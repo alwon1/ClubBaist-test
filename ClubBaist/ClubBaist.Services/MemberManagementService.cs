@@ -25,6 +25,12 @@ public class MemberManagementService<TKey> where TKey : IEquatable<TKey>
         ArgumentNullException.ThrowIfNull(createMemberRequest);
         EnsureRequiredKey(createMemberRequest.ApplicationUserId, nameof(createMemberRequest.ApplicationUserId));
         EnsureRequiredKey(createdByUserId, nameof(createdByUserId));
+        EnsureRequiredText(createMemberRequest.FirstName, nameof(createMemberRequest.FirstName));
+        EnsureRequiredText(createMemberRequest.LastName, nameof(createMemberRequest.LastName));
+        EnsureRequiredText(createMemberRequest.Email, nameof(createMemberRequest.Email));
+        EnsureRequiredText(createMemberRequest.Phone, nameof(createMemberRequest.Phone));
+        EnsureRequiredText(createMemberRequest.Address, nameof(createMemberRequest.Address));
+        EnsureRequiredText(createMemberRequest.PostalCode, nameof(createMemberRequest.PostalCode));
 
         await EnsureIdentityUserExistsAsync(createMemberRequest.ApplicationUserId, cancellationToken);
 
@@ -101,6 +107,14 @@ public class MemberManagementService<TKey> where TKey : IEquatable<TKey>
         }
 
         if (key is string text && string.IsNullOrWhiteSpace(text))
+        {
+            throw new ArgumentException("Value is required.", paramName);
+        }
+    }
+
+    private static void EnsureRequiredText(string? value, string paramName)
+    {
+        if (string.IsNullOrWhiteSpace(value))
         {
             throw new ArgumentException("Value is required.", paramName);
         }
