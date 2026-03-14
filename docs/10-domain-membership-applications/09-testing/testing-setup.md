@@ -30,8 +30,10 @@ Important packages:
 File: [ClubBaist/ClubBaist.Tests/TestAssemblyHooks.cs](../../ClubBaist/ClubBaist.Tests/TestAssemblyHooks.cs)
 
 What it does:
-- Runs once before all tests: initializes shared test host
-- Runs once after all tests: disposes resources
+- Provides the required MSTest assembly-level hook entry points (`AssemblyInitialize` and `AssemblyCleanup`)
+- Both methods are currently empty placeholders; no shared host is initialized or disposed here
+
+Note: Each test obtains its own isolated scope and SQLite in-memory connection via `TestServiceHost.CreateScope()` (see section 2 below). No shared host lifecycle is needed at the assembly level.
 
 ### 2) Shared DI host and SQLite connection
 File: [ClubBaist/ClubBaist.Tests/TestServiceHost.cs](../../ClubBaist/ClubBaist.Tests/TestServiceHost.cs)
