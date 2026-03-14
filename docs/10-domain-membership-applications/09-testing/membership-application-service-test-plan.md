@@ -3,6 +3,9 @@
 ## Purpose
 Define a DbContext-backed testing plan for the membership application service class library.
 
+Related implementation/setup guide:
+- [testing-setup.md](testing-setup.md)
+
 ## Scope
 - `ApplicationManagementService` submission, retrieval, and decision flows.
 - `MemberManagementService` behavior invoked by accepted applications.
