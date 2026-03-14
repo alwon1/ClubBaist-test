@@ -8,14 +8,50 @@ public class MemberAccount<TKey> where TKey : IEquatable<TKey>
     public TKey ApplicationUserId { get; set; } = default!;
     public IdentityUser<TKey>? ApplicationUser { get; set; }
     public string MemberNumber { get; set; } = string.Empty;
-    public string FirstName { get; set; } = string.Empty;
-    public string LastName { get; set; } = string.Empty;
+    public string FirstName
+    {
+        get;
+        set => field = RequireText(value, nameof(FirstName));
+    } = string.Empty;
+
+    public string LastName
+    {
+        get;
+        set => field = RequireText(value, nameof(LastName));
+    } = string.Empty;
+
     public DateTime DateOfBirth { get; set; }
-    public string Email { get; set; } = string.Empty;
-    public string Phone { get; set; } = string.Empty;
-    public string? AlternatePhone { get; set; }
-    public string Address { get; set; } = string.Empty;
-    public string PostalCode { get; set; } = string.Empty;
+
+    public string Email
+    {
+        get;
+        set => field = RequireText(value, nameof(Email));
+    } = string.Empty;
+
+    public string Phone
+    {
+        get;
+        set => field = RequireText(value, nameof(Phone));
+    } = string.Empty;
+
+    public string? AlternatePhone
+    {
+        get;
+        set => field = string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+    }
+
+    public string Address
+    {
+        get;
+        set => field = RequireText(value, nameof(Address));
+    } = string.Empty;
+
+    public string PostalCode
+    {
+        get;
+        set => field = RequireText(value, nameof(PostalCode));
+    } = string.Empty;
+
     public MembershipCategory MembershipCategory { get; set; }
     public bool IsActive { get; set; }
     public DateTime CreatedAt { get; set; }
@@ -37,14 +73,14 @@ public class MemberAccount<TKey> where TKey : IEquatable<TKey>
         DateTime updatedAt,
         string? alternatePhone = null)
     {
-        FirstName = RequireText(firstName, nameof(firstName));
-        LastName = RequireText(lastName, nameof(lastName));
+        FirstName = firstName;
+        LastName = lastName;
         DateOfBirth = dateOfBirth;
-        Email = RequireText(email, nameof(email));
-        Phone = RequireText(phone, nameof(phone));
-        AlternatePhone = NormalizeOptionalText(alternatePhone);
-        Address = RequireText(address, nameof(address));
-        PostalCode = RequireText(postalCode, nameof(postalCode));
+        Email = email;
+        Phone = phone;
+        AlternatePhone = alternatePhone;
+        Address = address;
+        PostalCode = postalCode;
         MembershipCategory = membershipCategory;
         UpdatedAt = updatedAt;
     }
@@ -68,8 +104,4 @@ public class MemberAccount<TKey> where TKey : IEquatable<TKey>
             : value.Trim();
     }
 
-    private static string? NormalizeOptionalText(string? value)
-    {
-        return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
-    }
 }
