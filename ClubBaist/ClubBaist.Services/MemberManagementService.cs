@@ -30,7 +30,7 @@ public class MemberManagementService<TKey> where TKey : IEquatable<TKey>
 
         var hasExistingMember = await _dbContext.MemberAccounts
             .AnyAsync(
-                member => EqualityComparer<TKey>.Default.Equals(member.ApplicationUserId, createMemberRequest.ApplicationUserId),
+                member => member.ApplicationUserId!.Equals(createMemberRequest.ApplicationUserId),
                 cancellationToken);
 
         if (hasExistingMember)
@@ -65,7 +65,7 @@ public class MemberManagementService<TKey> where TKey : IEquatable<TKey>
     private async Task EnsureIdentityUserExistsAsync(TKey applicationUserId, CancellationToken cancellationToken)
     {
         var exists = await _userManager.Users.AnyAsync(
-            user => EqualityComparer<TKey>.Default.Equals(user.Id, applicationUserId),
+            user => user.Id!.Equals(applicationUserId),
             cancellationToken);
 
         if (!exists)

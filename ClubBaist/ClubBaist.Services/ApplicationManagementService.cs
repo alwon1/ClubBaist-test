@@ -184,7 +184,7 @@ public class ApplicationManagementService<TKey> where TKey : IEquatable<TKey>
     private async Task EnsureIdentityUserExistsAsync(TKey userId, CancellationToken cancellationToken)
     {
         var exists = await _userManager.Users.AnyAsync(
-            user => EqualityComparer<TKey>.Default.Equals(user.Id, userId),
+            user => user.Id!.Equals(userId),
             cancellationToken);
 
         if (!exists)
