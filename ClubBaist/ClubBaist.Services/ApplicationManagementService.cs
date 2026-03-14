@@ -1,6 +1,7 @@
 using ClubBaist.Domain;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
 
 namespace ClubBaist.Services;
 
@@ -164,6 +165,15 @@ public class ApplicationManagementService<TKey> where TKey : IEquatable<TKey>
         CancellationToken cancellationToken = default)
     {
         EnsureRequiredKey(changedByUserId, nameof(changedByUserId));
+        await EnsureIdentityUserExistsAsync(changedByUserId, cancellationToken);
+
+        var applicationExists = await _dbContext.MembershipApplications
+            .AnyAsync(item => item.ApplicationId == applicationId, cancellationToken);
+
+        if (!applicationExists)
+        {
+            throw new KeyNotFoundException($"Membership application '{applicationId}' was not found.");
+        }
 
         var applicationExists = await _dbContext.MembershipApplications
             .AnyAsync(item => item.ApplicationId == applicationId, cancellationToken);
@@ -207,6 +217,11 @@ public class ApplicationManagementService<TKey> where TKey : IEquatable<TKey>
         if (key is null)
         {
             throw new ArgumentNullException(paramName);
+        }
+
+        if (EqualityComparer<TKey>.Default.Equals(key, default!))
+        {
+            throw new ArgumentException("A non-default value is required.", paramName);
         }
 
         if (key is string text && string.IsNullOrWhiteSpace(text))
