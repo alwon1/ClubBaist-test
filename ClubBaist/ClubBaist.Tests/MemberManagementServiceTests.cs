@@ -91,6 +91,7 @@ public sealed class MemberManagementServiceTests
     }
 
     [TestMethod]
+    [DataRow("", "LastName", "email@example.com", "555-0000", "1 St", "A1A1A1", "FirstName")]
     [DataRow("   ", "LastName", "email@example.com", "555-0000", "1 St", "A1A1A1", "FirstName")]
     [DataRow("FirstName", "", "email@example.com", "555-0000", "1 St", "A1A1A1", "LastName")]
     [DataRow("FirstName", "   ", "email@example.com", "555-0000", "1 St", "A1A1A1", "LastName")]
