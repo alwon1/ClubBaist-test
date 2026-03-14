@@ -53,7 +53,7 @@ public sealed class ApplicationManagementServiceTests
             AlternatePhone: "555-0101",
             SubmittedAt: submittedAt);
 
-        var result = await applicationService.SubmitApplicationAsync(request, userId);
+        var result = await applicationService.SubmitApplicationAsync(request);
 
         Assert.AreNotEqual(Guid.Empty, result.ApplicationId);
         Assert.AreEqual(ApplicationStatus.Submitted, result.CurrentStatus);
@@ -147,7 +147,7 @@ public sealed class ApplicationManagementServiceTests
             Sponsor2MemberId: sponsor2Id,
             SubmittedAt: submittedAt);
 
-        var submittedApplication = await applicationService.SubmitApplicationAsync(submitRequest, applicantUserId);
+        var submittedApplication = await applicationService.SubmitApplicationAsync(submitRequest);
 
         var changedAt = new DateTime(2026, 2, 16, 10, 15, 0, DateTimeKind.Utc);
         var result = await applicationService.ChangeApplicationStatusAsync(
@@ -214,8 +214,7 @@ public sealed class ApplicationManagementServiceTests
                 RequestedMembershipCategory: MembershipCategory.Social,
                 Sponsor1MemberId: sponsor1Id,
                 Sponsor2MemberId: sponsor2Id,
-                SubmittedAt: submittedAt),
-            applicantUserId);
+                SubmittedAt: submittedAt));
 
         var changedAt = new DateTime(2026, 2, 21, 11, 45, 0, DateTimeKind.Utc);
         var history = await applicationService.RecordStatusHistoryAsync(
@@ -278,8 +277,7 @@ public sealed class ApplicationManagementServiceTests
                 RequestedMembershipCategory: MembershipCategory.Social,
                 Sponsor1MemberId: sponsor1Id,
                 Sponsor2MemberId: sponsor2Id,
-                SubmittedAt: submittedAt),
-            applicantUserId);
+                SubmittedAt: submittedAt));
 
         var acceptedAt = new DateTime(2026, 2, 23, 10, 0, 0, DateTimeKind.Utc);
         var acceptedResult = await applicationService.ChangeApplicationStatusAsync(
