@@ -378,26 +378,28 @@ public sealed class ApplicationManagementServiceTests
         int sponsor1Id,
         int sponsor2Id)
     {
-        return new MembershipApplication<int>
+        var application = MembershipApplication<int>.Submit(
+            userId,
+            "Seed",
+            "Applicant",
+            "Tester",
+            "ClubBaist",
+            "100 Testing Ave",
+            "T2T2T2",
+            "555-0199",
+            "seed@example.com",
+            new DateTime(1992, 3, 1),
+            MembershipCategory.Social,
+            sponsor1Id,
+            sponsor2Id,
+            submittedAt);
+
+        if (status != ApplicationStatus.Submitted)
         {
-            ApplicationId = Guid.NewGuid(),
-            ApplicationUserId = userId,
-            CurrentStatus = status,
-            SubmittedAt = submittedAt,
-            LastStatusChangedAt = submittedAt,
-            FirstName = "Seed",
-            LastName = "Applicant",
-            Occupation = "Tester",
-            CompanyName = "ClubBaist",
-            Address = "100 Testing Ave",
-            PostalCode = "T2T2T2",
-            Phone = "555-0199",
-            Email = "seed@example.com",
-            DateOfBirth = new DateTime(1992, 3, 1),
-            RequestedMembershipCategory = MembershipCategory.Social,
-            Sponsor1MemberId = sponsor1Id,
-            Sponsor2MemberId = sponsor2Id
-        };
+            application.ChangeStatus(status, userId, submittedAt);
+        }
+
+        return application;
     }
 
     private static async Task ResetDatabaseAsync(TestApplicationDbContext dbContext)
