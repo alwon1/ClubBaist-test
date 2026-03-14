@@ -10,7 +10,7 @@ Document how service tests are wired in this repository, including the in-memory
 - Identity: ASP.NET Core Identity with int keys
 
 ## Key Project Configuration
-Test project configuration is in [ClubBaist/ClubBaist.Tests/ClubBaist.Tests.csproj](../../ClubBaist/ClubBaist.Tests/ClubBaist.Tests.csproj).
+Test project configuration is in [ClubBaist/ClubBaist.Tests/ClubBaist.Tests.csproj](../../../ClubBaist/ClubBaist.Tests/ClubBaist.Tests.csproj).
 
 Important settings:
 - Target framework: net10.0
@@ -27,7 +27,7 @@ Important packages:
 ## Test Infrastructure Files
 
 ### 1) Shared DI host and SQLite connection
-File: [ClubBaist/ClubBaist.Tests/TestServiceHost.cs](../../ClubBaist/ClubBaist.Tests/TestServiceHost.cs)
+File: [ClubBaist/ClubBaist.Tests/TestServiceHost.cs](../../../ClubBaist/ClubBaist.Tests/TestServiceHost.cs)
 
 What it does:
 - Each call to CreateScope() opens a new SQLite in-memory connection with Data Source=:memory:
@@ -40,7 +40,7 @@ Why each test gets its own connection:
 - Giving each test its own isolated database keeps tests fully independent and deterministic
 
 ### 2) Test DbContext with Identity integration
-File: [ClubBaist/ClubBaist.Tests/TestApplicationDbContext.cs](../../ClubBaist/ClubBaist.Tests/TestApplicationDbContext.cs)
+File: [ClubBaist/ClubBaist.Tests/TestApplicationDbContext.cs](../../../ClubBaist/ClubBaist.Tests/TestApplicationDbContext.cs)
 
 What it does:
 - Inherits from IdentityDbContext<IdentityUser<int>, IdentityRole<int>, int>
@@ -48,8 +48,8 @@ What it does:
 - Exposes MembershipApplications, MemberAccounts, and ApplicationStatusHistories DbSet properties
 - Configures relationships and delete behavior in OnModelCreating
 
-### 3) Setup validation test
-File: [ClubBaist/ClubBaist.Tests/Test1.cs](../../ClubBaist/ClubBaist.Tests/Test1.cs)
+### 4) Setup validation test
+File: [ClubBaist/ClubBaist.Tests/Test1.cs](../../../ClubBaist/ClubBaist.Tests/Test1.cs)
 
 What it verifies:
 - DI can resolve DbContext, UserManager, and both services
