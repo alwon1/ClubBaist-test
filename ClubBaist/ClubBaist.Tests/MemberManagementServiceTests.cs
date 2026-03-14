@@ -169,7 +169,7 @@ public sealed class MemberManagementServiceTests
             Phone: "555-0110",
             Address: "124 Main St",
             PostalCode: "T2T2T2",
-            MembershipCategory: MembershipCategory.Regular);
+            MembershipCategory: MembershipCategory.Associate);
 
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(
             async () => await memberService.CreateMemberAsync(duplicateRequest));
