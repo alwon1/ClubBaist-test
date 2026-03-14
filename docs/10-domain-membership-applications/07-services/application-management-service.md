@@ -18,7 +18,7 @@ Coordinate the end-to-end membership application workflow for submission, review
 - Trigger downstream member creation via `MemberManagementService` on acceptance.
 
 ## Core Operations (v1)
-- `SubmitApplicationAsync(submitRequest, submittedByUserId, cancellationToken)`
+- `SubmitApplicationAsync(submitRequest, cancellationToken)`
 - `GetActionableApplicationsAsync(filter, cancellationToken)`
 - `ChangeApplicationStatusAsync(applicationId, newStatus, changedByUserId, changedAt, cancellationToken)`
 - `RecordStatusHistoryAsync(applicationId, fromStatus, toStatus, changedByUserId, changedAt, cancellationToken)`

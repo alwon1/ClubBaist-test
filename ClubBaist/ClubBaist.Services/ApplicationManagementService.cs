@@ -29,12 +29,10 @@ public class ApplicationManagementService<TKey> where TKey : IEquatable<TKey>
 
     public async Task<MembershipApplication<TKey>> SubmitApplicationAsync(
         SubmitApplicationRequest<TKey> submitRequest,
-        TKey submittedByUserId,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(submitRequest);
         EnsureRequiredKey(submitRequest.ApplicationUserId, nameof(submitRequest.ApplicationUserId));
-        EnsureRequiredKey(submittedByUserId, nameof(submittedByUserId));
         EnsureRequiredKey(submitRequest.Sponsor1MemberId, nameof(submitRequest.Sponsor1MemberId));
         EnsureRequiredKey(submitRequest.Sponsor2MemberId, nameof(submitRequest.Sponsor2MemberId));
 
