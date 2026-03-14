@@ -1,6 +1,7 @@
 using ClubBaist.Domain;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
 
 namespace ClubBaist.Services;
 
@@ -105,6 +106,11 @@ public class MemberManagementService<TKey> where TKey : IEquatable<TKey>
         }
 
         if (key is string text && string.IsNullOrWhiteSpace(text))
+        {
+            throw new ArgumentException("Value is required.", paramName);
+        }
+
+        if (typeof(TKey).IsValueType && EqualityComparer<TKey>.Default.Equals(key, default!))
         {
             throw new ArgumentException("Value is required.", paramName);
         }
