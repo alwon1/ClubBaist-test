@@ -7,8 +7,32 @@ public class ApplicationStatusHistory<TKey> where TKey : IEquatable<TKey>
     public Guid ApplicationStatusHistoryId { get; set; } = Guid.NewGuid();
     public Guid MembershipApplicationId { get; set; }
     public MembershipApplication<TKey>? MembershipApplication { get; set; }
-    public ApplicationStatus FromStatus { get; set; }
-    public ApplicationStatus ToStatus { get; set; }
+    public ApplicationStatus FromStatus
+    {
+        get;
+        set
+        {
+            if (value == ToStatus)
+            {
+                throw new ArgumentException("FromStatus and ToStatus must be different for a transition record.", nameof(FromStatus));
+            }
+            field = value;
+        }
+    }
+
+    public ApplicationStatus ToStatus
+    {
+        get;
+        set
+        {
+            if (value == FromStatus)
+            {
+                throw new ArgumentException("FromStatus and ToStatus must be different for a transition record.", nameof(ToStatus));
+            }
+            field = value;
+        }
+    }
+
     public TKey ChangedByUserId { get; set; } = default!;
     public IdentityUser<TKey>? ChangedByUser { get; set; }
     public DateTime ChangedAt { get; set; }
@@ -25,11 +49,6 @@ public class ApplicationStatusHistory<TKey> where TKey : IEquatable<TKey>
         DateTime changedAt,
         Guid? applicationStatusHistoryId = null)
     {
-        if (fromStatus == toStatus)
-        {
-            throw new ArgumentException("FromStatus and ToStatus must be different for a transition record.", nameof(toStatus));
-        }
-
         ApplicationStatusHistoryId = applicationStatusHistoryId ?? Guid.NewGuid();
         MembershipApplicationId = membershipApplicationId;
         FromStatus = fromStatus;
