@@ -11,27 +11,13 @@ public class MemberAccount<TKey> where TKey : IEquatable<TKey>
     public string FirstName
     {
         get;
-        set
-        {
-            if (string.IsNullOrWhiteSpace(value))
-            {
-                throw new ArgumentException("Value is required.", nameof(FirstName));
-            }
-            field = value.Trim();
-        }
+        set => field = RequireText(value, nameof(FirstName));
     } = string.Empty;
 
     public string LastName
     {
         get;
-        set
-        {
-            if (string.IsNullOrWhiteSpace(value))
-            {
-                throw new ArgumentException("Value is required.", nameof(LastName));
-            }
-            field = value.Trim();
-        }
+        set => field = RequireText(value, nameof(LastName));
     } = string.Empty;
 
     public DateTime DateOfBirth { get; set; }
@@ -39,27 +25,13 @@ public class MemberAccount<TKey> where TKey : IEquatable<TKey>
     public string Email
     {
         get;
-        set
-        {
-            if (string.IsNullOrWhiteSpace(value))
-            {
-                throw new ArgumentException("Value is required.", nameof(Email));
-            }
-            field = value.Trim();
-        }
+        set => field = RequireText(value, nameof(Email));
     } = string.Empty;
 
     public string Phone
     {
         get;
-        set
-        {
-            if (string.IsNullOrWhiteSpace(value))
-            {
-                throw new ArgumentException("Value is required.", nameof(Phone));
-            }
-            field = value.Trim();
-        }
+        set => field = RequireText(value, nameof(Phone));
     } = string.Empty;
 
     public string? AlternatePhone
@@ -71,27 +43,13 @@ public class MemberAccount<TKey> where TKey : IEquatable<TKey>
     public string Address
     {
         get;
-        set
-        {
-            if (string.IsNullOrWhiteSpace(value))
-            {
-                throw new ArgumentException("Value is required.", nameof(Address));
-            }
-            field = value.Trim();
-        }
+        set => field = RequireText(value, nameof(Address));
     } = string.Empty;
 
     public string PostalCode
     {
         get;
-        set
-        {
-            if (string.IsNullOrWhiteSpace(value))
-            {
-                throw new ArgumentException("Value is required.", nameof(PostalCode));
-            }
-            field = value.Trim();
-        }
+        set => field = RequireText(value, nameof(PostalCode));
     } = string.Empty;
 
     public MembershipCategory MembershipCategory { get; set; }
@@ -137,6 +95,13 @@ public class MemberAccount<TKey> where TKey : IEquatable<TKey>
     {
         ApplicationUser = applicationUser ?? throw new ArgumentNullException(nameof(applicationUser));
         ApplicationUserId = applicationUser.Id;
+    }
+
+    private static string RequireText(string value, string paramName)
+    {
+        return string.IsNullOrWhiteSpace(value)
+            ? throw new ArgumentException("Value is required.", paramName)
+            : value.Trim();
     }
 
 }
