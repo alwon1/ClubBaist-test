@@ -50,8 +50,7 @@ public class MemberManagementService<TKey> where TKey : IEquatable<TKey>
             PostalCode = createMemberRequest.PostalCode,
             MembershipCategory = createMemberRequest.MembershipCategory,
             IsActive = createMemberRequest.IsActive,
-            CreatedAt = createdAt,
-            UpdatedAt = createdAt
+            CreatedAt = createdAt
         };
 
         _dbContext.MemberAccounts.Add(memberAccount);
