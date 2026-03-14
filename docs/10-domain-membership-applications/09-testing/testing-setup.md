@@ -10,7 +10,7 @@ Document how service tests are wired in this repository, including the in-memory
 - Identity: ASP.NET Core Identity with int keys
 
 ## Key Project Configuration
-Test project configuration is in [ClubBaist/ClubBaist.Tests/ClubBaist.Tests.csproj](../../ClubBaist/ClubBaist.Tests/ClubBaist.Tests.csproj).
+Test project configuration is in [ClubBaist/ClubBaist.Tests/ClubBaist.Tests.csproj](../../../ClubBaist/ClubBaist.Tests/ClubBaist.Tests.csproj).
 
 Important settings:
 - Target framework: net10.0
@@ -27,14 +27,14 @@ Important packages:
 ## Test Infrastructure Files
 
 ### 1) Assembly lifecycle hooks
-File: [ClubBaist/ClubBaist.Tests/TestAssemblyHooks.cs](../../ClubBaist/ClubBaist.Tests/TestAssemblyHooks.cs)
+File: [ClubBaist/ClubBaist.Tests/TestAssemblyHooks.cs](../../../ClubBaist/ClubBaist.Tests/TestAssemblyHooks.cs)
 
 What it does:
 - Runs once before all tests: initializes shared test host
 - Runs once after all tests: disposes resources
 
 ### 2) Shared DI host and SQLite connection
-File: [ClubBaist/ClubBaist.Tests/TestServiceHost.cs](../../ClubBaist/ClubBaist.Tests/TestServiceHost.cs)
+File: [ClubBaist/ClubBaist.Tests/TestServiceHost.cs](../../../ClubBaist/ClubBaist.Tests/TestServiceHost.cs)
 
 What it does:
 - Opens a single SQLite in-memory connection with Data Source=:memory:
@@ -47,7 +47,7 @@ Why the connection is kept open:
 - Keeping one connection open for the host lifetime preserves schema and data during test execution
 
 ### 3) Test DbContext with Identity integration
-File: [ClubBaist/ClubBaist.Tests/TestApplicationDbContext.cs](../../ClubBaist/ClubBaist.Tests/TestApplicationDbContext.cs)
+File: [ClubBaist/ClubBaist.Tests/TestApplicationDbContext.cs](../../../ClubBaist/ClubBaist.Tests/TestApplicationDbContext.cs)
 
 What it does:
 - Inherits from IdentityDbContext<IdentityUser<int>, IdentityRole<int>, int>
@@ -56,7 +56,7 @@ What it does:
 - Configures relationships and delete behavior in OnModelCreating
 
 ### 4) Setup validation test
-File: [ClubBaist/ClubBaist.Tests/Test1.cs](../../ClubBaist/ClubBaist.Tests/Test1.cs)
+File: [ClubBaist/ClubBaist.Tests/Test1.cs](../../../ClubBaist/ClubBaist.Tests/Test1.cs)
 
 What it verifies:
 - DI can resolve DbContext, UserManager, and both services
