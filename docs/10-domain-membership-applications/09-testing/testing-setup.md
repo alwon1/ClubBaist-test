@@ -26,9 +26,14 @@ Important packages:
 
 ## Test Infrastructure Files
 
+<<<<<<< HEAD
 ### 2) Per-test isolated DI scope and SQLite connection
 ### 1) Per-test isolated DI scope and SQLite connection
 File: [ClubBaist/ClubBaist.Tests/TestServiceHost.cs](../../../ClubBaist/ClubBaist.Tests/TestServiceHost.cs)
+=======
+### 1) Shared DI host and SQLite connection
+File: [ClubBaist/ClubBaist.Tests/TestServiceHost.cs](../../ClubBaist/ClubBaist.Tests/TestServiceHost.cs)
+>>>>>>> b5cc16e (Refactor testing documentation: reorder sections and remove assembly lifecycle hooks)
 
 What it does:
 - Each call to CreateScope() opens a new SQLite in-memory connection with Data Source=:memory:
