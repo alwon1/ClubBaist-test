@@ -176,16 +176,6 @@ public class ApplicationManagementService<TKey> where TKey : IEquatable<TKey>
             throw new KeyNotFoundException($"Membership application '{applicationId}' was not found.");
         }
 
-        var applicationExists = await _dbContext.MembershipApplications
-            .AnyAsync(item => item.ApplicationId == applicationId, cancellationToken);
-
-        if (!applicationExists)
-        {
-            throw new KeyNotFoundException($"Membership application '{applicationId}' was not found.");
-        }
-
-        await EnsureIdentityUserExistsAsync(changedByUserId, cancellationToken);
-
         var history = new ApplicationStatusHistory<TKey>
         {
             MembershipApplicationId = applicationId,
