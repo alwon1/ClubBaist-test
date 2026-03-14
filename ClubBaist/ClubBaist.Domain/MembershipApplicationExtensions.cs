@@ -14,11 +14,14 @@ public static class MembershipApplicationExtensions
             throw new ArgumentNullException(nameof(membershipApplication));
         }
 
-        return new ApplicationStatusHistory<TKey>(
-            membershipApplication.ApplicationId,
-            membershipApplication.CurrentStatus,
-            newStatus,
-            changedByUserId,
-            changedAt);
+        return new ApplicationStatusHistory<TKey>
+        {
+            ApplicationStatusHistoryId = Guid.NewGuid(),
+            MembershipApplicationId = membershipApplication.ApplicationId,
+            FromStatus = membershipApplication.CurrentStatus,
+            ToStatus = newStatus,
+            ChangedByUserId = changedByUserId,
+            ChangedAt = changedAt
+        };
     }
 }

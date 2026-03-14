@@ -168,12 +168,15 @@ public class ApplicationManagementService<TKey> where TKey : IEquatable<TKey>
     {
         EnsureRequiredKey(changedByUserId, nameof(changedByUserId));
 
-        var history = new ApplicationStatusHistory<TKey>(
-            applicationId,
-            fromStatus,
-            toStatus,
-            changedByUserId,
-            changedAt);
+        var history = new ApplicationStatusHistory<TKey>
+        {
+            ApplicationStatusHistoryId = Guid.NewGuid(),
+            MembershipApplicationId = applicationId,
+            FromStatus = fromStatus,
+            ToStatus = toStatus,
+            ChangedByUserId = changedByUserId,
+            ChangedAt = changedAt
+        };
 
         _dbContext.ApplicationStatusHistories.Add(history);
         await _dbContext.SaveChangesAsync(cancellationToken);
