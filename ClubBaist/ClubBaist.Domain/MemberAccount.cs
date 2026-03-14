@@ -55,7 +55,7 @@ public class MemberAccount<TKey> where TKey : IEquatable<TKey>
     public MembershipCategory MembershipCategory { get; set; }
     public bool IsActive { get; set; }
     public DateTime CreatedAt { get; set; }
-    public DateTime UpdatedAt { get; set; }
+    public DateTime UpdatedAt { get; private set; }
 
     public MemberAccount()
     {
