@@ -1,3 +1,5 @@
 <Solution>
   <Project Path="ClubBaist.Domain/ClubBaist.Domain.csproj" />
+  <Project Path="ClubBaist.Services/ClubBaist.Services.csproj" />
+  <Project Path="ClubBaist.Tests/ClubBaist.Tests.csproj" />
 </Solution>
