@@ -4,14 +4,18 @@ namespace ClubBaist.Domain;
 
 public class ApplicationStatusHistory<TKey> where TKey : IEquatable<TKey>
 {
-    public Guid ApplicationStatusHistoryId { get; private set; }
-    public Guid MembershipApplicationId { get; private set; }
-    public MembershipApplication<TKey>? MembershipApplication { get; private set; }
-    public ApplicationStatus FromStatus { get; private set; }
-    public ApplicationStatus ToStatus { get; private set; }
-    public TKey ChangedByUserId { get; private set; }
-    public IdentityUser<TKey>? ChangedByUser { get; private set; }
-    public DateTime ChangedAt { get; private set; }
+    public Guid ApplicationStatusHistoryId { get; set; }
+    public Guid MembershipApplicationId { get; set; }
+    public MembershipApplication<TKey>? MembershipApplication { get; set; }
+    public ApplicationStatus FromStatus { get; set; }
+    public ApplicationStatus ToStatus { get; set; }
+    public TKey ChangedByUserId { get; set; } = default!;
+    public IdentityUser<TKey>? ChangedByUser { get; set; }
+    public DateTime ChangedAt { get; set; }
+
+    public ApplicationStatusHistory()
+    {
+    }
 
     public ApplicationStatusHistory(
         Guid membershipApplicationId,

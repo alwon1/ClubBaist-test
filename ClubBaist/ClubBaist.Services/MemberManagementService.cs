@@ -41,20 +41,24 @@ public class MemberManagementService<TKey> where TKey : IEquatable<TKey>
         var createdAt = createMemberRequest.CreatedAt ?? DateTime.UtcNow;
         var memberNumber = await GenerateUniqueMemberNumberAsync(cancellationToken);
 
-        var memberAccount = new MemberAccount<TKey>(
-            createMemberRequest.ApplicationUserId,
-            memberNumber,
-            createMemberRequest.FirstName,
-            createMemberRequest.LastName,
-            createMemberRequest.DateOfBirth,
-            createMemberRequest.Email,
-            createMemberRequest.Phone,
-            createMemberRequest.Address,
-            createMemberRequest.PostalCode,
-            createMemberRequest.MembershipCategory,
-            createdAt,
-            createMemberRequest.IsActive,
-            createMemberRequest.AlternatePhone);
+        var memberAccount = new MemberAccount<TKey>
+        {
+            MemberAccountId = Guid.NewGuid(),
+            ApplicationUserId = createMemberRequest.ApplicationUserId,
+            MemberNumber = memberNumber,
+            FirstName = createMemberRequest.FirstName,
+            LastName = createMemberRequest.LastName,
+            DateOfBirth = createMemberRequest.DateOfBirth,
+            Email = createMemberRequest.Email,
+            Phone = createMemberRequest.Phone,
+            AlternatePhone = createMemberRequest.AlternatePhone,
+            Address = createMemberRequest.Address,
+            PostalCode = createMemberRequest.PostalCode,
+            MembershipCategory = createMemberRequest.MembershipCategory,
+            IsActive = createMemberRequest.IsActive,
+            CreatedAt = createdAt,
+            UpdatedAt = createdAt
+        };
 
         _dbContext.MemberAccounts.Add(memberAccount);
         await _dbContext.SaveChangesAsync(cancellationToken);

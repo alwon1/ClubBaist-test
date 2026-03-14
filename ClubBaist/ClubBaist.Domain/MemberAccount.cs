@@ -4,54 +4,25 @@ namespace ClubBaist.Domain;
 
 public class MemberAccount<TKey> where TKey : IEquatable<TKey>
 {
-    public Guid MemberAccountId { get; private set; }
-    public TKey ApplicationUserId { get; private set; }
-    public IdentityUser<TKey>? ApplicationUser { get; private set; }
-    public string MemberNumber { get; private set; }
-    public string FirstName { get; private set; }
-    public string LastName { get; private set; }
-    public DateTime DateOfBirth { get; private set; }
-    public string Email { get; private set; }
-    public string Phone { get; private set; }
-    public string? AlternatePhone { get; private set; }
-    public string Address { get; private set; }
-    public string PostalCode { get; private set; }
-    public MembershipCategory MembershipCategory { get; private set; }
-    public bool IsActive { get; private set; }
-    public DateTime CreatedAt { get; private set; }
-    public DateTime UpdatedAt { get; private set; }
+    public Guid MemberAccountId { get; set; }
+    public TKey ApplicationUserId { get; set; } = default!;
+    public IdentityUser<TKey>? ApplicationUser { get; set; }
+    public string MemberNumber { get; set; } = string.Empty;
+    public string FirstName { get; set; } = string.Empty;
+    public string LastName { get; set; } = string.Empty;
+    public DateTime DateOfBirth { get; set; }
+    public string Email { get; set; } = string.Empty;
+    public string Phone { get; set; } = string.Empty;
+    public string? AlternatePhone { get; set; }
+    public string Address { get; set; } = string.Empty;
+    public string PostalCode { get; set; } = string.Empty;
+    public MembershipCategory MembershipCategory { get; set; }
+    public bool IsActive { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
 
-    public MemberAccount(
-        TKey applicationUserId,
-        string memberNumber,
-        string firstName,
-        string lastName,
-        DateTime dateOfBirth,
-        string email,
-        string phone,
-        string address,
-        string postalCode,
-        MembershipCategory membershipCategory,
-        DateTime createdAt,
-        bool isActive = true,
-        string? alternatePhone = null,
-        Guid? memberAccountId = null)
+    public MemberAccount()
     {
-        MemberAccountId = memberAccountId ?? Guid.NewGuid();
-        ApplicationUserId = applicationUserId;
-        MemberNumber = RequireText(memberNumber, nameof(memberNumber));
-        FirstName = RequireText(firstName, nameof(firstName));
-        LastName = RequireText(lastName, nameof(lastName));
-        DateOfBirth = dateOfBirth;
-        Email = RequireText(email, nameof(email));
-        Phone = RequireText(phone, nameof(phone));
-        AlternatePhone = NormalizeOptionalText(alternatePhone);
-        Address = RequireText(address, nameof(address));
-        PostalCode = RequireText(postalCode, nameof(postalCode));
-        MembershipCategory = membershipCategory;
-        IsActive = isActive;
-        CreatedAt = createdAt;
-        UpdatedAt = createdAt;
     }
 
     public void UpdateProfile(
