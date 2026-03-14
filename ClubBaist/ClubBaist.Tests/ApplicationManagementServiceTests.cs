@@ -425,8 +425,7 @@ public sealed class ApplicationManagementServiceTests
             PostalCode = "S1S1S1",
             MembershipCategory = MembershipCategory.Social,
             IsActive = true,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow
         });
         await dbContext.SaveChangesAsync();
         return userId;
