@@ -26,27 +26,20 @@ Important packages:
 
 ## Test Infrastructure Files
 
-### 1) Assembly lifecycle hooks
-File: [ClubBaist/ClubBaist.Tests/TestAssemblyHooks.cs](../../../ClubBaist/ClubBaist.Tests/TestAssemblyHooks.cs)
-
-What it does:
-- Runs once before all tests: initializes shared test host
-- Runs once after all tests: disposes resources
-
-### 2) Shared DI host and SQLite connection
+### 1) Shared DI host and SQLite connection
 File: [ClubBaist/ClubBaist.Tests/TestServiceHost.cs](../../../ClubBaist/ClubBaist.Tests/TestServiceHost.cs)
 
 What it does:
-- Opens a single SQLite in-memory connection with Data Source=:memory:
-- Registers DbContext, Identity, and services in a ServiceCollection
-- Builds a ServiceProvider
-- Ensures schema is created at startup
+- Each call to CreateScope() opens a new SQLite in-memory connection with Data Source=:memory:
+- Registers DbContext, Identity, and services in a fresh ServiceCollection
+- Builds a new ServiceProvider and ensures schema is created
+- Returns a scope that, when disposed, also disposes the provider and closes the connection
 
-Why the connection is kept open:
-- SQLite in-memory data exists only while the connection is open
-- Keeping one connection open for the host lifetime preserves schema and data during test execution
+Why each test gets its own connection:
+- Tests run in parallel and a shared connection would cause interference between them
+- Giving each test its own isolated database keeps tests fully independent and deterministic
 
-### 3) Test DbContext with Identity integration
+### 2) Test DbContext with Identity integration
 File: [ClubBaist/ClubBaist.Tests/TestApplicationDbContext.cs](../../../ClubBaist/ClubBaist.Tests/TestApplicationDbContext.cs)
 
 What it does:
@@ -61,7 +54,7 @@ File: [ClubBaist/ClubBaist.Tests/Test1.cs](../../../ClubBaist/ClubBaist.Tests/Te
 What it verifies:
 - DI can resolve DbContext, UserManager, and both services
 - Identity user can be created
-- MemberManagementService can persist a member account using the shared setup
+- MemberManagementService can persist a member account using the per-test isolated setup
 
 ## Service Registration Model
 The test host currently registers int-keyed services:
