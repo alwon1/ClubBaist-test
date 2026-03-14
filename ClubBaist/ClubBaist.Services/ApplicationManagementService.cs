@@ -123,6 +123,11 @@ public class ApplicationManagementService<TKey> where TKey : IEquatable<TKey>
         _dbContext.ApplicationStatusHistories.Add(history);
 
         CreateMemberResult? memberCreationResult = null;
+
+        // Persist the application status change and history explicitly in this method,
+        // independent of the member creation service implementation.
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
         if (newStatus == ApplicationStatus.Accepted)
         {
             var createMemberRequest = new CreateMemberRequest<TKey>(
@@ -142,10 +147,6 @@ public class ApplicationManagementService<TKey> where TKey : IEquatable<TKey>
             memberCreationResult = await _memberManagementService.CreateMemberAsync(
                 createMemberRequest,
                 cancellationToken);
-        }
-        else
-        {
-            await _dbContext.SaveChangesAsync(cancellationToken);
         }
 
         return new ChangeApplicationStatusResult<TKey>(
