@@ -19,12 +19,10 @@ public class MemberManagementService<TKey> where TKey : IEquatable<TKey>
 
     public async Task<CreateMemberResult> CreateMemberAsync(
         CreateMemberRequest<TKey> createMemberRequest,
-        TKey createdByUserId,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(createMemberRequest);
         EnsureRequiredKey(createMemberRequest.ApplicationUserId, nameof(createMemberRequest.ApplicationUserId));
-        EnsureRequiredKey(createdByUserId, nameof(createdByUserId));
         EnsureRequiredText(createMemberRequest.FirstName, nameof(createMemberRequest.FirstName));
         EnsureRequiredText(createMemberRequest.LastName, nameof(createMemberRequest.LastName));
         EnsureRequiredText(createMemberRequest.Email, nameof(createMemberRequest.Email));

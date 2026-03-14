@@ -20,7 +20,6 @@ public sealed class MemberManagementServiceTests
         var dbContext = provider.GetRequiredService<TestApplicationDbContext>();
 
         var userId = await CreateIdentityUserAsync(userManager);
-        var createdByUserId = await CreateIdentityUserAsync(userManager);
 
         var request = new CreateMemberRequest<int>(
             ApplicationUserId: userId,
@@ -33,7 +32,7 @@ public sealed class MemberManagementServiceTests
             PostalCode: "T1T1T1",
             MembershipCategory: MembershipCategory.Social);
 
-        var result = await memberService.CreateMemberAsync(request, createdByUserId);
+        var result = await memberService.CreateMemberAsync(request);
 
         Assert.AreNotEqual(Guid.Empty, result.MemberAccountId);
         Assert.IsFalse(string.IsNullOrWhiteSpace(result.MemberNumber));
@@ -49,6 +48,46 @@ public sealed class MemberManagementServiceTests
         Assert.AreEqual("555-0100", persisted.Phone);
         Assert.AreEqual("123 Main St", persisted.Address);
         Assert.AreEqual("T1T1T1", persisted.PostalCode);
+    }
+
+    [TestMethod]
+    public async Task CreateMemberAsync_FieldsWithSurroundingWhitespace_TrimsBeforePersisting()
+    {
+        using var scope = TestServiceHost.CreateScope();
+        var provider = scope.ServiceProvider;
+
+        var memberService = provider.GetRequiredService<MemberManagementService<int>>();
+        var userManager = provider.GetRequiredService<UserManager<IdentityUser<int>>>();
+        var dbContext = provider.GetRequiredService<TestApplicationDbContext>();
+
+        var userId = await CreateIdentityUserAsync(userManager);
+        var createdByUserId = await CreateIdentityUserAsync(userManager);
+
+        var request = new CreateMemberRequest<int>(
+            ApplicationUserId: userId,
+            FirstName: "  Jane  ",
+            LastName: "  Doe  ",
+            DateOfBirth: new DateTime(1990, 5, 20),
+            Email: "  jane.doe@example.com  ",
+            Phone: "  555-0100  ",
+            Address: "  123 Main St  ",
+            PostalCode: "  T1T1T1  ",
+            MembershipCategory: MembershipCategory.Social,
+            AlternatePhone: "  555-0199  ");
+
+        var result = await memberService.CreateMemberAsync(request, createdByUserId);
+
+        var persisted = await dbContext.MemberAccounts
+            .AsNoTracking()
+            .SingleAsync(item => item.MemberAccountId == result.MemberAccountId);
+
+        Assert.AreEqual("Jane", persisted.FirstName);
+        Assert.AreEqual("Doe", persisted.LastName);
+        Assert.AreEqual("jane.doe@example.com", persisted.Email);
+        Assert.AreEqual("555-0100", persisted.Phone);
+        Assert.AreEqual("123 Main St", persisted.Address);
+        Assert.AreEqual("T1T1T1", persisted.PostalCode);
+        Assert.AreEqual("555-0199", persisted.AlternatePhone);
     }
 
     [TestMethod]
@@ -80,7 +119,6 @@ public sealed class MemberManagementServiceTests
         var userManager = provider.GetRequiredService<UserManager<IdentityUser<int>>>();
 
         var userId = await CreateIdentityUserAsync(userManager);
-        var createdByUserId = await CreateIdentityUserAsync(userManager);
 
         var request = new CreateMemberRequest<int>(
             ApplicationUserId: userId,
@@ -94,7 +132,7 @@ public sealed class MemberManagementServiceTests
             MembershipCategory: MembershipCategory.Social);
 
         var ex = await Assert.ThrowsAsync<ArgumentException>(
-            async () => await memberService.CreateMemberAsync(request, createdByUserId));
+            async () => await memberService.CreateMemberAsync(request));
 
         StringAssert.Contains(ex.ParamName, expectedParamFragment);
     }

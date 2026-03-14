@@ -10,7 +10,8 @@ Document how service tests are wired in this repository, including the in-memory
 - Identity: ASP.NET Core Identity with int keys
 
 ## Key Project Configuration
-Test project configuration is in [ClubBaist/ClubBaist.Tests/ClubBaist.Tests.csproj](../../ClubBaist/ClubBaist.Tests/ClubBaist.Tests.csproj).
+Test project configuration is in [ClubBaist/ClubBaist.Tests/ClubBaist.Tests.csproj](../../../ClubBaist/ClubBaist.Tests/ClubBaist.Tests.csproj).
+Test project configuration is in [ClubBaist/ClubBaist.Tests/ClubBaist.Tests.csproj](../../../ClubBaist/ClubBaist.Tests/ClubBaist.Tests.csproj).
 
 Important settings:
 - Target framework: net10.0
@@ -26,14 +27,12 @@ Important packages:
 
 ## Test Infrastructure Files
 
-### 1) Assembly lifecycle hooks
-File: [ClubBaist/ClubBaist.Tests/TestAssemblyHooks.cs](../../ClubBaist/ClubBaist.Tests/TestAssemblyHooks.cs)
+### 1) Shared DI host and SQLite connection
+File: [ClubBaist/ClubBaist.Tests/TestServiceHost.cs](../../../ClubBaist/ClubBaist.Tests/TestServiceHost.cs)
 
 What it does:
-- Provides the required MSTest assembly-level hook entry points (`AssemblyInitialize` and `AssemblyCleanup`)
-- Both methods are currently empty placeholders; no shared host is initialized or disposed here
-
-Note: Each test obtains its own isolated scope and SQLite in-memory connection via `TestServiceHost.CreateScope()` (see section 2 below). No shared host lifecycle is needed at the assembly level.
+- Runs once before all tests: initializes shared test host
+- Runs once after all tests: disposes resources
 
 ### 2) Shared DI host and SQLite connection
 File: [ClubBaist/ClubBaist.Tests/TestServiceHost.cs](../../ClubBaist/ClubBaist.Tests/TestServiceHost.cs)
@@ -57,13 +56,14 @@ What it does:
 - Exposes MembershipApplications, MemberAccounts, and ApplicationStatusHistories DbSet properties
 - Configures relationships and delete behavior in OnModelCreating
 
-### 4) Setup validation test
-File: [ClubBaist/ClubBaist.Tests/Test1.cs](../../ClubBaist/ClubBaist.Tests/Test1.cs)
+### 3) Setup validation test
+File: [ClubBaist/ClubBaist.Tests/ServiceSetupTests.cs](../../../../ClubBaist/ClubBaist.Tests/ServiceSetupTests.cs)
 
 What it verifies:
 - DI can resolve DbContext, UserManager, and both services
 - Identity user can be created
-- MemberManagementService can persist a member account using the shared setup
+- MemberManagementService can persist a member account using the per-test isolated setup
+- MemberManagementService can persist a member account using the per-test isolated setup
 
 ## Service Registration Model
 The test host currently registers int-keyed services:
