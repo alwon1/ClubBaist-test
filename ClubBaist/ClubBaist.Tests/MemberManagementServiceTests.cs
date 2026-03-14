@@ -61,7 +61,6 @@ public sealed class MemberManagementServiceTests
         var dbContext = provider.GetRequiredService<TestApplicationDbContext>();
 
         var userId = await CreateIdentityUserAsync(userManager);
-        var createdByUserId = await CreateIdentityUserAsync(userManager);
 
         var request = new CreateMemberRequest<int>(
             ApplicationUserId: userId,
@@ -75,7 +74,7 @@ public sealed class MemberManagementServiceTests
             MembershipCategory: MembershipCategory.Social,
             AlternatePhone: "  555-0199  ");
 
-        var result = await memberService.CreateMemberAsync(request, createdByUserId);
+        var result = await memberService.CreateMemberAsync(request);
 
         var persisted = await dbContext.MemberAccounts
             .AsNoTracking()

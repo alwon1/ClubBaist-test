@@ -364,8 +364,7 @@ public sealed class ApplicationManagementServiceTests
                 RequestedMembershipCategory: MembershipCategory.Social,
                 Sponsor1MemberId: sponsor1Id,
                 Sponsor2MemberId: sponsor2Id,
-                SubmittedAt: DateTime.UtcNow),
-            applicantUserId);
+                SubmittedAt: DateTime.UtcNow));
 
         var nonExistentUserId = await CreateUniquePositiveIntUserIdAsync(userManager);
 
