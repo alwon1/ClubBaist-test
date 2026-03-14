@@ -11,6 +11,7 @@ Document how service tests are wired in this repository, including the in-memory
 
 ## Key Project Configuration
 Test project configuration is in [ClubBaist/ClubBaist.Tests/ClubBaist.Tests.csproj](../../../ClubBaist/ClubBaist.Tests/ClubBaist.Tests.csproj).
+Test project configuration is in [ClubBaist/ClubBaist.Tests/ClubBaist.Tests.csproj](../../../ClubBaist/ClubBaist.Tests/ClubBaist.Tests.csproj).
 
 Important settings:
 - Target framework: net10.0
@@ -26,14 +27,8 @@ Important packages:
 
 ## Test Infrastructure Files
 
-<<<<<<< HEAD
-### 2) Per-test isolated DI scope and SQLite connection
-### 1) Per-test isolated DI scope and SQLite connection
-File: [ClubBaist/ClubBaist.Tests/TestServiceHost.cs](../../../ClubBaist/ClubBaist.Tests/TestServiceHost.cs)
-=======
 ### 1) Shared DI host and SQLite connection
-File: [ClubBaist/ClubBaist.Tests/TestServiceHost.cs](../../ClubBaist/ClubBaist.Tests/TestServiceHost.cs)
->>>>>>> b5cc16e (Refactor testing documentation: reorder sections and remove assembly lifecycle hooks)
+File: [ClubBaist/ClubBaist.Tests/TestServiceHost.cs](../../../ClubBaist/ClubBaist.Tests/TestServiceHost.cs)
 
 What it does:
 - Each call to CreateScope() opens a new SQLite in-memory connection with Data Source=:memory:
@@ -55,11 +50,12 @@ What it does:
 - Configures relationships and delete behavior in OnModelCreating
 
 ### 3) Setup validation test
-File: [ClubBaist/ClubBaist.Tests/ServiceSetupTests.cs](../../../ClubBaist/ClubBaist.Tests/ServiceSetupTests.cs)
+File: [ClubBaist/ClubBaist.Tests/ServiceSetupTests.cs](../../../../ClubBaist/ClubBaist.Tests/ServiceSetupTests.cs)
 
 What it verifies:
 - DI can resolve DbContext, UserManager, and both services
 - Identity user can be created
+- MemberManagementService can persist a member account using the per-test isolated setup
 - MemberManagementService can persist a member account using the per-test isolated setup
 
 ## Service Registration Model
