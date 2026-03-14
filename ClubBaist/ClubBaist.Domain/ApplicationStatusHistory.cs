@@ -12,7 +12,7 @@ public class ApplicationStatusHistory<TKey> where TKey : IEquatable<TKey>
         get;
         set
         {
-            if (ToStatus != default && value == ToStatus)
+            if (value == ToStatus)
             {
                 throw new ArgumentException("FromStatus and ToStatus must be different for a transition record.", nameof(FromStatus));
             }
@@ -25,7 +25,7 @@ public class ApplicationStatusHistory<TKey> where TKey : IEquatable<TKey>
         get;
         set
         {
-            if (FromStatus != default && value == FromStatus)
+            if (value == FromStatus)
             {
                 throw new ArgumentException("FromStatus and ToStatus must be different for a transition record.", nameof(ToStatus));
             }
