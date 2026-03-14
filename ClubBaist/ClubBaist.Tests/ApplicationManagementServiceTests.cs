@@ -316,6 +316,70 @@ public sealed class ApplicationManagementServiceTests
         Assert.AreEqual(ApplicationStatus.Accepted, historyEntries[0].ToStatus);
     }
 
+    [TestMethod]
+    public async Task RecordStatusHistoryAsync_UnknownApplication_ThrowsKeyNotFoundException()
+    {
+        using var scope = TestServiceHost.CreateScope();
+        var provider = scope.ServiceProvider;
+
+        var applicationService = provider.GetRequiredService<ApplicationManagementService<int>>();
+        var userManager = provider.GetRequiredService<UserManager<IdentityUser<int>>>();
+
+        var changedByUserId = await CreateIdentityUserAsync(userManager);
+        var nonExistentApplicationId = Guid.NewGuid();
+
+        await Assert.ThrowsAsync<KeyNotFoundException>(async () =>
+            await applicationService.RecordStatusHistoryAsync(
+                nonExistentApplicationId,
+                ApplicationStatus.Submitted,
+                ApplicationStatus.OnHold,
+                changedByUserId,
+                DateTime.UtcNow));
+    }
+
+    [TestMethod]
+    public async Task RecordStatusHistoryAsync_UnknownChangedByUser_ThrowsInvalidOperationException()
+    {
+        using var scope = TestServiceHost.CreateScope();
+        var provider = scope.ServiceProvider;
+
+        var applicationService = provider.GetRequiredService<ApplicationManagementService<int>>();
+        var userManager = provider.GetRequiredService<UserManager<IdentityUser<int>>>();
+        var dbContext = provider.GetRequiredService<TestApplicationDbContext>();
+
+        var applicantUserId = await CreateIdentityUserAsync(userManager);
+        var sponsor1Id = await CreateSponsorMemberAsync(userManager, dbContext);
+        var sponsor2Id = await CreateSponsorMemberAsync(userManager, dbContext);
+
+        var submitted = await applicationService.SubmitApplicationAsync(
+            new SubmitApplicationRequest<int>(
+                ApplicationUserId: applicantUserId,
+                FirstName: "Robin",
+                LastName: "History",
+                Occupation: "Tester",
+                CompanyName: "ClubBaist",
+                Address: "300 History Rd",
+                PostalCode: "T6T6T6",
+                Phone: "555-0600",
+                Email: "robin.history@example.com",
+                DateOfBirth: new DateTime(1994, 2, 28),
+                RequestedMembershipCategory: MembershipCategory.Social,
+                Sponsor1MemberId: sponsor1Id,
+                Sponsor2MemberId: sponsor2Id,
+                SubmittedAt: DateTime.UtcNow),
+            applicantUserId);
+
+        var nonExistentUserId = await CreateUniquePositiveIntUserIdAsync(userManager);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            await applicationService.RecordStatusHistoryAsync(
+                submitted.ApplicationId,
+                ApplicationStatus.Submitted,
+                ApplicationStatus.OnHold,
+                nonExistentUserId,
+                DateTime.UtcNow));
+    }
+
     private static async Task<int> CreateUniquePositiveIntUserIdAsync(UserManager<IdentityUser<int>> userManager)
     {
         while (true)
