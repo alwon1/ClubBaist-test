@@ -26,14 +26,7 @@ Important packages:
 
 ## Test Infrastructure Files
 
-### 1) Assembly lifecycle hooks
-File: [ClubBaist/ClubBaist.Tests/TestAssemblyHooks.cs](../../ClubBaist/ClubBaist.Tests/TestAssemblyHooks.cs)
-
-What it does:
-- Runs once before all tests: initializes shared test host
-- Runs once after all tests: disposes resources
-
-### 2) Shared DI host and SQLite connection
+### 1) Shared DI host and SQLite connection
 File: [ClubBaist/ClubBaist.Tests/TestServiceHost.cs](../../ClubBaist/ClubBaist.Tests/TestServiceHost.cs)
 
 What it does:
