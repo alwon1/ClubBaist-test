@@ -27,25 +27,25 @@ Important packages:
 
 ## Test Infrastructure Files
 
-### 1) Shared DI host and SQLite connection
+### 1) Test DI host factory and per-test SQLite connection
 File: [ClubBaist/ClubBaist.Tests/TestServiceHost.cs](../../../ClubBaist/ClubBaist.Tests/TestServiceHost.cs)
 
 What it does:
-- Runs once before all tests: initializes shared test host
-- Runs once after all tests: disposes resources
-
-### 2) Shared DI host and SQLite connection
+- Exposes a factory (`TestServiceHost.CreateScope()`) for creating isolated test scopes
+- Each scope has its own `ServiceProvider` instance and SQLite in-memory connection
+- Tests dispose the created scope at the end of each test to clean up resources
+### 2) Per-scope DI setup and SQLite connection behavior
 File: [ClubBaist/ClubBaist.Tests/TestServiceHost.cs](../../ClubBaist/ClubBaist.Tests/TestServiceHost.cs)
 
 What it does:
-- Opens a single SQLite in-memory connection with Data Source=:memory:
-- Registers DbContext, Identity, and services in a ServiceCollection
-- Builds a ServiceProvider
-- Ensures schema is created at startup
+- For each call to `CreateScope()`, opens a new SQLite in-memory connection with Data Source=:memory:
+- Registers DbContext, Identity, and services in a ServiceCollection for that scope
+- Builds a scoped ServiceProvider
+- Ensures schema is created when the scope is initialized
 
-Why the connection is kept open:
+Why the connection is kept open within a scope:
 - SQLite in-memory data exists only while the connection is open
-- Keeping one connection open for the host lifetime preserves schema and data during test execution
+- Keeping the connection open for the lifetime of the test scope preserves schema and data during that test
 
 ### 3) Test DbContext with Identity integration
 File: [ClubBaist/ClubBaist.Tests/TestApplicationDbContext.cs](../../ClubBaist/ClubBaist.Tests/TestApplicationDbContext.cs)
@@ -63,7 +63,7 @@ What it verifies:
 - DI can resolve DbContext, UserManager, and both services
 - Identity user can be created
 - MemberManagementService can persist a member account using the per-test isolated setup
-- MemberManagementService can persist a member account using the per-test isolated setup
+
 
 ## Service Registration Model
 The test host currently registers int-keyed services:
