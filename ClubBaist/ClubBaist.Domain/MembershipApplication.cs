@@ -6,26 +6,26 @@ public class MembershipApplication<TKey> where TKey : IEquatable<TKey>
 {
     private readonly List<ApplicationStatusHistory<TKey>> _statusHistory = [];
 
-    public Guid ApplicationId { get; set; } = Guid.NewGuid();
-    public TKey ApplicationUserId { get; set; } = default!;
-    public IdentityUser<TKey>? ApplicationUser { get; set; }
-    public ApplicationStatus CurrentStatus { get; set; }
-    public DateTime SubmittedAt { get; set; }
-    public DateTime LastStatusChangedAt { get; set; }
+    public Guid ApplicationId { get; private set; } = Guid.NewGuid();
+    public TKey ApplicationUserId { get; private set; } = default!;
+    public IdentityUser<TKey>? ApplicationUser { get; private set; }
+    public ApplicationStatus CurrentStatus { get; private set; }
+    public DateTime SubmittedAt { get; private set; }
+    public DateTime LastStatusChangedAt { get; private set; }
 
-    public string FirstName { get; set; } = string.Empty;
-    public string LastName { get; set; } = string.Empty;
-    public string Occupation { get; set; } = string.Empty;
-    public string CompanyName { get; set; } = string.Empty;
-    public string Address { get; set; } = string.Empty;
-    public string PostalCode { get; set; } = string.Empty;
-    public string Phone { get; set; } = string.Empty;
-    public string? AlternatePhone { get; set; }
-    public string Email { get; set; } = string.Empty;
-    public DateTime DateOfBirth { get; set; }
-    public MembershipCategory RequestedMembershipCategory { get; set; }
-    public TKey Sponsor1MemberId { get; set; } = default!;
-    public TKey Sponsor2MemberId { get; set; } = default!;
+    public string FirstName { get; private set; } = string.Empty;
+    public string LastName { get; private set; } = string.Empty;
+    public string Occupation { get; private set; } = string.Empty;
+    public string CompanyName { get; private set; } = string.Empty;
+    public string Address { get; private set; } = string.Empty;
+    public string PostalCode { get; private set; } = string.Empty;
+    public string Phone { get; private set; } = string.Empty;
+    public string? AlternatePhone { get; private set; }
+    public string Email { get; private set; } = string.Empty;
+    public DateTime DateOfBirth { get; private set; }
+    public MembershipCategory RequestedMembershipCategory { get; private set; }
+    public TKey Sponsor1MemberId { get; private set; } = default!;
+    public TKey Sponsor2MemberId { get; private set; } = default!;
 
     public IReadOnlyList<ApplicationStatusHistory<TKey>> StatusHistory => _statusHistory;
 
