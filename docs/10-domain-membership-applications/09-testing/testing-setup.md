@@ -11,7 +11,6 @@ Document how service tests are wired in this repository, including the in-memory
 
 ## Key Project Configuration
 Test project configuration is in [ClubBaist/ClubBaist.Tests/ClubBaist.Tests.csproj](../../../ClubBaist/ClubBaist.Tests/ClubBaist.Tests.csproj).
-Test project configuration is in [ClubBaist/ClubBaist.Tests/ClubBaist.Tests.csproj](../../../ClubBaist/ClubBaist.Tests/ClubBaist.Tests.csproj).
 
 Important settings:
 - Target framework: net10.0
