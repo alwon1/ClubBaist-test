@@ -44,7 +44,7 @@ public sealed class ServiceSetupTests
             "T0T0T0",
             ClubBaist.Domain.MembershipCategory.Social);
 
-        var createMemberResult = await memberManagementService.CreateMemberAsync(createMemberRequest, user.Id);
+        var createMemberResult = await memberManagementService.CreateMemberAsync(createMemberRequest);
 
         Assert.AreNotEqual(Guid.Empty, createMemberResult.MemberAccountId);
         Assert.IsTrue(await dbContext.MemberAccounts.AnyAsync(member => member.MemberAccountId == createMemberResult.MemberAccountId));
