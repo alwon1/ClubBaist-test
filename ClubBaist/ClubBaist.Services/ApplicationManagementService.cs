@@ -91,15 +91,15 @@ public class ApplicationManagementService<TKey> where TKey : IEquatable<TKey>
             query = query.Where(application => application.SubmittedAt <= filter.SubmittedTo.Value);
         }
 
+        query = query.OrderBy(application => application.SubmittedAt);
+
         if (filter.PageNumber is not null && filter.PageSize is not null && filter.PageNumber > 0 && filter.PageSize > 0)
         {
             var skip = (filter.PageNumber.Value - 1) * filter.PageSize.Value;
             query = query.Skip(skip).Take(filter.PageSize.Value);
         }
 
-        return await query
-            .OrderBy(application => application.SubmittedAt)
-            .ToListAsync(cancellationToken);
+        return await query.ToListAsync(cancellationToken);
     }
 
     public async Task<ChangeApplicationStatusResult<TKey>> ChangeApplicationStatusAsync(
