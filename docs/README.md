@@ -11,6 +11,7 @@
   - `06-class-model/`
   - `07-services/`
   - `08-reference/`
+  - `09-testing/`
 
 ## Current Modeling Choice
 Membership Applications is intentionally reduced to two use cases with alternative flows to keep scope compact and maintainable in early planning.
