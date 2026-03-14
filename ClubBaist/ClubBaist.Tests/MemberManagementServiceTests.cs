@@ -136,6 +136,47 @@ public sealed class MemberManagementServiceTests
         StringAssert.Contains(ex.ParamName, expectedParamFragment);
     }
 
+    [TestMethod]
+    public async Task CreateMemberAsync_DuplicateApplicationUserId_ThrowsInvalidOperationException()
+    {
+        using var scope = TestServiceHost.CreateScope();
+        var provider = scope.ServiceProvider;
+
+        var memberService = provider.GetRequiredService<MemberManagementService<int>>();
+        var userManager = provider.GetRequiredService<UserManager<IdentityUser<int>>>();
+
+        var userId = await CreateIdentityUserAsync(userManager);
+
+        var firstRequest = new CreateMemberRequest<int>(
+            ApplicationUserId: userId,
+            FirstName: "Jane",
+            LastName: "Doe",
+            DateOfBirth: new DateTime(1990, 5, 20),
+            Email: "jane.doe@example.com",
+            Phone: "555-0100",
+            Address: "123 Main St",
+            PostalCode: "T1T1T1",
+            MembershipCategory: MembershipCategory.Social);
+
+        await memberService.CreateMemberAsync(firstRequest);
+
+        var duplicateRequest = new CreateMemberRequest<int>(
+            ApplicationUserId: userId,
+            FirstName: "Janet",
+            LastName: "Doe",
+            DateOfBirth: new DateTime(1991, 1, 10),
+            Email: "janet.doe@example.com",
+            Phone: "555-0110",
+            Address: "124 Main St",
+            PostalCode: "T2T2T2",
+            MembershipCategory: MembershipCategory.Regular);
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(
+            async () => await memberService.CreateMemberAsync(duplicateRequest));
+
+        StringAssert.Contains(ex.Message, "already exists");
+    }
+
     private static async Task<int> CreateIdentityUserAsync(UserManager<IdentityUser<int>> userManager)
     {
         while (true)

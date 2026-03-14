@@ -33,16 +33,6 @@ public class MemberManagementService<TKey> where TKey : IEquatable<TKey>
 
         await EnsureIdentityUserExistsAsync(createMemberRequest.ApplicationUserId, cancellationToken);
 
-        var hasExistingMember = await _dbContext.MemberAccounts
-            .AnyAsync(
-                member => member.ApplicationUserId!.Equals(createMemberRequest.ApplicationUserId),
-                cancellationToken);
-
-        if (hasExistingMember)
-        {
-            throw new InvalidOperationException("A member account already exists for this application user.");
-        }
-
         var createdAt = createMemberRequest.CreatedAt ?? DateTime.UtcNow;
         var memberNumber = await GenerateUniqueMemberNumberAsync(cancellationToken);
 
@@ -65,9 +55,29 @@ public class MemberManagementService<TKey> where TKey : IEquatable<TKey>
         };
 
         _dbContext.MemberAccounts.Add(memberAccount);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        try
+        {
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException ex)
+        {
+            if (await HasExistingMemberAccountAsync(createMemberRequest.ApplicationUserId, cancellationToken))
+            {
+                throw new InvalidOperationException("A member account already exists for this application user.", ex);
+            }
+
+            throw;
+        }
 
         return new CreateMemberResult(memberAccount.MemberAccountId, memberAccount.MemberNumber, memberAccount.CreatedAt);
+    }
+
+    private Task<bool> HasExistingMemberAccountAsync(TKey applicationUserId, CancellationToken cancellationToken)
+    {
+        return _dbContext.MemberAccounts.AnyAsync(
+            member => member.ApplicationUserId!.Equals(applicationUserId),
+            cancellationToken);
     }
 
     private async Task EnsureIdentityUserExistsAsync(TKey applicationUserId, CancellationToken cancellationToken)

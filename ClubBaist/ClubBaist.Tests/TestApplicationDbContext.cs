@@ -35,6 +35,7 @@ public sealed class TestApplicationDbContext
         {
             entity.HasKey(member => member.MemberAccountId);
             entity.HasIndex(member => member.MemberNumber).IsUnique();
+            entity.HasIndex(member => member.ApplicationUserId).IsUnique();
 
             entity.HasOne(member => member.ApplicationUser)
                 .WithMany()
