@@ -181,6 +181,70 @@ public sealed class ApplicationManagementServiceTests
         Assert.AreEqual(changedAt, history.ChangedAt);
     }
 
+    [TestMethod]
+    public async Task RecordStatusHistoryAsync_PersistsHistoryEntry_WithExpectedValues()
+    {
+        using var scope = TestServiceHost.CreateScope();
+        var provider = scope.ServiceProvider;
+
+        var applicationService = provider.GetRequiredService<ApplicationManagementService<int>>();
+        var userManager = provider.GetRequiredService<UserManager<IdentityUser<int>>>();
+        var dbContext = provider.GetRequiredService<TestApplicationDbContext>();
+
+        await ResetDatabaseAsync(dbContext);
+
+        var applicantUserId = await CreateIdentityUserAsync(userManager);
+        var changedByUserId = await CreateIdentityUserAsync(userManager);
+        var sponsor1Id = await CreateSponsorMemberAsync(userManager, dbContext);
+        var sponsor2Id = await CreateSponsorMemberAsync(userManager, dbContext);
+
+        var submittedAt = new DateTime(2026, 2, 20, 9, 0, 0, DateTimeKind.Utc);
+        var submitted = await applicationService.SubmitApplicationAsync(
+            new SubmitApplicationRequest<int>(
+                ApplicationUserId: applicantUserId,
+                FirstName: "Sam",
+                LastName: "Submitter",
+                Occupation: "Coordinator",
+                CompanyName: "ClubBaist",
+                Address: "900 Service Rd",
+                PostalCode: "T4T4T4",
+                Phone: "555-0400",
+                Email: "sam.submitter@example.com",
+                DateOfBirth: new DateTime(1993, 7, 12),
+                RequestedMembershipCategory: MembershipCategory.Social,
+                Sponsor1MemberId: sponsor1Id,
+                Sponsor2MemberId: sponsor2Id,
+                SubmittedAt: submittedAt),
+            applicantUserId);
+
+        var changedAt = new DateTime(2026, 2, 21, 11, 45, 0, DateTimeKind.Utc);
+        var history = await applicationService.RecordStatusHistoryAsync(
+            submitted.ApplicationId,
+            ApplicationStatus.Submitted,
+            ApplicationStatus.Waitlisted,
+            changedByUserId,
+            changedAt);
+
+        Assert.AreEqual(submitted.ApplicationId, history.MembershipApplicationId);
+        Assert.AreEqual(ApplicationStatus.Submitted, history.FromStatus);
+        Assert.AreEqual(ApplicationStatus.Waitlisted, history.ToStatus);
+        Assert.AreEqual(changedByUserId, history.ChangedByUserId);
+        Assert.AreEqual(changedAt, history.ChangedAt);
+
+        var persistedHistory = await dbContext.ApplicationStatusHistories
+            .AsNoTracking()
+            .Where(item => item.MembershipApplicationId == submitted.ApplicationId)
+            .ToListAsync();
+
+        Assert.HasCount(1, persistedHistory);
+        var persisted = persistedHistory.Single();
+        Assert.AreEqual(history.ApplicationStatusHistoryId, persisted.ApplicationStatusHistoryId);
+        Assert.AreEqual(ApplicationStatus.Submitted, persisted.FromStatus);
+        Assert.AreEqual(ApplicationStatus.Waitlisted, persisted.ToStatus);
+        Assert.AreEqual(changedByUserId, persisted.ChangedByUserId);
+        Assert.AreEqual(changedAt, persisted.ChangedAt);
+    }
+
     private static async Task<int> CreateUniquePositiveIntUserIdAsync(UserManager<IdentityUser<int>> userManager)
     {
         while (true)
