@@ -8,14 +8,92 @@ public class MemberAccount<TKey> where TKey : IEquatable<TKey>
     public TKey ApplicationUserId { get; set; } = default!;
     public IdentityUser<TKey>? ApplicationUser { get; set; }
     public string MemberNumber { get; set; } = string.Empty;
-    public string FirstName { get; set; } = string.Empty;
-    public string LastName { get; set; } = string.Empty;
+    public string FirstName
+    {
+        get;
+        set
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                throw new ArgumentException("Value is required.", nameof(FirstName));
+            }
+            field = value.Trim();
+        }
+    } = string.Empty;
+
+    public string LastName
+    {
+        get;
+        set
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                throw new ArgumentException("Value is required.", nameof(LastName));
+            }
+            field = value.Trim();
+        }
+    } = string.Empty;
+
     public DateTime DateOfBirth { get; set; }
-    public string Email { get; set; } = string.Empty;
-    public string Phone { get; set; } = string.Empty;
-    public string? AlternatePhone { get; set; }
-    public string Address { get; set; } = string.Empty;
-    public string PostalCode { get; set; } = string.Empty;
+
+    public string Email
+    {
+        get;
+        set
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                throw new ArgumentException("Value is required.", nameof(Email));
+            }
+            field = value.Trim();
+        }
+    } = string.Empty;
+
+    public string Phone
+    {
+        get;
+        set
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                throw new ArgumentException("Value is required.", nameof(Phone));
+            }
+            field = value.Trim();
+        }
+    } = string.Empty;
+
+    public string? AlternatePhone
+    {
+        get;
+        set => field = string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+    }
+
+    public string Address
+    {
+        get;
+        set
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                throw new ArgumentException("Value is required.", nameof(Address));
+            }
+            field = value.Trim();
+        }
+    } = string.Empty;
+
+    public string PostalCode
+    {
+        get;
+        set
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                throw new ArgumentException("Value is required.", nameof(PostalCode));
+            }
+            field = value.Trim();
+        }
+    } = string.Empty;
+
     public MembershipCategory MembershipCategory { get; set; }
     public bool IsActive { get; set; }
     public DateTime CreatedAt { get; set; }
@@ -37,14 +115,14 @@ public class MemberAccount<TKey> where TKey : IEquatable<TKey>
         DateTime updatedAt,
         string? alternatePhone = null)
     {
-        FirstName = RequireText(firstName, nameof(firstName));
-        LastName = RequireText(lastName, nameof(lastName));
+        FirstName = firstName;
+        LastName = lastName;
         DateOfBirth = dateOfBirth;
-        Email = RequireText(email, nameof(email));
-        Phone = RequireText(phone, nameof(phone));
-        AlternatePhone = NormalizeOptionalText(alternatePhone);
-        Address = RequireText(address, nameof(address));
-        PostalCode = RequireText(postalCode, nameof(postalCode));
+        Email = email;
+        Phone = phone;
+        AlternatePhone = alternatePhone;
+        Address = address;
+        PostalCode = postalCode;
         MembershipCategory = membershipCategory;
         UpdatedAt = updatedAt;
     }
@@ -61,15 +139,4 @@ public class MemberAccount<TKey> where TKey : IEquatable<TKey>
         ApplicationUserId = applicationUser.Id;
     }
 
-    private static string RequireText(string value, string paramName)
-    {
-        return string.IsNullOrWhiteSpace(value)
-            ? throw new ArgumentException("Value is required.", paramName)
-            : value.Trim();
-    }
-
-    private static string? NormalizeOptionalText(string? value)
-    {
-        return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
-    }
 }
