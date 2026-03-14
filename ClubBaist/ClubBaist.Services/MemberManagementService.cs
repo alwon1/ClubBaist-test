@@ -43,7 +43,6 @@ public class MemberManagementService<TKey> where TKey : IEquatable<TKey>
 
         var memberAccount = new MemberAccount<TKey>
         {
-            MemberAccountId = Guid.NewGuid(),
             ApplicationUserId = createMemberRequest.ApplicationUserId,
             MemberNumber = memberNumber,
             FirstName = createMemberRequest.FirstName,

@@ -6,7 +6,7 @@ public class MembershipApplication<TKey> where TKey : IEquatable<TKey>
 {
     private readonly List<ApplicationStatusHistory<TKey>> _statusHistory = [];
 
-    public Guid ApplicationId { get; set; }
+    public Guid ApplicationId { get; set; } = Guid.NewGuid();
     public TKey ApplicationUserId { get; set; } = default!;
     public IdentityUser<TKey>? ApplicationUser { get; set; }
     public ApplicationStatus CurrentStatus { get; set; }
@@ -51,9 +51,8 @@ public class MembershipApplication<TKey> where TKey : IEquatable<TKey>
         string? alternatePhone = null,
         Guid? applicationId = null)
     {
-        return new MembershipApplication<TKey>
+        var membershipApplication = new MembershipApplication<TKey>
         {
-            ApplicationId = applicationId ?? Guid.NewGuid(),
             ApplicationUserId = applicationUserId,
             FirstName = RequireText(firstName, nameof(firstName)),
             LastName = RequireText(lastName, nameof(lastName)),
@@ -72,6 +71,13 @@ public class MembershipApplication<TKey> where TKey : IEquatable<TKey>
             SubmittedAt = submittedAt,
             LastStatusChangedAt = submittedAt
         };
+
+        if (applicationId.HasValue)
+        {
+            membershipApplication.ApplicationId = applicationId.Value;
+        }
+
+        return membershipApplication;
     }
 
     public bool CanTransitionTo(ApplicationStatus newStatus)

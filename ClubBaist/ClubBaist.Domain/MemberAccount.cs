@@ -4,7 +4,7 @@ namespace ClubBaist.Domain;
 
 public class MemberAccount<TKey> where TKey : IEquatable<TKey>
 {
-    public Guid MemberAccountId { get; set; }
+    public Guid MemberAccountId { get; set; } = Guid.NewGuid();
     public TKey ApplicationUserId { get; set; } = default!;
     public IdentityUser<TKey>? ApplicationUser { get; set; }
     public string MemberNumber { get; set; } = string.Empty;

@@ -4,7 +4,7 @@ namespace ClubBaist.Domain;
 
 public class ApplicationStatusHistory<TKey> where TKey : IEquatable<TKey>
 {
-    public Guid ApplicationStatusHistoryId { get; set; }
+    public Guid ApplicationStatusHistoryId { get; set; } = Guid.NewGuid();
     public Guid MembershipApplicationId { get; set; }
     public MembershipApplication<TKey>? MembershipApplication { get; set; }
     public ApplicationStatus FromStatus { get; set; }

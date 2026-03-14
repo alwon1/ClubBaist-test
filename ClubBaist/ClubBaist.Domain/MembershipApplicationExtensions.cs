@@ -16,7 +16,6 @@ public static class MembershipApplicationExtensions
 
         return new ApplicationStatusHistory<TKey>
         {
-            ApplicationStatusHistoryId = Guid.NewGuid(),
             MembershipApplicationId = membershipApplication.ApplicationId,
             FromStatus = membershipApplication.CurrentStatus,
             ToStatus = newStatus,

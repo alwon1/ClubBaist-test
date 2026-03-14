@@ -170,7 +170,6 @@ public class ApplicationManagementService<TKey> where TKey : IEquatable<TKey>
 
         var history = new ApplicationStatusHistory<TKey>
         {
-            ApplicationStatusHistoryId = Guid.NewGuid(),
             MembershipApplicationId = applicationId,
             FromStatus = fromStatus,
             ToStatus = toStatus,
