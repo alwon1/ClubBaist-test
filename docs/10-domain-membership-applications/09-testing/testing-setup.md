@@ -31,17 +31,24 @@ Important packages:
 File: [ClubBaist/ClubBaist.Tests/TestServiceHost.cs](../../../ClubBaist/ClubBaist.Tests/TestServiceHost.cs)
 
 What it does:
-- Each call to CreateScope() opens a new SQLite in-memory connection with Data Source=:memory:
-- Registers DbContext, Identity, and services in a fresh ServiceCollection
-- Builds a new ServiceProvider and ensures schema is created
-- Returns a scope that, when disposed, also disposes the provider and closes the connection
+- Runs once before all tests: initializes shared test host
+- Runs once after all tests: disposes resources
 
-Why each test gets its own connection:
-- Tests run in parallel and a shared connection would cause interference between them
-- Giving each test its own isolated database keeps tests fully independent and deterministic
+### 2) Shared DI host and SQLite connection
+File: [ClubBaist/ClubBaist.Tests/TestServiceHost.cs](../../ClubBaist/ClubBaist.Tests/TestServiceHost.cs)
 
-### 2) Test DbContext with Identity integration
-File: [ClubBaist/ClubBaist.Tests/TestApplicationDbContext.cs](../../../ClubBaist/ClubBaist.Tests/TestApplicationDbContext.cs)
+What it does:
+- Opens a single SQLite in-memory connection with Data Source=:memory:
+- Registers DbContext, Identity, and services in a ServiceCollection
+- Builds a ServiceProvider
+- Ensures schema is created at startup
+
+Why the connection is kept open:
+- SQLite in-memory data exists only while the connection is open
+- Keeping one connection open for the host lifetime preserves schema and data during test execution
+
+### 3) Test DbContext with Identity integration
+File: [ClubBaist/ClubBaist.Tests/TestApplicationDbContext.cs](../../ClubBaist/ClubBaist.Tests/TestApplicationDbContext.cs)
 
 What it does:
 - Inherits from IdentityDbContext<IdentityUser<int>, IdentityRole<int>, int>
