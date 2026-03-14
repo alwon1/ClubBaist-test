@@ -52,6 +52,46 @@ public sealed class MemberManagementServiceTests
     }
 
     [TestMethod]
+    public async Task CreateMemberAsync_FieldsWithSurroundingWhitespace_TrimsBeforePersisting()
+    {
+        using var scope = TestServiceHost.CreateScope();
+        var provider = scope.ServiceProvider;
+
+        var memberService = provider.GetRequiredService<MemberManagementService<int>>();
+        var userManager = provider.GetRequiredService<UserManager<IdentityUser<int>>>();
+        var dbContext = provider.GetRequiredService<TestApplicationDbContext>();
+
+        var userId = await CreateIdentityUserAsync(userManager);
+        var createdByUserId = await CreateIdentityUserAsync(userManager);
+
+        var request = new CreateMemberRequest<int>(
+            ApplicationUserId: userId,
+            FirstName: "  Jane  ",
+            LastName: "  Doe  ",
+            DateOfBirth: new DateTime(1990, 5, 20),
+            Email: "  jane.doe@example.com  ",
+            Phone: "  555-0100  ",
+            Address: "  123 Main St  ",
+            PostalCode: "  T1T1T1  ",
+            MembershipCategory: MembershipCategory.Social,
+            AlternatePhone: "  555-0199  ");
+
+        var result = await memberService.CreateMemberAsync(request, createdByUserId);
+
+        var persisted = await dbContext.MemberAccounts
+            .AsNoTracking()
+            .SingleAsync(item => item.MemberAccountId == result.MemberAccountId);
+
+        Assert.AreEqual("Jane", persisted.FirstName);
+        Assert.AreEqual("Doe", persisted.LastName);
+        Assert.AreEqual("jane.doe@example.com", persisted.Email);
+        Assert.AreEqual("555-0100", persisted.Phone);
+        Assert.AreEqual("123 Main St", persisted.Address);
+        Assert.AreEqual("T1T1T1", persisted.PostalCode);
+        Assert.AreEqual("555-0199", persisted.AlternatePhone);
+    }
+
+    [TestMethod]
     [DataRow("", "LastName", "email@example.com", "555-0000", "1 St", "A1A1A1", "FirstName")]
     [DataRow("   ", "LastName", "email@example.com", "555-0000", "1 St", "A1A1A1", "FirstName")]
     [DataRow("FirstName", "", "email@example.com", "555-0000", "1 St", "A1A1A1", "LastName")]
