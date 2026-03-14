@@ -20,7 +20,6 @@ public sealed class MemberManagementServiceTests
         var dbContext = provider.GetRequiredService<TestApplicationDbContext>();
 
         var userId = await CreateIdentityUserAsync(userManager);
-        var createdByUserId = await CreateIdentityUserAsync(userManager);
 
         var request = new CreateMemberRequest<int>(
             ApplicationUserId: userId,
@@ -33,7 +32,7 @@ public sealed class MemberManagementServiceTests
             PostalCode: "T1T1T1",
             MembershipCategory: MembershipCategory.Social);
 
-        var result = await memberService.CreateMemberAsync(request, createdByUserId);
+        var result = await memberService.CreateMemberAsync(request);
 
         Assert.AreNotEqual(Guid.Empty, result.MemberAccountId);
         Assert.IsFalse(string.IsNullOrWhiteSpace(result.MemberNumber));
@@ -120,7 +119,6 @@ public sealed class MemberManagementServiceTests
         var userManager = provider.GetRequiredService<UserManager<IdentityUser<int>>>();
 
         var userId = await CreateIdentityUserAsync(userManager);
-        var createdByUserId = await CreateIdentityUserAsync(userManager);
 
         var request = new CreateMemberRequest<int>(
             ApplicationUserId: userId,
@@ -134,7 +132,7 @@ public sealed class MemberManagementServiceTests
             MembershipCategory: MembershipCategory.Social);
 
         var ex = await Assert.ThrowsAsync<ArgumentException>(
-            async () => await memberService.CreateMemberAsync(request, createdByUserId));
+            async () => await memberService.CreateMemberAsync(request));
 
         StringAssert.Contains(ex.ParamName, expectedParamFragment);
     }

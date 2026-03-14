@@ -11,6 +11,7 @@ Document how service tests are wired in this repository, including the in-memory
 
 ## Key Project Configuration
 Test project configuration is in [ClubBaist/ClubBaist.Tests/ClubBaist.Tests.csproj](../../../ClubBaist/ClubBaist.Tests/ClubBaist.Tests.csproj).
+Test project configuration is in [ClubBaist/ClubBaist.Tests/ClubBaist.Tests.csproj](../../../ClubBaist/ClubBaist.Tests/ClubBaist.Tests.csproj).
 
 Important settings:
 - Target framework: net10.0
@@ -48,12 +49,13 @@ What it does:
 - Exposes MembershipApplications, MemberAccounts, and ApplicationStatusHistories DbSet properties
 - Configures relationships and delete behavior in OnModelCreating
 
-### 4) Setup validation test
-File: [ClubBaist/ClubBaist.Tests/Test1.cs](../../../ClubBaist/ClubBaist.Tests/Test1.cs)
+### 3) Setup validation test
+File: [ClubBaist/ClubBaist.Tests/ServiceSetupTests.cs](../../../../ClubBaist/ClubBaist.Tests/ServiceSetupTests.cs)
 
 What it verifies:
 - DI can resolve DbContext, UserManager, and both services
 - Identity user can be created
+- MemberManagementService can persist a member account using the per-test isolated setup
 - MemberManagementService can persist a member account using the per-test isolated setup
 
 ## Service Registration Model

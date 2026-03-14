@@ -140,7 +140,6 @@ public class ApplicationManagementService<TKey> where TKey : IEquatable<TKey>
 
             memberCreationResult = await _memberManagementService.CreateMemberAsync(
                 createMemberRequest,
-                changedByUserId,
                 cancellationToken);
         }
         else
