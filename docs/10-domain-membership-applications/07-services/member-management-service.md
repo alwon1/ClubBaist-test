@@ -42,14 +42,19 @@ Provide member account management operations for membership administration workf
 - This service does not currently handle membership-application decision logic; it only creates `MemberAccount` records when called.
 
 ## Suggested Dependencies
-- `ApplicationDbContext` (direct EF Core usage)
+- `IApplicationDbContext<TKey>` (domain data access contract)
 - `UserManager<ApplicationUser<TKey>>`
+
+## Data Access Contract
+- This service should depend on `IApplicationDbContext<TKey>` instead of a concrete EF Core context.
+- The concrete `ApplicationDbContext` is implemented in infrastructure.
+- See `application-db-context-interface.md` for interface details.
 
 ## Mermaid Service Context
 
 ```mermaid
 flowchart LR
   Caller[Membership Workflow / Admin Action] --> MMS[MemberManagementService]
-  MMS --> DB[(ApplicationDbContext)]
+  MMS --> DB[(IApplicationDbContext)]
   MMS --> UM[UserManager<ApplicationUser<TKey>>]
 ```
