@@ -26,14 +26,7 @@ Important packages:
 
 ## Test Infrastructure Files
 
-### 1) Assembly lifecycle hooks
-File: [ClubBaist/ClubBaist.Tests/TestAssemblyHooks.cs](../../ClubBaist/ClubBaist.Tests/TestAssemblyHooks.cs)
-
-What it does:
-- Provides assembly-level initialize and cleanup hooks via MSTest attributes
-- Currently used as an extension point; no shared host state is initialized here
-
-### 2) Per-test isolated DI scope and SQLite connection
+### 1) Shared DI host and SQLite connection
 File: [ClubBaist/ClubBaist.Tests/TestServiceHost.cs](../../ClubBaist/ClubBaist.Tests/TestServiceHost.cs)
 
 What it does:
@@ -46,7 +39,7 @@ Why each test gets its own connection:
 - Tests run in parallel and a shared connection would cause interference between them
 - Giving each test its own isolated database keeps tests fully independent and deterministic
 
-### 3) Test DbContext with Identity integration
+### 2) Test DbContext with Identity integration
 File: [ClubBaist/ClubBaist.Tests/TestApplicationDbContext.cs](../../ClubBaist/ClubBaist.Tests/TestApplicationDbContext.cs)
 
 What it does:
@@ -55,7 +48,7 @@ What it does:
 - Exposes MembershipApplications, MemberAccounts, and ApplicationStatusHistories DbSet properties
 - Configures relationships and delete behavior in OnModelCreating
 
-### 4) Setup validation test
+### 3) Setup validation test
 File: [ClubBaist/ClubBaist.Tests/Test1.cs](../../ClubBaist/ClubBaist.Tests/Test1.cs)
 
 What it verifies:
