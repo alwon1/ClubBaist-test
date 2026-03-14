@@ -71,7 +71,8 @@ Coordinate the end-to-end membership application workflow for submission, review
 - This service does not own identity user lifecycle management; it consumes existing `ApplicationUser` data.
 
 ## Suggested Dependencies
-- `IApplicationUserRepository` (or Identity user manager abstraction)
+- `ApplicationDbContext` (direct EF Core usage)
+- `UserManager<ApplicationUser<TKey>>`
 - `MemberManagementService`
 
 ## Mermaid Service Context
@@ -79,6 +80,7 @@ Coordinate the end-to-end membership application workflow for submission, review
 ```mermaid
 flowchart LR
   Caller[Application UI / Committee UI] --> AMS[ApplicationManagementService]
-  AMS --> URepo[IApplicationUserRepository]
+  AMS --> DB[(ApplicationDbContext)]
+  AMS --> UM[UserManager<ApplicationUser<TKey>>]
   AMS --> MMS[MemberManagementService]
 ```

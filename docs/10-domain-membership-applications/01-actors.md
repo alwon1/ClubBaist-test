@@ -9,7 +9,7 @@
 ### Supporting Actors
 - **Shareholder Sponsor**: Existing shareholder associated to an applicant; sponsor eligibility may be validated (5+ years, good standing, annual sponsorship limits).
 - **Membership Admin/Clerk**: Supports intake, data quality checks, and review preparation.
-- **Member Account Service**: Creates/activates a member account when application status is accepted.
+- **MemberManagementService**: Creates/activates a member account when application status is accepted.
 - **Finance Admin/Committee**: Uses accepted-member data for account and fee lifecycle processes.
 
 ## Actor Context Diagram
@@ -20,7 +20,7 @@ flowchart LR
   B[Membership Committee Member] --> S
   C[Shareholder Sponsor] --> S
   D[Membership Admin/Clerk] --> S
-  S --> E[Member Account Service]
+  S --> E[MemberManagementService]
   E --> F[Finance Admin/Committee]
 ```
 

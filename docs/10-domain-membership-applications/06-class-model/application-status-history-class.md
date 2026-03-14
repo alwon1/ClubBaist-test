@@ -29,13 +29,6 @@ Represents one status transition event for a membership application.
 - `ChangedAt` is required.
 - `FromStatus` and `ToStatus` should not be equal for a transition record.
 
-## Deferred / Future (currently unplanned)
-- Enforcing creation of a history record for every status change globally.
-- Sequence number/version per application for strict ordering.
-
-## Explicit Non-Rule (current design)
-- Not all status changes are guaranteed to be persisted in history in current scope (enforcement deferred).
-
 ## Allowed Status Transition Records (v1)
 (Should mirror `MembershipApplication` transition rules)
 - `Submitted -> OnHold | Waitlisted | Accepted | Denied`
@@ -59,4 +52,4 @@ Example conceptual method:
 This extension can:
 1. Read the current status from `membershipApplication`.
 2. Build an `ApplicationStatusHistory` object via constructor.
-3. Return the history record (or append to a collection when history enforcement is enabled).
+3. Return the history record (or append to a collection during status update handling).

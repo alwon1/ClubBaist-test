@@ -40,9 +40,7 @@ Represents a single membership application and its lifecycle from submission thr
 - Initial status must be `Submitted`.
 - All required form fields must be present before submit.
 - `Sponsor1MemberId` and `Sponsor2MemberId` are required.
-
-## Deferred / Future (currently unplanned)
-- Enforcing that every status change appends an `ApplicationStatusHistory` record.
+- Every status change appends an `ApplicationStatusHistory` record.
 
 ## Explicit Non-Rule (current design)
 - `MemberAccount` existence is not globally constrained by application status, because legacy members may predate the application system.
