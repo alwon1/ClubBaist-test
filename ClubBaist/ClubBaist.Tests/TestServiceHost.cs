@@ -31,7 +31,11 @@ public static class TestServiceHost
         services.AddScoped<MemberManagementService<int>>();
         services.AddScoped<ApplicationManagementService<int>>();
 
-        var provider = services.BuildServiceProvider();
+        var provider = services.BuildServiceProvider(new ServiceProviderOptions
+        {
+            ValidateScopes = true,
+            ValidateOnBuild = true,
+        });
 
         using (var initScope = provider.CreateScope())
         {
