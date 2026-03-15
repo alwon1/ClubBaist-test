@@ -9,6 +9,26 @@ namespace ClubBaist.Tests;
 public sealed class SeasonServiceTests
 {
     [TestMethod]
+    public async Task CreateSeasonAsync_DuplicateName_ReturnsConflict()
+    {
+        using var scope = TestServiceHost.CreateScope();
+        var seasonService = scope.ServiceProvider.GetRequiredService<SeasonService<int>>();
+
+        await seasonService.CreateSeasonAsync(
+            "Summer",
+            new DateOnly(2026, 6, 1),
+            new DateOnly(2026, 8, 31));
+
+        var result = await seasonService.CreateSeasonAsync(
+            "Summer",
+            new DateOnly(2027, 6, 1),
+            new DateOnly(2027, 8, 31));
+
+        Assert.AreEqual(ServiceResultStatus.Conflict, result.Status);
+        Assert.AreEqual(SeasonService<int>.SeasonDuplicateNameConflictCode, result.ConflictCode);
+    }
+
+    [TestMethod]
     public async Task CreateSeasonAsync_InvalidDateRange_ReturnsValidationFailure()
     {
         using var scope = TestServiceHost.CreateScope();

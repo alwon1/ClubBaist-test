@@ -7,6 +7,7 @@ public class SeasonService<TKey> where TKey : IEquatable<TKey>
 {
     public const string SeasonOverlapConflictCode = "SEASON_OVERLAP";
     public const string SeasonAlreadyClosedConflictCode = "SEASON_ALREADY_CLOSED";
+    public const string SeasonDuplicateNameConflictCode = "SEASON_DUPLICATE_NAME";
 
     private readonly IApplicationDbContext<TKey> _dbContext;
 
@@ -27,6 +28,18 @@ public class SeasonService<TKey> where TKey : IEquatable<TKey>
             return ServiceResult<Season>.ValidationFailed(validationErrors);
         }
 
+        var trimmedName = name.Trim();
+
+        var nameAlreadyExists = await _dbContext.Seasons
+            .AnyAsync(season => season.Name == trimmedName, cancellationToken);
+
+        if (nameAlreadyExists)
+        {
+            return ServiceResult<Season>.Conflict(
+                SeasonDuplicateNameConflictCode,
+                "A season with this name already exists.");
+        }
+
         var overlapsExistingSeason = await _dbContext.Seasons
             .AnyAsync(
                 season => startDate <= season.EndDate && endDate >= season.StartDate,
@@ -41,7 +54,7 @@ public class SeasonService<TKey> where TKey : IEquatable<TKey>
 
         var season = new Season
         {
-            Name = name.Trim(),
+            Name = trimmedName,
             StartDate = startDate,
             EndDate = endDate,
             SeasonStatus = SeasonStatus.Planned
