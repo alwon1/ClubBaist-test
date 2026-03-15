@@ -1,11 +1,16 @@
-# Tee Time Reservations – Use Case Catalog (Initial Backend Focus)
+# Tee Time Reservations – Use Case Catalog
 
 ## Scope Decision
-To start backend planning with practical delivery value, Tee Time Reservations are reduced to **2 core use cases** that cover the reservation lifecycle.
+To start backend planning with practical delivery value, Tee Time Reservations prioritize **2 core use cases** now, while tracking additional use cases for later phases.
 
-## Use Cases
+## Core Use Cases (Current Focus)
 1. **UC-TT-01 Create Tee Time Reservation**
 2. **UC-TT-02 Review and Maintain Reservation**
+
+## Deferred / Future Use Cases (Tracked)
+3. **UC-TT-03 Admin Adjust Season Window** *(deferred)*
+4. **UC-TT-04 Manage Standing Tee Time Requests** *(deferred)*
+5. **UC-TT-05 Manage Event Booking Blocks** *(deferred)*
 
 ## Coverage Mapping
 
@@ -18,14 +23,30 @@ To start backend planning with practical delivery value, Tee Time Reservations a
 | View, update, cancel reservation | UC-TT-02 main + alternate flows |
 | Atomic occupancy updates on edit/cancel | UC-TT-02 main flow + exceptions |
 | Admin/staff reservation support | UC-TT-01 and UC-TT-02 supporting actor + alternates |
+| Admin weather/operations season changes | UC-TT-03 (deferred) |
+| Standing tee time lifecycle | UC-TT-04 (deferred) |
+| Event-based tee-sheet blocking | UC-TT-05 (deferred) |
+| Audit/history emphasis | UC-TT-04 (deferred), if needed for standing tee-time decisions |
+| Routine reservation audit requirements | Out of scope for UC-TT-01/UC-TT-02 in current phase |
+
+## Use Case Status
+
+| Use case | Status | Notes |
+|---|---|---|
+| UC-TT-01 Create Tee Time Reservation | In scope | Core booking flow |
+| UC-TT-02 Review and Maintain Reservation | In scope | Core maintenance flow |
+| UC-TT-03 Admin Adjust Season Window | Deferred | Needed for weather/operations control |
+| UC-TT-04 Manage Standing Tee Time Requests | Deferred | Separate availability behavior |
+| UC-TT-05 Manage Event Booking Blocks | Deferred | Feeds constraints into availability |
 
 ## Use Case Relationship Diagram
 
 ```mermaid
 flowchart TD
   UC1[UC-TT-01 Create Tee Time Reservation] --> UC2[UC-TT-02 Review and Maintain Reservation]
-  UC2 --> U1[Update Reservation]
-  UC2 --> C1[Cancel Reservation]
+  UC3[UC-TT-03 Admin Adjust Season Window - deferred] --> UC1
+  UC3 --> UC2
+  UC4[UC-TT-04 Manage Standing Tee Time Requests - deferred] --> AV[Availability Constraints]
+  UC5[UC-TT-05 Manage Event Booking Blocks - deferred] --> AV
   UC1 --> CAP[Enforce slot capacity <= 4 total players]
   UC2 --> CAP
-```

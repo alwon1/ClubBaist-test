@@ -74,6 +74,7 @@ Allow an active member (or authorized staff acting on behalf of a member) to cre
 4. Individual player identities must be stored for each reservation.
 5. Time-of-day restrictions are evaluated using the membership type of the member performing the booking.
 6. Club policy treats slot capacity limit of four as absolute (no overbooking override).
+7. Routine reservation creation auditing is out of current scope to keep implementation simple.
 
 ## Initial SSD (System Sequence Diagram)
 
