@@ -15,3 +15,5 @@
 
 ## Current Modeling Choice
 Membership Applications is intentionally reduced to two use cases with alternative flows to keep scope compact and maintainable in early planning.
+
+- `20-domain-tee-time-reservations/`: initial tee-time reservation backend planning slice.
