@@ -89,3 +89,4 @@ sequenceDiagram
   else Invalid
     System-->>Actor: Error + current availability
   end
+```
