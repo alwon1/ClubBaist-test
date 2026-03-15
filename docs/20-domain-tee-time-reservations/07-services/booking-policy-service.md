@@ -14,10 +14,8 @@
 ### EvaluateCreateBookingAsync
 **Input model: `BookingRequest`**
 - `Guid MemberId`
-- `Guid CourseId`
 - `LocalDate PlayDate`
 - `LocalTime TeeTime`
-- `int PlayerCount`
 - `DateTimeOffset RequestedAt`
 
 **Output model: `BookingPolicyDecision`**
@@ -54,34 +52,37 @@
 
 **Output model: `BookingPolicy`**
 - `Guid SeasonId`
-- `int AdvanceBookingDays`
 - `int MinPlayers`
 - `int MaxPlayers`
 
 > Phase 1 note: no cancellation-cutoff policy is enforced yet. If a cutoff is introduced in a later phase, the policy model will be extended at that time.
 
 ## Dependencies on Other Services
-- Depends on `SeasonService` for season-specific booking window configuration.
+- Depends on `SeasonService` to confirm play date is inside an active season.
 - Read-only dependency on reservation repository/query service for booking ownership/state checks.
 
 ## Core Validation / Business Rules
 - Booking creation is allowed only when `PlayDate` is within the season’s advance-booking window.
-- `PlayerCount` must be within configured min/max limits.
 - Reservation updates may add/remove additional players, but the booking member must remain in the submitted participant list.
+- Number of players is derived from reservation participant identities and must remain between 1 and 4.
 - Member can cancel only their own active booking.
 - Phase 1 cancellation policy has **no time-based cutoff**; valid owner/staff cancellations are allowed regardless of how close `RequestedAt` is to tee time.
 - Decision output must include at least one reason when `Allowed = false`.
 
 ## Decision / Reason Codes (Phase 1)
 - `BOOKING_ALLOWED`: Create or cancel request passed all Phase 1 checks.
-- `BOOKING_WINDOW_VIOLATION`: Requested play date is outside advance-booking window.
-- `PLAYER_COUNT_OUT_OF_RANGE`: Player count is below minimum or above maximum.
+- `BOOKING_WINDOW_VIOLATION`: Requested play date is outside the active season window.
+- `PLAYER_COUNT_OUT_OF_RANGE`: Participant count is below minimum or above maximum.
 - `BOOKING_NOT_FOUND_OR_NOT_ACTIVE`: Booking does not exist or is already canceled/inactive.
 - `BOOKING_FORBIDDEN`: Requesting actor is not permitted to maintain the booking.
 
 > `CANCELLATION_CUTOFF_EXCEEDED` is intentionally not used in Phase 1 because cutoff enforcement is deferred.
 
+## POCO note
+- `Reservation` is consumed as a POCO record (including `PlayerMemberAccountIds`) with no behavioral methods required by policy evaluation.
+- `BookingPolicyService` computes rule outcomes from request + repository state and returns decision codes directly.
+
 ## Error / Result Model
 - **Success**: `Result<T>.Success(BookingPolicyDecision)`.
-- **Validation failure**: `Result<T>.ValidationFailed(errors)` (bad identifiers, invalid player count, malformed date/time inputs).
+- **Validation failure**: `Result<T>.ValidationFailed(errors)` (bad identifiers, invalid participant count, malformed date/time inputs).
 - **Conflict**: `Result<T>.Conflict(code, message)` (booking already canceled, season unavailable, stale booking state).
