@@ -25,7 +25,7 @@ Allow members and authorized staff to view reservation details and maintain rese
 1. Reservation details are returned (view).
 2. Reservation is updated or canceled as requested.
 3. Slot occupancy is adjusted accurately (decrement old slot/increment new slot as needed).
-4. Audit history stores actor, timestamp, and change summary.
+4. No audit trail requirement is defined for routine update/cancel actions in current scope.
 
 ### Failure / Partial
 1. Reservation remains unchanged.
@@ -38,8 +38,7 @@ Allow members and authorized staff to view reservation details and maintain rese
 4. System validates authorization and member-eligibility rules.
 5. System validates revised slot capacity.
 6. System applies update atomically and adjusts occupancy.
-7. System records audit history.
-8. System confirms update.
+7. System confirms update.
 
 ## Alternate Flows
 ### A1 – Cancel Reservation
@@ -90,4 +89,3 @@ sequenceDiagram
   else Invalid
     System-->>Actor: Error + current availability
   end
-```
