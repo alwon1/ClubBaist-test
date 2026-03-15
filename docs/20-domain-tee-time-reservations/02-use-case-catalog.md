@@ -17,7 +17,7 @@ To start backend planning with practical delivery value, Tee Time Reservations p
 | Required behavior | Covered in |
 |---|---|
 | Active member creates reservation | UC-TT-01 main flow |
-| Season-based booking window | UC-TT-01 business rules |
+| Season date-range validation | UC-TT-01 business rules |
 | Membership-type time-of-day restrictions | UC-TT-01 validation rules |
 | Shared slot capacity up to 4 total players across multiple bookings | UC-TT-01 business rules + alternates |
 | View, update, cancel reservation | UC-TT-02 main + alternate flows |
