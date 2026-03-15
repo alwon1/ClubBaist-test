@@ -77,6 +77,7 @@ Allow an active member (or authorized staff acting on behalf of a member) to cre
 5. Time-of-day restrictions are evaluated using the membership type of the booking member (the member account being booked), not the acting user.
 6. Club policy treats slot capacity limit of four as absolute (no overbooking override).
 7. Routine reservation creation auditing is out of current scope to keep implementation simple.
+8. Tee-time slots are scheduled at approximately 8-minute intervals; exact slot templates are course/day configuration and should not be hard-coded to 7.5 minutes.
 
 ## Initial SSD (System Sequence Diagram)
 
