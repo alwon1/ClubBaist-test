@@ -31,6 +31,7 @@ public static class TestServiceHost
         services.AddScoped<MemberManagementService<int>>();
         services.AddScoped<ApplicationManagementService<int>>();
         services.AddScoped<SeasonService<int>>();
+        services.AddScoped<BookingPolicyService<int>>();
 
         var provider = services.BuildServiceProvider(new ServiceProviderOptions
         {
