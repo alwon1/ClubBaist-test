@@ -43,6 +43,7 @@ Allow members and authorized staff to view reservation details and maintain rese
 ## Alternate Flows
 ### A1 – Cancel Reservation
 - At step 3, actor chooses cancel.
+- System validates reservation is active and actor is authorized (owner member or authorized staff).
 - System marks reservation canceled and releases slot occupancy.
 - System confirms cancellation.
 
@@ -61,13 +62,25 @@ Allow members and authorized staff to view reservation details and maintain rese
 ## Exceptions
 - **E1: Concurrency Conflict**: Reservation or capacity changed by another request; system prompts refresh and retry.
 - **E2: Transaction Error During Move**: Failure while moving between slots causes rollback; occupancy remains consistent.
+- **E3: Invalid Cancellation State**: Reservation is already canceled/not active; system rejects cancel request.
+- **E4: Cancellation Authorization Failure**: Actor is not allowed to cancel this reservation.
 
 ## Related Business Rules / Notes
 1. Shared slot capacity never exceeds four total players.
 2. Update and cancel operations must preserve capacity integrity.
 3. Members can only maintain their own reservations; staff roles may maintain reservations on behalf of members.
 4. Player identities remain visible in reservation details.
-5. No explicit cutoff policy for updates/cancellations is defined yet; operations are allowed unless future policy adds limits.
+5. Phase 1 defines no cancellation cutoff; cancellation timing is not a rejection criterion.
+6. Cancellation reason/decision codes align with policy service and do not include cutoff-based rejection in Phase 1.
+
+## Outcome / Reason Codes (Phase 1 alignment)
+- `BOOKING_ALLOWED` – update/cancel action passed current rules.
+- `BOOKING_FORBIDDEN` – actor lacks permission to maintain reservation.
+- `BOOKING_NOT_FOUND_OR_NOT_ACTIVE` – reservation missing or not in active state.
+- `BOOKING_WINDOW_VIOLATION` – update target date is outside allowed booking window.
+- `PLAYER_COUNT_OUT_OF_RANGE` – revised player count violates min/max policy.
+
+> `CANCELLATION_CUTOFF_EXCEEDED` is deferred to a future phase and is not emitted in UC-TT-02 flows.
 
 ## Initial SSD (System Sequence Diagram)
 
