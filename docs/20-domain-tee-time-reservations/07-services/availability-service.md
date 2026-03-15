@@ -49,7 +49,7 @@
 - `LocalTime teeTime`
 - `int requestedParticipants`
 
-**Output model: `CapacityCheck`**
+**Output contract (no dedicated DTO/class in Phase 1)**
 - `bool Fits`
 - `int RemainingAfterRequest`
 - `string DecisionCode`
@@ -67,12 +67,13 @@
 - `requestedParticipants` must be greater than zero and no more than slot capacity.
 - `IsBookable` requires both free capacity and a positive policy decision.
 - Slot-level calculations must be deterministic for the same read timestamp.
+- Tee-time slot generation should use the tee-sheet cadence configured for the course/day. Phase 1 default cadence is **approximately 8-minute intervals** (not a hard-coded 7.5-minute requirement).
 
 ## POCO note
 - `SlotOccupancy` is handled as a POCO projection (`SlotDate`, `SlotTime`, `ReservedPlayers`).
 - Capacity checks and conflict handling are service responsibilities rather than model-method responsibilities in Phase 1.
 
 ## Error / Result Model
-- **Success**: `Result<T>.Success(payload)` with `CourseDayAvailability`, `CourseAvailabilityRange`, `TeeTimeSlotAvailability`, or `CapacityCheck`.
+- **Success**: `Result<T>.Success(payload)` with `CourseDayAvailability`, `CourseAvailabilityRange`, `TeeTimeSlotAvailability`, or an inline capacity-check payload (`Fits`, `RemainingAfterRequest`, `DecisionCode`).
 - **Validation failure**: `Result<T>.ValidationFailed(errors)` (invalid date/time, non-positive requested participants, invalid range).
 - **Conflict**: `Result<T>.Conflict(code, message)` (season closed, slot no longer available at check time, stale read version).
