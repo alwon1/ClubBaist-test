@@ -31,6 +31,14 @@ public static class TestServiceHost
         services.AddScoped<MemberManagementService<int>>();
         services.AddScoped<ApplicationManagementService<int>>();
         services.AddScoped<SeasonService<int>>();
+        services.AddScoped<PlayerCountPolicyRule<int>>();
+        services.AddScoped<MemberEligibilityPolicyRule<int>>();
+        services.AddScoped<IBookingPolicyRule<int>>(provider => provider.GetRequiredService<PlayerCountPolicyRule<int>>());
+        services.AddScoped<IBookingPolicyRule<int>>(provider => provider.GetRequiredService<MemberEligibilityPolicyRule<int>>());
+        services.AddScoped<IAvailabilityPolicyRule<int>>(provider => provider.GetRequiredService<PlayerCountPolicyRule<int>>());
+        services.AddScoped<IAvailabilityPolicyRule<int>>(provider => provider.GetRequiredService<MemberEligibilityPolicyRule<int>>());
+        services.AddScoped<AvailabilityService<int>>();
+        services.AddScoped<BookingPolicyService<int>>();
 
         var provider = services.BuildServiceProvider(new ServiceProviderOptions
         {

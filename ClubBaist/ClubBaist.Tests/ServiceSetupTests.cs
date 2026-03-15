@@ -18,11 +18,15 @@ public sealed class ServiceSetupTests
         var userManager = provider.GetRequiredService<UserManager<IdentityUser<int>>>();
         var memberManagementService = provider.GetRequiredService<MemberManagementService<int>>();
         var applicationManagementService = provider.GetRequiredService<ApplicationManagementService<int>>();
+        var availabilityService = provider.GetRequiredService<AvailabilityService<int>>();
+        var bookingPolicyService = provider.GetRequiredService<BookingPolicyService<int>>();
 
         Assert.IsNotNull(dbContext);
         Assert.IsNotNull(userManager);
         Assert.IsNotNull(memberManagementService);
         Assert.IsNotNull(applicationManagementService);
+        Assert.IsNotNull(availabilityService);
+        Assert.IsNotNull(bookingPolicyService);
 
         var user = new IdentityUser<int>
         {
