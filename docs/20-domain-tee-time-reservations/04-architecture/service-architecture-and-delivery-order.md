@@ -1,43 +1,53 @@
 # Tee Time Reservations – Service Architecture and Delivery Order
 
 ## Purpose
-Define a simple, scalable backend service design that supports immediate reservation needs and planned future capabilities (standing tee times, event bookings, dynamic season changes).
+Define the backend service design for tee-time reservations, covering immediate reservation needs and planned future capabilities (standing tee times, event bookings, dynamic season changes).
 
 ## Service Inventory (Current + Future)
 
-### Core (Build First)
-1. **ReservationService**
-   - Reservation lifecycle: create, view, update, cancel.
-   - Persists reservation plus participant member references (no separate player-detail behavior model in Phase 1).
-   - Triggers slot occupancy changes.
+### Core (Implemented)
 
-2. **AvailabilityService**
-   - Calculates bookable start times and remaining capacity.
-   - Enforces absolute slot cap of 4 total players.
-   - Aggregates constraints from reservations, season, policies, and future blockers.
+1. **TeeTimeBookingService** *(generic on `TKey`)*
+   - Unified service handling both availability queries and reservation lifecycle (create, view by date/member, update players, cancel).
+   - Fetches tee times from `IScheduleTimeService`.
+   - Applies all `IBookingRule` implementations to each slot/booking request.
+   - Occupancy is computed from active `Reservation` records (no separate occupancy table).
+   - Batches occupancy queries for range availability to avoid N×M DB queries.
+   - Wraps create/update operations in serializable transactions.
 
-3. **BookingPolicyService**
-   - Central booking validations:
-     - active member requirement
-     - membership-type time-of-day rules (based on booking member)
-     - per-request rule checks (e.g., participant count bounds derived from participant references)
+2. **IScheduleTimeService / DefaultScheduleTimeService**
+   - Generates the ordered list of tee-time slots for a given date.
+   - Default implementation: 7.5-minute intervals (alternating 7/8 min), 7:00 AM – 7:00 PM.
+   - Interface allows swapping in a different schedule (seasonal hours, day-specific cadences) without touching the booking service.
 
-4. **SeasonService**
-   - Source of truth for bookable season windows.
-   - Supports weather-driven season updates.
+3. **IBookingRule**
+   - Common interface for all booking policies.
+   - Each rule receives a `TeeTimeSlot` and a `BookingEvaluationContext` (pre-fetched member category, optional precomputed occupancy, optional excluded reservation ID).
+   - Returns an `int`: remaining capacity after the request. Negative = denied; 0 = exactly full (accepted); positive = capacity remaining.
+   - Implemented rules:
+     - **SlotCapacityRule** – enforces the 4-player slot cap.
+     - **BookingWindowRule** – requires the slot date to fall within an active or planned season (via `ISeasonService`).
+     - **MembershipTimeRestrictionRule** – enforces Gold/Silver/Bronze time-of-day restrictions.
+
+4. **ISeasonService / SeasonService**
+   - Singleton service loaded once at application startup.
+   - Holds all `Active` and `Planned` seasons, enabling advance booking into upcoming seasons.
+   - Exposes `GetSeasonForDate(DateOnly)` for in-memory lookup with no per-request DB queries.
+   - Restart the application to pick up season data changes.
 
 ### Future (Planned Extensions)
+
 5. **StandingTeeTimeService**
    - Manages recurring/standing request lifecycle and assignments.
-   - Publishes standing allocations as slot constraints consumed by AvailabilityService.
+   - Would supply slot constraints consumed by `TeeTimeBookingService`.
 
 6. **EventBookingService**
    - Manages tournaments and special events.
-   - Publishes event blocks/reductions consumed by AvailabilityService.
+   - Would supply event blocks consumed by `TeeTimeBookingService` (e.g., a dedicated `EventBlockRule`).
 
-7. **AuditHistoryService** *(optional, standing tee times only)*
-   - Keep out of initial core reservation scope to reduce complexity.
-   - If introduced, prioritize standing tee-time decisions/assignments before broader audit coverage.
+7. **AuditHistoryService** *(optional)*
+   - Keep out of initial core scope.
+   - Prioritize for standing tee-time decisions/assignments if introduced.
 
 ## Interaction Design
 
@@ -45,26 +55,27 @@ Define a simple, scalable backend service design that supports immediate reserva
 flowchart LR
   Actor[Member / Admin] --> API[Booking API Layer]
 
-  API --> RS[ReservationService]
-  API --> AV[AvailabilityService]
+  API --> BS[TeeTimeBookingService]
 
-  RS --> BP[BookingPolicyService]
-  RS --> SS[SeasonService]
-  RS --> AV
-  ST --> AH[AuditHistoryService - optional]
+  BS --> SS[ISeasonService - singleton]
+  BS --> SCH[IScheduleTimeService]
+  BS --> Rules[IBookingRule implementations]
+  BS --> Repo[(Reservations + Seasons DB)]
 
-  AV --> SS
-  AV --> BP
-  AV --> Repo[(Reservation + Slot Store)]
+  Rules --> SCR[SlotCapacityRule]
+  Rules --> BWR[BookingWindowRule]
+  Rules --> MTR[MembershipTimeRestrictionRule]
 
-  ST[StandingTeeTimeService - future] --> AV
-  EV[EventBookingService - future] --> AV
+  BWR --> SS
 
-  RS --> Repo
-  AH --> Repo
+  ST[StandingTeeTimeService - future] --> BS
+  EV[EventBookingService - future] --> BS
 ```
 
+## Domain Model Shape (Phase 1)
 
-## Domain model shape assumption (Phase 1)
-- `Reservation`, `Season`, and `SlotOccupancy` are persisted as **POCO data models**.
-- Domain validation and orchestration rules are executed in `ReservationService`, `AvailabilityService`, `BookingPolicyService`, and `SeasonService` rather than on domain model instance methods.
+- `Reservation` – booking entity. `PlayerMemberAccountIds` holds the **additional (non-booking) players** only; the booking member is always implicit player #1. `IsCancelled` bool replaces a status enum.
+- `TeeTimeSlot` – input record shared between booking requests and rule evaluation.
+- `Season` – persisted with `SeasonStatus` (`Planned | Active | Closed`). Active + Planned seasons are loaded into `SeasonService` at startup.
+- No separate `SlotOccupancy` table – occupancy is computed from active reservations at query time and batched for range queries.
+- Domain validation and orchestration are executed in `TeeTimeBookingService` and `IBookingRule` implementations rather than on domain model instance methods.

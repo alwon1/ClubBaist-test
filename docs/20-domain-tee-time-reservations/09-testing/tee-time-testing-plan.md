@@ -1,483 +1,245 @@
-# Tee Time Reservations – Service Unit Test Catalog (Phase 1)
+# Tee Time Reservations – Test Catalog (Phase 1)
 
 ## Purpose
-List the **unit tests to implement** for tee-time reservation services in Phase 1, including:
+List the tests to implement for the tee-time booking service in Phase 1, covering:
 - required starting conditions (preconditions),
 - expected postconditions,
 - and variants for each test group.
 
-This is the source planning document to use before implementing/expanding tests in `ClubBaist/ClubBaist.Tests`.
+Source of truth for `ClubBaist/ClubBaist.Tests` test planning.
 
 ## Scope
 In scope:
-- Service-library unit tests only.
-- `BookingPolicyService` and reservation service orchestration paths.
-- Capacity, authorization, season window, membership-time window, concurrency, and idempotency service behavior.
+- `TeeTimeBookingService` integration tests (via `TestServiceHost` with in-memory SQLite).
+- Individual `IBookingRule` unit tests (pure logic; no DB needed for most rules).
+- `DefaultScheduleTimeService` unit tests (pure logic).
 
 Out of scope:
-- Domain-only unit tests.
 - API/integration tests.
 - UI/E2E tests.
 
+## Key Semantics (test authors must know)
+
+- `PlayerMemberAccountIds` on `Reservation`/`TeeTimeSlot` = **additional players only** (not the booking member). Total players = `1 + PlayerMemberAccountIds.Count`.
+- Rule return value: negative = denied; `0` = slot exactly full after booking (accepted); positive = remaining capacity.
+- `TeeTimeBookingService` returns the **minimum rule result**, clamped to `[0, MaxCapacity]`. Returns `-1` if denied.
+- `BookingWindowRule` checks `ISeasonService` — tests must register a season covering the test date.
+- `MembershipTimeRestrictionRule` skips when `MemberCategory` is null (availability queries).
+- `SlotCapacityRule` excludes `ExcludeReservationId` from occupancy during updates.
+
 ---
 
-## Test Group A — Create Reservation Unit Tests (UC-TT-01)
+## Test Group A — Create Reservation (UC-TT-01)
 
-### A1. Create reservation succeeds for valid active member
-**Test ID:** UT-TT-CREATE-001  
+### A1. Create succeeds for valid active member
+**Test ID:** UT-TT-CREATE-001
 **Starting conditions:**
 - Booking member exists and is active.
-- Requested play date is in season window.
-- Requested tee time is within booking member membership time window.
-- Target slot has enough remaining capacity.
-- Player count is within allowed min/max.
+- Requested date is within an Active or Planned season.
+- Requested time is within booking member's membership tier window.
+- Slot has remaining capacity.
 
 **Postconditions:**
-- Service returns success.
-- Reservation entity is created.
-- Player entries are linked to reservation.
-- Slot occupancy increases by requested player count.
-- Decision/result includes `BOOKING_ALLOWED`.
+- Returns `>= 0` (remaining capacity after booking).
+- `Reservation` row persisted with correct `SlotDate`, `SlotTime`, `BookingMemberAccountId`.
+- `PlayerMemberAccountIds` matches the additional players passed.
 
 **Variants:**
-- Gold member valid window.
-- Silver member valid window.
-- Bronze member valid window.
-- Player counts at lower boundary and upper boundary (still valid).
+- Gold member, anytime.
+- Silver member, allowed time window.
+- Bronze member, allowed time window.
+- Exactly fills slot (returns `0`).
 
 ---
 
-### A2. Create fails for inactive member
-**Test ID:** UT-TT-CREATE-002  
+### A2. Create denied — member not found
+**Test ID:** UT-TT-CREATE-002
+**Postconditions:**
+- Returns `-1`. No reservation created.
+
+---
+
+### A3. Create denied — date outside season
+**Test ID:** UT-TT-CREATE-003
+**Starting conditions:** No season covering the requested date.
+**Postconditions:**
+- Returns `-1`. No reservation created.
+
+**Variants:**
+- Date before any season.
+- Date after all seasons closed.
+- Exact boundary: day before season start.
+
+---
+
+### A4. Create denied — membership time restriction
+**Test ID:** UT-TT-CREATE-004
 **Starting conditions:**
-- Booking member exists but is inactive.
-- All other inputs are valid (season/time/capacity/player count).
+- Date is within season.
+- Requested time is outside booking member's tier window.
 
 **Postconditions:**
-- Service returns failure.
-- No reservation created.
-- No occupancy change.
-- Result reason is `BOOKING_FORBIDDEN` (or inactive-member denial code if introduced later).
+- Returns `-1`. No reservation created.
 
 **Variants:**
-- Actor is the member.
-- Actor is staff booking on behalf of member (still denied because booking member is inactive).
+- Bronze member, restricted time (weekday 3–6 PM).
+- Silver member, restricted time (weekday 3–5:30 PM).
+- Social member, any time.
 
 ---
 
-### A3. Create fails when outside season/booking window
-**Test ID:** UT-TT-CREATE-003  
-**Starting conditions:**
-- Booking member is active.
-- Requested play date is outside allowed booking/season window.
-- Other inputs valid.
+### A5. Create denied — slot full
+**Test ID:** UT-TT-CREATE-005
+**Starting conditions:** Slot currently has 4 players (via existing reservation with 3 additional players + booking member = 4).
 
 **Postconditions:**
-- Service returns failure.
-- No reservation created.
-- No occupancy change.
-- Result reason includes `BOOKING_WINDOW_VIOLATION`.
-
-**Variants:**
-- Date before opening boundary.
-- Date after closing boundary.
-- Exact boundary tests (first allowed day / last allowed day).
+- Returns `-1`. No new reservation created.
 
 ---
 
-### A4. Create fails when membership time window is violated
-**Test ID:** UT-TT-CREATE-004  
-**Starting conditions:**
-- Booking member is active.
-- Date is valid in season.
-- Requested tee time is outside booking member membership-type allowed time window.
-- Capacity exists.
+### A6. Create denied — would exceed capacity
+**Test ID:** UT-TT-CREATE-006
+**Starting conditions:** Slot has 3 players; request adds 2 (total = 5).
 
 **Postconditions:**
-- Service returns failure.
-- No reservation created.
-- No occupancy change.
-- Result reason includes `BOOKING_WINDOW_VIOLATION` (or membership-time specific code if added).
+- Returns `-1`. No reservation created.
 
 **Variants:**
-- Bronze early-time denial.
-- Silver restricted-time denial.
-- Staff-assisted booking where acting user window differs from booking member (must evaluate booking member rules).
+- 3/4 occupied, request 2 additional (1+2=3 > 1 remaining).
+- 2/4 occupied, request 3 additional (1+3=4 > 2 remaining).
 
 ---
 
-### A5. Create fails when slot is full
-**Test ID:** UT-TT-CREATE-005  
-**Starting conditions:**
-- Booking member is active and otherwise eligible.
-- Target slot current occupancy is 4/4.
-- Requested player count >= 1.
+## Test Group B — Update Reservation (UC-TT-02)
 
-**Postconditions:**
-- Service returns capacity failure/conflict.
-- No reservation created.
-- Occupancy remains 4/4.
-- Response includes remaining capacity = 0.
-
-**Variants:**
-- 1-player request into full slot.
-- 2-player request into full slot.
-
----
-
-### A6. Create fails when requested players exceed remaining capacity
-**Test ID:** UT-TT-CREATE-006  
-**Starting conditions:**
-- Slot occupancy is partial (e.g., 3/4 or 2/4).
-- Booking member otherwise valid.
-- Requested player count exceeds remaining capacity.
-
-**Postconditions:**
-- Service returns capacity failure/conflict.
-- No reservation created.
-- Occupancy unchanged.
-- Response includes correct remaining capacity.
-
-**Variants:**
-- Occupancy 3/4, request 2.
-- Occupancy 2/4, request 3.
-
----
-
-### A7. Create fails for invalid player count range
-**Test ID:** UT-TT-CREATE-007  
-**Starting conditions:**
-- Member and slot conditions otherwise valid.
-- Player count is outside policy range.
-
-**Postconditions:**
-- Service returns validation/policy failure.
-- No reservation created.
-- No occupancy change.
-- Result reason includes `PLAYER_COUNT_OUT_OF_RANGE`.
-
-**Variants:**
-- Player count below minimum.
-- Player count above maximum.
-
----
-
-### A8. Staff-assisted create success (authorized)
-**Test ID:** UT-TT-CREATE-008  
-**Starting conditions:**
-- Acting user has authorized staff role.
-- Booking member is active.
-- Booking member season/time eligibility passes.
-- Capacity available.
-
-**Postconditions:**
-- Service returns success.
-- Reservation owner/member linkage uses booking member.
-- Acting user metadata is recorded.
-- Occupancy increases correctly.
-
-**Variants:**
-- Staff creates for Gold member.
-- Staff creates for Bronze member at allowed time.
-
----
-
-### A9. Create idempotency behavior
-**Test ID:** UT-TT-CREATE-009  
-**Starting conditions:**
-- First create command has unique idempotency key and succeeds.
-- Same command is replayed with same key.
-
-**Postconditions:**
-- No duplicate reservation created.
-- No duplicate player rows.
-- Occupancy increment applied once.
-- Second call returns stable duplicate-safe result.
-
-**Variants:**
-- Immediate replay.
-- Replay after simulated transient timeout.
-
----
-
-## Test Group B — Update/Move Reservation Unit Tests (UC-TT-02 Update)
-
-### B1. Update succeeds when all rules pass
-**Test ID:** UT-TT-UPDATE-001  
+### B1. Update succeeds
+**Test ID:** UT-TT-UPDATE-001
 **Starting conditions:**
 - Reservation exists and is active.
-- Actor is owner or authorized staff.
-- Target date/time is season-valid and membership-time valid for booking member.
-- Target slot has sufficient remaining capacity.
-- Version token is current.
+- New player list is valid (capacity + season + time rules pass).
 
 **Postconditions:**
-- Service returns success (`BOOKING_ALLOWED`).
-- Reservation details updated.
-- Source slot occupancy decremented by old player count (as applicable).
-- Target slot occupancy incremented by new player count.
-- Net occupancy integrity preserved.
+- Returns `>= 0`.
+- `Reservation.PlayerMemberAccountIds` updated.
 
 **Variants:**
-- Same slot, player list change only.
-- Move to different slot, same player count.
-- Move + player count change within capacity.
+- Add an additional player.
+- Remove an additional player.
+- Same player count, different player.
 
 ---
 
-### B2. Update denied for unauthorized actor
-**Test ID:** UT-TT-UPDATE-002  
-**Starting conditions:**
-- Reservation exists and active.
-- Actor is not owner and lacks staff role.
-- Other inputs valid.
-
-**Postconditions:**
-- Service returns failure with `BOOKING_FORBIDDEN`.
-- Reservation unchanged.
-- Occupancies unchanged.
-
-**Variants:**
-- Unauthorized update attempt.
-- Unauthorized move attempt.
+### B2. Update denied — reservation not found or cancelled
+**Test ID:** UT-TT-UPDATE-002
+**Postconditions:** Returns `-1`. No change.
 
 ---
 
-### B3. Update fails when target slot lacks capacity
-**Test ID:** UT-TT-UPDATE-003  
+### B3. Update denied — capacity exceeded after update
+**Test ID:** UT-TT-UPDATE-003
 **Starting conditions:**
-- Reservation exists and actor authorized.
-- Proposed update targets slot without enough remaining capacity.
+- Another reservation occupies some slots. Updated list would exceed 4 total.
+- `ExcludeReservationId` ensures only the *other* reservations count, not the one being updated.
 
 **Postconditions:**
-- Service returns capacity conflict/failure.
-- Reservation unchanged.
-- Source and target occupancies unchanged.
-
-**Variants:**
-- Target full (4/4).
-- Target partial but still insufficient for requested players.
+- Returns `-1`. Reservation unchanged.
 
 ---
 
-### B4. Update fails for season/time-window violations
-**Test ID:** UT-TT-UPDATE-004  
+### B4. Update occupancy excludes the reservation being updated
+**Test ID:** UT-TT-UPDATE-004
+**Purpose:** Verify `ExcludeReservationId` prevents double-counting.
 **Starting conditions:**
-- Reservation exists and actor authorized.
-- Proposed date/time violates season or membership-time rules.
+- Slot has exactly one reservation (booking member + 2 additional = 3 players).
+- Update changes players to booking member + 2 different additional = still 3.
 
 **Postconditions:**
-- Service returns failure with `BOOKING_WINDOW_VIOLATION`.
-- Reservation unchanged.
-- Occupancies unchanged.
-
-**Variants:**
-- Out-of-season target date.
-- Membership-time restricted target time.
+- Returns `>= 0` (slot sees 3 players, not 6). Update persists.
 
 ---
 
-### B5. Update fails on stale version conflict
-**Test ID:** UT-TT-UPDATE-005  
-**Starting conditions:**
-- Two update requests start from same reservation version.
-- First request commits successfully.
-- Second request executes with stale version.
+## Test Group C — Cancel Reservation (UC-TT-02 Cancel)
 
+### C1. Cancel succeeds
+**Test ID:** UT-TT-CANCEL-001
 **Postconditions:**
-- First succeeds.
-- Second returns conflict result.
-- No partial occupancy drift from failed stale update.
-
-**Variants:**
-- Competing updates to same target slot.
-- Competing updates to different target slots.
+- Returns `true`.
+- `Reservation.IsCancelled = true`.
+- Subsequent capacity query for that slot increases by the cancelled reservation's player count.
 
 ---
 
-### B6. Update/move rollback on injected persistence failure
-**Test ID:** UT-TT-UPDATE-006  
-**Starting conditions:**
-- Reservation exists; actor authorized; update initially valid.
-- Inject failure between occupancy decrement and increment (or equivalent transaction step).
-
-**Postconditions:**
-- Service returns failure/conflict.
-- Transaction rolls back fully.
-- Reservation remains unchanged.
-- Source/target occupancies remain pre-operation values.
-
-**Variants:**
-- Failure after source decrement.
-- Failure during reservation update write.
+### C2. Cancel fails — not found or already cancelled
+**Test ID:** UT-TT-CANCEL-002
+**Postconditions:** Returns `false`. No change.
 
 ---
 
-## Test Group C — Cancel Reservation Unit Tests (UC-TT-02 Cancel)
+## Test Group D — Availability Queries
 
-### C1. Cancel succeeds for authorized owner
-**Test ID:** UT-TT-CANCEL-001  
+### D1. GetAvailabilityAsync returns correct remaining capacity
+**Test ID:** UT-TT-AVAIL-001
 **Starting conditions:**
-- Reservation exists and is active.
-- Actor is reservation owner.
+- Season covers the queried date.
+- Known set of reservations in the date range.
 
 **Postconditions:**
-- Service returns success with `BOOKING_ALLOWED`.
-- Reservation status becomes canceled/inactive.
-- Occupancy decreases by reserved player count.
+- Each slot's `RemainingCapacity = 4 - total booked players` (clamped to 0).
 
 **Variants:**
-- Cancel far before tee time.
-- Cancel close to tee time (still allowed in Phase 1).
+- Single date.
+- Multi-day range (verify single DB query via test-level assertion if possible).
 
 ---
 
-### C2. Cancel succeeds for authorized staff
-**Test ID:** UT-TT-CANCEL-002  
-**Starting conditions:**
-- Reservation exists and active.
-- Actor has authorized staff role.
-
+### D2. Slots outside season return 0 remaining capacity
+**Test ID:** UT-TT-AVAIL-002
+**Starting conditions:** No season covering queried date.
 **Postconditions:**
-- Service returns success.
-- Reservation canceled.
-- Occupancy released exactly once.
-
-**Variants:**
-- Staff cancel on behalf of member.
+- All slots have `RemainingCapacity = 0`.
 
 ---
 
-### C3. Cancel denied for unauthorized actor
-**Test ID:** UT-TT-CANCEL-003  
-**Starting conditions:**
-- Reservation exists and active.
-- Actor is neither owner nor authorized staff.
-
+### D3. GetBookedTimesAsync returns reservation details
+**Test ID:** UT-TT-AVAIL-003
 **Postconditions:**
-- Service returns `BOOKING_FORBIDDEN`.
-- Reservation remains active.
-- Occupancy unchanged.
-
-**Variants:**
-- Unauthorized member actor.
+- Returns correct `BookedSlot` list with `Reservations` populated for occupied slots.
+- Empty `Reservations` for unbooked slots.
 
 ---
 
-### C4. Cancel fails when reservation missing or not active
-**Test ID:** UT-TT-CANCEL-004  
-**Starting conditions:**
-- Reservation does not exist, or exists but already canceled.
+## Test Group E — Schedule Time Service
 
+### E1. DefaultScheduleTimeService generates correct intervals
+**Test ID:** UT-TT-SCHED-001
 **Postconditions:**
-- Service returns `BOOKING_NOT_FOUND_OR_NOT_ACTIVE`.
-- No occupancy side effects.
-
-**Variants:**
-- Missing reservation ID.
-- Already canceled reservation.
+- First slot = 7:00 AM.
+- Last slot < 7:00 PM.
+- Gaps alternate 7/8 minutes. Average = 7.5 minutes.
 
 ---
 
-### C5. Cancel has no cutoff rejection in Phase 1
-**Test ID:** UT-TT-CANCEL-005  
-**Starting conditions:**
-- Reservation active and actor authorized.
-- Cancel attempt occurs very close to tee time.
+## Test Group F — Capacity Integrity
 
-**Postconditions:**
-- Service does not emit `CANCELLATION_CUTOFF_EXCEEDED`.
-- If other rules pass, cancellation succeeds.
-
-**Variants:**
-- Cancel at configured boundary minutes before tee time.
-- Cancel after prior update near tee time.
+### F1. Occupancy aggregates correctly across multiple reservations in same slot
+**Test ID:** UT-TT-CAP-001
+**Starting conditions:** Two active reservations in the same slot.
+**Postconditions:** Remaining capacity = `4 - sum of all players across reservations`.
 
 ---
 
-### C6. Cancel idempotency / repeated command safety
-**Test ID:** UT-TT-CANCEL-006  
-**Starting conditions:**
-- First cancel succeeds.
-- Same cancel command is replayed.
-
-**Postconditions:**
-- Replay yields stable terminal response (not-active or duplicate-safe).
-- Occupancy decrement occurs once only.
-- No additional state corruption.
-
-**Variants:**
-- Immediate replay.
-- Replay after transient error simulation.
-
----
-
-## Test Group D — Shared Slot Capacity Integrity Unit Tests
-
-### D1. Shared slot occupancy aggregates across reservations
-**Test ID:** UT-TT-CAP-001  
-**Starting conditions:**
-- Multiple reservations in same slot with known counts.
-
-**Postconditions:**
-- Service-calculated occupancy equals sum of active reservation players.
-- Remaining capacity is `4 - occupancy`.
-
-**Variants:**
-- Two reservations sharing a slot.
-- Three reservations sharing a slot.
-
----
-
-### D2. Capacity never exceeds 4 under normal sequential operations
-**Test ID:** UT-TT-CAP-002  
-**Starting conditions:**
-- Sequence of create/update/cancel operations with deterministic ordering.
-
-**Postconditions:**
-- Occupancy never exceeds 4.
-- Final occupancy matches expected arithmetic from operations.
-
-**Variants:**
-- Create then cancel then create.
-- Move-in/move-out sequences across two slots.
-
----
-
-### D3. Capacity integrity under concurrent competing writes
-**Test ID:** UT-TT-CAP-003  
-**Starting conditions:**
-- Two or more competing operations target same slot near capacity.
-
-**Postconditions:**
-- At most one conflicting operation succeeds when needed.
-- Final occupancy <= 4.
-- Failed operations return conflict/capacity failures without partial writes.
-
-**Variants:**
-- Competing creates into remaining capacity 1.
-- Competing update-moves into nearly full slot.
+### F2. Cancelled reservations are excluded from occupancy
+**Test ID:** UT-TT-CAP-002
+**Starting conditions:** One active + one cancelled reservation in same slot.
+**Postconditions:** Occupancy counts only the active reservation.
 
 ---
 
 ## Minimal Execution Gate for Initial Implementation
-The first implementation pass in `ClubBaist/ClubBaist.Tests` must include at minimum:
-- A1, A2, A3, A5, A7, A8
-- B1, B2, B3, B5, B6
-- C1, C3, C4, C5
-- D1, D3
+Must include at minimum: A1, A3, A5, A6, B1, B4, C1, C2, D1, D2, F1, F2.
 
-(Equivalent consolidated tests are acceptable if they still prove all listed preconditions/postconditions.)
-
-## Definition of Done for This Plan
-A unit test is considered complete only when it explicitly asserts:
-1. Starting condition setup (member status, window eligibility, authorization role, slot occupancy, version/idempotency key as applicable).
-2. Service result semantics (success/failure/conflict + reason code assertions).
-3. Postconditions on reservation state and slot occupancy.
-4. Negative side-effect checks (unchanged state on failure paths).
-
-## Adoption Rule for `ClubBaist/ClubBaist.Tests`
-Before adding/expanding tee-time unit tests:
-1. Map each test implementation to the UT-TT test IDs above.
-2. Keep test names aligned with these IDs for traceability.
-3. Update this document first (or in the same PR) if behavior or expected reason codes change.
+## Definition of Done
+A test is complete when it asserts:
+1. Starting conditions explicitly set up (season, member, existing reservations).
+2. Method return value checked.
+3. Postconditions on persisted state verified (or confirmed unchanged on failure paths).

@@ -1,79 +1,70 @@
-# AvailabilityService
+# TeeTimeBookingService – Availability Methods
 
 ## Responsibility
-`AvailabilityService` provides bookable tee-time views by combining tee-sheet configuration with current reservation occupancy, returning slot-level availability for a single day and across date ranges so daily, weekly, and multi-day planner experiences can use the same domain service.
+`TeeTimeBookingService` provides tee-time availability views by combining the schedule (from `IScheduleTimeService`) with current reservation occupancy, running each slot through all `IBookingRule` implementations.
 
-## Public Operations
-- `GetDailyAvailabilityAsync(LocalDate playDate, int? participantCount, CancellationToken ct)`
-- `GetAvailabilityRangeAsync(LocalDate startDate, LocalDate endDate, int? participantCount, CancellationToken ct)`
-- `GetSlotAvailabilityAsync(LocalDate playDate, LocalTime teeTime, CancellationToken ct)`
-- `CheckCapacityAsync(LocalDate playDate, LocalTime teeTime, int requestedParticipants, CancellationToken ct)`
+Availability and reservation operations are unified in one service rather than separate services.
 
-## Inputs / Outputs (domain model contracts)
+## Public Methods (Availability)
 
-### GetDailyAvailabilityAsync
-**Input**
-- `LocalDate playDate`
-- `int? participantCount`
+### GetAvailabilityAsync
+```csharp
+Task<IReadOnlyList<DayAvailability>> GetAvailabilityAsync(
+    DateOnly from,
+    DateOnly to,
+    CancellationToken cancellationToken = default)
+```
 
-**Output model: `CourseDayAvailability`**
-- `LocalDate PlayDate`
-- `IReadOnlyList<TeeTimeSlotAvailability> Slots`
+**Inputs:** start and end date (inclusive). Works for a single day (`from == to`) or a multi-day range (e.g., weekly planner view).
 
-### GetAvailabilityRangeAsync
-**Input**
-- `LocalDate startDate`
-- `LocalDate endDate`
-- `int? participantCount`
+**Output:**
+```
+DayAvailability
+  Date: DateOnly
+  Slots: IReadOnlyList<SlotAvailability>
+    Time: TimeOnly
+    RemainingCapacity: int   // 0 = full, positive = spots left
+```
 
-**Output model: `CourseAvailabilityRange`**
-- `LocalDate StartDate`
-- `LocalDate EndDate`
-- `IReadOnlyList<CourseDayAvailability> Days`
+**Behaviour:**
+- Fetches all active reservations for the entire range in a **single batch query**.
+- Computes occupancy per (date, time) in memory.
+- Calls `IScheduleTimeService.GetScheduleTimes(date)` for each date.
+- Runs each slot through all rules with `BookingEvaluationContext(MemberCategory: null)` — no member-specific filtering.
+- `BookingWindowRule` uses `ISeasonService` to check if each date is within a season.
+- `MembershipTimeRestrictionRule` is skipped (passes through) when `MemberCategory` is null.
 
-### GetSlotAvailabilityAsync
-**Input**
-- `LocalDate playDate`
-- `LocalTime teeTime`
+### GetBookedTimesAsync
+```csharp
+Task<IReadOnlyList<BookedSlot>> GetBookedTimesAsync(
+    DateOnly date,
+    CancellationToken cancellationToken = default)
+```
 
-**Output model: `TeeTimeSlotAvailability`**
-- `LocalTime TeeTime`
-- `int Capacity`
-- `int ReservedParticipants`
-- `int RemainingParticipants`
-- `bool IsBookable`
+**Output:**
+```
+BookedSlot
+  Time: TimeOnly
+  RemainingCapacity: int   // clamped to [0, 4]
+  Reservations: IReadOnlyList<Reservation>  // active reservations for this slot
+```
 
-### CheckCapacityAsync
-**Input**
-- `LocalDate playDate`
-- `LocalTime teeTime`
-- `int requestedParticipants`
+Returns schedule times with reservation details attached, for building a booked-times view (who is booked, remaining spots).
 
-**Output contract (no dedicated DTO/class in Phase 1)**
-- `bool Fits`
-- `int RemainingAfterRequest`
-- `string DecisionCode`
+## Schedule Time Service
 
-## Dependencies on Other Services
-- Depends on `SeasonService` to ensure queried dates are in an active season.
-- Depends on `BookingPolicyService` for policy-level constraints when computing `IsBookable`.
-- Depends on tee-sheet and reservation read models (repositories/query services).
+```csharp
+public interface IScheduleTimeService
+{
+    IReadOnlyList<TimeOnly> GetScheduleTimes(DateOnly date);
+}
+```
 
-## Core Validation / Business Rules
-- Availability can be returned only for dates in an active season.
-- `startDate` must be on or before `endDate` for range queries.
-- Range query size is limited to 7 days in Phase 1 to support weekly/multi-day planner views without overloading reads.
-- Slot capacity cannot drop below zero after confirmed reservations are counted.
-- `requestedParticipants` must be greater than zero and no more than slot capacity.
-- `IsBookable` requires both free capacity and a positive policy decision.
-- Slot-level calculations must be deterministic for the same read timestamp.
-- Tee-time slot generation should use the tee-sheet cadence configured for the course/day. Phase 1 default cadence is **approximately 8-minute intervals** (not a hard-coded 7.5-minute requirement).
+`DefaultScheduleTimeService` generates times from 7:00 AM to 7:00 PM using alternating 7/8-minute gaps (7:00, 7:07, 7:15, 7:22, 7:30 ...) to achieve a 7.5-minute average interval. Swap the registration to use a different implementation.
 
-## POCO note
-- `SlotOccupancy` is handled as a POCO projection (`SlotDate`, `SlotTime`, `ReservedPlayers`).
-- Capacity checks and conflict handling are service responsibilities rather than model-method responsibilities in Phase 1.
+## Core Rules
 
-## Error / Result Model
-- **Success**: `Result<T>.Success(payload)` with `CourseDayAvailability`, `CourseAvailabilityRange`, `TeeTimeSlotAvailability`, or an inline capacity-check payload (`Fits`, `RemainingAfterRequest`, `DecisionCode`).
-- **Validation failure**: `Result<T>.ValidationFailed(errors)` (invalid date/time, non-positive requested participants, invalid range).
-- **Conflict**: `Result<T>.Conflict(code, message)` (season closed, slot no longer available at check time, stale read version).
+- `RemainingCapacity` is clamped to `[0, MaxCapacity]` where `MaxCapacity = 4`.
+- Availability queries use `Guid.Empty` as the booking member; `SlotCapacityRule` requests 0 players for these.
+- Dates outside any Active or Planned season return `RemainingCapacity = 0` for all slots (via `BookingWindowRule`).
+- Date range is unbounded — callers choose the range size. The single-query batch fetch keeps this efficient.

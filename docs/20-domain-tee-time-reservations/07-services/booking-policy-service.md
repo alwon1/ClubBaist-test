@@ -1,88 +1,75 @@
-# BookingPolicyService
+# Booking Rules (IBookingRule)
 
 ## Responsibility
-`BookingPolicyService` evaluates whether a member can create or modify a tee-time booking under Phase 1 policy rules, centralizing lead-time, party-size, and booking-state checks so reservation commands receive one domain-level policy decision.
+Booking rules evaluate whether a tee-time slot is available or a booking request is permitted. Each rule is an independent implementation of `IBookingRule`, making it easy to add, remove, or reorder policies without touching the booking service.
 
-## Public Operations
-- `EvaluateCreateBookingAsync(BookingRequest bookingRequest, CancellationToken ct)`
-- `EvaluateUpdateBookingAsync(BookingRequest bookingRequest, Guid bookingId, CancellationToken ct)`
-- `EvaluateCancelBookingAsync(BookingCancellation bookingCancellation, CancellationToken ct)`
-- `GetPolicyForDateAsync(LocalDate playDate, CancellationToken ct)`
+## Interface
 
-## Inputs / Outputs (domain model contracts)
+```csharp
+public interface IBookingRule
+{
+    Task<int> EvaluateAsync(TeeTimeSlot slot, BookingEvaluationContext context, CancellationToken cancellationToken = default);
+}
+```
 
-### EvaluateCreateBookingAsync
-**Input model: `BookingRequest`**
-- `Guid MemberId`
-- `LocalDate PlayDate`
-- `LocalTime TeeTime`
-- `DateTimeOffset RequestedAt`
+### Return value contract
+| Value | Meaning |
+|-------|---------|
+| Negative | Rule denies the request |
+| `0` | Slot is exactly full after this booking — accepted |
+| Positive | Remaining capacity after this booking |
 
-**Output model: `BookingPolicyDecision`**
-- `bool Allowed`
-- `string DecisionCode`
-- `IReadOnlyList<string> Reasons`
-- `BookingPolicy PolicyApplied`
+`TeeTimeBookingService` takes the minimum value across all rules. If any rule returns negative, the overall result is `-1` (denied). The final result is clamped to `[0, MaxCapacity]`.
 
-### EvaluateCancelBookingAsync
-**Input model: `BookingCancellation`**
-- `Guid BookingId`
-- `Guid MemberId`
-- `DateTimeOffset RequestedAt`
+## BookingEvaluationContext
 
-**Output model: `BookingPolicyDecision`**
-- `bool Allowed`
-- `string DecisionCode`
-- `IReadOnlyList<string> Reasons`
+Pre-fetched data passed to every rule by the booking service to avoid per-rule DB queries:
 
-### EvaluateUpdateBookingAsync
-**Input models: `BookingRequest` + `Guid bookingId`**
-- `Guid bookingId` (identifier of reservation being updated)
-- `BookingRequest bookingRequest` (updated play date/time, member context, and requested players using the standard booking domain object)
+```csharp
+public sealed record BookingEvaluationContext(
+    MembershipCategory? MemberCategory,       // null = availability query (no member check)
+    Guid? ExcludeReservationId = null,        // for update: exclude this reservation from occupancy
+    int? PrecomputedOccupancy = null);        // pre-fetched for range queries; null = rule queries DB
+```
 
-**Output model: `BookingPolicyDecision`**
-- `bool Allowed`
-- `string DecisionCode`
-- `IReadOnlyList<string> Reasons`
-- `BookingPolicy PolicyApplied`
+## Implemented Rules
 
-### GetPolicyForDateAsync
-**Input**
-- `LocalDate playDate`
+### SlotCapacityRule
+- Computes slot occupancy from active `Reservation` records.
+- Uses `PrecomputedOccupancy` when provided (range queries); otherwise queries DB.
+- Excludes `ExcludeReservationId` from occupancy when updating an existing reservation.
+- Occupancy per reservation = `1 + PlayerMemberAccountIds.Count` (booking member is always player #1).
+- For availability queries (`Guid.Empty` booking member), `requested = 0`; for bookings, `requested = 1 + additional players`.
+- Returns `Math.Max(0, MaxCapacity - occupancy - requested)`.
 
-**Output model: `BookingPolicy`**
-- `Guid SeasonId`
-- `int MinPlayers`
-- `int MaxPlayers`
+### BookingWindowRule
+- Calls `ISeasonService.GetSeasonForDate(slot.SlotDate)`.
+- Returns `int.MaxValue` if the date falls within an Active or Planned season; `-1` otherwise.
+- No DB access — season data is held in the `SeasonService` singleton.
 
-> Phase 1 note: no cancellation-cutoff policy is enforced yet. If a cutoff is introduced in a later phase, the policy model will be extended at that time.
+### MembershipTimeRestrictionRule
+- Pure logic — no DB access.
+- Uses `context.MemberCategory`; returns `int.MaxValue` immediately if null (availability query).
+- Denies (`-1`) when the booking member's membership tier is restricted at the requested time of day / day of week:
 
-## Dependencies on Other Services
-- Depends on `SeasonService` to confirm play date is inside an active season.
-- Read-only dependency on reservation repository/query service for booking ownership/state checks.
+| Tier | Members | Mon–Fri | Weekends |
+|------|---------|---------|---------|
+| Gold | Shareholder, Associate | Anytime | Anytime |
+| Silver | ShareholderSpouse, AssociateSpouse | Before 3 PM or after 5:30 PM | After 11 AM |
+| Bronze | PeeWee, Junior, Intermediate | Before 3 PM or after 6 PM | After 1 PM |
+| Social | Social | Never | Never |
 
-## Core Validation / Business Rules
-- Booking creation is allowed only when `PlayDate` is within the season’s advance-booking window.
-- Reservation updates may add/remove additional players, but the booking member must remain in the submitted participant list.
-- Number of players is derived from reservation participant identities and must remain between 1 and 4.
-- Member can cancel only their own active booking.
-- Phase 1 cancellation policy has **no time-based cutoff**; valid owner/staff cancellations are allowed regardless of how close `RequestedAt` is to tee time.
-- Decision output must include at least one reason when `Allowed = false`.
+## Adding a New Rule
+1. Implement `IBookingRule` in `ClubBaist.Services/Rules/`.
+2. Register it in the DI container alongside the existing rules.
+3. No changes to `TeeTimeBookingService` are required.
 
-## Decision / Reason Codes (Phase 1)
-- `BOOKING_ALLOWED`: Create or cancel request passed all Phase 1 checks.
-- `BOOKING_WINDOW_VIOLATION`: Requested play date is outside the active season window.
-- `PLAYER_COUNT_OUT_OF_RANGE`: Participant count is below minimum or above maximum.
-- `BOOKING_NOT_FOUND_OR_NOT_ACTIVE`: Booking does not exist or is already canceled/inactive.
-- `BOOKING_FORBIDDEN`: Requesting actor is not permitted to maintain the booking.
+## TeeTimeSlot (rule input)
 
-> `CANCELLATION_CUTOFF_EXCEEDED` is intentionally not used in Phase 1 because cutoff enforcement is deferred.
-
-## POCO note
-- `Reservation` is consumed as a POCO record (including `PlayerMemberAccountIds`) with no behavioral methods required by policy evaluation.
-- `BookingPolicyService` computes rule outcomes from request + repository state and returns decision codes directly.
-
-## Error / Result Model
-- **Success**: `Result<T>.Success(BookingPolicyDecision)`.
-- **Validation failure**: `Result<T>.ValidationFailed(errors)` (bad identifiers, invalid participant count, malformed date/time inputs).
-- **Conflict**: `Result<T>.Conflict(code, message)` (booking already canceled, season unavailable, stale booking state).
+```csharp
+public record TeeTimeSlot(
+    DateOnly SlotDate,
+    TimeOnly SlotTime,
+    Guid BookingMemberAccountId,   // Guid.Empty for availability queries
+    List<Guid> PlayerMemberAccountIds);  // non-booking additional players only
+```
