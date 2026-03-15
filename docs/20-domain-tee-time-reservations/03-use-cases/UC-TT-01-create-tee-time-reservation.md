@@ -61,6 +61,8 @@ Allow an active member (or authorized staff acting on behalf of a member) to cre
 
 ### A5 – Staff-Assisted Booking
 - Admin/Clerk performs the workflow on behalf of an active member.
+- **Note:** In staff-assisted flow, policy checks (member status and membership time-window eligibility) are always evaluated against the booking member (the member account being booked), not the acting user.
+- Example: if a Clerk creates a 7:00 AM reservation for Member Jane Doe, the system applies Jane Doe's membership time-window rules, while recording the Clerk as the acting user in authorization and audit metadata.
 - System records audit details for acting user and booking member.
 
 ## Exceptions
@@ -72,7 +74,7 @@ Allow an active member (or authorized staff acting on behalf of a member) to cre
 2. A start-time slot has an absolute maximum of four total players across all reservations.
 3. Different members may share the same start-time slot if total occupancy remains four or less.
 4. Individual player identities must be stored for each reservation.
-5. Time-of-day restrictions are evaluated using the membership type of the member performing the booking.
+5. Time-of-day restrictions are evaluated using the membership type of the booking member (the member account being booked), not the acting user.
 6. Club policy treats slot capacity limit of four as absolute (no overbooking override).
 7. Routine reservation creation auditing is out of current scope to keep implementation simple.
 
