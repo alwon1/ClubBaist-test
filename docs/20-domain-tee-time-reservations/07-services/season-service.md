@@ -4,7 +4,7 @@
 `SeasonService` owns the tee-time season calendar used by booking and availability flows, including identifying the active season for a date, exposing season boundaries, and enforcing season-state constraints so downstream services can work directly with domain models without re-implementing calendar policy.
 
 ## Public Operations
-- `CreateSeasonAsync(string name, LocalDate startDate, LocalDate endDate, int advanceBookingDays, CancellationToken ct)`
+- `CreateSeasonAsync(string name, LocalDate startDate, LocalDate endDate, CancellationToken ct)`
 - `GetSeasonForDateAsync(LocalDate playDate, CancellationToken ct)`
 - `GetCurrentSeasonAsync(LocalDate today, CancellationToken ct)`
 - `CloseSeasonAsync(Guid seasonId, LocalDate closedOn, CancellationToken ct)`
@@ -16,14 +16,12 @@
 - `string name`
 - `LocalDate startDate`
 - `LocalDate endDate`
-- `int advanceBookingDays`
 
 **Output model: `Season`**
 - `Guid SeasonId`
 - `string Name`
 - `LocalDate StartDate`
 - `LocalDate EndDate`
-- `int AdvanceBookingDays`
 - `SeasonStatus Status` (`Planned | Active | Closed`)
 
 ### GetSeasonForDateAsync / GetCurrentSeasonAsync
@@ -34,7 +32,6 @@
 - `Guid SeasonId`
 - `LocalDate StartDate`
 - `LocalDate EndDate`
-- `int AdvanceBookingDays`
 - `SeasonStatus Status`
 
 ### CloseSeasonAsync
@@ -48,14 +45,17 @@
 - No hard dependency on other domain services in Phase 1.
 - Exposes season data consumed by `BookingPolicyService` and `AvailabilityService`.
 
+## POCO note
+- `Season` is treated as a persistence/data model in Phase 1.
+- Date/window/state validations are enforced by `SeasonService` workflow logic, not by `Season` instance methods.
+
 ## Core Validation / Business Rules
 - `startDate` must be on or before `endDate`.
 - A new season cannot overlap date ranges of existing seasons.
-- `advanceBookingDays` must be a positive value.
 - A closed season cannot be reopened in Phase 1.
 - A date can map to at most one active season.
 
 ## Error / Result Model
 - **Success**: `Result<T>.Success(payload)` with `Season`.
-- **Validation failure**: `Result<T>.ValidationFailed(errors)` (invalid dates, non-positive booking window, missing name).
+- **Validation failure**: `Result<T>.ValidationFailed(errors)` (invalid dates, missing name).
 - **Conflict**: `Result<T>.Conflict(code, message)` (overlapping season, close already-closed season).

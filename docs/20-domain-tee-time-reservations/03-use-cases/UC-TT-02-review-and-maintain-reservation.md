@@ -77,7 +77,7 @@ Allow members and authorized staff to view reservation details and maintain rese
 - `BOOKING_ALLOWED` – update/cancel action passed current rules.
 - `BOOKING_FORBIDDEN` – actor lacks permission to maintain reservation.
 - `BOOKING_NOT_FOUND_OR_NOT_ACTIVE` – reservation missing or not in active state.
-- `BOOKING_WINDOW_VIOLATION` – update target date is outside allowed booking window.
+- `BOOKING_WINDOW_VIOLATION` – update target date is outside the active season window.
 - `PLAYER_COUNT_OUT_OF_RANGE` – revised player count violates min/max policy.
 
 > `CANCELLATION_CUTOFF_EXCEEDED` is deferred to a future phase and is not emitted in UC-TT-02 flows.

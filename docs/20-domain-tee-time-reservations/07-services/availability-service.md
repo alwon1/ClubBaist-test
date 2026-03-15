@@ -4,56 +4,50 @@
 `AvailabilityService` provides bookable tee-time views by combining tee-sheet configuration with current reservation occupancy, returning slot-level availability for a single day and across date ranges so daily, weekly, and multi-day planner experiences can use the same domain service.
 
 ## Public Operations
-- `GetDailyAvailabilityAsync(Guid courseId, LocalDate playDate, int? partySize, CancellationToken ct)`
-- `GetAvailabilityRangeAsync(Guid courseId, LocalDate startDate, LocalDate endDate, int? partySize, CancellationToken ct)`
-- `GetSlotAvailabilityAsync(Guid courseId, LocalDate playDate, LocalTime teeTime, CancellationToken ct)`
-- `CheckCapacityAsync(Guid courseId, LocalDate playDate, LocalTime teeTime, int requestedPlayers, CancellationToken ct)`
+- `GetDailyAvailabilityAsync(LocalDate playDate, int? participantCount, CancellationToken ct)`
+- `GetAvailabilityRangeAsync(LocalDate startDate, LocalDate endDate, int? participantCount, CancellationToken ct)`
+- `GetSlotAvailabilityAsync(LocalDate playDate, LocalTime teeTime, CancellationToken ct)`
+- `CheckCapacityAsync(LocalDate playDate, LocalTime teeTime, int requestedParticipants, CancellationToken ct)`
 
 ## Inputs / Outputs (domain model contracts)
 
 ### GetDailyAvailabilityAsync
 **Input**
-- `Guid courseId`
 - `LocalDate playDate`
-- `int? partySize`
+- `int? participantCount`
 
 **Output model: `CourseDayAvailability`**
-- `Guid CourseId`
 - `LocalDate PlayDate`
 - `IReadOnlyList<TeeTimeSlotAvailability> Slots`
 
 ### GetAvailabilityRangeAsync
 **Input**
-- `Guid courseId`
 - `LocalDate startDate`
 - `LocalDate endDate`
-- `int? partySize`
+- `int? participantCount`
 
 **Output model: `CourseAvailabilityRange`**
-- `Guid CourseId`
 - `LocalDate StartDate`
 - `LocalDate EndDate`
 - `IReadOnlyList<CourseDayAvailability> Days`
 
 ### GetSlotAvailabilityAsync
 **Input**
-- `Guid courseId`
 - `LocalDate playDate`
 - `LocalTime teeTime`
 
 **Output model: `TeeTimeSlotAvailability`**
 - `LocalTime TeeTime`
 - `int Capacity`
-- `int ReservedPlayers`
-- `int RemainingPlayers`
+- `int ReservedParticipants`
+- `int RemainingParticipants`
 - `bool IsBookable`
 
 ### CheckCapacityAsync
 **Input**
-- `Guid courseId`
 - `LocalDate playDate`
 - `LocalTime teeTime`
-- `int requestedPlayers`
+- `int requestedParticipants`
 
 **Output model: `CapacityCheck`**
 - `bool Fits`
@@ -70,11 +64,15 @@
 - `startDate` must be on or before `endDate` for range queries.
 - Range query size is limited to 7 days in Phase 1 to support weekly/multi-day planner views without overloading reads.
 - Slot capacity cannot drop below zero after confirmed reservations are counted.
-- `requestedPlayers` must be greater than zero and no more than slot capacity.
+- `requestedParticipants` must be greater than zero and no more than slot capacity.
 - `IsBookable` requires both free capacity and a positive policy decision.
 - Slot-level calculations must be deterministic for the same read timestamp.
 
+## POCO note
+- `SlotOccupancy` is handled as a POCO projection (`SlotDate`, `SlotTime`, `ReservedPlayers`).
+- Capacity checks and conflict handling are service responsibilities rather than model-method responsibilities in Phase 1.
+
 ## Error / Result Model
 - **Success**: `Result<T>.Success(payload)` with `CourseDayAvailability`, `CourseAvailabilityRange`, `TeeTimeSlotAvailability`, or `CapacityCheck`.
-- **Validation failure**: `Result<T>.ValidationFailed(errors)` (invalid course/date/time, non-positive requested players, invalid range).
+- **Validation failure**: `Result<T>.ValidationFailed(errors)` (invalid date/time, non-positive requested participants, invalid range).
 - **Conflict**: `Result<T>.Conflict(code, message)` (season closed, slot no longer available at check time, stale read version).

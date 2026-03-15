@@ -8,7 +8,7 @@ Define a simple, scalable backend service design that supports immediate reserva
 ### Core (Build First)
 1. **ReservationService**
    - Reservation lifecycle: create, view, update, cancel.
-   - Persists reservation + individual player details.
+   - Persists reservation plus participant member references (no separate player-detail behavior model in Phase 1).
    - Triggers slot occupancy changes.
 
 2. **AvailabilityService**
@@ -20,7 +20,7 @@ Define a simple, scalable backend service design that supports immediate reserva
    - Central booking validations:
      - active member requirement
      - membership-type time-of-day rules (based on booking member)
-     - per-request rule checks (e.g., player counts)
+     - per-request rule checks (e.g., participant count bounds derived from participant references)
 
 4. **SeasonService**
    - Source of truth for bookable season windows.
@@ -63,3 +63,8 @@ flowchart LR
   RS --> Repo
   AH --> Repo
 ```
+
+
+## Domain model shape assumption (Phase 1)
+- `Reservation`, `Season`, and `SlotOccupancy` are persisted as **POCO data models**.
+- Domain validation and orchestration rules are executed in `ReservationService`, `AvailabilityService`, `BookingPolicyService`, and `SeasonService` rather than on domain model instance methods.
