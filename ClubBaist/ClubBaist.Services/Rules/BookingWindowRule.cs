@@ -1,25 +1,17 @@
 using ClubBaist.Domain;
-using Microsoft.EntityFrameworkCore;
 
 namespace ClubBaist.Services.Rules;
 
-public class BookingWindowRule<TKey> : IBookingRule where TKey : IEquatable<TKey>
+public class BookingWindowRule : IBookingRule
 {
-    private readonly IApplicationDbContext<TKey> _dbContext;
-
-    public BookingWindowRule(IApplicationDbContext<TKey> dbContext)
+    public Task<int> EvaluateAsync(TeeTimeSlot slot, BookingEvaluationContext context, CancellationToken cancellationToken = default)
     {
-        _dbContext = dbContext;
-    }
+        var season = context.ActiveSeason;
 
-    public async Task<int> EvaluateAsync(TeeTimeSlot slot, CancellationToken cancellationToken = default)
-    {
-        var hasActiveSeason = await _dbContext.Seasons
-            .AnyAsync(s => s.SeasonStatus == SeasonStatus.Active
-                        && s.StartDate <= slot.SlotDate
-                        && s.EndDate >= slot.SlotDate,
-                cancellationToken);
+        var allowed = season is not null
+            && season.StartDate <= slot.SlotDate
+            && season.EndDate >= slot.SlotDate;
 
-        return hasActiveSeason ? int.MaxValue : 0;
+        return Task.FromResult(allowed ? int.MaxValue : 0);
     }
 }

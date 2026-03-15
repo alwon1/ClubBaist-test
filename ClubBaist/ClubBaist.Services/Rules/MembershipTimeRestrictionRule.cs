@@ -1,28 +1,16 @@
 using ClubBaist.Domain;
-using Microsoft.EntityFrameworkCore;
 
 namespace ClubBaist.Services.Rules;
 
-public class MembershipTimeRestrictionRule<TKey> : IBookingRule where TKey : IEquatable<TKey>
+public class MembershipTimeRestrictionRule : IBookingRule
 {
-    private readonly IApplicationDbContext<TKey> _dbContext;
-
-    public MembershipTimeRestrictionRule(IApplicationDbContext<TKey> dbContext)
+    public Task<int> EvaluateAsync(TeeTimeSlot slot, BookingEvaluationContext context, CancellationToken cancellationToken = default)
     {
-        _dbContext = dbContext;
-    }
+        if (context.MemberCategory is null)
+            return Task.FromResult(int.MaxValue);
 
-    public async Task<int> EvaluateAsync(TeeTimeSlot slot, CancellationToken cancellationToken = default)
-    {
-        var member = await _dbContext.MemberAccounts
-            .FirstOrDefaultAsync(m => m.MemberAccountId == slot.BookingMemberAccountId, cancellationToken);
-
-        if (member is null)
-            return 0;
-
-        return IsAllowed(member.MembershipCategory, slot.SlotDate, slot.SlotTime)
-            ? int.MaxValue
-            : 0;
+        var allowed = IsAllowed(context.MemberCategory.Value, slot.SlotDate, slot.SlotTime);
+        return Task.FromResult(allowed ? int.MaxValue : 0);
     }
 
     private static bool IsAllowed(MembershipCategory category, DateOnly date, TimeOnly time)

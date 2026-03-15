@@ -14,7 +14,7 @@ public class SlotCapacityRule<TKey> : IBookingRule where TKey : IEquatable<TKey>
         _dbContext = dbContext;
     }
 
-    public async Task<int> EvaluateAsync(TeeTimeSlot slot, CancellationToken cancellationToken = default)
+    public async Task<int> EvaluateAsync(TeeTimeSlot slot, BookingEvaluationContext context, CancellationToken cancellationToken = default)
     {
         var occupancy = await _dbContext.Reservations
             .Where(r => r.SlotDate == slot.SlotDate
