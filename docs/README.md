@@ -26,3 +26,4 @@ Membership Applications is intentionally reduced to two use cases with alternati
 
 - `30-ui-planning/`: cross-domain UI planning artifacts.
   - `01-page-catalog.md`
+  - `02-proposed-ui-diagrams.md`
