@@ -30,6 +30,7 @@ public static class TestServiceHost
         services.AddScoped<IApplicationDbContext<int>>(provider => provider.GetRequiredService<TestApplicationDbContext>());
         services.AddScoped<MemberManagementService<int>>();
         services.AddScoped<ApplicationManagementService<int>>();
+        services.AddScoped<SeasonService<int>>();
 
         var provider = services.BuildServiceProvider(new ServiceProviderOptions
         {
