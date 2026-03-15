@@ -5,6 +5,8 @@ namespace ClubBaist.Services;
 
 public class TeeTimeBookingService<TKey> where TKey : IEquatable<TKey>
 {
+    private const int MaxCapacity = 4;
+
     private readonly IScheduleTimeService _scheduleTimeService;
     private readonly IReadOnlyList<IBookingRule> _rules;
     private readonly IApplicationDbContext<TKey> _dbContext;
@@ -24,7 +26,16 @@ public class TeeTimeBookingService<TKey> where TKey : IEquatable<TKey>
         DateOnly to,
         CancellationToken cancellationToken = default)
     {
-        var context = new BookingEvaluationContext(MemberCategory: null);
+        // Batch: fetch all reservations for the range in one query.
+        var reservationsInRange = await _dbContext.Reservations
+            .Where(r => r.SlotDate >= from && r.SlotDate <= to && !r.IsCancelled)
+            .ToListAsync(cancellationToken);
+
+        var occupancyBySlot = reservationsInRange
+            .GroupBy(r => (r.SlotDate, r.SlotTime))
+            .ToDictionary(
+                g => g.Key,
+                g => g.Sum(r => r.PlayerMemberAccountIds.Count + 1));
 
         var days = new List<DayAvailability>();
 
@@ -35,6 +46,11 @@ public class TeeTimeBookingService<TKey> where TKey : IEquatable<TKey>
 
             foreach (var time in times)
             {
+                occupancyBySlot.TryGetValue((date, time), out var occupancy);
+                var context = new BookingEvaluationContext(
+                    MemberCategory: null,
+                    PrecomputedOccupancy: occupancy);
+
                 var slot = new TeeTimeSlot(date, time, Guid.Empty, []);
                 var remaining = await EvaluateRulesAsync(slot, context, cancellationToken);
                 slots.Add(new SlotAvailability(time, remaining));
@@ -65,8 +81,8 @@ public class TeeTimeBookingService<TKey> where TKey : IEquatable<TKey>
         foreach (var time in times)
         {
             grouped.TryGetValue(time, out var slotReservations);
-            var playerCount = slotReservations?.Sum(r => r.PlayerMemberAccountIds.Count) ?? 0;
-            var remaining = 4 - playerCount;
+            var playerCount = slotReservations?.Sum(r => r.PlayerMemberAccountIds.Count + 1) ?? 0;
+            var remaining = Math.Max(0, MaxCapacity - playerCount);
 
             result.Add(new BookedSlot(time, remaining, slotReservations ?? []));
         }
@@ -92,13 +108,15 @@ public class TeeTimeBookingService<TKey> where TKey : IEquatable<TKey>
         var memberCategory = await FetchMemberCategoryAsync(slot.BookingMemberAccountId, cancellationToken);
 
         if (memberCategory is null)
-            return 0;
+            return -1;
+
+        await using var transaction = await _dbContext.BeginTransactionAsync(cancellationToken);
 
         var context = new BookingEvaluationContext(memberCategory);
         var remaining = await EvaluateRulesAsync(slot, context, cancellationToken);
 
-        if (remaining <= 0)
-            return 0;
+        if (remaining < 0)
+            return -1;
 
         var reservation = new Reservation
         {
@@ -110,6 +128,7 @@ public class TeeTimeBookingService<TKey> where TKey : IEquatable<TKey>
 
         _dbContext.Reservations.Add(reservation);
         await _dbContext.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
 
         return remaining;
     }
@@ -123,15 +142,14 @@ public class TeeTimeBookingService<TKey> where TKey : IEquatable<TKey>
             .FirstOrDefaultAsync(r => r.ReservationId == reservationId && !r.IsCancelled, cancellationToken);
 
         if (reservation is null)
-            return 0;
-
-        if (!playerMemberAccountIds.Contains(reservation.BookingMemberAccountId))
-            return 0;
+            return -1;
 
         var memberCategory = await FetchMemberCategoryAsync(reservation.BookingMemberAccountId, cancellationToken);
 
         if (memberCategory is null)
-            return 0;
+            return -1;
+
+        await using var transaction = await _dbContext.BeginTransactionAsync(cancellationToken);
 
         var slot = new TeeTimeSlot(
             reservation.SlotDate,
@@ -139,14 +157,15 @@ public class TeeTimeBookingService<TKey> where TKey : IEquatable<TKey>
             reservation.BookingMemberAccountId,
             playerMemberAccountIds);
 
-        var context = new BookingEvaluationContext(memberCategory);
+        var context = new BookingEvaluationContext(memberCategory, ExcludeReservationId: reservationId);
         var remaining = await EvaluateRulesAsync(slot, context, cancellationToken);
 
-        if (remaining <= 0)
-            return 0;
+        if (remaining < 0)
+            return -1;
 
         reservation.PlayerMemberAccountIds = playerMemberAccountIds;
         await _dbContext.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
 
         return remaining;
     }
@@ -175,13 +194,13 @@ public class TeeTimeBookingService<TKey> where TKey : IEquatable<TKey>
         {
             var result = await rule.EvaluateAsync(slot, context, cancellationToken);
 
-            if (result <= 0)
-                return 0;
+            if (result < 0)
+                return -1;
 
             min = Math.Min(min, result);
         }
 
-        return min == int.MaxValue ? 4 : min;
+        return min == int.MaxValue ? MaxCapacity : Math.Min(min, MaxCapacity);
     }
 
     private Task<MembershipCategory?> FetchMemberCategoryAsync(Guid memberAccountId, CancellationToken cancellationToken) =>

@@ -2,6 +2,7 @@ using ClubBaist.Domain;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace ClubBaist.Tests;
 
@@ -18,6 +19,9 @@ public sealed class TestApplicationDbContext
     public DbSet<ApplicationStatusHistory<int>> ApplicationStatusHistories => Set<ApplicationStatusHistory<int>>();
     public DbSet<Season> Seasons => Set<Season>();
     public DbSet<Reservation> Reservations => Set<Reservation>();
+
+    public Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default) =>
+        Database.BeginTransactionAsync(cancellationToken);
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

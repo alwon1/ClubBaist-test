@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace ClubBaist.Domain;
 
@@ -11,4 +12,5 @@ public interface IApplicationDbContext<TKey> where TKey : IEquatable<TKey>
     DbSet<Reservation> Reservations { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
+    Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default);
 }

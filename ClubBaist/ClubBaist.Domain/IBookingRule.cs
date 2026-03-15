@@ -5,7 +5,10 @@ namespace ClubBaist.Domain;
 /// <see cref="MemberCategory"/> is null for availability queries where no
 /// specific member is being evaluated.
 /// </summary>
-public sealed record BookingEvaluationContext(MembershipCategory? MemberCategory);
+public sealed record BookingEvaluationContext(
+    MembershipCategory? MemberCategory,
+    Guid? ExcludeReservationId = null,
+    int? PrecomputedOccupancy = null);
 
 public interface IBookingRule
 {
