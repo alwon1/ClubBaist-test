@@ -24,8 +24,7 @@ public class TeeTimeBookingService<TKey> where TKey : IEquatable<TKey>
         DateOnly to,
         CancellationToken cancellationToken = default)
     {
-        var activeSeason = await FetchActiveSeasonAsync(cancellationToken);
-        var context = new BookingEvaluationContext(activeSeason, MemberCategory: null);
+        var context = new BookingEvaluationContext(MemberCategory: null);
 
         var days = new List<DayAvailability>();
 
@@ -90,13 +89,12 @@ public class TeeTimeBookingService<TKey> where TKey : IEquatable<TKey>
         TeeTimeSlot slot,
         CancellationToken cancellationToken = default)
     {
-        var activeSeason = await FetchActiveSeasonAsync(cancellationToken);
         var memberCategory = await FetchMemberCategoryAsync(slot.BookingMemberAccountId, cancellationToken);
 
         if (memberCategory is null)
             return 0;
 
-        var context = new BookingEvaluationContext(activeSeason, memberCategory);
+        var context = new BookingEvaluationContext(memberCategory);
         var remaining = await EvaluateRulesAsync(slot, context, cancellationToken);
 
         if (remaining <= 0)
@@ -130,7 +128,6 @@ public class TeeTimeBookingService<TKey> where TKey : IEquatable<TKey>
         if (!playerMemberAccountIds.Contains(reservation.BookingMemberAccountId))
             return 0;
 
-        var activeSeason = await FetchActiveSeasonAsync(cancellationToken);
         var memberCategory = await FetchMemberCategoryAsync(reservation.BookingMemberAccountId, cancellationToken);
 
         if (memberCategory is null)
@@ -142,7 +139,7 @@ public class TeeTimeBookingService<TKey> where TKey : IEquatable<TKey>
             reservation.BookingMemberAccountId,
             playerMemberAccountIds);
 
-        var context = new BookingEvaluationContext(activeSeason, memberCategory);
+        var context = new BookingEvaluationContext(memberCategory);
         var remaining = await EvaluateRulesAsync(slot, context, cancellationToken);
 
         if (remaining <= 0)
@@ -186,10 +183,6 @@ public class TeeTimeBookingService<TKey> where TKey : IEquatable<TKey>
 
         return min == int.MaxValue ? 4 : min;
     }
-
-    private Task<Season?> FetchActiveSeasonAsync(CancellationToken cancellationToken) =>
-        _dbContext.Seasons
-            .FirstOrDefaultAsync(s => s.SeasonStatus == SeasonStatus.Active, cancellationToken);
 
     private Task<MembershipCategory?> FetchMemberCategoryAsync(Guid memberAccountId, CancellationToken cancellationToken) =>
         _dbContext.MemberAccounts
