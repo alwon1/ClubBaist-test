@@ -36,9 +36,10 @@ Allow members and authorized staff to view reservation details and maintain rese
 2. System shows current reservation, players, and slot occupancy context.
 3. Actor submits requested update (date/time and/or player list).
 4. System validates authorization and member-eligibility rules.
-5. System validates revised slot capacity.
-6. System applies update atomically and adjusts occupancy.
-7. System confirms update.
+5. System validates participant-list rules (booking member remains on reservation; only additional players may be added/removed).
+6. System validates revised slot capacity.
+7. System applies update atomically and adjusts occupancy.
+8. System confirms update.
 
 ## Alternate Flows
 ### A1 – Cancel Reservation
@@ -59,6 +60,11 @@ Allow members and authorized staff to view reservation details and maintain rese
 - At step 4, revised time is invalid for booking member's membership type.
 - System rejects update and returns allowed windows.
 
+### A5 – Booking Member Removal Attempted
+- At step 5, update removes the booking member from the reservation player list.
+- System rejects update with a policy reason (for example, `BOOKING_MEMBER_REQUIRED`).
+- System instructs actor to cancel the reservation instead if the booking member will not play.
+
 ## Exceptions
 - **E1: Concurrency Conflict**: Reservation or capacity changed by another request; system prompts refresh and retry.
 - **E2: Transaction Error During Move**: Failure while moving between slots causes rollback; occupancy remains consistent.
@@ -70,8 +76,11 @@ Allow members and authorized staff to view reservation details and maintain rese
 2. Update and cancel operations must preserve capacity integrity.
 3. Members can only maintain their own reservations; staff roles may maintain reservations on behalf of members.
 4. Player identities remain visible in reservation details.
-5. Phase 1 defines no cancellation cutoff; cancellation timing is not a rejection criterion.
-6. Cancellation reason/decision codes align with policy service and do not include cutoff-based rejection in Phase 1.
+5. Update operations are participant-list based: additional players may be added/removed, but the booking member cannot be removed from an active reservation.
+6. If the booking member will not participate, the valid operation is cancellation (with rebooking if needed), not participant removal.
+7. No explicit cutoff policy for updates/cancellations is defined yet; operations are allowed unless future policy adds limits.
+8. Phase 1 defines no cancellation cutoff; cancellation timing is not a rejection criterion.
+9. Cancellation reason/decision codes align with policy service and do not include cutoff-based rejection in Phase 1.
 
 ## Outcome / Reason Codes (Phase 1 alignment)
 - `BOOKING_ALLOWED` – update/cancel action passed current rules.

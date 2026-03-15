@@ -5,6 +5,7 @@
 
 ## Public Operations
 - `EvaluateCreateBookingAsync(BookingRequest bookingRequest, CancellationToken ct)`
+- `EvaluateUpdateBookingAsync(BookingRequest bookingRequest, Guid bookingId, CancellationToken ct)`
 - `EvaluateCancelBookingAsync(BookingCancellation bookingCancellation, CancellationToken ct)`
 - `GetPolicyForDateAsync(LocalDate playDate, CancellationToken ct)`
 
@@ -36,6 +37,17 @@
 - `string DecisionCode`
 - `IReadOnlyList<string> Reasons`
 
+### EvaluateUpdateBookingAsync
+**Input models: `BookingRequest` + `Guid bookingId`**
+- `Guid bookingId` (identifier of reservation being updated)
+- `BookingRequest bookingRequest` (updated play date/time, member context, and requested players using the standard booking domain object)
+
+**Output model: `BookingPolicyDecision`**
+- `bool Allowed`
+- `string DecisionCode`
+- `IReadOnlyList<string> Reasons`
+- `BookingPolicy PolicyApplied`
+
 ### GetPolicyForDateAsync
 **Input**
 - `LocalDate playDate`
@@ -55,6 +67,7 @@
 ## Core Validation / Business Rules
 - Booking creation is allowed only when `PlayDate` is within the season’s advance-booking window.
 - `PlayerCount` must be within configured min/max limits.
+- Reservation updates may add/remove additional players, but the booking member must remain in the submitted participant list.
 - Member can cancel only their own active booking.
 - Phase 1 cancellation policy has **no time-based cutoff**; valid owner/staff cancellations are allowed regardless of how close `RequestedAt` is to tee time.
 - Decision output must include at least one reason when `Allowed = false`.
