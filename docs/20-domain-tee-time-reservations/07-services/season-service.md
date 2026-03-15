@@ -1,61 +1,74 @@
-# SeasonService
+# SeasonService / ISeasonService
 
 ## Responsibility
-`SeasonService` owns the tee-time season calendar used by booking and availability flows, including identifying the active season for a date, exposing season boundaries, and enforcing season-state constraints so downstream services can work directly with domain models without re-implementing calendar policy.
+`SeasonService` provides in-memory season lookups used by `BookingWindowRule` to determine whether a date is bookable. It is a **singleton** loaded once at application startup — restart the application to pick up season data changes.
 
-## Public Operations
-- `CreateSeasonAsync(string name, LocalDate startDate, LocalDate endDate, CancellationToken ct)`
-- `GetSeasonForDateAsync(LocalDate playDate, CancellationToken ct)`
-- `GetCurrentSeasonAsync(LocalDate today, CancellationToken ct)`
-- `CloseSeasonAsync(Guid seasonId, LocalDate closedOn, CancellationToken ct)`
+## Interface
 
-## Inputs / Outputs (domain model contracts)
+```csharp
+public interface ISeasonService
+{
+    Season? GetSeasonForDate(DateOnly date);
+}
+```
 
-### CreateSeasonAsync
-**Input**
-- `string name`
-- `LocalDate startDate`
-- `LocalDate endDate`
+Returns the `Season` whose date range covers the given date, or `null` if no matching season exists.
 
-**Output model: `Season`**
-- `Guid SeasonId`
-- `string Name`
-- `LocalDate StartDate`
-- `LocalDate EndDate`
-- `SeasonStatus Status` (`Planned | Active | Closed`)
+## SeasonService Implementation
 
-### GetSeasonForDateAsync / GetCurrentSeasonAsync
-**Input**
-- `LocalDate playDate` or `LocalDate today`
+```csharp
+public class SeasonService : ISeasonService
+{
+    // Loaded at startup: Active + Planned seasons
+    public Season? GetSeasonForDate(DateOnly date) =>
+        _seasons.FirstOrDefault(s => s.StartDate <= date && s.EndDate >= date);
+}
+```
 
-**Output model: `Season`**
-- `Guid SeasonId`
-- `LocalDate StartDate`
-- `LocalDate EndDate`
-- `SeasonStatus Status`
+## What Seasons Are Loaded
 
-### CloseSeasonAsync
-**Input**
-- `Guid seasonId`
-- `LocalDate closedOn`
+Both `SeasonStatus.Active` and `SeasonStatus.Planned` seasons are loaded:
+- **Active** — current in-play season.
+- **Planned** — upcoming season. Members can book ahead into a planned season before it officially starts.
+- **Closed** seasons are excluded — no bookings into past seasons.
 
-**Output model: `Season`** (updated status)
+## DI Registration
 
-## Dependencies on Other Services
-- No hard dependency on other domain services in Phase 1.
-- Exposes season data consumed by `BookingPolicyService` and `AvailabilityService`.
+```csharp
+services.AddSingleton<ISeasonService>(provider =>
+{
+    using var scope = provider.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<IApplicationDbContext<TKey>>();
+    var seasons = db.Seasons
+        .Where(s => s.SeasonStatus == SeasonStatus.Active
+                 || s.SeasonStatus == SeasonStatus.Planned)
+        .ToList();
+    return new SeasonService(seasons);
+});
+```
 
-## POCO note
-- `Season` is treated as a persistence/data model in Phase 1.
-- Date/window/state validations are enforced by `SeasonService` workflow logic, not by `Season` instance methods.
+The factory resolves lazily on first use, after `EnsureCreated()` has run.
+
+## Season Domain Model
+
+```csharp
+public class Season
+{
+    public Guid SeasonId { get; set; }
+    public string Name { get; set; }
+    public DateOnly StartDate { get; set; }
+    public DateOnly EndDate { get; set; }
+    public SeasonStatus SeasonStatus { get; set; }  // Planned | Active | Closed
+}
+```
 
 ## Core Validation / Business Rules
-- `startDate` must be on or before `endDate`.
-- A new season cannot overlap date ranges of existing seasons.
-- A closed season cannot be reopened in Phase 1.
-- A date can map to at most one active season.
 
-## Error / Result Model
-- **Success**: `Result<T>.Success(payload)` with `Season`.
-- **Validation failure**: `Result<T>.ValidationFailed(errors)` (invalid dates, missing name).
-- **Conflict**: `Result<T>.Conflict(code, message)` (overlapping season, close already-closed season).
+- `StartDate` must be on or before `EndDate`.
+- Seasons must not have overlapping date ranges (enforced at the application level when creating seasons).
+- A date maps to at most one season.
+- A closed season cannot be reopened.
+
+## Future
+
+Season mutation operations (create, activate, close) belong in a future `SeasonManagementService`. For now seasons are managed directly via the database or seed data, and the application is restarted to reflect changes.
