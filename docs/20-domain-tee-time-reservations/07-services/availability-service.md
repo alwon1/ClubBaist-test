@@ -55,7 +55,7 @@
 - `LocalTime teeTime`
 - `int requestedPlayers`
 
-**Output model: `CapacityCheck`**
+**Output contract (no dedicated DTO/class in Phase 1)**
 - `bool Fits`
 - `int RemainingAfterRequest`
 - `string DecisionCode`
@@ -73,8 +73,9 @@
 - `requestedPlayers` must be greater than zero and no more than slot capacity.
 - `IsBookable` requires both free capacity and a positive policy decision.
 - Slot-level calculations must be deterministic for the same read timestamp.
+- Tee-time slot generation should use the tee-sheet cadence configured for the course/day. Phase 1 default cadence is **approximately 8-minute intervals** (not a hard-coded 7.5-minute requirement).
 
 ## Error / Result Model
-- **Success**: `Result<T>.Success(payload)` with `CourseDayAvailability`, `CourseAvailabilityRange`, `TeeTimeSlotAvailability`, or `CapacityCheck`.
+- **Success**: `Result<T>.Success(payload)` with `CourseDayAvailability`, `CourseAvailabilityRange`, `TeeTimeSlotAvailability`, or an inline capacity-check payload (`Fits`, `RemainingAfterRequest`, `DecisionCode`).
 - **Validation failure**: `Result<T>.ValidationFailed(errors)` (invalid course/date/time, non-positive requested players, invalid range).
 - **Conflict**: `Result<T>.Conflict(code, message)` (season closed, slot no longer available at check time, stale read version).
