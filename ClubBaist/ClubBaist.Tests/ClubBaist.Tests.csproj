@@ -24,6 +24,7 @@
   <ItemGroup>
     <ProjectReference Include="..\ClubBaist.Domain\ClubBaist.Domain.csproj" />
     <ProjectReference Include="..\ClubBaist.Services\ClubBaist.Services.csproj" />
+    <ProjectReference Include="..\ClubBaist.ServiceDefaults\ClubBaist.ServiceDefaults.csproj" />
   </ItemGroup>
 
 </Project>
