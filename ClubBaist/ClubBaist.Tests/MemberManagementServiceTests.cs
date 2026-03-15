@@ -15,13 +15,13 @@ public sealed class MemberManagementServiceTests
         using var scope = TestServiceHost.CreateScope();
         var provider = scope.ServiceProvider;
 
-        var memberService = provider.GetRequiredService<MemberManagementService<int>>();
-        var userManager = provider.GetRequiredService<UserManager<IdentityUser<int>>>();
-        var dbContext = provider.GetRequiredService<TestApplicationDbContext>();
+        var memberService = provider.GetRequiredService<MemberManagementService<Guid>>();
+        var userManager = provider.GetRequiredService<UserManager<IdentityUser<Guid>>>();
+        var dbContext = provider.GetRequiredService<ApplicationDbContext>();
 
         var userId = await CreateIdentityUserAsync(userManager);
 
-        var request = new CreateMemberRequest<int>(
+        var request = new CreateMemberRequest<Guid>(
             ApplicationUserId: userId,
             FirstName: "Jane",
             LastName: "Doe",
@@ -56,13 +56,13 @@ public sealed class MemberManagementServiceTests
         using var scope = TestServiceHost.CreateScope();
         var provider = scope.ServiceProvider;
 
-        var memberService = provider.GetRequiredService<MemberManagementService<int>>();
-        var userManager = provider.GetRequiredService<UserManager<IdentityUser<int>>>();
-        var dbContext = provider.GetRequiredService<TestApplicationDbContext>();
+        var memberService = provider.GetRequiredService<MemberManagementService<Guid>>();
+        var userManager = provider.GetRequiredService<UserManager<IdentityUser<Guid>>>();
+        var dbContext = provider.GetRequiredService<ApplicationDbContext>();
 
         var userId = await CreateIdentityUserAsync(userManager);
 
-        var request = new CreateMemberRequest<int>(
+        var request = new CreateMemberRequest<Guid>(
             ApplicationUserId: userId,
             FirstName: "  Jane  ",
             LastName: "  Doe  ",
@@ -114,12 +114,12 @@ public sealed class MemberManagementServiceTests
         using var scope = TestServiceHost.CreateScope();
         var provider = scope.ServiceProvider;
 
-        var memberService = provider.GetRequiredService<MemberManagementService<int>>();
-        var userManager = provider.GetRequiredService<UserManager<IdentityUser<int>>>();
+        var memberService = provider.GetRequiredService<MemberManagementService<Guid>>();
+        var userManager = provider.GetRequiredService<UserManager<IdentityUser<Guid>>>();
 
         var userId = await CreateIdentityUserAsync(userManager);
 
-        var request = new CreateMemberRequest<int>(
+        var request = new CreateMemberRequest<Guid>(
             ApplicationUserId: userId,
             FirstName: firstName,
             LastName: lastName,
@@ -142,12 +142,12 @@ public sealed class MemberManagementServiceTests
         using var scope = TestServiceHost.CreateScope();
         var provider = scope.ServiceProvider;
 
-        var memberService = provider.GetRequiredService<MemberManagementService<int>>();
-        var userManager = provider.GetRequiredService<UserManager<IdentityUser<int>>>();
+        var memberService = provider.GetRequiredService<MemberManagementService<Guid>>();
+        var userManager = provider.GetRequiredService<UserManager<IdentityUser<Guid>>>();
 
         var userId = await CreateIdentityUserAsync(userManager);
 
-        var firstRequest = new CreateMemberRequest<int>(
+        var firstRequest = new CreateMemberRequest<Guid>(
             ApplicationUserId: userId,
             FirstName: "Jane",
             LastName: "Doe",
@@ -160,7 +160,7 @@ public sealed class MemberManagementServiceTests
 
         await memberService.CreateMemberAsync(firstRequest);
 
-        var duplicateRequest = new CreateMemberRequest<int>(
+        var duplicateRequest = new CreateMemberRequest<Guid>(
             ApplicationUserId: userId,
             FirstName: "Janet",
             LastName: "Doe",
@@ -177,28 +177,19 @@ public sealed class MemberManagementServiceTests
         StringAssert.Contains(ex.Message, "already exists");
     }
 
-    private static async Task<int> CreateIdentityUserAsync(UserManager<IdentityUser<int>> userManager)
+    private static async Task<Guid> CreateIdentityUserAsync(UserManager<IdentityUser<Guid>> userManager)
     {
-        while (true)
+        var userId = Guid.NewGuid();
+        var user = new IdentityUser<Guid>
         {
-            var candidate = Random.Shared.Next(1, int.MaxValue);
-            var exists = await userManager.Users.AnyAsync(user => user.Id == candidate);
-            if (exists)
-            {
-                continue;
-            }
+            Id = userId,
+            UserName = $"user-{userId:N}",
+            Email = $"user-{userId:N}@example.com"
+        };
 
-            var user = new IdentityUser<int>
-            {
-                Id = candidate,
-                UserName = $"user-{candidate}",
-                Email = $"user-{candidate}@example.com"
-            };
+        var createResult = await userManager.CreateAsync(user);
+        Assert.IsTrue(createResult.Succeeded, string.Join(",", createResult.Errors.Select(error => error.Description)));
 
-            var createResult = await userManager.CreateAsync(user);
-            Assert.IsTrue(createResult.Succeeded, string.Join(",", createResult.Errors.Select(error => error.Description)));
-
-            return candidate;
-        }
+        return userId;
     }
 }

@@ -1,5 +1,6 @@
 using ClubBaist.Domain;
 using ClubBaist.Services;
+using ClubBaist.Services.Rules;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -22,22 +23,31 @@ public static class TestServiceHost
 
         var services = new ServiceCollection();
 
-        services.AddDbContext<TestApplicationDbContext>(options => options.UseSqlite(connection));
+        services.AddDbContext<ApplicationDbContext>(options => options.UseSqlite(connection));
 
-        services.AddIdentityCore<IdentityUser<int>>()
-            .AddRoles<IdentityRole<int>>()
-            .AddEntityFrameworkStores<TestApplicationDbContext>();
+        services.AddIdentityCore<IdentityUser<Guid>>()
+            .AddRoles<IdentityRole<Guid>>()
+            .AddEntityFrameworkStores<ApplicationDbContext>();
 
-        services.AddScoped<IApplicationDbContext<int>>(provider => provider.GetRequiredService<TestApplicationDbContext>());
-        services.AddScoped<MemberManagementService<int>>();
-        services.AddScoped<ApplicationManagementService<int>>();
+        services.AddScoped<IApplicationDbContext<Guid>>(provider => provider.GetRequiredService<ApplicationDbContext>());
+        services.AddScoped<MemberManagementService<Guid>>();
+        services.AddScoped<ApplicationManagementService<Guid>>();
+        services.AddScoped<TeeTimeBookingService<Guid>>();
+
+        // Booking rules
+        services.AddScoped<IBookingRule, BookingWindowRule>();
+        services.AddScoped<IBookingRule, SlotCapacityRule<Guid>>();
+        services.AddScoped<IBookingRule, MembershipTimeRestrictionRule>();
+
+        // Schedule service
+        services.AddSingleton<IScheduleTimeService, DefaultScheduleTimeService>();
 
         // SeasonService is a singleton loaded once from DB on first resolution.
         // The DB is guaranteed to exist before any test scope resolves it.
         services.AddSingleton<ISeasonService>(provider =>
         {
             using var scope = provider.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<TestApplicationDbContext>();
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             var seasons = db.Seasons
                 .Where(s => s.SeasonStatus == SeasonStatus.Active || s.SeasonStatus == SeasonStatus.Planned)
                 .ToList();
@@ -52,7 +62,7 @@ public static class TestServiceHost
 
         using (var initScope = provider.CreateScope())
         {
-            initScope.ServiceProvider.GetRequiredService<TestApplicationDbContext>().Database.EnsureCreated();
+            initScope.ServiceProvider.GetRequiredService<ApplicationDbContext>().Database.EnsureCreated();
         }
 
         return new TestScope(provider.CreateScope(), provider, connection);

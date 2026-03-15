@@ -1,0 +1,151 @@
+@page "/membership/applications"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "Admin,MembershipCommittee")]
+
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
+@using ClubBaist.Domain
+@using ClubBaist.Services
+
+@inject ApplicationManagementService<Guid> ApplicationService
+
+<PageTitle>Application Inbox</PageTitle>
+
+<div class="container mt-4">
+    <h2 class="mb-4">Membership Application Inbox</h2>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row align-items-end">
+                <div class="col-md-4">
+                    <div class="form-floating mb-3">
+                        <select id="statusFilter" class="form-select" @onchange="OnStatusFilterChanged">
+                            <option value="">All Actionable</option>
+                            @foreach (var status in _filterStatuses)
+                            {
+                                <option value="@status">@status</option>
+                            }
+                        </select>
+                        <label for="statusFilter">Filter by Status</label>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="mb-3">
+                        <button class="btn btn-primary" @onclick="LoadApplicationsAsync">
+                            <span class="me-1">Search</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (_loading)
+    {
+        <div class="d-flex justify-content-center my-4">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else if (_applications is null || _applications.Count == 0)
+    {
+        <div class="alert alert-info" role="alert">
+            No applications found matching the selected criteria.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>First Name</th>
+                        <th>Last Name</th>
+                        <th>Email</th>
+                        <th>Category</th>
+                        <th>Status</th>
+                        <th>Submitted</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var app in _applications)
+                    {
+                        <tr>
+                            <td>@app.FirstName</td>
+                            <td>@app.LastName</td>
+                            <td>@app.Email</td>
+                            <td>@app.RequestedMembershipCategory</td>
+                            <td>
+                                <span class="badge @GetStatusBadgeClass(app.CurrentStatus)">
+                                    @app.CurrentStatus
+                                </span>
+                            </td>
+                            <td>@app.SubmittedAt.ToString("yyyy-MM-dd")</td>
+                            <td>
+                                <a href="/membership/applications/@app.ApplicationId" class="btn btn-sm btn-outline-primary">
+                                    Review
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@code {
+    private IReadOnlyList<MembershipApplication<Guid>>? _applications;
+    private ApplicationStatus? _selectedStatus;
+    private bool _loading = true;
+
+    private static readonly ApplicationStatus[] _filterStatuses =
+    [
+        ApplicationStatus.Submitted,
+        ApplicationStatus.OnHold,
+        ApplicationStatus.Waitlisted
+    ];
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadApplicationsAsync();
+    }
+
+    private void OnStatusFilterChanged(ChangeEventArgs e)
+    {
+        var value = e.Value?.ToString();
+        _selectedStatus = string.IsNullOrEmpty(value)
+            ? null
+            : Enum.Parse<ApplicationStatus>(value);
+    }
+
+    private async Task LoadApplicationsAsync()
+    {
+        _loading = true;
+
+        try
+        {
+            var filter = new ActionableApplicationFilter(Status: _selectedStatus);
+            _applications = await ApplicationService.GetActionableApplicationsAsync(filter, CancellationToken.None);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private static string GetStatusBadgeClass(ApplicationStatus status)
+    {
+        return status switch
+        {
+            ApplicationStatus.Submitted => "bg-primary",
+            ApplicationStatus.OnHold => "bg-warning text-dark",
+            ApplicationStatus.Waitlisted => "bg-info text-dark",
+            ApplicationStatus.Accepted => "bg-success",
+            ApplicationStatus.Denied => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+}

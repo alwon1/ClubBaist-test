@@ -1,0 +1,298 @@
+@page "/membership/apply"
+@rendermode InteractiveServer
+@attribute [Authorize]
+
+@using System.ComponentModel.DataAnnotations
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.EntityFrameworkCore
+@using ClubBaist.Domain
+@using ClubBaist.Services
+
+@inject ApplicationManagementService<Guid> ApplicationService
+@inject IApplicationDbContext<Guid> DbContext
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<PageTitle>Apply for Membership</PageTitle>
+
+<div class="container mt-4">
+    <h2 class="mb-4">Apply for Membership</h2>
+
+    @if (!string.IsNullOrEmpty(_successMessage))
+    {
+        <div class="alert alert-success" role="alert">
+            @_successMessage
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(_errorMessage))
+    {
+        <div class="alert alert-danger" role="alert">
+            @_errorMessage
+        </div>
+    }
+
+    @if (!_submitted)
+    {
+        <EditForm Model="_model" OnValidSubmit="HandleSubmitAsync" FormName="applyForm">
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger mb-3" />
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Personal Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3">
+                                <InputText id="firstName" class="form-control" @bind-Value="_model.FirstName" placeholder="First Name" />
+                                <label for="firstName">First Name</label>
+                                <ValidationMessage For="() => _model.FirstName" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3">
+                                <InputText id="lastName" class="form-control" @bind-Value="_model.LastName" placeholder="Last Name" />
+                                <label for="lastName">Last Name</label>
+                                <ValidationMessage For="() => _model.LastName" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3">
+                                <InputDate id="dateOfBirth" class="form-control" @bind-Value="_model.DateOfBirth" placeholder="Date of Birth" />
+                                <label for="dateOfBirth">Date of Birth</label>
+                                <ValidationMessage For="() => _model.DateOfBirth" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3">
+                                <InputText id="email" class="form-control" @bind-Value="_model.Email" placeholder="Email" />
+                                <label for="email">Email</label>
+                                <ValidationMessage For="() => _model.Email" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3">
+                                <InputText id="phone" class="form-control" @bind-Value="_model.Phone" placeholder="Phone" />
+                                <label for="phone">Phone</label>
+                                <ValidationMessage For="() => _model.Phone" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3">
+                                <InputText id="alternatePhone" class="form-control" @bind-Value="_model.AlternatePhone" placeholder="Alternate Phone" />
+                                <label for="alternatePhone">Alternate Phone (Optional)</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <InputText id="address" class="form-control" @bind-Value="_model.Address" placeholder="Address" />
+                        <label for="address">Address</label>
+                        <ValidationMessage For="() => _model.Address" />
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <InputText id="postalCode" class="form-control" @bind-Value="_model.PostalCode" placeholder="Postal Code" />
+                        <label for="postalCode">Postal Code</label>
+                        <ValidationMessage For="() => _model.PostalCode" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Employment Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3">
+                                <InputText id="occupation" class="form-control" @bind-Value="_model.Occupation" placeholder="Occupation" />
+                                <label for="occupation">Occupation</label>
+                                <ValidationMessage For="() => _model.Occupation" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3">
+                                <InputText id="companyName" class="form-control" @bind-Value="_model.CompanyName" placeholder="Company Name" />
+                                <label for="companyName">Company Name</label>
+                                <ValidationMessage For="() => _model.CompanyName" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Membership Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="form-floating mb-3">
+                        <InputSelect id="membershipCategory" class="form-select" @bind-Value="_model.RequestedMembershipCategory">
+                            <option value="">-- Select Category --</option>
+                            @foreach (var category in Enum.GetValues<MembershipCategory>())
+                            {
+                                <option value="@category">@category</option>
+                            }
+                        </InputSelect>
+                        <label for="membershipCategory">Membership Category</label>
+                        <ValidationMessage For="() => _model.RequestedMembershipCategory" />
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3">
+                                <InputSelect id="sponsor1" class="form-select" @bind-Value="_model.Sponsor1MemberId">
+                                    <option value="">-- Select Sponsor 1 --</option>
+                                    @foreach (var sponsor in _sponsors)
+                                    {
+                                        <option value="@sponsor.MemberAccountId">@sponsor.FirstName @sponsor.LastName (@sponsor.MemberNumber)</option>
+                                    }
+                                </InputSelect>
+                                <label for="sponsor1">Sponsor 1</label>
+                                <ValidationMessage For="() => _model.Sponsor1MemberId" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3">
+                                <InputSelect id="sponsor2" class="form-select" @bind-Value="_model.Sponsor2MemberId">
+                                    <option value="">-- Select Sponsor 2 --</option>
+                                    @foreach (var sponsor in _sponsors)
+                                    {
+                                        <option value="@sponsor.MemberAccountId">@sponsor.FirstName @sponsor.LastName (@sponsor.MemberNumber)</option>
+                                    }
+                                </InputSelect>
+                                <label for="sponsor2">Sponsor 2</label>
+                                <ValidationMessage For="() => _model.Sponsor2MemberId" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <button type="submit" class="btn btn-primary" disabled="@_submitting">
+                    @if (_submitting)
+                    {
+                        <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                    }
+                    Submit Application
+                </button>
+            </div>
+        </EditForm>
+    }
+</div>
+
+@code {
+    private ApplicationFormModel _model = new();
+    private List<MemberAccount<Guid>> _sponsors = [];
+    private bool _submitting;
+    private bool _submitted;
+    private string? _successMessage;
+    private string? _errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _sponsors = await DbContext.MemberAccounts
+            .Where(m => m.IsActive && m.MembershipCategory == MembershipCategory.Shareholder)
+            .OrderBy(m => m.LastName)
+            .ThenBy(m => m.FirstName)
+            .AsNoTracking()
+            .ToListAsync();
+    }
+
+    private async Task HandleSubmitAsync()
+    {
+        _submitting = true;
+        _errorMessage = null;
+        _successMessage = null;
+
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            var userId = Guid.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+            var request = new SubmitApplicationRequest<Guid>(
+                ApplicationUserId: userId,
+                FirstName: _model.FirstName!,
+                LastName: _model.LastName!,
+                Occupation: _model.Occupation!,
+                CompanyName: _model.CompanyName!,
+                Address: _model.Address!,
+                PostalCode: _model.PostalCode!,
+                Phone: _model.Phone!,
+                Email: _model.Email!,
+                DateOfBirth: _model.DateOfBirth,
+                RequestedMembershipCategory: _model.RequestedMembershipCategory,
+                Sponsor1MemberId: _model.Sponsor1MemberId,
+                Sponsor2MemberId: _model.Sponsor2MemberId,
+                AlternatePhone: _model.AlternatePhone
+            );
+
+            await ApplicationService.SubmitApplicationAsync(request, CancellationToken.None);
+
+            _successMessage = "Your membership application has been submitted successfully. You will be notified once it has been reviewed.";
+            _submitted = true;
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"An error occurred while submitting your application: {ex.Message}";
+        }
+        finally
+        {
+            _submitting = false;
+        }
+    }
+
+    private sealed class ApplicationFormModel
+    {
+        [Required(ErrorMessage = "First name is required.")]
+        public string? FirstName { get; set; }
+
+        [Required(ErrorMessage = "Last name is required.")]
+        public string? LastName { get; set; }
+
+        [Required(ErrorMessage = "Occupation is required.")]
+        public string? Occupation { get; set; }
+
+        [Required(ErrorMessage = "Company name is required.")]
+        public string? CompanyName { get; set; }
+
+        [Required(ErrorMessage = "Address is required.")]
+        public string? Address { get; set; }
+
+        [Required(ErrorMessage = "Postal code is required.")]
+        public string? PostalCode { get; set; }
+
+        [Required(ErrorMessage = "Phone number is required.")]
+        public string? Phone { get; set; }
+
+        [Required(ErrorMessage = "Email is required.")]
+        [EmailAddress(ErrorMessage = "Please enter a valid email address.")]
+        public string? Email { get; set; }
+
+        [Required(ErrorMessage = "Date of birth is required.")]
+        public DateTime DateOfBirth { get; set; } = DateTime.Today.AddYears(-30);
+
+        public string? AlternatePhone { get; set; }
+
+        [Required(ErrorMessage = "Membership category is required.")]
+        public MembershipCategory RequestedMembershipCategory { get; set; }
+
+        [Required(ErrorMessage = "Sponsor 1 is required.")]
+        public Guid Sponsor1MemberId { get; set; }
+
+        [Required(ErrorMessage = "Sponsor 2 is required.")]
+        public Guid Sponsor2MemberId { get; set; }
+    }
+}

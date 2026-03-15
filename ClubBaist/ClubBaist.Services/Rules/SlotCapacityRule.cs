@@ -42,6 +42,6 @@ public class SlotCapacityRule<TKey> : IBookingRule where TKey : IEquatable<TKey>
             ? 0
             : 1 + slot.PlayerMemberAccountIds.Count;
 
-        return Math.Max(0, MaxCapacity - occupancy - requested);
+        return MaxCapacity - occupancy - requested;
     }
 }

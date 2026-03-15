@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>dotnet-ClubBaist.Seeder-885bd363-599d-444d-878e-b4cfab5ab045</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Microsoft.EntityFrameworkCore.SqlServer" Version="13.1.2" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.5" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ClubBaist.Domain\ClubBaist.Domain.csproj" />
+    <ProjectReference Include="..\ClubBaist.Services\ClubBaist.Services.csproj" />
+    <ProjectReference Include="..\ClubBaist.ServiceDefaults\ClubBaist.ServiceDefaults.csproj" />
+  </ItemGroup>
+</Project>

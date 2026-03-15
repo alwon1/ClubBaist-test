@@ -1,7 +1,98 @@
-﻿@page "/"
+@page "/"
+@using Microsoft.AspNetCore.Authorization
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Club BAIST - Home</PageTitle>
 
-<h1>Hello, world!</h1>
+<div class="container">
+    <h1 class="mb-4">Welcome to Club BAIST</h1>
+    <p class="lead">An exclusive private golf club, founded in 1996.</p>
 
-Welcome to your new app.
+    <AuthorizeView>
+        <Authorized>
+            <div class="row g-4 mt-3">
+                <AuthorizeView Roles="Member" Context="memberContext">
+                    <Authorized>
+                        <div class="col-md-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">Book Tee Time</h5>
+                                    <p class="card-text">Search available tee times and make a reservation.</p>
+                                    <a href="teetimes" class="btn btn-primary">View Availability</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">My Reservations</h5>
+                                    <p class="card-text">View, update, or cancel your upcoming reservations.</p>
+                                    <a href="teetimes/my" class="btn btn-outline-primary">View Reservations</a>
+                                </div>
+                            </div>
+                        </div>
+                    </Authorized>
+                </AuthorizeView>
+
+                <AuthorizeView Roles="Admin" Context="adminContext">
+                    <Authorized>
+                        <div class="col-md-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">Staff Console</h5>
+                                    <p class="card-text">Manage reservations on behalf of members.</p>
+                                    <a href="teetimes/staff" class="btn btn-warning">Open Console</a>
+                                </div>
+                            </div>
+                        </div>
+                    </Authorized>
+                </AuthorizeView>
+
+                <AuthorizeView Roles="Admin,MembershipCommittee" Context="committeeContext">
+                    <Authorized>
+                        <div class="col-md-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">Membership Applications</h5>
+                                    <p class="card-text">Review and process pending membership applications.</p>
+                                    <a href="membership/applications" class="btn btn-info">View Applications</a>
+                                </div>
+                            </div>
+                        </div>
+                    </Authorized>
+                </AuthorizeView>
+
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Apply for Membership</h5>
+                            <p class="card-text">Submit a new membership application to Club BAIST.</p>
+                            <a href="membership/apply" class="btn btn-outline-secondary">Apply Now</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </Authorized>
+        <NotAuthorized>
+            <div class="row g-4 mt-3">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Already a Member?</h5>
+                            <p class="card-text">Log in to access tee time reservations and your account.</p>
+                            <a href="Account/Login" class="btn btn-primary">Login</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Interested in Membership?</h5>
+                            <p class="card-text">Register an account and submit your membership application.</p>
+                            <a href="Account/Register" class="btn btn-outline-primary">Register</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </NotAuthorized>
+    </AuthorizeView>
+</div>

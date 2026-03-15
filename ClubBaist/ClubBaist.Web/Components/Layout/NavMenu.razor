@@ -1,10 +1,10 @@
-﻿@implements IDisposable
+@implements IDisposable
 
 @inject NavigationManager NavigationManager
 
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
-        <a class="navbar-brand" href="">ClubBaist.Web</a>
+        <a class="navbar-brand" href="">Club BAIST</a>
     </div>
 </div>
 
@@ -18,26 +18,54 @@
             </NavLink>
         </div>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="auth">
-                <span class="bi bi-lock-nav-menu" aria-hidden="true"></span> Auth Required
-            </NavLink>
-        </div>
-
         <AuthorizeView>
             <Authorized>
+                <AuthorizeView Roles="Member" Context="memberContext">
+                    <Authorized>
+                        <div class="nav-item px-3">
+                            <NavLink class="nav-link" href="teetimes">
+                                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Tee Times
+                            </NavLink>
+                        </div>
+                        <div class="nav-item px-3">
+                            <NavLink class="nav-link" href="teetimes/my">
+                                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> My Reservations
+                            </NavLink>
+                        </div>
+                    </Authorized>
+                </AuthorizeView>
+
+                <AuthorizeView Roles="Admin" Context="adminContext">
+                    <Authorized>
+                        <div class="nav-item px-3">
+                            <NavLink class="nav-link" href="teetimes">
+                                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Tee Times
+                            </NavLink>
+                        </div>
+                        <div class="nav-item px-3">
+                            <NavLink class="nav-link" href="teetimes/staff">
+                                <span class="bi bi-person-workspace" aria-hidden="true"></span> Staff Console
+                            </NavLink>
+                        </div>
+                    </Authorized>
+                </AuthorizeView>
+
+                <AuthorizeView Roles="Admin,MembershipCommittee" Context="committeeContext">
+                    <Authorized>
+                        <div class="nav-item px-3">
+                            <NavLink class="nav-link" href="membership/applications">
+                                <span class="bi bi-person-badge-nav-menu" aria-hidden="true"></span> Applications
+                            </NavLink>
+                        </div>
+                    </Authorized>
+                </AuthorizeView>
+
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="membership/apply">
+                        <span class="bi bi-person-nav-menu" aria-hidden="true"></span> Apply for Membership
+                    </NavLink>
+                </div>
+
                 <div class="nav-item px-3">
                     <NavLink class="nav-link" href="Account/Manage">
                         <span class="bi bi-person-fill-nav-menu" aria-hidden="true"></span> @context.User.Identity?.Name
@@ -54,6 +82,11 @@
                 </div>
             </Authorized>
             <NotAuthorized>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="membership/apply">
+                        <span class="bi bi-person-nav-menu" aria-hidden="true"></span> Apply for Membership
+                    </NavLink>
+                </div>
                 <div class="nav-item px-3">
                     <NavLink class="nav-link" href="Account/Register">
                         <span class="bi bi-person-nav-menu" aria-hidden="true"></span> Register
@@ -89,4 +122,3 @@
         NavigationManager.LocationChanged -= OnLocationChanged;
     }
 }
-

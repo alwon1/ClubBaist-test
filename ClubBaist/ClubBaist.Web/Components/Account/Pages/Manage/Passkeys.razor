@@ -1,12 +1,11 @@
 ﻿@page "/Account/Manage/Passkeys"
 
-@using ClubBaist.Web.Data
 @using Microsoft.AspNetCore.Identity
 @using System.ComponentModel.DataAnnotations
 @using System.Buffers.Text
 
-@inject UserManager<ApplicationUser> UserManager
-@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<IdentityUser<Guid>> UserManager
+@inject SignInManager<IdentityUser<Guid>> SignInManager
 @inject IdentityRedirectManager RedirectManager
 
 <PageTitle>Manage your passkeys</PageTitle>
@@ -62,7 +61,7 @@ else
 @code {
     private const int MaxPasskeyCount = 100;
 
-    private ApplicationUser? user;
+    private IdentityUser<Guid>? user;
     private IList<UserPasskeyInfo>? currentPasskeys;
 
     [CascadingParameter]
