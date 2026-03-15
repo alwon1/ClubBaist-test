@@ -45,7 +45,8 @@
 - `int AdvanceBookingDays`
 - `int MinPlayers`
 - `int MaxPlayers`
-- `Duration CancellationCutoff`
+
+> Phase 1 note: no cancellation-cutoff policy is enforced yet. If a cutoff is introduced in a later phase, the policy model will be extended at that time.
 
 ## Dependencies on Other Services
 - Depends on `SeasonService` for season-specific booking window configuration.
@@ -55,8 +56,17 @@
 - Booking creation is allowed only when `PlayDate` is within the season’s advance-booking window.
 - `PlayerCount` must be within configured min/max limits.
 - Member can cancel only their own active booking.
-- Cancellation requests after the cutoff window are rejected.
+- Phase 1 cancellation policy has **no time-based cutoff**; valid owner/staff cancellations are allowed regardless of how close `RequestedAt` is to tee time.
 - Decision output must include at least one reason when `Allowed = false`.
+
+## Decision / Reason Codes (Phase 1)
+- `BOOKING_ALLOWED`: Create or cancel request passed all Phase 1 checks.
+- `BOOKING_WINDOW_VIOLATION`: Requested play date is outside advance-booking window.
+- `PLAYER_COUNT_OUT_OF_RANGE`: Player count is below minimum or above maximum.
+- `BOOKING_NOT_FOUND_OR_NOT_ACTIVE`: Booking does not exist or is already canceled/inactive.
+- `BOOKING_FORBIDDEN`: Requesting actor is not permitted to maintain the booking.
+
+> `CANCELLATION_CUTOFF_EXCEEDED` is intentionally not used in Phase 1 because cutoff enforcement is deferred.
 
 ## Error / Result Model
 - **Success**: `Result<T>.Success(BookingPolicyDecision)`.
