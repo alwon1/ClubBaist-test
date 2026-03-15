@@ -2,6 +2,7 @@ using ClubBaist.Domain;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace ClubBaist.Tests;
 
@@ -18,8 +19,9 @@ public sealed class TestApplicationDbContext
     public DbSet<ApplicationStatusHistory<int>> ApplicationStatusHistories => Set<ApplicationStatusHistory<int>>();
     public DbSet<Season> Seasons => Set<Season>();
     public DbSet<Reservation> Reservations => Set<Reservation>();
-    public DbSet<ReservationPlayer> ReservationPlayers => Set<ReservationPlayer>();
-    public DbSet<SlotOccupancy> SlotOccupancies => Set<SlotOccupancy>();
+
+    public Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default) =>
+        Database.BeginTransactionAsync(cancellationToken);
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -76,13 +78,6 @@ public sealed class TestApplicationDbContext
         {
             entity.HasKey(reservation => reservation.ReservationId);
 
-            entity.Property<string>("IdempotencyKey")
-                .HasMaxLength(128)
-                .IsRequired();
-
-            entity.HasIndex("IdempotencyKey")
-                .IsUnique();
-
             entity.HasIndex(reservation => new
             {
                 reservation.BookingMemberAccountId,
@@ -90,30 +85,7 @@ public sealed class TestApplicationDbContext
                 reservation.SlotTime
             });
 
-            entity.Ignore(reservation => reservation.PlayerMemberAccountIds);
-        });
-
-        builder.Entity<ReservationPlayer>(entity =>
-        {
-            entity.HasKey(player => new { player.ReservationId, player.PlayerMemberAccountId });
-
-            entity.HasIndex(player => player.PlayerMemberAccountId);
-
-            entity.HasOne<Reservation>()
-                .WithMany()
-                .HasForeignKey(player => player.ReservationId)
-                .OnDelete(DeleteBehavior.Cascade);
-        });
-
-        builder.Entity<SlotOccupancy>(entity =>
-        {
-            entity.HasKey(slot => new { slot.SlotDate, slot.SlotTime });
-
-            entity.Property(slot => slot.ReservedPlayers)
-                .IsRequired();
-
-            entity.HasIndex(slot => new { slot.SlotDate, slot.SlotTime })
-                .IsUnique();
+            entity.PrimitiveCollection(reservation => reservation.PlayerMemberAccountIds);
         });
     }
 }

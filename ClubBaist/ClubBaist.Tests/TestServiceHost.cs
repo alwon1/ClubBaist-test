@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using System.Linq;
 
 namespace ClubBaist.Tests;
 
@@ -30,6 +31,18 @@ public static class TestServiceHost
         services.AddScoped<IApplicationDbContext<int>>(provider => provider.GetRequiredService<TestApplicationDbContext>());
         services.AddScoped<MemberManagementService<int>>();
         services.AddScoped<ApplicationManagementService<int>>();
+
+        // SeasonService is a singleton loaded once from DB on first resolution.
+        // The DB is guaranteed to exist before any test scope resolves it.
+        services.AddSingleton<ISeasonService>(provider =>
+        {
+            using var scope = provider.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<TestApplicationDbContext>();
+            var seasons = db.Seasons
+                .Where(s => s.SeasonStatus == SeasonStatus.Active || s.SeasonStatus == SeasonStatus.Planned)
+                .ToList();
+            return new SeasonService(seasons);
+        });
 
         var provider = services.BuildServiceProvider(new ServiceProviderOptions
         {
