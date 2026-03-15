@@ -16,6 +16,10 @@ public sealed class TestApplicationDbContext
     public DbSet<MembershipApplication<int>> MembershipApplications => Set<MembershipApplication<int>>();
     public DbSet<MemberAccount<int>> MemberAccounts => Set<MemberAccount<int>>();
     public DbSet<ApplicationStatusHistory<int>> ApplicationStatusHistories => Set<ApplicationStatusHistory<int>>();
+    public DbSet<Season> Seasons => Set<Season>();
+    public DbSet<Reservation> Reservations => Set<Reservation>();
+    public DbSet<ReservationPlayer> ReservationPlayers => Set<ReservationPlayer>();
+    public DbSet<SlotOccupancy> SlotOccupancies => Set<SlotOccupancy>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -56,6 +60,60 @@ public sealed class TestApplicationDbContext
                 .WithMany()
                 .HasForeignKey(history => history.ChangedByUserId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<Season>(entity =>
+        {
+            entity.HasKey(season => season.SeasonId);
+            entity.Property(season => season.Name)
+                .IsRequired();
+            entity.HasIndex(season => season.Name)
+                .IsUnique();
+            entity.HasIndex(season => new { season.StartDate, season.EndDate });
+        });
+
+        builder.Entity<Reservation>(entity =>
+        {
+            entity.HasKey(reservation => reservation.ReservationId);
+
+            entity.Property<string>("IdempotencyKey")
+                .HasMaxLength(128)
+                .IsRequired();
+
+            entity.HasIndex("IdempotencyKey")
+                .IsUnique();
+
+            entity.HasIndex(reservation => new
+            {
+                reservation.BookingMemberAccountId,
+                reservation.SlotDate,
+                reservation.SlotTime
+            });
+
+            entity.Ignore(reservation => reservation.PlayerMemberAccountIds);
+        });
+
+        builder.Entity<ReservationPlayer>(entity =>
+        {
+            entity.HasKey(player => new { player.ReservationId, player.PlayerMemberAccountId });
+
+            entity.HasIndex(player => player.PlayerMemberAccountId);
+
+            entity.HasOne<Reservation>()
+                .WithMany()
+                .HasForeignKey(player => player.ReservationId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<SlotOccupancy>(entity =>
+        {
+            entity.HasKey(slot => new { slot.SlotDate, slot.SlotTime });
+
+            entity.Property(slot => slot.ReservedPlayers)
+                .IsRequired();
+
+            entity.HasIndex(slot => new { slot.SlotDate, slot.SlotTime })
+                .IsUnique();
         });
     }
 }
