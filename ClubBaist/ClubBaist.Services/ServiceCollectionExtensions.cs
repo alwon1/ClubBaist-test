@@ -21,6 +21,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IBookingRule, BookingWindowRule>();
         services.AddScoped<IBookingRule, SlotCapacityRule<TKey>>();
         services.AddScoped<IBookingRule, MembershipTimeRestrictionRule>();
+        services.AddScoped<IBookingRule, MemberConflictRule<TKey>>();
 
         // Schedule service
         services.AddSingleton<IScheduleTimeService, DefaultScheduleTimeService>();
