@@ -69,7 +69,7 @@
     <div class="mb-2 d-flex gap-3 align-items-center small text-muted flex-wrap">
         <span><span class="badge bg-primary">&nbsp;</span> Booking member</span>
         <span><span class="badge bg-secondary">&nbsp;</span> Additional player</span>
-        <span class="border rounded px-1" style="border-style: dashed !important;">—</span> Available spot
+        <span class="border rounded px-1 empty-slot-bookable" style="font-size:0.8rem;">+</span> Click to book
         @if (!isAdmin)
         {
             <span class="ms-2"><span class="reservation-editable-sample border rounded px-1" style="border: 2px solid #0d6efd; cursor:pointer">✎</span> Click to edit your reservation</span>
@@ -149,14 +149,15 @@ else if (viewMode == ViewMode.Week && weeklySlots is not null)
                                 }
                                 @for (var i = 0; i < emptyCount; i++)
                                 {
-                                    <div class="weekly-empty-spot">—</div>
-                                }
-                                @if (slot.RemainingCapacity > 0)
-                                {
-                                    <div class="weekly-book-link">
+                                    @if (slot.RemainingCapacity > 0)
+                                    {
                                         <a href="@($"/teetimes/book?date={d:yyyy-MM-dd}&time={slot.Time:HH:mm}")"
-                                           class="btn btn-primary btn-sm weekly-book-btn">Book</a>
-                                    </div>
+                                           class="weekly-empty-spot weekly-empty-spot-bookable">+</a>
+                                    }
+                                    else
+                                    {
+                                        <div class="weekly-empty-spot">—</div>
+                                    }
                                 }
                             }
                         </div>
@@ -239,25 +240,20 @@ else if (viewMode == ViewMode.Day && slots is not null)
                         @for (var i = 0; i < emptyCount; i++)
                         {
                             <div class="col-3 px-1">
-                                <div class="empty-slot text-muted text-center">—</div>
+                                @if (slot.RemainingCapacity > 0)
+                                {
+                                    <a href="@($"/teetimes/book?date={selectedDate:yyyy-MM-dd}&time={slot.Time:HH:mm}")"
+                                       class="empty-slot empty-slot-bookable text-center">+</a>
+                                }
+                                else
+                                {
+                                    <div class="empty-slot text-muted text-center">—</div>
+                                }
                             </div>
                         }
                     </div>
                 </div>
 
-                <div class="slot-action">
-                    @if (slot.RemainingCapacity > 0)
-                    {
-                        <a class="btn btn-sm btn-primary"
-                           href="@($"/teetimes/book?date={selectedDate:yyyy-MM-dd}&time={slot.Time:HH:mm}")">
-                            Book
-                        </a>
-                    }
-                    else
-                    {
-                        <button class="btn btn-sm btn-secondary" disabled>Full</button>
-                    }
-                </div>
             </div>
         }
     </div>
@@ -283,12 +279,6 @@ else if (viewMode == ViewMode.Day && slots is not null)
     .slot-time {
         width: 5.5rem;
         flex-shrink: 0;
-    }
-
-    .slot-action {
-        width: 4.5rem;
-        flex-shrink: 0;
-        text-align: right;
     }
 
     .reservation-box {
@@ -317,6 +307,19 @@ else if (viewMode == ViewMode.Day && slots is not null)
         align-items: center;
         justify-content: center;
         background: #fafafa;
+    }
+
+    .empty-slot-bookable {
+        border-color: #0d6efd;
+        color: #0d6efd;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .empty-slot-bookable:hover {
+        background: #e7f1ff;
+        border-color: #0a58ca;
+        color: #0a58ca;
     }
 
     .member-badge {
@@ -414,17 +417,19 @@ else if (viewMode == ViewMode.Day && slots is not null)
         margin-bottom: 1px;
         line-height: 1.4;
         background: #fafafa;
+        display: block;
     }
 
-    .weekly-book-link {
-        text-align: right;
-        margin-top: 2px;
+    .weekly-empty-spot-bookable {
+        border-color: #0d6efd;
+        color: #0d6efd;
+        text-decoration: none;
+        cursor: pointer;
     }
 
-    .weekly-book-btn {
-        font-size: 0.55rem;
-        padding: 0.05rem 0.25rem;
-        line-height: 1.4;
+    .weekly-empty-spot-bookable:hover {
+        background: #e7f1ff;
+        color: #0a58ca;
     }
 
     /* Today column highlight */

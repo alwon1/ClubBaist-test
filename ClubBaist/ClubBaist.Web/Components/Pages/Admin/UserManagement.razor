@@ -135,7 +135,7 @@
                     user.Id,
                     user.Email ?? user.UserName ?? user.Id.ToString(),
                     roles,
-                    member?.MemberNumber,
+                    member?.MemberNumber.ToString(),
                     member?.MemberAccountId));
             }
 

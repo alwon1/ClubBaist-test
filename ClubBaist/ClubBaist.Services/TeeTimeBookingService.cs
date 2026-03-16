@@ -31,6 +31,7 @@ public class TeeTimeBookingService<TKey> where TKey : IEquatable<TKey>
     {
         // Batch: fetch all reservations for the range in one query.
         var reservationsInRange = await _dbContext.Reservations
+            .AsNoTracking()
             .Where(r => r.SlotDate >= from && r.SlotDate <= to && !r.IsCancelled)
             .ToListAsync(cancellationToken);
 
@@ -72,6 +73,7 @@ public class TeeTimeBookingService<TKey> where TKey : IEquatable<TKey>
         var times = _scheduleTimeService.GetScheduleTimes(date);
 
         var reservations = await _dbContext.Reservations
+            .AsNoTracking()
             .Where(r => r.SlotDate == date && !r.IsCancelled)
             .ToListAsync(cancellationToken);
 
@@ -100,6 +102,7 @@ public class TeeTimeBookingService<TKey> where TKey : IEquatable<TKey>
         var times = _scheduleTimeService.GetScheduleTimes(date);
 
         var reservations = await _dbContext.Reservations
+            .AsNoTracking()
             .Where(r => r.SlotDate == date && !r.IsCancelled)
             .ToListAsync(cancellationToken);
 
@@ -109,6 +112,7 @@ public class TeeTimeBookingService<TKey> where TKey : IEquatable<TKey>
             .ToList();
 
         var memberList = await _dbContext.MemberAccounts
+            .AsNoTracking()
             .Where(m => memberIds.Contains(m.MemberAccountId))
             .Select(m => new MemberInfo(m.MemberAccountId, m.FirstName, m.LastName))
             .ToListAsync(cancellationToken);
@@ -149,6 +153,7 @@ public class TeeTimeBookingService<TKey> where TKey : IEquatable<TKey>
         CancellationToken cancellationToken = default)
     {
         return await _dbContext.Reservations
+            .AsNoTracking()
             .Where(r => !r.IsCancelled
                      && (r.BookingMemberAccountId == memberAccountId
                          || r.PlayerMemberAccountIds.Contains(memberAccountId)))

@@ -68,14 +68,14 @@ public class SeedWorker(
         // Create MemberAccounts if they don't exist yet
         if (!await db.MemberAccounts.AnyAsync(ct))
         {
-            var memberNumber = 1;
+            var memberNumber = 10000;
 
             db.MemberAccounts.AddRange(
-                CreateMember(sh1.Id, $"{memberNumber++}", "Alice", "Shareholder", "shareholder1@clubbaist.com", MembershipCategory.Shareholder, now),
-                CreateMember(sh2.Id, $"{memberNumber++}", "Bob", "Shareholder", "shareholder2@clubbaist.com", MembershipCategory.Shareholder, now),
-                CreateMember(sh3.Id, $"{memberNumber++}", "Carol", "Shareholder", "shareholder3@clubbaist.com", MembershipCategory.Shareholder, now),
-                CreateMember(silver.Id, $"{memberNumber++}", "Diana", "Silver", "silver@clubbaist.com", MembershipCategory.ShareholderSpouse, now),
-                CreateMember(bronze.Id, $"{memberNumber++}", "Evan", "Bronze", "bronze@clubbaist.com", MembershipCategory.Junior, now)
+                CreateMember(sh1.Id, memberNumber++, "Alice", "Shareholder", "shareholder1@clubbaist.com", MembershipCategory.Shareholder, now),
+                CreateMember(sh2.Id, memberNumber++, "Bob", "Shareholder", "shareholder2@clubbaist.com", MembershipCategory.Shareholder, now),
+                CreateMember(sh3.Id, memberNumber++, "Carol", "Shareholder", "shareholder3@clubbaist.com", MembershipCategory.Shareholder, now),
+                CreateMember(silver.Id, memberNumber++, "Diana", "Silver", "silver@clubbaist.com", MembershipCategory.ShareholderSpouse, now),
+                CreateMember(bronze.Id, memberNumber++, "Evan", "Bronze", "bronze@clubbaist.com", MembershipCategory.Junior, now)
             );
 
             await db.SaveChangesAsync(ct);
@@ -115,7 +115,7 @@ public class SeedWorker(
     }
 
     private static MemberAccount<Guid> CreateMember(
-        Guid userId, string memberNumber, string firstName, string lastName,
+        Guid userId, int memberNumber, string firstName, string lastName,
         string email, MembershipCategory category, DateTime now)
     {
         return new MemberAccount<Guid>

@@ -125,17 +125,13 @@ public class MemberManagementService<TKey> where TKey : IEquatable<TKey>
         }
     }
 
-    private async Task<string> GenerateUniqueMemberNumberAsync(CancellationToken cancellationToken)
+    private async Task<int> GenerateUniqueMemberNumberAsync(CancellationToken cancellationToken)
     {
         var maxNumber = await _dbContext.MemberAccounts
-            .Select(m => m.MemberNumber)
-            .ToListAsync(cancellationToken)
-            .ContinueWith(t => t.Result
-                .Select(n => int.TryParse(n, out var v) ? v : 0)
-                .DefaultIfEmpty(0)
-                .Max(), cancellationToken);
+            .AsNoTracking()
+            .MaxAsync(m => (int?)m.MemberNumber, cancellationToken) ?? 9999;
 
-        return (maxNumber + 1).ToString();
+        return maxNumber + 1;
     }
 
     private static void EnsureRequiredKey(TKey key, string paramName)
@@ -182,7 +178,7 @@ public sealed record CreateMemberRequest<TKey>(
 
 public sealed record CreateMemberResult(
     Guid MemberAccountId,
-    string MemberNumber,
+    int MemberNumber,
     DateTime CreatedAt);
 
 public sealed record UpdateMemberRequest<TKey>(

@@ -1,5 +1,6 @@
 using ClubBaist.Domain;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace ClubBaist.Tests;
 
@@ -30,13 +31,14 @@ public static class TestDataFactory
         MembershipCategory category = MembershipCategory.Social)
     {
         var userId = await CreateIdentityUserAsync(userManager);
+        var nextMemberNumber = (await dbContext.MemberAccounts.AsNoTracking().MaxAsync(m => (int?)m.MemberNumber) ?? 9999) + 1;
 
         var memberAccountId = Guid.NewGuid();
         dbContext.MemberAccounts.Add(new MemberAccount<Guid>
         {
             MemberAccountId = memberAccountId,
             ApplicationUserId = userId,
-            MemberNumber = $"M-{userId:N}",
+            MemberNumber = nextMemberNumber,
             FirstName = "Test",
             LastName = "Member",
             DateOfBirth = new DateTime(1985, 1, 15),

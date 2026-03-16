@@ -35,7 +35,7 @@ public sealed class MemberManagementServiceTests
         var result = await memberService.CreateMemberAsync(request);
 
         Assert.AreNotEqual(Guid.Empty, result.MemberAccountId);
-        Assert.IsFalse(string.IsNullOrWhiteSpace(result.MemberNumber));
+        Assert.IsTrue(result.MemberNumber >= 10000);
 
         var persisted = await dbContext.MemberAccounts
             .AsNoTracking()
@@ -247,9 +247,7 @@ public sealed class MemberManagementServiceTests
         var result1 = await memberService.CreateMemberAsync(request1);
         var result2 = await memberService.CreateMemberAsync(request2);
 
-        Assert.IsTrue(int.TryParse(result1.MemberNumber, out var num1));
-        Assert.IsTrue(int.TryParse(result2.MemberNumber, out var num2));
-        Assert.AreEqual(num1 + 1, num2);
+        Assert.AreEqual(result1.MemberNumber + 1, result2.MemberNumber);
     }
 
     private static Task<Guid> CreateIdentityUserAsync(UserManager<IdentityUser<Guid>> userManager) =>

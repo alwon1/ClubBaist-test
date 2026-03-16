@@ -1,5 +1,6 @@
 using ClubBaist.Domain;
 using ClubBaist.Services.Rules;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ClubBaist.Services;
@@ -45,6 +46,7 @@ public static class ServiceCollectionExtensions
             using var scope = provider.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<TDbContext>();
             var seasons = db.Seasons
+                .AsNoTracking()
                 .Where(s => s.SeasonStatus == SeasonStatus.Active || s.SeasonStatus == SeasonStatus.Planned)
                 .ToList();
             return new SeasonService(seasons);

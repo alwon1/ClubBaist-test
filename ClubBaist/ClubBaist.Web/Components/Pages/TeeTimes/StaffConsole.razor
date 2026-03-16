@@ -407,10 +407,11 @@ else
             else
             {
                 var pattern = $"%{memberSearchTerm.Trim()}%";
+                var memberNumberSearch = int.TryParse(memberSearchTerm.Trim(), out var memberNum) ? (int?)memberNum : null;
                 memberSearchResults = await DbContext.MemberAccounts
                     .Where(m => EF.Functions.Like(m.FirstName, pattern)
                              || EF.Functions.Like(m.LastName, pattern)
-                             || EF.Functions.Like(m.MemberNumber, pattern))
+                             || (memberNumberSearch != null && m.MemberNumber == memberNumberSearch))
                     .OrderBy(m => m.LastName)
                     .ThenBy(m => m.FirstName)
                     .Take(50)
@@ -526,10 +527,11 @@ else
             if (!string.IsNullOrWhiteSpace(reservationSearchTerm))
             {
                 var pattern = $"%{reservationSearchTerm.Trim()}%";
+                var reservationMemberNumberSearch = int.TryParse(reservationSearchTerm.Trim(), out var resNum) ? (int?)resNum : null;
                 var matchingMemberIds = DbContext.MemberAccounts
                     .Where(m => EF.Functions.Like(m.FirstName, pattern)
                              || EF.Functions.Like(m.LastName, pattern)
-                             || EF.Functions.Like(m.MemberNumber, pattern))
+                             || (reservationMemberNumberSearch != null && m.MemberNumber == reservationMemberNumberSearch))
                     .Select(m => m.MemberAccountId);
                 reservationQuery = reservationQuery.Where(r => matchingMemberIds.Contains(r.BookingMemberAccountId));
             }
@@ -552,7 +554,7 @@ else
                     r.SlotDate,
                     r.SlotTime,
                     member is not null ? $"{member.FirstName} {member.LastName}" : "Unknown",
-                    member?.MemberNumber ?? "",
+                    member?.MemberNumber.ToString() ?? "",
                     r.PlayerMemberAccountIds.Count + 1,
                     r.IsCancelled);
             }).ToList();
