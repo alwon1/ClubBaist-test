@@ -18,4 +18,17 @@ public class SeasonService : ISeasonService
 
     public Season? GetSeasonForDate(DateOnly date) =>
         _seasons.FirstOrDefault(s => s.StartDate <= date && s.EndDate >= date);
+
+    public DateOnly? GetNextAvailableDate(DateOnly from)
+    {
+        var season = _seasons
+            .Where(s => s.EndDate >= from)
+            .OrderBy(s => s.StartDate)
+            .FirstOrDefault();
+
+        if (season is null)
+            return null;
+
+        return from >= season.StartDate ? from : season.StartDate;
+    }
 }
