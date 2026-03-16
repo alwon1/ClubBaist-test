@@ -64,6 +64,19 @@
     <div class="alert alert-danger">@errorMessage</div>
 }
 
+@if (!isLoading && (slots is not null || weeklySlots is not null))
+{
+    <div class="mb-2 d-flex gap-3 align-items-center small text-muted flex-wrap">
+        <span><span class="badge bg-primary">&nbsp;</span> Booking member</span>
+        <span><span class="badge bg-secondary">&nbsp;</span> Additional player</span>
+        <span class="border rounded px-1" style="border-style: dashed !important;">—</span> Available spot
+        @if (!isAdmin)
+        {
+            <span class="ms-2"><span class="reservation-editable-sample border rounded px-1" style="border: 2px solid #0d6efd; cursor:pointer">✎</span> Click to edit your reservation</span>
+        }
+    </div>
+}
+
 @if (isLoading)
 {
     <div class="text-center my-4">
@@ -82,18 +95,8 @@ else if (viewMode == ViewMode.Week && weeklySlots is not null)
         <button class="btn btn-outline-secondary btn-sm" @onclick="GoToNextWeek">Next &rsaquo;</button>
     </div>
 
-    <div class="mb-2 d-flex gap-3 align-items-center small text-muted flex-wrap">
-        <span><span class="badge bg-primary">&nbsp;</span> Booking member</span>
-        <span><span class="badge bg-secondary">&nbsp;</span> Additional player</span>
-        <span class="border rounded px-1" style="border-style: dashed !important;">—</span> Available spot
-        @if (!isAdmin)
-        {
-            <span class="ms-2"><span class="border rounded px-1" style="border: 2px solid #0d6efd; cursor:pointer">✎</span> Click to edit your reservation</span>
-        }
-    </div>
-
     <div class="weekly-container">
-        <QuickGrid Items="@WeeklyGridRows" Class="table weekly-table">
+        <QuickGrid Items="@weeklyGridRows.AsQueryable()" Class="table weekly-table">
 
             <TemplateColumn Title="" Class="weekly-time-col">
                 <span class="weekly-time-label">@context.Time.ToString("h:mm tt")</span>
@@ -113,13 +116,7 @@ else if (viewMode == ViewMode.Week && weeklySlots is not null)
                     <ChildContent>
                         @{
                             var slot = context.Slots.GetValueOrDefault(d);
-                            var cellBg = slot is null ? "weekly-no-data" :
-                                slot.RemainingCapacity switch
-                                {
-                                    BookingConstants.MaxPlayersPerSlot => "slot-row-open",
-                                    > 0 => "slot-row-partial",
-                                    _ => "slot-row-full"
-                                };
+                            var cellBg = slot is null ? "weekly-no-data" : UiHelpers.GetSlotCapacityClass(slot.RemainingCapacity);
                             var emptyCount = slot is null ? 0 :
                                 BookingConstants.MaxPlayersPerSlot - slot.Reservations.Sum(r => 1 + r.Players.Count);
                         }
@@ -172,27 +169,12 @@ else if (viewMode == ViewMode.Week && weeklySlots is not null)
 }
 else if (viewMode == ViewMode.Day && slots is not null)
 {
-    <div class="mb-2 d-flex gap-3 align-items-center small text-muted">
-        <span><span class="badge bg-primary">&nbsp;</span> Booking member</span>
-        <span><span class="badge bg-secondary">&nbsp;</span> Additional player</span>
-        <span class="border rounded px-1" style="border-style: dashed !important;">—</span> Available spot
-        @if (!isAdmin)
-        {
-            <span class="ms-2"><span class="reservation-editable-sample border rounded px-1" style="border: 2px solid #0d6efd; cursor:pointer">✎</span> Click to edit your reservation</span>
-        }
-    </div>
-
     <div class="tee-time-grid">
         @foreach (var slot in slots)
         {
             var totalBooked = slot.Reservations.Sum(r => 1 + r.Players.Count);
             var emptyCount = BookingConstants.MaxPlayersPerSlot - totalBooked;
-            var rowBg = slot.RemainingCapacity switch
-            {
-                BookingConstants.MaxPlayersPerSlot => "slot-row-open",
-                > 0 => "slot-row-partial",
-                _ => "slot-row-full"
-            };
+            var rowBg = UiHelpers.GetSlotCapacityClass(slot.RemainingCapacity);
 
             <div class="slot-row @rowBg d-flex align-items-center border-bottom py-2 gap-3">
                 <div class="slot-time fw-bold text-nowrap">
@@ -473,25 +455,11 @@ else if (viewMode == ViewMode.Day && slots is not null)
     private IReadOnlyList<BookedSlotWithMembers>? slots;
     private Dictionary<DateOnly, IReadOnlyList<BookedSlotWithMembers>>? weeklySlots;
     private List<DateOnly> weekDates = new();
-    private List<TimeOnly> allWeekTimes = new();
+    private List<WeeklySlotRow> weeklyGridRows = [];
     private bool isLoading;
     private string? errorMessage;
     private bool isAdmin;
     private Guid currentMemberAccountId;
-
-    private IQueryable<WeeklySlotRow> WeeklyGridRows
-    {
-        get
-        {
-            if (weeklySlots is null) return Enumerable.Empty<WeeklySlotRow>().AsQueryable();
-            return allWeekTimes.Select(time => new WeeklySlotRow(
-                time,
-                weekDates.ToDictionary(
-                    d => d,
-                    d => weeklySlots.GetValueOrDefault(d)?.FirstOrDefault(s => s.Time == time))
-            )).AsQueryable();
-        }
-    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -518,14 +486,20 @@ else if (viewMode == ViewMode.Day && slots is not null)
     private void OnAvailabilityChanged(DateOnly date)
     {
         var relevant = viewMode == ViewMode.Week
-            ? weekDates.Contains(date)
+            ? weekDates.Count > 0 && date >= weekDates[0] && date <= weekDates[6]
             : date == selectedDate;
 
         if (!relevant) return;
 
         _ = InvokeAsync(async () =>
         {
-            try { await RefreshCurrentView(); }
+            try
+            {
+                if (viewMode == ViewMode.Week && weeklySlots is not null)
+                    await RefreshWeekDay(date);
+                else
+                    await LoadAvailability();
+            }
             catch (Exception ex) { Logger.LogError(ex, "Live refresh failed for {Date}", date); }
         });
     }
@@ -602,7 +576,7 @@ else if (viewMode == ViewMode.Day && slots is not null)
         isLoading = true;
         errorMessage = null;
         weeklySlots = null;
-        allWeekTimes = new();
+        weeklyGridRows = [];
 
         try
         {
@@ -612,10 +586,7 @@ else if (viewMode == ViewMode.Day && slots is not null)
                 result[date] = await BookingService.GetBookedSlotsWithMembersAsync(date);
             }
             weeklySlots = result;
-            allWeekTimes = weeklySlots.Values
-                .FirstOrDefault(s => s.Count > 0)
-                ?.Select(s => s.Time)
-                .ToList() ?? new();
+            RebuildWeeklyGridRows();
         }
         catch (Exception ex)
         {
@@ -626,6 +597,26 @@ else if (viewMode == ViewMode.Day && slots is not null)
         {
             isLoading = false;
         }
+    }
+
+    private void RebuildWeeklyGridRows()
+    {
+        if (weeklySlots is null) { weeklyGridRows = []; return; }
+        var times = weeklySlots.Values.FirstOrDefault(s => s.Count > 0)?.Select(s => s.Time) ?? [];
+        weeklyGridRows = times.Select(time => new WeeklySlotRow(
+            time,
+            weekDates.ToDictionary(
+                d => d,
+                d => weeklySlots.GetValueOrDefault(d)?.FirstOrDefault(s => s.Time == time))
+        )).ToList();
+    }
+
+    private async Task RefreshWeekDay(DateOnly date)
+    {
+        var daySlots = await BookingService.GetBookedSlotsWithMembersAsync(date);
+        weeklySlots![date] = daySlots;
+        RebuildWeeklyGridRows();
+        StateHasChanged();
     }
 
     private async Task LoadAvailability()
