@@ -110,27 +110,31 @@ public class TeeTimeBookingService<TKey> where TKey : IEquatable<TKey>
         if (memberCategory is null)
             return -1;
 
-        await using var transaction = await _dbContext.BeginTransactionAsync(cancellationToken);
-
-        var context = new BookingEvaluationContext(memberCategory);
-        var remaining = await EvaluateRulesAsync(slot, context, cancellationToken);
-
-        if (remaining < 0)
-            return -1;
-
-        var reservation = new Reservation
+        var strategy = _dbContext.CreateExecutionStrategy();
+        return await strategy.ExecuteAsync(async () =>
         {
-            SlotDate = slot.SlotDate,
-            SlotTime = slot.SlotTime,
-            BookingMemberAccountId = slot.BookingMemberAccountId,
-            PlayerMemberAccountIds = slot.PlayerMemberAccountIds
-        };
+            await using var transaction = await _dbContext.BeginTransactionAsync(cancellationToken);
 
-        _dbContext.Reservations.Add(reservation);
-        await _dbContext.SaveChangesAsync(cancellationToken);
-        await transaction.CommitAsync(cancellationToken);
+            var context = new BookingEvaluationContext(memberCategory);
+            var remaining = await EvaluateRulesAsync(slot, context, cancellationToken);
 
-        return remaining;
+            if (remaining < 0)
+                return -1;
+
+            var reservation = new Reservation
+            {
+                SlotDate = slot.SlotDate,
+                SlotTime = slot.SlotTime,
+                BookingMemberAccountId = slot.BookingMemberAccountId,
+                PlayerMemberAccountIds = slot.PlayerMemberAccountIds
+            };
+
+            _dbContext.Reservations.Add(reservation);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+
+            return remaining;
+        });
     }
 
     public async Task<int> UpdateReservationAsync(
@@ -149,25 +153,29 @@ public class TeeTimeBookingService<TKey> where TKey : IEquatable<TKey>
         if (memberCategory is null)
             return -1;
 
-        await using var transaction = await _dbContext.BeginTransactionAsync(cancellationToken);
+        var strategy = _dbContext.CreateExecutionStrategy();
+        return await strategy.ExecuteAsync(async () =>
+        {
+            await using var transaction = await _dbContext.BeginTransactionAsync(cancellationToken);
 
-        var slot = new TeeTimeSlot(
-            reservation.SlotDate,
-            reservation.SlotTime,
-            reservation.BookingMemberAccountId,
-            playerMemberAccountIds);
+            var slot = new TeeTimeSlot(
+                reservation.SlotDate,
+                reservation.SlotTime,
+                reservation.BookingMemberAccountId,
+                playerMemberAccountIds);
 
-        var context = new BookingEvaluationContext(memberCategory, ExcludeReservationId: reservationId);
-        var remaining = await EvaluateRulesAsync(slot, context, cancellationToken);
+            var context = new BookingEvaluationContext(memberCategory, ExcludeReservationId: reservationId);
+            var remaining = await EvaluateRulesAsync(slot, context, cancellationToken);
 
-        if (remaining < 0)
-            return -1;
+            if (remaining < 0)
+                return -1;
 
-        reservation.PlayerMemberAccountIds = playerMemberAccountIds;
-        await _dbContext.SaveChangesAsync(cancellationToken);
-        await transaction.CommitAsync(cancellationToken);
+            reservation.PlayerMemberAccountIds = playerMemberAccountIds;
+            await _dbContext.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
 
-        return remaining;
+            return remaining;
+        });
     }
 
     public async Task<bool> CancelReservationAsync(
