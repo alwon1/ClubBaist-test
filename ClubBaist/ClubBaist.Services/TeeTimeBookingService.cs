@@ -10,15 +10,18 @@ public class TeeTimeBookingService<TKey> where TKey : IEquatable<TKey>
     private readonly IScheduleTimeService _scheduleTimeService;
     private readonly IReadOnlyList<IBookingRule> _rules;
     private readonly IApplicationDbContext<TKey> _dbContext;
+    private readonly AvailabilityUpdateService _availabilityUpdates;
 
     public TeeTimeBookingService(
         IScheduleTimeService scheduleTimeService,
         IEnumerable<IBookingRule> rules,
-        IApplicationDbContext<TKey> dbContext)
+        IApplicationDbContext<TKey> dbContext,
+        AvailabilityUpdateService availabilityUpdates)
     {
         _scheduleTimeService = scheduleTimeService;
         _rules = rules.ToList();
         _dbContext = dbContext;
+        _availabilityUpdates = availabilityUpdates;
     }
 
     public async Task<IReadOnlyList<DayAvailability>> GetAvailabilityAsync(
@@ -184,6 +187,7 @@ public class TeeTimeBookingService<TKey> where TKey : IEquatable<TKey>
             await _dbContext.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
+            _availabilityUpdates.Notify(slot.SlotDate);
             return remaining;
         });
     }
@@ -225,6 +229,7 @@ public class TeeTimeBookingService<TKey> where TKey : IEquatable<TKey>
             await _dbContext.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
+            _availabilityUpdates.Notify(reservation.SlotDate);
             return remaining;
         });
     }
@@ -239,9 +244,11 @@ public class TeeTimeBookingService<TKey> where TKey : IEquatable<TKey>
         if (reservation is null)
             return false;
 
+        var slotDate = reservation.SlotDate;
         reservation.IsCancelled = true;
         await _dbContext.SaveChangesAsync(cancellationToken);
 
+        _availabilityUpdates.Notify(slotDate);
         return true;
     }
 

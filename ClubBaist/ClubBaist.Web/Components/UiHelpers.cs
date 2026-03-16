@@ -1,4 +1,5 @@
 using ClubBaist.Domain;
+using ClubBaist.Services;
 
 namespace ClubBaist.Web.Components;
 
@@ -12,5 +13,12 @@ public static class UiHelpers
         ApplicationStatus.Accepted => "bg-success",
         ApplicationStatus.Denied => "bg-danger",
         _ => "bg-secondary"
+    };
+
+    public static string GetSlotCapacityClass(int remainingCapacity) => remainingCapacity switch
+    {
+        BookingConstants.MaxPlayersPerSlot => "slot-row-open",
+        > 0 => "slot-row-partial",
+        _ => "slot-row-full"
     };
 }
