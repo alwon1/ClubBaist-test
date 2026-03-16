@@ -10,7 +10,6 @@
 
 @inject MemberManagementService<Guid> MemberService
 @inject IApplicationDbContext<Guid> DbContext
-@inject NavigationManager NavigationManager
 @inject ILogger<EditMember> Logger
 
 <PageTitle>Edit Member - Club Baist</PageTitle>
@@ -239,7 +238,7 @@ else
 
         try
         {
-            await MemberService.UpdateMemberAsync(new UpdateMemberRequest<Guid>(
+            _member = await MemberService.UpdateMemberAsync(new UpdateMemberRequest<Guid>(
                 MemberAccountId: MemberId,
                 FirstName: _model.FirstName,
                 LastName: _model.LastName,
@@ -251,10 +250,6 @@ else
                 MembershipCategory: _model.MembershipCategory,
                 IsActive: _model.IsActive,
                 AlternatePhone: _model.AlternatePhone));
-
-            // Refresh local copy to reflect updated values
-            _member = await DbContext.MemberAccounts
-                .FirstOrDefaultAsync(m => m.MemberAccountId == MemberId);
 
             _resultMessage = "Member profile updated successfully.";
         }

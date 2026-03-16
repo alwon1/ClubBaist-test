@@ -78,7 +78,7 @@ public class MemberManagementService<TKey> where TKey : IEquatable<TKey>
         return new CreateMemberResult(memberAccount.MemberAccountId, memberAccount.MemberNumber, memberAccount.CreatedAt);
     }
 
-    public async Task UpdateMemberAsync(
+    public async Task<MemberAccount<TKey>> UpdateMemberAsync(
         UpdateMemberRequest<TKey> request,
         CancellationToken cancellationToken = default)
     {
@@ -88,6 +88,7 @@ public class MemberManagementService<TKey> where TKey : IEquatable<TKey>
             .FirstOrDefaultAsync(m => m.MemberAccountId == request.MemberAccountId, cancellationToken)
             ?? throw new InvalidOperationException("Member not found.");
 
+        var now = DateTime.UtcNow;
         member.UpdateProfile(
             request.FirstName,
             request.LastName,
@@ -97,11 +98,12 @@ public class MemberManagementService<TKey> where TKey : IEquatable<TKey>
             request.Address,
             request.PostalCode,
             request.MembershipCategory,
-            DateTime.UtcNow,
+            now,
             request.AlternatePhone);
 
-        member.SetActive(request.IsActive, DateTime.UtcNow);
+        member.SetActive(request.IsActive, now);
         await _dbContext.SaveChangesAsync(cancellationToken);
+        return member;
     }
 
     private Task<bool> HasExistingMemberAccountAsync(TKey applicationUserId, CancellationToken cancellationToken)

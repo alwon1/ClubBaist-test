@@ -11,7 +11,6 @@
 
 @inject UserManager<IdentityUser<Guid>> UserManager
 @inject IApplicationDbContext<Guid> DbContext
-@inject NavigationManager NavigationManager
 @inject ILogger<EditUser> Logger
 
 <PageTitle>Manage User - Club Baist</PageTitle>
@@ -65,7 +64,7 @@ else
                 <input class="form-check-input" type="checkbox" id="roleAdmin"
                        @bind="_roleAdmin" />
                 <label class="form-check-label" for="roleAdmin">
-                    <span class="badge bg-danger me-1">Admin</span>
+                    <span class="badge @UiHelpers.GetRoleBadgeClass(AppRoles.Admin) me-1">Admin</span>
                     Full system access
                 </label>
             </div>
@@ -73,7 +72,7 @@ else
                 <input class="form-check-input" type="checkbox" id="roleCommittee"
                        @bind="_roleCommittee" />
                 <label class="form-check-label" for="roleCommittee">
-                    <span class="badge bg-warning text-dark me-1">MembershipCommittee</span>
+                    <span class="badge @UiHelpers.GetRoleBadgeClass(AppRoles.MembershipCommittee) me-1">MembershipCommittee</span>
                     Can review membership applications
                 </label>
             </div>
@@ -81,7 +80,7 @@ else
                 <input class="form-check-input" type="checkbox" id="roleMember"
                        @bind="_roleMember" />
                 <label class="form-check-label" for="roleMember">
-                    <span class="badge bg-success me-1">Member</span>
+                    <span class="badge @UiHelpers.GetRoleBadgeClass(AppRoles.Member) me-1">Member</span>
                     Club member with tee time access
                 </label>
             </div>
@@ -147,7 +146,7 @@ else
             else
             {
                 <p class="text-muted mb-2">This user does not have a member profile.</p>
-                <a href="@($"/admin/users/create?linkUserId={UserId}")" class="btn btn-outline-secondary">
+                <a href="/admin/users/create" class="btn btn-outline-secondary">
                     Create Member Profile
                 </a>
             }

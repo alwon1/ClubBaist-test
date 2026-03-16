@@ -62,7 +62,7 @@
                 <TemplateColumn Title="Roles">
                     @foreach (var role in context.Roles)
                     {
-                        <span class="badge @GetRoleBadgeClass(role) me-1">@role</span>
+                        <span class="badge @UiHelpers.GetRoleBadgeClass(role) me-1">@role</span>
                     }
                 </TemplateColumn>
                 <TemplateColumn Title="Member #">
@@ -186,17 +186,9 @@
             return;
         }
 
-        var term = _searchTerm.Trim().ToLowerInvariant();
+        var term = _searchTerm.Trim();
         _rows = _allRows.Where(r => r.Email.Contains(term, StringComparison.OrdinalIgnoreCase)).ToList();
     }
-
-    private static string GetRoleBadgeClass(string role) => role switch
-    {
-        AppRoles.Admin => "bg-danger",
-        AppRoles.MembershipCommittee => "bg-warning text-dark",
-        AppRoles.Member => "bg-success",
-        _ => "bg-secondary"
-    };
 
     public void Dispose()
     {
