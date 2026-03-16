@@ -1,0 +1,304 @@
+@page "/admin/users/{UserId:guid}"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = AppRoles.Admin)]
+
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using ClubBaist.Domain
+@using ClubBaist.Services
+
+@inject UserManager<IdentityUser<Guid>> UserManager
+@inject IApplicationDbContext<Guid> DbContext
+@inject ILogger<EditUser> Logger
+
+<PageTitle>Manage User - Club Baist</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3>Manage User</h3>
+    <a href="/admin/users" class="btn btn-outline-secondary">Back to Users</a>
+</div>
+
+@if (_loading)
+{
+    <div class="d-flex justify-content-center my-4">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+}
+else if (_user is null)
+{
+    <div class="alert alert-warning">User not found.</div>
+}
+else
+{
+    @if (!string.IsNullOrEmpty(_rolesMessage))
+    {
+        <div class="alert @(_rolesError ? "alert-danger" : "alert-success") alert-dismissible fade show">
+            @_rolesMessage
+            <button type="button" class="btn-close" @onclick="() => _rolesMessage = null"></button>
+        </div>
+    }
+    @if (!string.IsNullOrEmpty(_passwordMessage))
+    {
+        <div class="alert @(_passwordError ? "alert-danger" : "alert-success") alert-dismissible fade show">
+            @_passwordMessage
+            <button type="button" class="btn-close" @onclick="() => _passwordMessage = null"></button>
+        </div>
+    }
+
+    <div class="card mb-4">
+        <div class="card-header"><h5 class="mb-0">Account</h5></div>
+        <div class="card-body">
+            <p class="mb-1"><strong>Email:</strong> @_user.Email</p>
+            <p class="mb-0"><strong>User ID:</strong> <code>@_user.Id</code></p>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header"><h5 class="mb-0">Roles</h5></div>
+        <div class="card-body">
+            <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" id="roleAdmin"
+                       @bind="_roleAdmin" />
+                <label class="form-check-label" for="roleAdmin">
+                    <span class="badge @UiHelpers.GetRoleBadgeClass(AppRoles.Admin) me-1">Admin</span>
+                    Full system access
+                </label>
+            </div>
+            <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" id="roleCommittee"
+                       @bind="_roleCommittee" />
+                <label class="form-check-label" for="roleCommittee">
+                    <span class="badge @UiHelpers.GetRoleBadgeClass(AppRoles.MembershipCommittee) me-1">MembershipCommittee</span>
+                    Can review membership applications
+                </label>
+            </div>
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="roleMember"
+                       @bind="_roleMember" />
+                <label class="form-check-label" for="roleMember">
+                    <span class="badge @UiHelpers.GetRoleBadgeClass(AppRoles.Member) me-1">Member</span>
+                    Club member with tee time access
+                </label>
+            </div>
+            @if (!_roleMember && _memberAccount is not null)
+            {
+                <div class="alert alert-warning py-2 mb-3">
+                    Removing the Member role will not delete the member profile. The user will lose tee time access but their member record will remain.
+                </div>
+            }
+            <button class="btn btn-primary" @onclick="SaveRolesAsync" disabled="@_savingRoles">
+                @if (_savingRoles)
+                {
+                    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                }
+                Save Roles
+            </button>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header"><h5 class="mb-0">Reset Password</h5></div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-5">
+                    <div class="form-floating mb-3">
+                        <input type="password" class="form-control" id="newPassword"
+                               @bind="_newPassword" placeholder="New Password" />
+                        <label for="newPassword">New Password</label>
+                    </div>
+                </div>
+                <div class="col-md-5">
+                    <div class="form-floating mb-3">
+                        <input type="password" class="form-control" id="confirmPassword"
+                               @bind="_confirmPassword" placeholder="Confirm Password" />
+                        <label for="confirmPassword">Confirm Password</label>
+                    </div>
+                </div>
+            </div>
+            <button class="btn btn-warning" @onclick="ResetPasswordAsync" disabled="@_savingPassword">
+                @if (_savingPassword)
+                {
+                    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                }
+                Reset Password
+            </button>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header"><h5 class="mb-0">Member Profile</h5></div>
+        <div class="card-body">
+            @if (_memberAccount is not null)
+            {
+                <p class="mb-2">
+                    Member <strong>@_memberAccount.FirstName @_memberAccount.LastName</strong>
+                    &nbsp;<span class="badge bg-secondary">@_memberAccount.MemberNumber</span>
+                    &nbsp;<span class="badge @(_memberAccount.IsActive ? "bg-success" : "bg-secondary")">@(_memberAccount.IsActive ? "Active" : "Inactive")</span>
+                </p>
+                <a href="@($"/admin/members/{_memberAccount.MemberAccountId}")" class="btn btn-outline-primary">
+                    Edit Member Profile
+                </a>
+            }
+            else
+            {
+                <p class="text-muted mb-2">This user does not have a member profile.</p>
+                <a href="/admin/users/create" class="btn btn-outline-secondary">
+                    Create Member Profile
+                </a>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public Guid UserId { get; set; }
+
+    private IdentityUser<Guid>? _user;
+    private MemberAccount<Guid>? _memberAccount;
+    private bool _loading = true;
+
+    private bool _roleAdmin;
+    private bool _roleCommittee;
+    private bool _roleMember;
+
+    private bool _savingRoles;
+    private string? _rolesMessage;
+    private bool _rolesError;
+
+    private string _newPassword = string.Empty;
+    private string _confirmPassword = string.Empty;
+    private bool _savingPassword;
+    private string? _passwordMessage;
+    private bool _passwordError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        try
+        {
+            _user = await UserManager.FindByIdAsync(UserId.ToString());
+            if (_user is null) return;
+
+            var roles = await UserManager.GetRolesAsync(_user);
+            _roleAdmin = roles.Contains(AppRoles.Admin);
+            _roleCommittee = roles.Contains(AppRoles.MembershipCommittee);
+            _roleMember = roles.Contains(AppRoles.Member);
+
+            _memberAccount = await DbContext.MemberAccounts
+                .FirstOrDefaultAsync(m => m.ApplicationUserId == UserId);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load user {UserId}", UserId);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task SaveRolesAsync()
+    {
+        if (_user is null) return;
+
+        _savingRoles = true;
+        _rolesMessage = null;
+        _rolesError = false;
+
+        try
+        {
+            var currentRoles = await UserManager.GetRolesAsync(_user);
+
+            await ApplyRoleChangeAsync(_roleAdmin, AppRoles.Admin, currentRoles);
+            await ApplyRoleChangeAsync(_roleCommittee, AppRoles.MembershipCommittee, currentRoles);
+            await ApplyRoleChangeAsync(_roleMember, AppRoles.Member, currentRoles);
+
+            _rolesMessage = "Roles updated successfully.";
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to update roles for user {UserId}", UserId);
+            _rolesMessage = "Failed to update roles. Please try again.";
+            _rolesError = true;
+        }
+        finally
+        {
+            _savingRoles = false;
+        }
+    }
+
+    private async Task ApplyRoleChangeAsync(bool desired, string role, IList<string> currentRoles)
+    {
+        var hasRole = currentRoles.Contains(role);
+        if (desired && !hasRole)
+            await UserManager.AddToRoleAsync(_user!, role);
+        else if (!desired && hasRole)
+            await UserManager.RemoveFromRoleAsync(_user!, role);
+    }
+
+    private async Task ResetPasswordAsync()
+    {
+        if (_user is null) return;
+
+        _passwordMessage = null;
+        _passwordError = false;
+
+        if (string.IsNullOrWhiteSpace(_newPassword))
+        {
+            _passwordMessage = "Please enter a new password.";
+            _passwordError = true;
+            return;
+        }
+
+        if (_newPassword != _confirmPassword)
+        {
+            _passwordMessage = "Passwords do not match.";
+            _passwordError = true;
+            return;
+        }
+
+        _savingPassword = true;
+        try
+        {
+            var removeResult = await UserManager.RemovePasswordAsync(_user);
+            if (!removeResult.Succeeded)
+            {
+                _passwordMessage = string.Join(" ", removeResult.Errors.Select(e => e.Description));
+                _passwordError = true;
+                return;
+            }
+
+            var addResult = await UserManager.AddPasswordAsync(_user, _newPassword);
+            if (!addResult.Succeeded)
+            {
+                _passwordMessage = string.Join(" ", addResult.Errors.Select(e => e.Description));
+                _passwordError = true;
+                return;
+            }
+
+            _newPassword = string.Empty;
+            _confirmPassword = string.Empty;
+            _passwordMessage = "Password reset successfully.";
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to reset password for user {UserId}", UserId);
+            _passwordMessage = "Failed to reset password. Please try again.";
+            _passwordError = true;
+        }
+        finally
+        {
+            _savingPassword = false;
+        }
+    }
+}
