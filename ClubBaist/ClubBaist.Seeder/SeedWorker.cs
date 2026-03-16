@@ -24,6 +24,7 @@ public class SeedWorker(
         await SeedRolesAsync(roleManager, stoppingToken);
         await SeedUsersAsync(userManager, db, stoppingToken);
         await SeedSeasonAsync(db, stoppingToken);
+        await SeedApplicationsAsync(userManager, db, stoppingToken);
 
         logger.LogInformation("Seeding complete. Stopping seeder.");
         lifetime.StopApplication();
@@ -149,5 +150,111 @@ public class SeedWorker(
             await db.SaveChangesAsync(ct);
             logger.LogInformation("Seeded active season: 2026");
         }
+    }
+
+    private async Task SeedApplicationsAsync(
+        UserManager<IdentityUser<Guid>> userManager, ApplicationDbContext db, CancellationToken ct)
+    {
+        if (await db.MembershipApplications.AnyAsync(ct))
+            return;
+
+        var now = DateTime.UtcNow;
+
+        // Retrieve existing sponsor member IDs
+        var sponsors = await db.MemberAccounts
+            .OrderBy(m => m.MemberNumber)
+            .Take(2)
+            .Select(m => m.MemberAccountId)
+            .ToListAsync(ct);
+
+        if (sponsors.Count < 2)
+        {
+            logger.LogWarning("Not enough member accounts to seed applications; skipping.");
+            return;
+        }
+
+        var sponsor1Id = sponsors[0];
+        var sponsor2Id = sponsors[1];
+
+        // Retrieve the committee user (used as the actor for status transitions)
+        var committeeUser = await userManager.FindByEmailAsync("committee@clubbaist.com")
+            ?? throw new InvalidOperationException("Committee user not found.");
+
+        // Create identity users for applicants
+        var applicants = new[]
+        {
+            ("frank.pending@example.com",  "Frank",  "Pending",   new DateTime(1990, 3, 22)),
+            ("grace.onhold@example.com",   "Grace",  "OnHold",    new DateTime(1988, 7, 14)),
+            ("henry.waitlist@example.com", "Henry",  "Waitlist",  new DateTime(1995, 11, 5)),
+            ("iris.submitted@example.com", "Iris",   "Submitted", new DateTime(1992, 6, 30)),
+            ("jack.waitlist@example.com",  "Jack",   "Waitlist",  new DateTime(1985, 9, 18)),
+        };
+
+        var applicantUsers = new List<IdentityUser<Guid>>();
+        foreach (var (email, _, _, _) in applicants)
+        {
+            ct.ThrowIfCancellationRequested();
+            var user = await userManager.FindByEmailAsync(email);
+            if (user is null)
+            {
+                user = new IdentityUser<Guid>
+                {
+                    UserName = email,
+                    Email = email,
+                    EmailConfirmed = true
+                };
+                var result = await userManager.CreateAsync(user, DefaultPassword);
+                if (!result.Succeeded)
+                {
+                    var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                    throw new InvalidOperationException($"Failed to create applicant user {email}: {errors}");
+                }
+            }
+            applicantUsers.Add(user);
+        }
+
+        // Build and save applications
+        var applications = new List<MembershipApplication<Guid>>();
+        for (var i = 0; i < applicants.Length; i++)
+        {
+            var (email, firstName, lastName, dob) = applicants[i];
+            var userId = applicantUsers[i].Id;
+            var submittedAt = now.AddDays(-(applicants.Length - i) * 3);
+
+            var app = MembershipApplication<Guid>.Submit(
+                applicationUserId: userId,
+                firstName: firstName,
+                lastName: lastName,
+                occupation: "Software Developer",
+                companyName: "Acme Corp",
+                address: "456 Fairway Lane",
+                postalCode: "T2P 2B2",
+                phone: "403-555-0200",
+                email: email,
+                dateOfBirth: dob,
+                requestedMembershipCategory: MembershipCategory.Associate,
+                sponsor1MemberId: sponsor1Id,
+                sponsor2MemberId: sponsor2Id,
+                submittedAt: submittedAt);
+
+            applications.Add(app);
+        }
+
+        db.MembershipApplications.AddRange(applications);
+        await db.SaveChangesAsync(ct);
+
+        // Advance statuses for some applications
+        // applications[1] → OnHold
+        applications[1].ChangeStatus(ApplicationStatus.OnHold, committeeUser.Id, now.AddDays(-8));
+
+        // applications[2] → Waitlisted
+        applications[2].ChangeStatus(ApplicationStatus.Waitlisted, committeeUser.Id, now.AddDays(-6));
+
+        // applications[4] → OnHold then Waitlisted
+        applications[4].ChangeStatus(ApplicationStatus.OnHold, committeeUser.Id, now.AddDays(-10));
+        applications[4].ChangeStatus(ApplicationStatus.Waitlisted, committeeUser.Id, now.AddDays(-5));
+
+        await db.SaveChangesAsync(ct);
+        logger.LogInformation("Seeded {Count} in-progress membership applications", applications.Count);
     }
 }
