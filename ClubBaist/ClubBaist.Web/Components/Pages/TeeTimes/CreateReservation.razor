@@ -28,7 +28,7 @@
 {
     <div class="alert alert-success">
         <p>@successMessage</p>
-        <a href="/teetimes/my" class="btn btn-outline-success mt-2">View My Reservations</a>
+        <a href="@(isAdmin ? "/teetimes/staff" : "/teetimes/my")" class="btn btn-outline-success mt-2">View Reservations</a>
     </div>
 }
 else if (isLoading)
