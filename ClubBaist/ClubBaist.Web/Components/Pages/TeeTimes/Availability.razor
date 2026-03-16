@@ -1,15 +1,18 @@
 @page "/teetimes"
-@rendermode InteractiveServer
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = AppRoles.AdminOrMember)]
 
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Authorization
-@using Microsoft.AspNetCore.Components.QuickGrid
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.EntityFrameworkCore
 @using ClubBaist.Domain
 @using ClubBaist.Services
 
 @inject TeeTimeBookingService<Guid> BookingService
 @inject ISeasonService SeasonService
+@inject IApplicationDbContext<Guid> DbContext
+@inject AuthenticationStateProvider AuthStateProvider
 @inject ILogger<Availability> Logger
 
 <PageTitle>Tee Time Availability - Club Baist</PageTitle>
@@ -55,51 +58,204 @@
 }
 else if (slots is not null)
 {
-    <QuickGrid Items="@slots.AsQueryable()" Class="table table-striped" RowClass="@GetRowClass">
-        <TemplateColumn Title="Time" SortBy="@(GridSort<BookedSlotWithMembers>.ByAscending(s => s.Time))">
-            @context.Time.ToString("h:mm tt")
-        </TemplateColumn>
-        <TemplateColumn Title="Available Spots">
-            @context.RemainingCapacity / @BookingConstants.MaxPlayersPerSlot
-        </TemplateColumn>
-        <TemplateColumn Title="Bookings">
-            @foreach (var reservation in context.Reservations)
+    <div class="mb-2 d-flex gap-3 align-items-center small text-muted">
+        <span><span class="badge bg-primary">&nbsp;</span> Booking member</span>
+        <span><span class="badge bg-secondary">&nbsp;</span> Additional player</span>
+        <span class="border rounded px-1" style="border-style: dashed !important;">—</span> Available spot
+        @if (!isAdmin)
+        {
+            <span class="ms-2"><span class="reservation-editable-sample border rounded px-1" style="border: 2px solid #0d6efd; cursor:pointer">✎</span> Click to edit your reservation</span>
+        }
+    </div>
+
+    <div class="tee-time-grid">
+        @foreach (var slot in slots)
+        {
+            var totalBooked = slot.Reservations.Sum(r => 1 + r.Players.Count);
+            var emptyCount = BookingConstants.MaxPlayersPerSlot - totalBooked;
+            var rowBg = slot.RemainingCapacity switch
             {
-                <div class="d-flex flex-wrap gap-1 mb-1">
-                    <span class="badge bg-primary">@reservation.BookingMember.FirstName @reservation.BookingMember.LastName</span>
-                    @foreach (var player in reservation.Players)
+                BookingConstants.MaxPlayersPerSlot => "slot-row-open",
+                > 0 => "slot-row-partial",
+                _ => "slot-row-full"
+            };
+
+            <div class="slot-row @rowBg d-flex align-items-center border-bottom py-2 gap-3">
+                <div class="slot-time fw-bold text-nowrap">
+                    @slot.Time.ToString("h:mm tt")
+                </div>
+
+                <div class="slot-members flex-grow-1">
+                    <div class="row g-1 flex-nowrap m-0">
+                        @foreach (var res in slot.Reservations)
+                        {
+                            var memberCount = 1 + res.Players.Count;
+                            var outerCol = $"col-{memberCount * 3}";
+                            var innerCol = $"col-{12 / memberCount}";
+                            var canEdit = isAdmin || res.BookingMember.MemberAccountId == currentMemberAccountId;
+
+                            <div class="@outerCol px-1">
+                                @if (canEdit)
+                                {
+                                    <a href="/teetimes/reservation/@res.ReservationId"
+                                       class="d-block text-decoration-none reservation-box reservation-editable"
+                                       title="Edit reservation">
+                                        <div class="row g-1 m-0">
+                                            <div class="@innerCol px-1">
+                                                <span class="badge bg-primary w-100 member-badge" title="@res.BookingMember.FirstName @res.BookingMember.LastName">
+                                                    @res.BookingMember.FirstName @res.BookingMember.LastName
+                                                </span>
+                                            </div>
+                                            @foreach (var player in res.Players)
+                                            {
+                                                <div class="@innerCol px-1">
+                                                    <span class="badge bg-secondary w-100 member-badge" title="@player.FirstName @player.LastName">
+                                                        @player.FirstName @player.LastName
+                                                    </span>
+                                                </div>
+                                            }
+                                        </div>
+                                    </a>
+                                }
+                                else
+                                {
+                                    <div class="reservation-box">
+                                        <div class="row g-1 m-0">
+                                            <div class="@innerCol px-1">
+                                                <span class="badge bg-primary w-100 member-badge" title="@res.BookingMember.FirstName @res.BookingMember.LastName">
+                                                    @res.BookingMember.FirstName @res.BookingMember.LastName
+                                                </span>
+                                            </div>
+                                            @foreach (var player in res.Players)
+                                            {
+                                                <div class="@innerCol px-1">
+                                                    <span class="badge bg-secondary w-100 member-badge" title="@player.FirstName @player.LastName">
+                                                        @player.FirstName @player.LastName
+                                                    </span>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+
+                        @for (var i = 0; i < emptyCount; i++)
+                        {
+                            <div class="col-3 px-1">
+                                <div class="empty-slot text-muted text-center">—</div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <div class="slot-action">
+                    @if (slot.RemainingCapacity > 0)
                     {
-                        <span class="badge bg-secondary">@player.FirstName @player.LastName</span>
+                        <a class="btn btn-sm btn-primary"
+                           href="@($"/teetimes/book?date={selectedDate:yyyy-MM-dd}&time={slot.Time:HH:mm}")">
+                            Book
+                        </a>
+                    }
+                    else
+                    {
+                        <button class="btn btn-sm btn-secondary" disabled>Full</button>
                     }
                 </div>
-            }
-        </TemplateColumn>
-        <TemplateColumn Title="Action">
-            @if (context.RemainingCapacity > 0)
-            {
-                <a class="btn btn-sm btn-primary"
-                   href="@($"/teetimes/book?date={selectedDate:yyyy-MM-dd}&time={context.Time:HH:mm}")">
-                    Book
-                </a>
-            }
-            else
-            {
-                <button class="btn btn-sm btn-secondary" disabled>Full</button>
-            }
-        </TemplateColumn>
-    </QuickGrid>
+            </div>
+        }
+    </div>
 }
+
+<style>
+    .tee-time-grid {
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        overflow: hidden;
+    }
+
+    .slot-row {
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+    }
+
+    .slot-row-open { background-color: rgba(25, 135, 84, 0.06); }
+    .slot-row-partial { background-color: rgba(255, 193, 7, 0.08); }
+    .slot-row-full { background-color: rgba(220, 53, 69, 0.06); }
+
+    .slot-time {
+        width: 5.5rem;
+        flex-shrink: 0;
+    }
+
+    .slot-action {
+        width: 4.5rem;
+        flex-shrink: 0;
+        text-align: right;
+    }
+
+    .reservation-box {
+        border: 2px solid #adb5bd;
+        border-radius: 0.375rem;
+        padding: 0.2rem;
+        background: #fff;
+    }
+
+    .reservation-editable {
+        border-color: #0d6efd;
+        color: inherit;
+    }
+
+    .reservation-editable:hover {
+        background: #e7f1ff;
+        border-color: #0a58ca;
+    }
+
+    .empty-slot {
+        border: 2px dashed #dee2e6;
+        border-radius: 0.375rem;
+        padding: 0.2rem;
+        min-height: 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #fafafa;
+    }
+
+    .member-badge {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        display: block !important;
+        font-size: 0.75rem;
+    }
+</style>
 
 @code {
     private DateOnly selectedDate = DateOnly.FromDateTime(DateTime.Today);
     private IReadOnlyList<BookedSlotWithMembers>? slots;
     private bool isLoading;
     private string? errorMessage;
+    private bool isAdmin;
+    private Guid currentMemberAccountId;
 
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        var userId = Guid.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        isAdmin = user.IsInRole(AppRoles.Admin);
+
+        if (!isAdmin)
+        {
+            var member = await DbContext.MemberAccounts
+                .FirstOrDefaultAsync(m => m.ApplicationUserId == userId);
+            currentMemberAccountId = member?.MemberAccountId ?? Guid.Empty;
+        }
+
         selectedDate = SeasonService.GetNextAvailableDate(DateOnly.FromDateTime(DateTime.Today))
             ?? DateOnly.FromDateTime(DateTime.Today);
+
         await LoadAvailability();
     }
 
@@ -131,11 +287,4 @@ else if (slots is not null)
             isLoading = false;
         }
     }
-
-    private string GetRowClass(BookedSlotWithMembers slot) => slot.RemainingCapacity switch
-    {
-        BookingConstants.MaxPlayersPerSlot => "table-success",
-        > 0 => "table-warning",
-        _ => "table-danger"
-    };
 }
