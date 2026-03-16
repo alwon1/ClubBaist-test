@@ -10,7 +10,7 @@
     <AuthorizeView>
         <Authorized>
             <div class="row g-4 mt-3">
-                <AuthorizeView Roles="Member" Context="memberContext">
+                <AuthorizeView Roles="@AppRoles.Member" Context="memberContext">
                     <Authorized>
                         <div class="col-md-4">
                             <div class="card h-100">
@@ -33,7 +33,7 @@
                     </Authorized>
                 </AuthorizeView>
 
-                <AuthorizeView Roles="Admin" Context="adminContext">
+                <AuthorizeView Roles="@AppRoles.Admin" Context="adminContext">
                     <Authorized>
                         <div class="col-md-4">
                             <div class="card h-100">
@@ -47,7 +47,7 @@
                     </Authorized>
                 </AuthorizeView>
 
-                <AuthorizeView Roles="Admin,MembershipCommittee" Context="committeeContext">
+                <AuthorizeView Roles="@AppRoles.AdminOrCommittee" Context="committeeContext">
                     <Authorized>
                         <div class="col-md-4">
                             <div class="card h-100">

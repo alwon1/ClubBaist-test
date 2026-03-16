@@ -115,12 +115,12 @@
                         </div>
                         <div class="row mb-3">
                             <div class="col-md-6">
-                                <strong>Sponsor 1 ID:</strong>
-                                <p>@_application.Sponsor1MemberId</p>
+                                <strong>Sponsor 1:</strong>
+                                <p>@GetSponsorName(_application.Sponsor1MemberId)</p>
                             </div>
                             <div class="col-md-6">
-                                <strong>Sponsor 2 ID:</strong>
-                                <p>@_application.Sponsor2MemberId</p>
+                                <strong>Sponsor 2:</strong>
+                                <p>@GetSponsorName(_application.Sponsor2MemberId)</p>
                             </div>
                         </div>
                     </div>
@@ -199,6 +199,7 @@
     public Guid ApplicationId { get; set; }
 
     private MembershipApplication<Guid>? _application;
+    private Dictionary<Guid, string> _sponsorNames = new();
     private List<ApplicationStatus> _validTransitions = [];
     private ApplicationStatus? _selectedStatus;
     private bool _loading = true;
@@ -226,6 +227,13 @@
                 _validTransitions = Enum.GetValues<ApplicationStatus>()
                     .Where(s => _application.CanTransitionTo(s) && s != _application.CurrentStatus)
                     .ToList();
+
+                var sponsorIds = new[] { _application.Sponsor1MemberId, _application.Sponsor2MemberId };
+                _sponsorNames = await DbContext.MemberAccounts
+                    .Where(m => sponsorIds.Contains(m.MemberAccountId))
+                    .ToDictionaryAsync(
+                        m => m.MemberAccountId,
+                        m => $"{m.FirstName} {m.LastName} ({m.MemberNumber})");
             }
         }
         finally
@@ -276,6 +284,9 @@
             _processing = false;
         }
     }
+
+    private string GetSponsorName(Guid sponsorId) =>
+        _sponsorNames.TryGetValue(sponsorId, out var name) ? name : sponsorId.ToString();
 
     private static string GetStatusBadgeClass(ApplicationStatus status) =>
         UiHelpers.GetStatusBadgeClass(status);
