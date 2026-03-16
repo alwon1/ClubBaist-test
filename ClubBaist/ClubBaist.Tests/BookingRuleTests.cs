@@ -201,6 +201,225 @@ public sealed class BookingRuleTests
 
     #endregion
 
+    #region MemberConflictRule
+
+    [TestMethod]
+    public async Task MemberConflictRule_NoExistingReservations_ReturnsMaxValue()
+    {
+        using var scope = TestServiceHost.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var rule = new MemberConflictRule<Guid>(dbContext);
+
+        var slot = new TeeTimeSlot(new DateOnly(2026, 6, 15), new TimeOnly(10, 0), Guid.NewGuid(), []);
+        var context = new BookingEvaluationContext(MembershipCategory.Shareholder);
+
+        var result = await rule.EvaluateAsync(slot, context);
+
+        Assert.AreEqual(int.MaxValue, result);
+    }
+
+    [TestMethod]
+    public async Task MemberConflictRule_BookingMemberAlreadyBooked_ReturnsNegative()
+    {
+        using var scope = TestServiceHost.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+        var date = new DateOnly(2026, 6, 15);
+        var time = new TimeOnly(10, 0);
+        var memberId = Guid.NewGuid();
+
+        dbContext.Reservations.Add(new Reservation
+        {
+            SlotDate = date,
+            SlotTime = time,
+            BookingMemberAccountId = memberId,
+            PlayerMemberAccountIds = []
+        });
+        await dbContext.SaveChangesAsync();
+
+        var rule = new MemberConflictRule<Guid>(dbContext);
+        var slot = new TeeTimeSlot(date, time, memberId, []);
+        var context = new BookingEvaluationContext(MembershipCategory.Shareholder);
+
+        var result = await rule.EvaluateAsync(slot, context);
+
+        Assert.AreEqual(-1, result, "Booking member already in this slot should be blocked");
+    }
+
+    [TestMethod]
+    public async Task MemberConflictRule_PlayerAlreadyBookedAsPlayer_ReturnsNegative()
+    {
+        using var scope = TestServiceHost.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+        var date = new DateOnly(2026, 6, 15);
+        var time = new TimeOnly(10, 0);
+        var existingBooker = Guid.NewGuid();
+        var conflictingPlayer = Guid.NewGuid();
+
+        dbContext.Reservations.Add(new Reservation
+        {
+            SlotDate = date,
+            SlotTime = time,
+            BookingMemberAccountId = existingBooker,
+            PlayerMemberAccountIds = [conflictingPlayer]
+        });
+        await dbContext.SaveChangesAsync();
+
+        var rule = new MemberConflictRule<Guid>(dbContext);
+        var slot = new TeeTimeSlot(date, time, Guid.NewGuid(), [conflictingPlayer]);
+        var context = new BookingEvaluationContext(MembershipCategory.Shareholder);
+
+        var result = await rule.EvaluateAsync(slot, context);
+
+        Assert.AreEqual(-1, result, "Player already in this slot should be blocked");
+    }
+
+    [TestMethod]
+    public async Task MemberConflictRule_PlayerAlreadyBookedAsBookingMember_ReturnsNegative()
+    {
+        using var scope = TestServiceHost.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+        var date = new DateOnly(2026, 6, 15);
+        var time = new TimeOnly(10, 0);
+        var existingBooker = Guid.NewGuid();
+
+        dbContext.Reservations.Add(new Reservation
+        {
+            SlotDate = date,
+            SlotTime = time,
+            BookingMemberAccountId = existingBooker,
+            PlayerMemberAccountIds = []
+        });
+        await dbContext.SaveChangesAsync();
+
+        var rule = new MemberConflictRule<Guid>(dbContext);
+        // Try to add existingBooker as a player in a new reservation
+        var slot = new TeeTimeSlot(date, time, Guid.NewGuid(), [existingBooker]);
+        var context = new BookingEvaluationContext(MembershipCategory.Shareholder);
+
+        var result = await rule.EvaluateAsync(slot, context);
+
+        Assert.AreEqual(-1, result, "Existing booking member added as a player should be blocked");
+    }
+
+    [TestMethod]
+    public async Task MemberConflictRule_AvailabilityQuery_GuidEmpty_ReturnsMaxValue()
+    {
+        using var scope = TestServiceHost.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+        var date = new DateOnly(2026, 6, 15);
+        var time = new TimeOnly(10, 0);
+
+        dbContext.Reservations.Add(new Reservation
+        {
+            SlotDate = date,
+            SlotTime = time,
+            BookingMemberAccountId = Guid.NewGuid(),
+            PlayerMemberAccountIds = []
+        });
+        await dbContext.SaveChangesAsync();
+
+        var rule = new MemberConflictRule<Guid>(dbContext);
+        var slot = new TeeTimeSlot(date, time, Guid.Empty, []);
+        var context = new BookingEvaluationContext(null, PrecomputedOccupancy: 1);
+
+        var result = await rule.EvaluateAsync(slot, context);
+
+        Assert.AreEqual(int.MaxValue, result, "Availability queries (Guid.Empty) should skip conflict check");
+    }
+
+    [TestMethod]
+    public async Task MemberConflictRule_UpdateExcludesOwnReservation_ReturnsMaxValue()
+    {
+        using var scope = TestServiceHost.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+        var date = new DateOnly(2026, 6, 15);
+        var time = new TimeOnly(10, 0);
+        var bookerId = Guid.NewGuid();
+        var reservationId = Guid.NewGuid();
+
+        dbContext.Reservations.Add(new Reservation
+        {
+            ReservationId = reservationId,
+            SlotDate = date,
+            SlotTime = time,
+            BookingMemberAccountId = bookerId,
+            PlayerMemberAccountIds = []
+        });
+        await dbContext.SaveChangesAsync();
+
+        var rule = new MemberConflictRule<Guid>(dbContext);
+        var slot = new TeeTimeSlot(date, time, bookerId, []);
+        var context = new BookingEvaluationContext(MembershipCategory.Shareholder, ExcludeReservationId: reservationId);
+
+        var result = await rule.EvaluateAsync(slot, context);
+
+        Assert.AreEqual(int.MaxValue, result, "Updating own reservation should not conflict with itself");
+    }
+
+    [TestMethod]
+    public async Task MemberConflictRule_CancelledReservation_NotConsideredConflict()
+    {
+        using var scope = TestServiceHost.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+        var date = new DateOnly(2026, 6, 15);
+        var time = new TimeOnly(10, 0);
+        var memberId = Guid.NewGuid();
+
+        dbContext.Reservations.Add(new Reservation
+        {
+            SlotDate = date,
+            SlotTime = time,
+            BookingMemberAccountId = memberId,
+            PlayerMemberAccountIds = [],
+            IsCancelled = true
+        });
+        await dbContext.SaveChangesAsync();
+
+        var rule = new MemberConflictRule<Guid>(dbContext);
+        var slot = new TeeTimeSlot(date, time, memberId, []);
+        var context = new BookingEvaluationContext(MembershipCategory.Shareholder);
+
+        var result = await rule.EvaluateAsync(slot, context);
+
+        Assert.AreEqual(int.MaxValue, result, "Cancelled reservations should not block re-booking");
+    }
+
+    [TestMethod]
+    public async Task MemberConflictRule_DifferentTimeSlot_NoConflict()
+    {
+        using var scope = TestServiceHost.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+        var date = new DateOnly(2026, 6, 15);
+        var memberId = Guid.NewGuid();
+
+        dbContext.Reservations.Add(new Reservation
+        {
+            SlotDate = date,
+            SlotTime = new TimeOnly(10, 0),
+            BookingMemberAccountId = memberId,
+            PlayerMemberAccountIds = []
+        });
+        await dbContext.SaveChangesAsync();
+
+        var rule = new MemberConflictRule<Guid>(dbContext);
+        // Same member, different time — should be fine
+        var slot = new TeeTimeSlot(date, new TimeOnly(11, 0), memberId, []);
+        var context = new BookingEvaluationContext(MembershipCategory.Shareholder);
+
+        var result = await rule.EvaluateAsync(slot, context);
+
+        Assert.AreEqual(int.MaxValue, result, "Same member at a different time slot should not conflict");
+    }
+
+    #endregion
+
     /// <summary>
     /// Returns a DateOnly in June 2026 matching the specified day of week.
     /// </summary>

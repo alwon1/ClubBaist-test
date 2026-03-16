@@ -200,6 +200,149 @@ public sealed class TeeTimeBookingServiceTests
     }
 
     [TestMethod]
+    public async Task CreateReservation_BookingMemberAlreadyBookedAtSlot_ReturnsNegative()
+    {
+        using var scope = CreateScopeWithSeason();
+        var provider = scope.ServiceProvider;
+
+        var bookingService = provider.GetRequiredService<TeeTimeBookingService<Guid>>();
+        var memberId = await CreateMemberAsync(provider, MembershipCategory.Shareholder);
+
+        // First booking succeeds
+        var slot1 = new TeeTimeSlot(SeasonDate, SlotTime, memberId, []);
+        var first = await bookingService.CreateReservationAsync(slot1);
+        Assert.IsTrue(first >= 0, "First booking should succeed");
+
+        // Second booking at the same slot with the same member should fail
+        var slot2 = new TeeTimeSlot(SeasonDate, SlotTime, memberId, []);
+        var result = await bookingService.CreateReservationAsync(slot2);
+
+        Assert.AreEqual(-1, result, "Booking member already in this slot should be rejected");
+    }
+
+    [TestMethod]
+    public async Task CreateReservation_PlayerAlreadyBookedAtSlot_ReturnsNegative()
+    {
+        using var scope = CreateScopeWithSeason();
+        var provider = scope.ServiceProvider;
+
+        var bookingService = provider.GetRequiredService<TeeTimeBookingService<Guid>>();
+        var booker1 = await CreateMemberAsync(provider, MembershipCategory.Shareholder);
+        var booker2 = await CreateMemberAsync(provider, MembershipCategory.Shareholder);
+        var sharedPlayer = await CreateMemberAsync(provider, MembershipCategory.Shareholder);
+
+        // Book the shared player in the first reservation
+        var slot1 = new TeeTimeSlot(SeasonDate, SlotTime, booker1, [sharedPlayer]);
+        var first = await bookingService.CreateReservationAsync(slot1);
+        Assert.IsTrue(first >= 0, "First booking should succeed");
+
+        // Attempt to add the same player to a second reservation in the same slot
+        var slot2 = new TeeTimeSlot(SeasonDate, SlotTime, booker2, [sharedPlayer]);
+        var result = await bookingService.CreateReservationAsync(slot2);
+
+        Assert.AreEqual(-1, result, "Player already in this slot should be rejected");
+    }
+
+    [TestMethod]
+    public async Task UpdateReservation_NewPlayerAlreadyBooked_ReturnsNegative()
+    {
+        using var scope = CreateScopeWithSeason();
+        var provider = scope.ServiceProvider;
+
+        var bookingService = provider.GetRequiredService<TeeTimeBookingService<Guid>>();
+        var dbContext = provider.GetRequiredService<ApplicationDbContext>();
+
+        var booker1 = await CreateMemberAsync(provider, MembershipCategory.Shareholder);
+        var booker2 = await CreateMemberAsync(provider, MembershipCategory.Shareholder);
+        var takenPlayer = await CreateMemberAsync(provider, MembershipCategory.Shareholder);
+
+        // First reservation claims takenPlayer
+        var slot1 = new TeeTimeSlot(SeasonDate, SlotTime, booker1, [takenPlayer]);
+        await bookingService.CreateReservationAsync(slot1);
+
+        // Second reservation with booker2, no extra players yet
+        var slot2 = new TeeTimeSlot(SeasonDate, SlotTime, booker2, []);
+        await bookingService.CreateReservationAsync(slot2);
+
+        var reservation2 = await dbContext.Reservations
+            .FirstAsync(r => r.BookingMemberAccountId == booker2 && !r.IsCancelled);
+
+        // Try to add takenPlayer to the second reservation
+        var result = await bookingService.UpdateReservationAsync(reservation2.ReservationId, [takenPlayer]);
+
+        Assert.AreEqual(-1, result, "Updating to include a player already booked in the slot should fail");
+    }
+
+    [TestMethod]
+    public async Task GetBookedSlotsWithMembers_ReturnsCorrectReservationGroups()
+    {
+        using var scope = CreateScopeWithSeason();
+        var provider = scope.ServiceProvider;
+
+        var bookingService = provider.GetRequiredService<TeeTimeBookingService<Guid>>();
+
+        var booker = await CreateMemberAsync(provider, MembershipCategory.Shareholder);
+        var player = await CreateMemberAsync(provider, MembershipCategory.Shareholder);
+
+        var slot = new TeeTimeSlot(SeasonDate, SlotTime, booker, [player]);
+        await bookingService.CreateReservationAsync(slot);
+
+        var bookedSlots = await bookingService.GetBookedSlotsWithMembersAsync(SeasonDate);
+        var targetSlot = bookedSlots.FirstOrDefault(s => s.Time == SlotTime);
+
+        Assert.IsNotNull(targetSlot);
+        Assert.AreEqual(1, targetSlot.Reservations.Count);
+
+        var reservation = targetSlot.Reservations[0];
+        Assert.AreEqual(booker, reservation.BookingMember.MemberAccountId);
+        Assert.AreEqual(1, reservation.Players.Count);
+        Assert.AreEqual(player, reservation.Players[0].MemberAccountId);
+        Assert.AreEqual(2, targetSlot.RemainingCapacity); // 4 max - 2 booked = 2
+    }
+
+    [TestMethod]
+    public async Task GetBookedSlotsWithMembers_EmptySlot_ShowsFullCapacity()
+    {
+        using var scope = CreateScopeWithSeason();
+        var provider = scope.ServiceProvider;
+
+        var bookingService = provider.GetRequiredService<TeeTimeBookingService<Guid>>();
+
+        var bookedSlots = await bookingService.GetBookedSlotsWithMembersAsync(SeasonDate);
+        var targetSlot = bookedSlots.FirstOrDefault(s => s.Time == SlotTime);
+
+        Assert.IsNotNull(targetSlot);
+        Assert.AreEqual(0, targetSlot.Reservations.Count);
+        Assert.AreEqual(BookingConstants.MaxPlayersPerSlot, targetSlot.RemainingCapacity);
+    }
+
+    [TestMethod]
+    public async Task GetBookedSlotsWithMembers_MultipleReservationsInSlot_GroupedSeparately()
+    {
+        using var scope = CreateScopeWithSeason();
+        var provider = scope.ServiceProvider;
+
+        var bookingService = provider.GetRequiredService<TeeTimeBookingService<Guid>>();
+
+        var booker1 = await CreateMemberAsync(provider, MembershipCategory.Shareholder);
+        var booker2 = await CreateMemberAsync(provider, MembershipCategory.Shareholder);
+
+        await bookingService.CreateReservationAsync(new TeeTimeSlot(SeasonDate, SlotTime, booker1, []));
+        await bookingService.CreateReservationAsync(new TeeTimeSlot(SeasonDate, SlotTime, booker2, []));
+
+        var bookedSlots = await bookingService.GetBookedSlotsWithMembersAsync(SeasonDate);
+        var targetSlot = bookedSlots.FirstOrDefault(s => s.Time == SlotTime);
+
+        Assert.IsNotNull(targetSlot);
+        Assert.AreEqual(2, targetSlot.Reservations.Count, "Each booking should be its own reservation group");
+        Assert.AreEqual(2, targetSlot.RemainingCapacity); // 4 max - 2 booked = 2
+
+        var bookerIds = targetSlot.Reservations.Select(r => r.BookingMember.MemberAccountId).ToHashSet();
+        Assert.IsTrue(bookerIds.Contains(booker1));
+        Assert.IsTrue(bookerIds.Contains(booker2));
+    }
+
+    [TestMethod]
     public async Task GetAvailability_ReturnsCorrectRemainingCapacity()
     {
         using var scope = CreateScopeWithSeason();
