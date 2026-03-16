@@ -9,6 +9,7 @@
 @using ClubBaist.Services
 
 @inject TeeTimeBookingService<Guid> BookingService
+@inject ISeasonService SeasonService
 @inject ILogger<Availability> Logger
 
 <PageTitle>Tee Time Availability - Club Baist</PageTitle>
@@ -55,11 +56,23 @@
 else if (slots is not null)
 {
     <QuickGrid Items="@slots.AsQueryable()" Class="table table-striped" RowClass="@GetRowClass">
-        <TemplateColumn Title="Time" SortBy="@(GridSort<SlotAvailability>.ByAscending(s => s.Time))">
+        <TemplateColumn Title="Time" SortBy="@(GridSort<BookedSlotWithMembers>.ByAscending(s => s.Time))">
             @context.Time.ToString("h:mm tt")
         </TemplateColumn>
         <TemplateColumn Title="Available Spots">
             @context.RemainingCapacity / @BookingConstants.MaxPlayersPerSlot
+        </TemplateColumn>
+        <TemplateColumn Title="Bookings">
+            @foreach (var reservation in context.Reservations)
+            {
+                <div class="d-flex flex-wrap gap-1 mb-1">
+                    <span class="badge bg-primary">@reservation.BookingMember.FirstName @reservation.BookingMember.LastName</span>
+                    @foreach (var player in reservation.Players)
+                    {
+                        <span class="badge bg-secondary">@player.FirstName @player.LastName</span>
+                    }
+                </div>
+            }
         </TemplateColumn>
         <TemplateColumn Title="Action">
             @if (context.RemainingCapacity > 0)
@@ -79,12 +92,14 @@ else if (slots is not null)
 
 @code {
     private DateOnly selectedDate = DateOnly.FromDateTime(DateTime.Today);
-    private IReadOnlyList<SlotAvailability>? slots;
+    private IReadOnlyList<BookedSlotWithMembers>? slots;
     private bool isLoading;
     private string? errorMessage;
 
     protected override async Task OnInitializedAsync()
     {
+        selectedDate = SeasonService.GetNextAvailableDate(DateOnly.FromDateTime(DateTime.Today))
+            ?? DateOnly.FromDateTime(DateTime.Today);
         await LoadAvailability();
     }
 
@@ -104,8 +119,7 @@ else if (slots is not null)
 
         try
         {
-            var result = await BookingService.GetAvailabilityAsync(selectedDate, selectedDate);
-            slots = result.FirstOrDefault()?.Slots;
+            slots = await BookingService.GetBookedSlotsWithMembersAsync(selectedDate);
         }
         catch (Exception ex)
         {
@@ -118,7 +132,7 @@ else if (slots is not null)
         }
     }
 
-    private string GetRowClass(SlotAvailability slot) => slot.RemainingCapacity switch
+    private string GetRowClass(BookedSlotWithMembers slot) => slot.RemainingCapacity switch
     {
         BookingConstants.MaxPlayersPerSlot => "table-success",
         > 0 => "table-warning",

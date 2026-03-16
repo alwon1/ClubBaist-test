@@ -90,6 +90,57 @@ public class TeeTimeBookingService<TKey> where TKey : IEquatable<TKey>
         return result;
     }
 
+    public async Task<IReadOnlyList<BookedSlotWithMembers>> GetBookedSlotsWithMembersAsync(
+        DateOnly date,
+        CancellationToken cancellationToken = default)
+    {
+        var times = _scheduleTimeService.GetScheduleTimes(date);
+
+        var reservations = await _dbContext.Reservations
+            .Where(r => r.SlotDate == date && !r.IsCancelled)
+            .ToListAsync(cancellationToken);
+
+        var memberIds = reservations
+            .SelectMany(r => r.PlayerMemberAccountIds.Append(r.BookingMemberAccountId))
+            .Distinct()
+            .ToList();
+
+        var memberList = await _dbContext.MemberAccounts
+            .Where(m => memberIds.Contains(m.MemberAccountId))
+            .Select(m => new MemberInfo(m.MemberAccountId, m.FirstName, m.LastName))
+            .ToListAsync(cancellationToken);
+
+        var members = memberList.ToDictionary(m => m.MemberAccountId);
+
+        var grouped = reservations
+            .GroupBy(r => r.SlotTime)
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        var result = new List<BookedSlotWithMembers>();
+
+        foreach (var time in times)
+        {
+            grouped.TryGetValue(time, out var slotReservations);
+            var playerCount = slotReservations?.Sum(r => r.PlayerMemberAccountIds.Count + 1) ?? 0;
+            var remaining = Math.Max(0, MaxCapacity - playerCount);
+
+            var reservationsWithMembers = slotReservations?.Select(r =>
+            {
+                var bookingMember = members.TryGetValue(r.BookingMemberAccountId, out var bm)
+                    ? bm
+                    : new MemberInfo(r.BookingMemberAccountId, "Unknown", "Member");
+                var players = r.PlayerMemberAccountIds
+                    .Select(id => members.TryGetValue(id, out var pm) ? pm : new MemberInfo(id, "Unknown", "Member"))
+                    .ToList();
+                return new ReservationWithMembers(r.ReservationId, bookingMember, players);
+            }).ToList() ?? [];
+
+            result.Add(new BookedSlotWithMembers(time, remaining, reservationsWithMembers));
+        }
+
+        return result;
+    }
+
     public async Task<IReadOnlyList<Reservation>> GetMemberReservationsAsync(
         Guid memberAccountId,
         CancellationToken cancellationToken = default)
@@ -221,3 +272,6 @@ public class TeeTimeBookingService<TKey> where TKey : IEquatable<TKey>
 public sealed record SlotAvailability(TimeOnly Time, int RemainingCapacity);
 public sealed record DayAvailability(DateOnly Date, IReadOnlyList<SlotAvailability> Slots);
 public sealed record BookedSlot(TimeOnly Time, int RemainingCapacity, IReadOnlyList<Reservation> Reservations);
+public sealed record MemberInfo(Guid MemberAccountId, string FirstName, string LastName);
+public sealed record ReservationWithMembers(Guid ReservationId, MemberInfo BookingMember, IReadOnlyList<MemberInfo> Players);
+public sealed record BookedSlotWithMembers(TimeOnly Time, int RemainingCapacity, IReadOnlyList<ReservationWithMembers> Reservations);
