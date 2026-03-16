@@ -7,9 +7,14 @@ var builder = Host.CreateApplicationBuilder(args);
 builder.AddServiceDefaults();
 builder.AddSqlServerDbContext<ApplicationDbContext>("clubbaist");
 
-builder.Services.AddIdentityCore<IdentityUser<Guid>>()
+builder.Services.AddIdentityCore<IdentityUser<Guid>>(options =>
+    {
+        options.SignIn.RequireConfirmedAccount = true;
+        options.Stores.SchemaVersion = IdentitySchemaVersions.Version3;
+    })
     .AddRoles<IdentityRole<Guid>>()
-    .AddEntityFrameworkStores<ApplicationDbContext>();
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddSignInManager();
 
 builder.Services.AddHostedService<SeedWorker>();
 
