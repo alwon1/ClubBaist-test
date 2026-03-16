@@ -31,13 +31,27 @@
                 </div>
             </div>
             <div class="col-auto">
-                <button class="btn btn-primary mb-3" @onclick="LoadAvailability" disabled="@isLoading">
+                <button class="btn btn-primary mb-3" @onclick="RefreshCurrentView" disabled="@isLoading">
                     @if (isLoading)
                     {
                         <span class="spinner-border spinner-border-sm me-1" role="status"></span>
                     }
                     Refresh
                 </button>
+            </div>
+            <div class="col-auto d-none d-lg-block mb-3">
+                <div class="btn-group" role="group" aria-label="View mode">
+                    <button type="button"
+                            class="btn btn-outline-secondary @(viewMode == ViewMode.Day ? "active" : "")"
+                            @onclick='() => SetViewMode(ViewMode.Day)'>
+                        Day
+                    </button>
+                    <button type="button"
+                            class="btn btn-outline-secondary @(viewMode == ViewMode.Week ? "active" : "")"
+                            @onclick='() => SetViewMode(ViewMode.Week)'>
+                        Week
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -56,7 +70,111 @@
         </div>
     </div>
 }
-else if (slots is not null)
+else if (viewMode == ViewMode.Week && weeklySlots is not null)
+{
+    <div class="mb-3 d-flex align-items-center gap-2">
+        <button class="btn btn-outline-secondary btn-sm" @onclick="GoToPreviousWeek">&lsaquo; Prev</button>
+        <span class="fw-semibold small">
+            @weekDates[0].ToString("MMM d") &ndash; @weekDates[6].ToString("MMM d, yyyy")
+        </span>
+        <button class="btn btn-outline-secondary btn-sm" @onclick="GoToNextWeek">Next &rsaquo;</button>
+    </div>
+
+    <div class="mb-2 d-flex gap-3 align-items-center small text-muted flex-wrap">
+        <span><span class="badge bg-primary">&nbsp;</span> Booking member</span>
+        <span><span class="badge bg-secondary">&nbsp;</span> Additional player</span>
+        <span class="border rounded px-1" style="border-style: dashed !important;">—</span> Available spot
+        @if (!isAdmin)
+        {
+            <span class="ms-2"><span class="border rounded px-1" style="border: 2px solid #0d6efd; cursor:pointer">✎</span> Click to edit your reservation</span>
+        }
+    </div>
+
+    <div class="weekly-container">
+        <table class="weekly-table">
+            <thead>
+                <tr>
+                    <th class="weekly-time-th"></th>
+                    @foreach (var date in weekDates)
+                    {
+                        <th class="weekly-day-th @(date == selectedDate ? "weekly-today-header" : "")">
+                            <div class="fw-bold">@date.ToString("ddd")</div>
+                            <div class="fw-normal">@date.ToString("MMM d")</div>
+                        </th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var time in allWeekTimes)
+                {
+                    <tr>
+                        <td class="weekly-time-td">@time.ToString("h:mm tt")</td>
+                        @foreach (var date in weekDates)
+                        {
+                            var daySlots = weeklySlots.GetValueOrDefault(date);
+                            var slot = daySlots?.FirstOrDefault(s => s.Time == time);
+                            if (slot is null)
+                            {
+                                <td class="weekly-slot-cell weekly-no-data @(date == selectedDate ? "weekly-today-col" : "")"></td>
+                            }
+                            else
+                            {
+                                var totalBooked = slot.Reservations.Sum(r => 1 + r.Players.Count);
+                                var emptyCount = BookingConstants.MaxPlayersPerSlot - totalBooked;
+                                var cellBg = slot.RemainingCapacity switch
+                                {
+                                    BookingConstants.MaxPlayersPerSlot => "slot-row-open",
+                                    > 0 => "slot-row-partial",
+                                    _ => "slot-row-full"
+                                };
+                                var bookDate = date;
+                                var bookTime = slot.Time;
+                                <td class="weekly-slot-cell @cellBg @(date == selectedDate ? "weekly-today-col" : "")">
+                                    @foreach (var res in slot.Reservations)
+                                    {
+                                        var canEdit = isAdmin || res.BookingMember.MemberAccountId == currentMemberAccountId;
+                                        if (canEdit)
+                                        {
+                                            <a href="/teetimes/reservation/@res.ReservationId" class="text-decoration-none d-block">
+                                                <span class="badge bg-primary weekly-badge" title="@res.BookingMember.FirstName @res.BookingMember.LastName">
+                                                    @res.BookingMember.FirstName
+                                                </span>
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-primary weekly-badge" title="@res.BookingMember.FirstName @res.BookingMember.LastName">
+                                                @res.BookingMember.FirstName
+                                            </span>
+                                        }
+                                        @foreach (var player in res.Players)
+                                        {
+                                            <span class="badge bg-secondary weekly-badge" title="@player.FirstName @player.LastName">
+                                                @player.FirstName
+                                            </span>
+                                        }
+                                    }
+                                    @for (var i = 0; i < emptyCount; i++)
+                                    {
+                                        <div class="weekly-empty-spot">—</div>
+                                    }
+                                    @if (slot.RemainingCapacity > 0)
+                                    {
+                                        <div class="weekly-book-link">
+                                            <a href="@($"/teetimes/book?date={bookDate:yyyy-MM-dd}&time={bookTime:HH:mm}")"
+                                               class="btn btn-primary btn-sm weekly-book-btn">Book</a>
+                                        </div>
+                                    }
+                                </td>
+                            }
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else if (viewMode == ViewMode.Day && slots is not null)
 {
     <div class="mb-2 d-flex gap-3 align-items-center small text-muted">
         <span><span class="badge bg-primary">&nbsp;</span> Booking member</span>
@@ -168,6 +286,7 @@ else if (slots is not null)
 }
 
 <style>
+    /* === Day View Styles === */
     .tee-time-grid {
         border: 1px solid #dee2e6;
         border-radius: 0.375rem;
@@ -229,11 +348,135 @@ else if (slots is not null)
         display: block !important;
         font-size: 0.75rem;
     }
+
+    /* === Weekly View Styles === */
+    .weekly-container {
+        overflow: auto;
+        max-height: 75vh;
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+    }
+
+    .weekly-table {
+        border-collapse: collapse;
+        width: 100%;
+        min-width: 700px;
+    }
+
+    /* Sticky header row */
+    .weekly-table thead th {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        background: #f8f9fa;
+        border-bottom: 2px solid #dee2e6;
+        border-left: 1px solid #dee2e6;
+        padding: 0.4rem 0.3rem;
+        text-align: center;
+        font-size: 0.8rem;
+        white-space: nowrap;
+    }
+
+    /* Sticky + leftmost corner cell */
+    .weekly-time-th {
+        position: sticky;
+        left: 0;
+        z-index: 3;
+        background: #f8f9fa;
+        min-width: 5.5rem;
+        border-left: none;
+        border-right: 2px solid #dee2e6;
+    }
+
+    /* Sticky time column cells */
+    .weekly-time-td {
+        position: sticky;
+        left: 0;
+        z-index: 1;
+        background: #f8f9fa;
+        font-size: 0.7rem;
+        font-weight: 600;
+        white-space: nowrap;
+        padding: 0.3rem 0.4rem;
+        text-align: right;
+        vertical-align: middle;
+        border-bottom: 1px solid #dee2e6;
+        border-right: 2px solid #dee2e6;
+        min-width: 5.5rem;
+    }
+
+    /* Day column headers */
+    .weekly-day-th {
+        min-width: 130px;
+    }
+
+    /* Slot cells */
+    .weekly-slot-cell {
+        border-left: 1px solid #dee2e6;
+        border-bottom: 1px solid #dee2e6;
+        padding: 0.2rem;
+        vertical-align: top;
+        font-size: 0.7rem;
+        min-width: 130px;
+    }
+
+    .weekly-badge {
+        display: block;
+        font-size: 0.6rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 100%;
+        margin-bottom: 1px;
+        line-height: 1.3;
+    }
+
+    .weekly-empty-spot {
+        font-size: 0.6rem;
+        color: #adb5bd;
+        text-align: center;
+        border: 1px dashed #dee2e6;
+        border-radius: 0.2rem;
+        margin-bottom: 1px;
+        line-height: 1.4;
+        background: #fafafa;
+    }
+
+    .weekly-book-link {
+        text-align: right;
+        margin-top: 2px;
+    }
+
+    .weekly-book-btn {
+        font-size: 0.55rem;
+        padding: 0.05rem 0.25rem;
+        line-height: 1.4;
+    }
+
+    /* Today column highlight */
+    .weekly-today-header {
+        color: #0d6efd;
+        border-bottom: 3px solid #0d6efd !important;
+    }
+
+    .weekly-today-col {
+        border-left: 2px solid #0d6efd !important;
+    }
+
+    .weekly-no-data {
+        background: #f8f9fa;
+    }
 </style>
 
 @code {
+    private enum ViewMode { Day, Week }
+
+    private ViewMode viewMode = ViewMode.Day;
     private DateOnly selectedDate = DateOnly.FromDateTime(DateTime.Today);
     private IReadOnlyList<BookedSlotWithMembers>? slots;
+    private Dictionary<DateOnly, IReadOnlyList<BookedSlotWithMembers>>? weeklySlots;
+    private List<DateOnly> weekDates = new();
+    private List<TimeOnly> allWeekTimes = new();
     private bool isLoading;
     private string? errorMessage;
     private bool isAdmin;
@@ -264,7 +507,91 @@ else if (slots is not null)
         if (DateOnly.TryParse(e.Value?.ToString(), out var date))
         {
             selectedDate = date;
+            if (viewMode == ViewMode.Week)
+            {
+                SetWeekDates();
+                await LoadWeeklyAvailability();
+            }
+            else
+            {
+                await LoadAvailability();
+            }
+        }
+    }
+
+    private async Task RefreshCurrentView()
+    {
+        if (viewMode == ViewMode.Week)
+            await LoadWeeklyAvailability();
+        else
             await LoadAvailability();
+    }
+
+    private async Task SetViewMode(ViewMode mode)
+    {
+        if (viewMode == mode) return;
+        viewMode = mode;
+        if (mode == ViewMode.Week)
+        {
+            SetWeekDates();
+            await LoadWeeklyAvailability();
+        }
+        else
+        {
+            await LoadAvailability();
+        }
+    }
+
+    private void SetWeekDates()
+    {
+        var dayOfWeek = (int)selectedDate.DayOfWeek;
+        var daysFromMonday = dayOfWeek == 0 ? 6 : dayOfWeek - 1;
+        var monday = selectedDate.AddDays(-daysFromMonday);
+        weekDates = Enumerable.Range(0, 7).Select(i => monday.AddDays(i)).ToList();
+    }
+
+    private async Task GoToPreviousWeek()
+    {
+        selectedDate = weekDates[0].AddDays(-7);
+        SetWeekDates();
+        await LoadWeeklyAvailability();
+    }
+
+    private async Task GoToNextWeek()
+    {
+        selectedDate = weekDates[0].AddDays(7);
+        SetWeekDates();
+        await LoadWeeklyAvailability();
+    }
+
+    private async Task LoadWeeklyAvailability()
+    {
+        isLoading = true;
+        errorMessage = null;
+        weeklySlots = null;
+        allWeekTimes = new();
+
+        try
+        {
+            var result = new Dictionary<DateOnly, IReadOnlyList<BookedSlotWithMembers>>();
+            foreach (var date in weekDates)
+            {
+                result[date] = await BookingService.GetBookedSlotsWithMembersAsync(date);
+            }
+            weeklySlots = result;
+            allWeekTimes = weeklySlots.Values
+                .FirstOrDefault(s => s.Count > 0)
+                ?.Select(s => s.Time)
+                .ToList() ?? new();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load weekly availability");
+            errorMessage = "An unexpected error occurred while loading availability. Please try again later.";
+        }
+        finally
+        {
+            isLoading = false;
         }
     }
 
