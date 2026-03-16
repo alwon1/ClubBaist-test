@@ -1,6 +1,7 @@
 @page "/teetimes/staff"
 @rendermode InteractiveServer
 @attribute [Authorize(Roles = AppRoles.Admin)]
+@implements IDisposable
 
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Authorization
@@ -34,102 +35,233 @@
     </div>
 }
 
-<div class="card mb-4">
-    <div class="card-header">
-        <strong>Member Search</strong>
-    </div>
-    <div class="card-body">
-        <div class="row align-items-end">
-            <div class="col-md-6">
-                <div class="form-floating mb-3">
-                    <input type="text" class="form-control" id="searchInput"
-                           @bind="searchTerm" @bind:event="oninput"
-                           placeholder="Search by name or member number" />
-                    <label for="searchInput">Name or Member Number</label>
-                </div>
-            </div>
-            <div class="col-auto">
-                <button class="btn btn-primary mb-3" @onclick="SearchMembers" disabled="@isSearching">
-                    @if (isSearching)
-                    {
-                        <span class="spinner-border spinner-border-sm me-1" role="status"></span>
-                    }
-                    Search
-                </button>
-            </div>
-        </div>
+<ul class="nav nav-tabs mb-3">
+    <li class="nav-item">
+        <button class="nav-link @(activeView == ConsoleView.Members ? "active" : "")"
+                @onclick='() => SetView(ConsoleView.Members)'>
+            Members
+        </button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link @(activeView == ConsoleView.Reservations ? "active" : "")"
+                @onclick='() => SetView(ConsoleView.Reservations)'>
+            Reservations
+        </button>
+    </li>
+</ul>
 
-        @if (searchResults is not null && searchResults.Count > 0)
-        {
-            <QuickGrid Items="@searchResults.AsQueryable()" Class="table table-striped table-hover"
-                       RowClass="@(m => selectedMember?.MemberAccountId == m.MemberAccountId ? "table-active" : "")">
-                <TemplateColumn Title="Member #" SortBy="@(GridSort<MemberAccount<Guid>>.ByAscending(m => m.MemberNumber))">
-                    @context.MemberNumber
-                </TemplateColumn>
-                <TemplateColumn Title="Name" SortBy="@(GridSort<MemberAccount<Guid>>.ByAscending(m => m.LastName).ThenAscending(m => m.FirstName))">
-                    @context.FirstName @context.LastName
-                </TemplateColumn>
-                <TemplateColumn Title="Email">
-                    @context.Email
-                </TemplateColumn>
-                <TemplateColumn Title="Category">
-                    @context.MembershipCategory
-                </TemplateColumn>
-                <TemplateColumn Title="Status">
-                    @if (context.IsActive)
-                    {
-                        <span class="badge bg-success">Active</span>
-                    }
-                    else
-                    {
-                        <span class="badge bg-secondary">Inactive</span>
-                    }
-                </TemplateColumn>
-                <TemplateColumn Title="Action">
-                    <button class="btn btn-sm btn-outline-primary" @onclick="() => SelectMember(context)">
-                        Select
-                    </button>
-                </TemplateColumn>
-            </QuickGrid>
-        }
-        else if (searchResults is not null)
-        {
-            <p class="text-muted">No members found matching your search.</p>
-        }
-    </div>
-</div>
-
-@if (selectedMember is not null)
+@if (activeView == ConsoleView.Members)
 {
     <div class="card mb-4">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <strong>Reservations for @selectedMember.FirstName @selectedMember.LastName (@selectedMember.MemberNumber)</strong>
-            <a href="@($"/teetimes?date={DateOnly.FromDateTime(DateTime.Today):yyyy-MM-dd}")"
-               class="btn btn-sm btn-primary">
-                Book on Behalf
-            </a>
+        <div class="card-header d-flex align-items-center gap-2">
+            <strong>Members</strong>
+            @if (isMemberSearching)
+            {
+                <span class="spinner-border spinner-border-sm" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </span>
+            }
         </div>
         <div class="card-body">
-            @if (isLoadingReservations)
-            {
-                <div class="text-center my-3">
-                    <div class="spinner-border spinner-border-sm" role="status">
-                        <span class="visually-hidden">Loading...</span>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-floating mb-3">
+                        <input type="text" class="form-control" id="memberSearchInput"
+                               value="@memberSearchTerm"
+                               @oninput="OnMemberSearchInput"
+                               placeholder="Filter by name or member number" />
+                        <label for="memberSearchInput">Filter by name or member number</label>
                     </div>
                 </div>
-            }
-            else if (memberReservations is not null && memberReservations.Count > 0)
+            </div>
+
+            @if (memberSearchResults is { Count: > 0 })
             {
-                <QuickGrid Items="@memberReservations.AsQueryable()" Class="table table-striped"
+                <QuickGrid Items="@memberSearchResults.AsQueryable()" Class="table table-striped table-hover"
+                           RowClass="@(m => selectedMember?.MemberAccountId == m.MemberAccountId ? "table-active" : "")">
+                    <TemplateColumn Title="Member #" SortBy="@(GridSort<MemberAccount<Guid>>.ByAscending(m => m.MemberNumber))">
+                        @context.MemberNumber
+                    </TemplateColumn>
+                    <TemplateColumn Title="Name" SortBy="@(GridSort<MemberAccount<Guid>>.ByAscending(m => m.LastName).ThenAscending(m => m.FirstName))">
+                        @context.FirstName @context.LastName
+                    </TemplateColumn>
+                    <TemplateColumn Title="Email">
+                        @context.Email
+                    </TemplateColumn>
+                    <TemplateColumn Title="Category">
+                        @context.MembershipCategory
+                    </TemplateColumn>
+                    <TemplateColumn Title="Status">
+                        @if (context.IsActive)
+                        {
+                            <span class="badge bg-success">Active</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Inactive</span>
+                        }
+                    </TemplateColumn>
+                    <TemplateColumn Title="Action">
+                        <button class="btn btn-sm btn-outline-primary" @onclick="() => SelectMember(context)">
+                            Select
+                        </button>
+                    </TemplateColumn>
+                </QuickGrid>
+            }
+            else if (!isMemberSearching)
+            {
+                <p class="text-muted">No members found.</p>
+            }
+        </div>
+    </div>
+
+    @if (selectedMember is not null)
+    {
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <strong>Reservations for @selectedMember.FirstName @selectedMember.LastName (@selectedMember.MemberNumber)</strong>
+                <a href="@($"/teetimes?date={DateOnly.FromDateTime(DateTime.Today):yyyy-MM-dd}")"
+                   class="btn btn-sm btn-primary">
+                    Book on Behalf
+                </a>
+            </div>
+            <div class="card-body">
+                @if (isLoadingReservations)
+                {
+                    <div class="text-center my-3">
+                        <div class="spinner-border spinner-border-sm" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                }
+                else if (memberReservations is { Count: > 0 })
+                {
+                    <QuickGrid Items="@memberReservations.AsQueryable()" Class="table table-striped"
+                               RowClass="@(r => r.IsCancelled ? "table-secondary" : "")">
+                        <TemplateColumn Title="Date" SortBy="@(GridSort<Reservation>.ByAscending(r => r.SlotDate))">
+                            @context.SlotDate.ToString("MMM d, yyyy")
+                        </TemplateColumn>
+                        <TemplateColumn Title="Time" SortBy="@(GridSort<Reservation>.ByAscending(r => r.SlotTime))">
+                            @context.SlotTime.ToString("h:mm tt")
+                        </TemplateColumn>
+                        <TemplateColumn Title="Players">
+                            @(context.PlayerMemberAccountIds.Count + 1)
+                        </TemplateColumn>
+                        <TemplateColumn Title="Status">
+                            @if (context.IsCancelled)
+                            {
+                                <span class="badge bg-secondary">Cancelled</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-success">Active</span>
+                            }
+                        </TemplateColumn>
+                        <TemplateColumn Title="Actions">
+                            <a href="@($"/teetimes/reservation/{context.ReservationId}")"
+                               class="btn btn-sm btn-outline-primary me-1">
+                                View/Edit
+                            </a>
+                            @if (!context.IsCancelled && context.SlotDate >= DateOnly.FromDateTime(DateTime.Today))
+                            {
+                                @if (cancelConfirmId == context.ReservationId)
+                                {
+                                    <button class="btn btn-sm btn-danger me-1"
+                                            @onclick="() => ConfirmCancel(context.ReservationId)">
+                                        Confirm
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-secondary"
+                                            @onclick="() => cancelConfirmId = null">
+                                        No
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-sm btn-outline-danger"
+                                            @onclick="() => cancelConfirmId = context.ReservationId">
+                                        Cancel
+                                    </button>
+                                }
+                            }
+                        </TemplateColumn>
+                    </QuickGrid>
+                }
+                else
+                {
+                    <p class="text-muted">No reservations found for this member.</p>
+                }
+            </div>
+        </div>
+    }
+}
+else
+{
+    <div class="card mb-4">
+        <div class="card-header d-flex align-items-center gap-2">
+            <strong>Reservations</strong>
+            @if (isReservationSearching)
+            {
+                <span class="spinner-border spinner-border-sm" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </span>
+            }
+        </div>
+        <div class="card-body">
+            <div class="row align-items-end g-3 mb-3">
+                <div class="col-md-4">
+                    <div class="form-floating">
+                        <input type="text" class="form-control" id="reservationSearchInput"
+                               value="@reservationSearchTerm"
+                               @oninput="OnReservationSearchInput"
+                               placeholder="Filter by member name or number" />
+                        <label for="reservationSearchInput">Filter by member name or number</label>
+                    </div>
+                </div>
+                <div class="col-auto d-flex align-items-center">
+                    <div class="form-check form-switch mb-0">
+                        <input class="form-check-input" type="checkbox" id="dateRangeToggle"
+                               @bind="dateRangeEnabled" @bind:after="OnDateRangeToggled" />
+                        <label class="form-check-label" for="dateRangeToggle">Custom date range</label>
+                    </div>
+                </div>
+                <div class="col-auto">
+                    <div class="input-group">
+                        <span class="input-group-text">From</span>
+                        <input type="date" class="form-control" style="min-width:150px"
+                               disabled="@(!dateRangeEnabled)"
+                               value="@dateFrom.ToString("yyyy-MM-dd")"
+                               @onchange="OnDateFromChanged" />
+                    </div>
+                </div>
+                <div class="col-auto">
+                    <div class="input-group">
+                        <span class="input-group-text">To</span>
+                        <input type="date" class="form-control" style="min-width:150px"
+                               disabled="@(!dateRangeEnabled)"
+                               value="@(dateTo?.ToString("yyyy-MM-dd") ?? "")"
+                               @onchange="OnDateToChanged" />
+                    </div>
+                </div>
+            </div>
+
+            @if (reservationRows is { Count: > 0 })
+            {
+                <QuickGrid Items="@reservationRows.AsQueryable()" Class="table table-striped table-hover"
                            RowClass="@(r => r.IsCancelled ? "table-secondary" : "")">
-                    <TemplateColumn Title="Date" SortBy="@(GridSort<Reservation>.ByAscending(r => r.SlotDate))">
+                    <TemplateColumn Title="Date" SortBy="@(GridSort<ReservationRow>.ByAscending(r => r.SlotDate))">
                         @context.SlotDate.ToString("MMM d, yyyy")
                     </TemplateColumn>
-                    <TemplateColumn Title="Time" SortBy="@(GridSort<Reservation>.ByAscending(r => r.SlotTime))">
+                    <TemplateColumn Title="Time" SortBy="@(GridSort<ReservationRow>.ByAscending(r => r.SlotTime))">
                         @context.SlotTime.ToString("h:mm tt")
                     </TemplateColumn>
+                    <TemplateColumn Title="Booked By" SortBy="@(GridSort<ReservationRow>.ByAscending(r => r.BookingMemberName))">
+                        @context.BookingMemberName
+                    </TemplateColumn>
+                    <TemplateColumn Title="Member #">
+                        @context.MemberNumber
+                    </TemplateColumn>
                     <TemplateColumn Title="Players">
-                        @(context.PlayerMemberAccountIds.Count + 1)
+                        @context.PlayerCount
                     </TemplateColumn>
                     <TemplateColumn Title="Status">
                         @if (context.IsCancelled)
@@ -170,59 +302,131 @@
                     </TemplateColumn>
                 </QuickGrid>
             }
-            else
+            else if (!isReservationSearching)
             {
-                <p class="text-muted">No reservations found for this member.</p>
+                <p class="text-muted">No reservations found.</p>
             }
         </div>
     </div>
 }
 
 @code {
-    private string searchTerm = string.Empty;
-    private bool isSearching;
-    private bool isLoadingReservations;
+    private enum ConsoleView { Members, Reservations }
+
+    private record ReservationRow(
+        Guid ReservationId,
+        DateOnly SlotDate,
+        TimeOnly SlotTime,
+        string BookingMemberName,
+        string MemberNumber,
+        int PlayerCount,
+        bool IsCancelled);
+
+    // Shared state
+    private ConsoleView activeView = ConsoleView.Members;
     private string? errorMessage;
     private string? successMessage;
     private Guid? cancelConfirmId;
 
-    private List<MemberAccount<Guid>>? searchResults;
+    // Members view state
+    private string memberSearchTerm = string.Empty;
+    private bool isMemberSearching;
+    private List<MemberAccount<Guid>>? memberSearchResults;
     private MemberAccount<Guid>? selectedMember;
     private List<Reservation>? memberReservations;
+    private bool isLoadingReservations;
 
-    private async Task SearchMembers()
+    // Reservations view state
+    private string reservationSearchTerm = string.Empty;
+    private bool isReservationSearching;
+    private List<ReservationRow>? reservationRows;
+    // dateFrom defaults to today; always applied as a floor.
+    // When dateRangeEnabled is false the date inputs are disabled but the
+    // today-or-later default is still enforced.  Enabling the toggle lets
+    // staff choose a custom window.
+    private bool dateRangeEnabled;
+    private DateOnly dateFrom = DateOnly.FromDateTime(DateTime.Today);
+    private DateOnly? dateTo;
+
+    // Debounce tokens
+    private CancellationTokenSource? _memberDebounce;
+    private CancellationTokenSource? _reservationDebounce;
+
+    protected override async Task OnInitializedAsync()
     {
-        if (string.IsNullOrWhiteSpace(searchTerm))
-        {
-            errorMessage = "Please enter a search term.";
-            return;
-        }
+        await SearchMembers();
+    }
 
-        isSearching = true;
+    private async Task SetView(ConsoleView view)
+    {
+        activeView = view;
         errorMessage = null;
-        selectedMember = null;
-        memberReservations = null;
+        successMessage = null;
+        cancelConfirmId = null;
+
+        if (view == ConsoleView.Reservations && reservationRows is null)
+        {
+            await LoadReservations();
+        }
+    }
+
+    // --- Members View ---
+
+    private async Task OnMemberSearchInput(ChangeEventArgs e)
+    {
+        memberSearchTerm = e.Value?.ToString() ?? string.Empty;
+
+        var old = _memberDebounce;
+        old?.Cancel();
+        _memberDebounce = new CancellationTokenSource();
+        var token = _memberDebounce.Token;
+        old?.Dispose();
 
         try
         {
-            var pattern = $"%{searchTerm.Trim()}%";
-            searchResults = await DbContext.MemberAccounts
-                .Where(m => EF.Functions.Like(m.FirstName, pattern)
-                         || EF.Functions.Like(m.LastName, pattern)
-                         || EF.Functions.Like(m.MemberNumber, pattern))
-                .OrderBy(m => m.LastName)
-                .ThenBy(m => m.FirstName)
-                .Take(50)
-                .ToListAsync();
+            await Task.Delay(300, token);
+            await SearchMembers(token);
         }
+        catch (OperationCanceledException) { }
+    }
+
+    private async Task SearchMembers(CancellationToken cancellationToken = default)
+    {
+        isMemberSearching = true;
+        StateHasChanged();
+
+        try
+        {
+            if (string.IsNullOrWhiteSpace(memberSearchTerm))
+            {
+                memberSearchResults = await DbContext.MemberAccounts
+                    .OrderBy(m => m.LastName)
+                    .ThenBy(m => m.FirstName)
+                    .ToListAsync(cancellationToken);
+            }
+            else
+            {
+                var pattern = $"%{memberSearchTerm.Trim()}%";
+                memberSearchResults = await DbContext.MemberAccounts
+                    .Where(m => EF.Functions.Like(m.FirstName, pattern)
+                             || EF.Functions.Like(m.LastName, pattern)
+                             || EF.Functions.Like(m.MemberNumber, pattern))
+                    .OrderBy(m => m.LastName)
+                    .ThenBy(m => m.FirstName)
+                    .Take(50)
+                    .ToListAsync(cancellationToken);
+            }
+        }
+        catch (OperationCanceledException) { throw; }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Member search failed for term '{SearchTerm}'", searchTerm);
-            errorMessage = "An unexpected error occurred during the search. Please try again later.";
+            Logger.LogError(ex, "Member search failed for term '{SearchTerm}'", memberSearchTerm);
+            errorMessage = "Search failed. Please try again.";
         }
         finally
         {
-            isSearching = false;
+            isMemberSearching = false;
+            StateHasChanged();
         }
     }
 
@@ -235,20 +439,138 @@
 
         try
         {
-            memberReservations = (await BookingService.GetMemberReservationsAsync(member.MemberAccountId))
-                .OrderBy(r => r.SlotDate).ThenBy(r => r.SlotTime)
-                .ToList();
+            // Query directly to include cancelled reservations so staff see the full history.
+            memberReservations = await DbContext.Reservations
+                .Where(r => r.BookingMemberAccountId == member.MemberAccountId
+                         || r.PlayerMemberAccountIds.Contains(member.MemberAccountId))
+                .OrderBy(r => r.SlotDate)
+                .ThenBy(r => r.SlotTime)
+                .ToListAsync();
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to load reservations for member {MemberId}", member.MemberAccountId);
-            errorMessage = "An unexpected error occurred while loading reservations. Please try again later.";
+            errorMessage = "Failed to load reservations. Please try again.";
         }
         finally
         {
             isLoadingReservations = false;
         }
     }
+
+    // --- Reservations View ---
+
+    private async Task OnReservationSearchInput(ChangeEventArgs e)
+    {
+        reservationSearchTerm = e.Value?.ToString() ?? string.Empty;
+
+        var old = _reservationDebounce;
+        old?.Cancel();
+        _reservationDebounce = new CancellationTokenSource();
+        var token = _reservationDebounce.Token;
+        old?.Dispose();
+
+        try
+        {
+            await Task.Delay(300, token);
+            await LoadReservations(token);
+        }
+        catch (OperationCanceledException) { }
+    }
+
+    private async Task OnDateRangeToggled()
+    {
+        if (!dateRangeEnabled)
+        {
+            dateFrom = DateOnly.FromDateTime(DateTime.Today);
+            dateTo = null;
+        }
+        await LoadReservations();
+    }
+
+    private async Task OnDateFromChanged(ChangeEventArgs e)
+    {
+        if (DateOnly.TryParse(e.Value?.ToString(), out var date))
+        {
+            dateFrom = date;
+            await LoadReservations();
+        }
+    }
+
+    private async Task OnDateToChanged(ChangeEventArgs e)
+    {
+        var val = e.Value?.ToString();
+        dateTo = string.IsNullOrEmpty(val) ? null
+            : DateOnly.TryParse(val, out var date) ? date
+            : dateTo;
+        await LoadReservations();
+    }
+
+    private async Task LoadReservations(CancellationToken cancellationToken = default)
+    {
+        isReservationSearching = true;
+        StateHasChanged();
+
+        try
+        {
+            // Date range filter: dateFrom is always applied (defaults to today when the
+            // custom-range toggle is off), so the view never shows past reservations by default.
+            var reservationQuery = DbContext.Reservations
+                .Where(r => r.SlotDate >= dateFrom);
+
+            if (dateTo.HasValue)
+                reservationQuery = reservationQuery.Where(r => r.SlotDate <= dateTo.Value);
+
+            // Push the member name/number filter into the DB via a subquery to avoid
+            // loading the full result set when a search term is present.
+            if (!string.IsNullOrWhiteSpace(reservationSearchTerm))
+            {
+                var pattern = $"%{reservationSearchTerm.Trim()}%";
+                var matchingMemberIds = DbContext.MemberAccounts
+                    .Where(m => EF.Functions.Like(m.FirstName, pattern)
+                             || EF.Functions.Like(m.LastName, pattern)
+                             || EF.Functions.Like(m.MemberNumber, pattern))
+                    .Select(m => m.MemberAccountId);
+                reservationQuery = reservationQuery.Where(r => matchingMemberIds.Contains(r.BookingMemberAccountId));
+            }
+
+            var reservations = await reservationQuery
+                .OrderBy(r => r.SlotDate)
+                .ThenBy(r => r.SlotTime)
+                .ToListAsync(cancellationToken);
+
+            var memberIds = reservations.Select(r => r.BookingMemberAccountId).Distinct().ToList();
+            var members = await DbContext.MemberAccounts
+                .Where(m => memberIds.Contains(m.MemberAccountId))
+                .ToDictionaryAsync(m => m.MemberAccountId, cancellationToken);
+
+            reservationRows = reservations.Select(r =>
+            {
+                members.TryGetValue(r.BookingMemberAccountId, out var member);
+                return new ReservationRow(
+                    r.ReservationId,
+                    r.SlotDate,
+                    r.SlotTime,
+                    member is not null ? $"{member.FirstName} {member.LastName}" : "Unknown",
+                    member?.MemberNumber ?? "",
+                    r.PlayerMemberAccountIds.Count + 1,
+                    r.IsCancelled);
+            }).ToList();
+        }
+        catch (OperationCanceledException) { throw; }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load reservations");
+            errorMessage = "Failed to load reservations. Please try again.";
+        }
+        finally
+        {
+            isReservationSearching = false;
+            StateHasChanged();
+        }
+    }
+
+    // --- Shared Cancel ---
 
     private async Task ConfirmCancel(Guid reservationId)
     {
@@ -263,10 +585,10 @@
             if (result)
             {
                 successMessage = "Reservation cancelled successfully.";
-                if (selectedMember is not null)
-                {
+                if (activeView == ConsoleView.Members && selectedMember is not null)
                     await SelectMember(selectedMember);
-                }
+                else if (activeView == ConsoleView.Reservations)
+                    await LoadReservations();
             }
             else
             {
@@ -276,7 +598,15 @@
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to cancel reservation {ReservationId}", reservationId);
-            errorMessage = "An unexpected error occurred while cancelling the reservation. Please try again later.";
+            errorMessage = "Failed to cancel reservation. Please try again.";
         }
+    }
+
+    public void Dispose()
+    {
+        _memberDebounce?.Cancel();
+        _memberDebounce?.Dispose();
+        _reservationDebounce?.Cancel();
+        _reservationDebounce?.Dispose();
     }
 }
