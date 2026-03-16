@@ -9,7 +9,14 @@ public class SeedWorker(
     IHostApplicationLifetime lifetime,
     ILogger<SeedWorker> logger) : BackgroundService
 {
-    private const string DefaultPassword = "Pass@word1";
+    // Known passwords for seeded users (development/demo only)
+    private const string AdminPassword        = "Admin@Pass1";
+    private const string CommitteePassword    = "Committee@Pass1";
+    private const string Shareholder1Password = "Shareholder1@Pass1";
+    private const string Shareholder2Password = "Shareholder2@Pass1";
+    private const string Shareholder3Password = "Shareholder3@Pass1";
+    private const string SilverPassword       = "Silver@Pass1";
+    private const string BronzePassword       = "Bronze@Pass1";
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -48,21 +55,21 @@ public class SeedWorker(
         var now = DateTime.UtcNow;
 
         // Admin
-        await CreateUserWithRoleAsync(userManager, "admin@clubbaist.com", AppRoles.Admin, ct);
+        await CreateUserWithRoleAsync(userManager, "admin@clubbaist.com", AppRoles.Admin, AdminPassword, ct);
 
         // Membership Committee
-        await CreateUserWithRoleAsync(userManager, "committee@clubbaist.com", AppRoles.MembershipCommittee, ct);
+        await CreateUserWithRoleAsync(userManager, "committee@clubbaist.com", AppRoles.MembershipCommittee, CommitteePassword, ct);
 
         // Shareholder members (Gold) - need at least 3 for sponsorship
-        var sh1 = await CreateUserWithRoleAsync(userManager, "shareholder1@clubbaist.com", AppRoles.Member, ct);
-        var sh2 = await CreateUserWithRoleAsync(userManager, "shareholder2@clubbaist.com", AppRoles.Member, ct);
-        var sh3 = await CreateUserWithRoleAsync(userManager, "shareholder3@clubbaist.com", AppRoles.Member, ct);
+        var sh1 = await CreateUserWithRoleAsync(userManager, "shareholder1@clubbaist.com", AppRoles.Member, Shareholder1Password, ct);
+        var sh2 = await CreateUserWithRoleAsync(userManager, "shareholder2@clubbaist.com", AppRoles.Member, Shareholder2Password, ct);
+        var sh3 = await CreateUserWithRoleAsync(userManager, "shareholder3@clubbaist.com", AppRoles.Member, Shareholder3Password, ct);
 
         // Silver member
-        var silver = await CreateUserWithRoleAsync(userManager, "silver@clubbaist.com", AppRoles.Member, ct);
+        var silver = await CreateUserWithRoleAsync(userManager, "silver@clubbaist.com", AppRoles.Member, SilverPassword, ct);
 
         // Bronze member
-        var bronze = await CreateUserWithRoleAsync(userManager, "bronze@clubbaist.com", AppRoles.Member, ct);
+        var bronze = await CreateUserWithRoleAsync(userManager, "bronze@clubbaist.com", AppRoles.Member, BronzePassword, ct);
 
         // Create MemberAccounts if they don't exist yet
         if (!await db.MemberAccounts.AnyAsync(ct))
@@ -83,7 +90,7 @@ public class SeedWorker(
     }
 
     private async Task<IdentityUser<Guid>> CreateUserWithRoleAsync(
-        UserManager<IdentityUser<Guid>> userManager, string email, string role, CancellationToken ct)
+        UserManager<IdentityUser<Guid>> userManager, string email, string role, string password, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
         var user = await userManager.FindByEmailAsync(email);
@@ -95,7 +102,7 @@ public class SeedWorker(
                 Email = email,
                 EmailConfirmed = true
             };
-            var result = await userManager.CreateAsync(user, DefaultPassword);
+            var result = await userManager.CreateAsync(user, password);
             if (!result.Succeeded)
             {
                 var errors = string.Join(", ", result.Errors.Select(e => e.Description));
