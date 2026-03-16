@@ -21,4 +21,12 @@ public static class UiHelpers
         > 0 => "slot-row-partial",
         _ => "slot-row-full"
     };
+
+    public static string GetRoleBadgeClass(string role) => role switch
+    {
+        AppRoles.Admin => "bg-danger",
+        AppRoles.MembershipCommittee => "bg-warning text-dark",
+        AppRoles.Member => "bg-success",
+        _ => "bg-secondary"
+    };
 }

@@ -78,6 +78,34 @@ public class MemberManagementService<TKey> where TKey : IEquatable<TKey>
         return new CreateMemberResult(memberAccount.MemberAccountId, memberAccount.MemberNumber, memberAccount.CreatedAt);
     }
 
+    public async Task<MemberAccount<TKey>> UpdateMemberAsync(
+        UpdateMemberRequest<TKey> request,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var member = await _dbContext.MemberAccounts
+            .FirstOrDefaultAsync(m => m.MemberAccountId == request.MemberAccountId, cancellationToken)
+            ?? throw new InvalidOperationException("Member not found.");
+
+        var now = DateTime.UtcNow;
+        member.UpdateProfile(
+            request.FirstName,
+            request.LastName,
+            request.DateOfBirth,
+            request.Email,
+            request.Phone,
+            request.Address,
+            request.PostalCode,
+            request.MembershipCategory,
+            now,
+            request.AlternatePhone);
+
+        member.SetActive(request.IsActive, now);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return member;
+    }
+
     private Task<bool> HasExistingMemberAccountAsync(TKey applicationUserId, CancellationToken cancellationToken)
     {
         return _dbContext.MemberAccounts.AnyAsync(
@@ -156,3 +184,17 @@ public sealed record CreateMemberResult(
     Guid MemberAccountId,
     string MemberNumber,
     DateTime CreatedAt);
+
+public sealed record UpdateMemberRequest<TKey>(
+    Guid MemberAccountId,
+    string FirstName,
+    string LastName,
+    DateTime DateOfBirth,
+    string Email,
+    string Phone,
+    string Address,
+    string PostalCode,
+    MembershipCategory MembershipCategory,
+    bool IsActive,
+    string? AlternatePhone = null)
+    where TKey : IEquatable<TKey>;

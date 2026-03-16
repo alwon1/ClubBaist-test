@@ -1,0 +1,198 @@
+@page "/admin/users"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = AppRoles.Admin)]
+@implements IDisposable
+
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using ClubBaist.Domain
+@using ClubBaist.Services
+
+@inject UserManager<IdentityUser<Guid>> UserManager
+@inject IApplicationDbContext<Guid> DbContext
+@inject NavigationManager NavigationManager
+@inject ILogger<UserManagement> Logger
+
+<PageTitle>User Management - Club Baist</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3>User Management</h3>
+    <a href="/admin/users/create" class="btn btn-primary">Add User</a>
+</div>
+
+@if (!string.IsNullOrEmpty(_errorMessage))
+{
+    <div class="alert alert-danger alert-dismissible fade show">
+        @_errorMessage
+        <button type="button" class="btn-close" @onclick="() => _errorMessage = null"></button>
+    </div>
+}
+
+<div class="card mb-4">
+    <div class="card-header d-flex align-items-center gap-2">
+        <strong>Users</strong>
+        @if (_loading)
+        {
+            <span class="spinner-border spinner-border-sm" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </span>
+        }
+    </div>
+    <div class="card-body">
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <div class="form-floating">
+                    <input type="text" class="form-control" id="searchInput"
+                           value="@_searchTerm"
+                           @oninput="OnSearchInput"
+                           placeholder="Filter by email" />
+                    <label for="searchInput">Filter by email</label>
+                </div>
+            </div>
+        </div>
+
+        @if (_rows is { Count: > 0 })
+        {
+            <QuickGrid Items="@_rows.AsQueryable()" Class="table table-striped table-hover">
+                <TemplateColumn Title="Email" SortBy="@(GridSort<UserRow>.ByAscending(r => r.Email))">
+                    @context.Email
+                </TemplateColumn>
+                <TemplateColumn Title="Roles">
+                    @foreach (var role in context.Roles)
+                    {
+                        <span class="badge @UiHelpers.GetRoleBadgeClass(role) me-1">@role</span>
+                    }
+                </TemplateColumn>
+                <TemplateColumn Title="Member #">
+                    @if (context.MemberNumber is not null)
+                    {
+                        <span class="badge bg-secondary">@context.MemberNumber</span>
+                    }
+                    else
+                    {
+                        <span class="text-muted">—</span>
+                    }
+                </TemplateColumn>
+                <TemplateColumn Title="Actions">
+                    <a href="@($"/admin/users/{context.UserId}")" class="btn btn-sm btn-outline-primary me-1">
+                        Manage
+                    </a>
+                    @if (context.MemberAccountId.HasValue)
+                    {
+                        <a href="@($"/admin/members/{context.MemberAccountId.Value}")" class="btn btn-sm btn-outline-secondary">
+                            Edit Member
+                        </a>
+                    }
+                </TemplateColumn>
+            </QuickGrid>
+        }
+        else if (!_loading)
+        {
+            <p class="text-muted">No users found.</p>
+        }
+    </div>
+</div>
+
+@code {
+    private record UserRow(
+        Guid UserId,
+        string Email,
+        List<string> Roles,
+        string? MemberNumber,
+        Guid? MemberAccountId);
+
+    private List<UserRow>? _rows;
+    private List<UserRow>? _allRows;
+    private string _searchTerm = string.Empty;
+    private bool _loading;
+    private string? _errorMessage;
+    private CancellationTokenSource? _debounce;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUsersAsync();
+    }
+
+    private async Task LoadUsersAsync()
+    {
+        _loading = true;
+        try
+        {
+            var users = await UserManager.Users.ToListAsync();
+            var memberAccounts = await DbContext.MemberAccounts
+                .Select(m => new { m.ApplicationUserId, m.MemberNumber, m.MemberAccountId })
+                .ToListAsync();
+            var memberByUser = memberAccounts.ToDictionary(m => m.ApplicationUserId);
+
+            var rows = new List<UserRow>();
+            foreach (var user in users)
+            {
+                var roles = (await UserManager.GetRolesAsync(user)).OrderBy(r => r).ToList();
+                memberByUser.TryGetValue(user.Id, out var member);
+                rows.Add(new UserRow(
+                    user.Id,
+                    user.Email ?? user.UserName ?? user.Id.ToString(),
+                    roles,
+                    member?.MemberNumber,
+                    member?.MemberAccountId));
+            }
+
+            _allRows = rows.OrderBy(r => r.Email).ToList();
+            ApplyFilter();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load users");
+            _errorMessage = "Failed to load users. Please try again.";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task OnSearchInput(ChangeEventArgs e)
+    {
+        _searchTerm = e.Value?.ToString() ?? string.Empty;
+
+        var old = _debounce;
+        old?.Cancel();
+        _debounce = new CancellationTokenSource();
+        var token = _debounce.Token;
+        old?.Dispose();
+
+        try
+        {
+            await Task.Delay(300, token);
+            ApplyFilter();
+            StateHasChanged();
+        }
+        catch (OperationCanceledException) { }
+    }
+
+    private void ApplyFilter()
+    {
+        if (_allRows is null)
+        {
+            _rows = null;
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_searchTerm))
+        {
+            _rows = _allRows;
+            return;
+        }
+
+        var term = _searchTerm.Trim();
+        _rows = _allRows.Where(r => r.Email.Contains(term, StringComparison.OrdinalIgnoreCase)).ToList();
+    }
+
+    public void Dispose()
+    {
+        _debounce?.Cancel();
+        _debounce?.Dispose();
+    }
+}
