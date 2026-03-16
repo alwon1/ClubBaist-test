@@ -177,6 +177,81 @@ public sealed class MemberManagementServiceTests
         StringAssert.Contains(ex.Message, "already exists");
     }
 
+    [TestMethod]
+    public async Task CreateMemberAsync_ValidRequest_AssignsMemberRole()
+    {
+        using var scope = TestServiceHost.CreateScope();
+        var provider = scope.ServiceProvider;
+
+        var memberService = provider.GetRequiredService<MemberManagementService<Guid>>();
+        var userManager = provider.GetRequiredService<UserManager<IdentityUser<Guid>>>();
+        var roleManager = provider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
+
+        await roleManager.CreateAsync(new IdentityRole<Guid> { Name = AppRoles.Member });
+
+        var userId = await CreateIdentityUserAsync(userManager);
+
+        var request = new CreateMemberRequest<Guid>(
+            ApplicationUserId: userId,
+            FirstName: "Jane",
+            LastName: "Doe",
+            DateOfBirth: new DateTime(1990, 5, 20),
+            Email: "jane.doe@example.com",
+            Phone: "555-0100",
+            Address: "123 Main St",
+            PostalCode: "T1T1T1",
+            MembershipCategory: MembershipCategory.Social);
+
+        await memberService.CreateMemberAsync(request);
+
+        var user = await userManager.FindByIdAsync(userId.ToString());
+        Assert.IsNotNull(user);
+        Assert.IsTrue(await userManager.IsInRoleAsync(user, AppRoles.Member));
+    }
+
+    [TestMethod]
+    public async Task CreateMemberAsync_MultipleMembersCreated_AssignsSequentialMemberNumbers()
+    {
+        using var scope = TestServiceHost.CreateScope();
+        var provider = scope.ServiceProvider;
+
+        var memberService = provider.GetRequiredService<MemberManagementService<Guid>>();
+        var userManager = provider.GetRequiredService<UserManager<IdentityUser<Guid>>>();
+        var dbContext = provider.GetRequiredService<ApplicationDbContext>();
+
+        var userId1 = await CreateIdentityUserAsync(userManager);
+        var userId2 = await CreateIdentityUserAsync(userManager);
+
+        var request1 = new CreateMemberRequest<Guid>(
+            ApplicationUserId: userId1,
+            FirstName: "First",
+            LastName: "Member",
+            DateOfBirth: new DateTime(1990, 1, 1),
+            Email: "first@example.com",
+            Phone: "555-0001",
+            Address: "1 Main St",
+            PostalCode: "T1T1T1",
+            MembershipCategory: MembershipCategory.Social);
+
+        var request2 = new CreateMemberRequest<Guid>(
+            ApplicationUserId: userId2,
+            FirstName: "Second",
+            LastName: "Member",
+            DateOfBirth: new DateTime(1991, 2, 2),
+            Email: "second@example.com",
+            Phone: "555-0002",
+            Address: "2 Main St",
+            PostalCode: "T2T2T2",
+            MembershipCategory: MembershipCategory.Social);
+
+        var result1 = await memberService.CreateMemberAsync(request1);
+        var result2 = await memberService.CreateMemberAsync(request2);
+
+        Assert.IsTrue(int.TryParse(result1.MemberNumber, out var num1));
+        Assert.IsTrue(int.TryParse(result2.MemberNumber, out var num2));
+        Assert.AreEqual(num1 + 1, num2);
+    }
+
     private static Task<Guid> CreateIdentityUserAsync(UserManager<IdentityUser<Guid>> userManager) =>
         TestDataFactory.CreateIdentityUserAsync(userManager);
 }

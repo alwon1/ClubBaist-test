@@ -40,6 +40,15 @@ public static class TestServiceHost
         using (var initScope = provider.CreateScope())
         {
             initScope.ServiceProvider.GetRequiredService<ApplicationDbContext>().Database.EnsureCreated();
+
+            var roleManager = initScope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
+            foreach (var role in new[] { AppRoles.Admin, AppRoles.MembershipCommittee, AppRoles.Member })
+            {
+                if (!roleManager.RoleExistsAsync(role).GetAwaiter().GetResult())
+                {
+                    roleManager.CreateAsync(new IdentityRole<Guid> { Name = role }).GetAwaiter().GetResult();
+                }
+            }
         }
 
         return new TestScope(provider.CreateScope(), provider, connection);

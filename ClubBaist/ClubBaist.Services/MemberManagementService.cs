@@ -69,6 +69,12 @@ public class MemberManagementService<TKey> where TKey : IEquatable<TKey>
             throw;
         }
 
+        var identityUser = await _userManager.FindByIdAsync(createMemberRequest.ApplicationUserId.ToString()!);
+        if (identityUser is not null && !await _userManager.IsInRoleAsync(identityUser, AppRoles.Member))
+        {
+            await _userManager.AddToRoleAsync(identityUser, AppRoles.Member);
+        }
+
         return new CreateMemberResult(memberAccount.MemberAccountId, memberAccount.MemberNumber, memberAccount.CreatedAt);
     }
 
@@ -93,18 +99,15 @@ public class MemberManagementService<TKey> where TKey : IEquatable<TKey>
 
     private async Task<string> GenerateUniqueMemberNumberAsync(CancellationToken cancellationToken)
     {
-        while (true)
-        {
-            var candidate = $"MBR-{DateTime.UtcNow:yyyyMMddHHmmss}-{Guid.NewGuid():N}"[..24].ToUpperInvariant();
-            var exists = await _dbContext.MemberAccounts.AnyAsync(
-                member => member.MemberNumber == candidate,
-                cancellationToken);
+        var maxNumber = await _dbContext.MemberAccounts
+            .Select(m => m.MemberNumber)
+            .ToListAsync(cancellationToken)
+            .ContinueWith(t => t.Result
+                .Select(n => int.TryParse(n, out var v) ? v : 0)
+                .DefaultIfEmpty(0)
+                .Max(), cancellationToken);
 
-            if (!exists)
-            {
-                return candidate;
-            }
-        }
+        return (maxNumber + 1).ToString();
     }
 
     private static void EnsureRequiredKey(TKey key, string paramName)
