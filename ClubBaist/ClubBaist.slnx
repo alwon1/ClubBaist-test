@@ -1,6 +1,7 @@
 <Solution>
   <Project Path="ClubBaist.AppHost/ClubBaist.AppHost.csproj" />
   <Project Path="ClubBaist.Domain/ClubBaist.Domain.csproj" />
+  <Project Path="ClubBaist.PlaywrightTests/ClubBaist.PlaywrightTests.csproj" />
   <Project Path="ClubBaist.Seeder/ClubBaist.Seeder.csproj" />
   <Project Path="ClubBaist.ServiceDefaults/ClubBaist.ServiceDefaults.csproj" />
   <Project Path="ClubBaist.Services/ClubBaist.Services.csproj" />
