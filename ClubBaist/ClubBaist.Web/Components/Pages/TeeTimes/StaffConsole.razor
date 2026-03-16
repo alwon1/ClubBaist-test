@@ -55,9 +55,11 @@
     <div class="card mb-4">
         <div class="card-header d-flex align-items-center gap-2">
             <strong>Members</strong>
-            @if (isMemberSearching)
+            @if (isMemberLoading)
             {
-                <span class="spinner-border spinner-border-sm" role="status"></span>
+                <span class="spinner-border spinner-border-sm" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </span>
             }
         </div>
         <div class="card-body">
@@ -106,7 +108,7 @@
                     </TemplateColumn>
                 </QuickGrid>
             }
-            else if (!isMemberSearching)
+            else if (!isMemberLoading)
             {
                 <p class="text-muted">No members found.</p>
             }
@@ -199,7 +201,9 @@ else
             <strong>Reservations</strong>
             @if (isReservationSearching)
             {
-                <span class="spinner-border spinner-border-sm" role="status"></span>
+                <span class="spinner-border spinner-border-sm" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </span>
             }
         </div>
         <div class="card-body">
@@ -324,9 +328,10 @@ else
     private string? successMessage;
     private Guid? cancelConfirmId;
 
-    // Members view state
+    // Members view state — all members loaded once and filtered in-memory
+    private List<MemberAccount<Guid>> _allMembers = [];
     private string memberSearchTerm = string.Empty;
-    private bool isMemberSearching;
+    private bool isMemberLoading;
     private List<MemberAccount<Guid>>? memberSearchResults;
     private MemberAccount<Guid>? selectedMember;
     private List<Reservation>? memberReservations;
@@ -336,17 +341,37 @@ else
     private string reservationSearchTerm = string.Empty;
     private bool isReservationSearching;
     private List<ReservationRow>? reservationRows;
+    // dateFrom defaults to today; always applied as a floor.
+    // When dateRangeEnabled is false the date inputs are disabled but the
+    // today-or-later default is still enforced.  Enabling the toggle lets
+    // staff choose a custom window.
     private bool dateRangeEnabled;
     private DateOnly dateFrom = DateOnly.FromDateTime(DateTime.Today);
     private DateOnly? dateTo;
 
-    // Debounce tokens
-    private CancellationTokenSource? _memberDebounce;
+    // Debounce token for the reservation search (member search is in-memory, no debounce needed)
     private CancellationTokenSource? _reservationDebounce;
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadAllMembers();
+        isMemberLoading = true;
+        try
+        {
+            _allMembers = await DbContext.MemberAccounts
+                .OrderBy(m => m.LastName)
+                .ThenBy(m => m.FirstName)
+                .ToListAsync();
+            memberSearchResults = _allMembers;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load member list");
+            errorMessage = "Failed to load member list.";
+        }
+        finally
+        {
+            isMemberLoading = false;
+        }
     }
 
     private async Task SetView(ConsoleView view)
@@ -364,80 +389,22 @@ else
 
     // --- Members View ---
 
-    private async Task LoadAllMembers()
-    {
-        isMemberSearching = true;
-        try
-        {
-            memberSearchResults = await DbContext.MemberAccounts
-                .OrderBy(m => m.LastName)
-                .ThenBy(m => m.FirstName)
-                .ToListAsync();
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Failed to load member list");
-            errorMessage = "Failed to load member list.";
-        }
-        finally
-        {
-            isMemberSearching = false;
-        }
-    }
-
-    private async Task OnMemberSearchInput(ChangeEventArgs e)
+    private void OnMemberSearchInput(ChangeEventArgs e)
     {
         memberSearchTerm = e.Value?.ToString() ?? string.Empty;
-        _memberDebounce?.Cancel();
-        _memberDebounce = new CancellationTokenSource();
-        var token = _memberDebounce.Token;
 
-        try
+        if (string.IsNullOrWhiteSpace(memberSearchTerm))
         {
-            await Task.Delay(300, token);
-            await SearchMembers(token);
+            memberSearchResults = _allMembers;
+            return;
         }
-        catch (OperationCanceledException) { }
-    }
 
-    private async Task SearchMembers(CancellationToken cancellationToken = default)
-    {
-        isMemberSearching = true;
-        StateHasChanged();
-
-        try
-        {
-            if (string.IsNullOrWhiteSpace(memberSearchTerm))
-            {
-                memberSearchResults = await DbContext.MemberAccounts
-                    .OrderBy(m => m.LastName)
-                    .ThenBy(m => m.FirstName)
-                    .ToListAsync(cancellationToken);
-            }
-            else
-            {
-                var pattern = $"%{memberSearchTerm.Trim()}%";
-                memberSearchResults = await DbContext.MemberAccounts
-                    .Where(m => EF.Functions.Like(m.FirstName, pattern)
-                             || EF.Functions.Like(m.LastName, pattern)
-                             || EF.Functions.Like(m.MemberNumber, pattern))
-                    .OrderBy(m => m.LastName)
-                    .ThenBy(m => m.FirstName)
-                    .Take(50)
-                    .ToListAsync(cancellationToken);
-            }
-        }
-        catch (OperationCanceledException) { throw; }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Member search failed for term '{SearchTerm}'", memberSearchTerm);
-            errorMessage = "Search failed. Please try again.";
-        }
-        finally
-        {
-            isMemberSearching = false;
-            StateHasChanged();
-        }
+        var term = memberSearchTerm.Trim();
+        memberSearchResults = _allMembers
+            .Where(m => m.FirstName.Contains(term, StringComparison.OrdinalIgnoreCase)
+                     || m.LastName.Contains(term, StringComparison.OrdinalIgnoreCase)
+                     || m.MemberNumber.Contains(term, StringComparison.OrdinalIgnoreCase))
+            .ToList();
     }
 
     private async Task SelectMember(MemberAccount<Guid> member)
@@ -449,9 +416,13 @@ else
 
         try
         {
-            memberReservations = (await BookingService.GetMemberReservationsAsync(member.MemberAccountId))
-                .OrderBy(r => r.SlotDate).ThenBy(r => r.SlotTime)
-                .ToList();
+            // Query directly to include cancelled reservations so staff see the full history.
+            memberReservations = await DbContext.Reservations
+                .Where(r => r.BookingMemberAccountId == member.MemberAccountId
+                         || r.PlayerMemberAccountIds.Contains(member.MemberAccountId))
+                .OrderBy(r => r.SlotDate)
+                .ThenBy(r => r.SlotTime)
+                .ToListAsync();
         }
         catch (Exception ex)
         {
@@ -469,9 +440,12 @@ else
     private async Task OnReservationSearchInput(ChangeEventArgs e)
     {
         reservationSearchTerm = e.Value?.ToString() ?? string.Empty;
-        _reservationDebounce?.Cancel();
+
+        var old = _reservationDebounce;
+        old?.Cancel();
         _reservationDebounce = new CancellationTokenSource();
         var token = _reservationDebounce.Token;
+        old?.Dispose();
 
         try
         {
@@ -516,13 +490,28 @@ else
 
         try
         {
-            var query = DbContext.Reservations
+            // Date range filter: dateFrom is always applied (defaults to today when the
+            // custom-range toggle is off), so the view never shows past reservations by default.
+            var reservationQuery = DbContext.Reservations
                 .Where(r => r.SlotDate >= dateFrom);
 
             if (dateTo.HasValue)
-                query = query.Where(r => r.SlotDate <= dateTo.Value);
+                reservationQuery = reservationQuery.Where(r => r.SlotDate <= dateTo.Value);
 
-            var reservations = await query
+            // Push the member name/number filter into the DB via a subquery to avoid
+            // loading the full result set when a search term is present.
+            if (!string.IsNullOrWhiteSpace(reservationSearchTerm))
+            {
+                var pattern = $"%{reservationSearchTerm.Trim()}%";
+                var matchingMemberIds = DbContext.MemberAccounts
+                    .Where(m => EF.Functions.Like(m.FirstName, pattern)
+                             || EF.Functions.Like(m.LastName, pattern)
+                             || EF.Functions.Like(m.MemberNumber, pattern))
+                    .Select(m => m.MemberAccountId);
+                reservationQuery = reservationQuery.Where(r => matchingMemberIds.Contains(r.BookingMemberAccountId));
+            }
+
+            var reservations = await reservationQuery
                 .OrderBy(r => r.SlotDate)
                 .ThenBy(r => r.SlotTime)
                 .ToListAsync(cancellationToken);
@@ -532,7 +521,7 @@ else
                 .Where(m => memberIds.Contains(m.MemberAccountId))
                 .ToDictionaryAsync(m => m.MemberAccountId, cancellationToken);
 
-            IEnumerable<ReservationRow> rows = reservations.Select(r =>
+            reservationRows = reservations.Select(r =>
             {
                 members.TryGetValue(r.BookingMemberAccountId, out var member);
                 return new ReservationRow(
@@ -543,17 +532,7 @@ else
                     member?.MemberNumber ?? "",
                     r.PlayerMemberAccountIds.Count + 1,
                     r.IsCancelled);
-            });
-
-            if (!string.IsNullOrWhiteSpace(reservationSearchTerm))
-            {
-                var term = reservationSearchTerm.Trim();
-                rows = rows.Where(r =>
-                    r.BookingMemberName.Contains(term, StringComparison.OrdinalIgnoreCase) ||
-                    r.MemberNumber.Contains(term, StringComparison.OrdinalIgnoreCase));
-            }
-
-            reservationRows = rows.ToList();
+            }).ToList();
         }
         catch (OperationCanceledException) { throw; }
         catch (Exception ex)
@@ -602,7 +581,7 @@ else
 
     public void Dispose()
     {
-        _memberDebounce?.Dispose();
+        _reservationDebounce?.Cancel();
         _reservationDebounce?.Dispose();
     }
 }
