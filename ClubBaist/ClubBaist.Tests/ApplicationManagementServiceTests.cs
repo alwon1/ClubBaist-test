@@ -410,7 +410,7 @@ public sealed class ApplicationManagementServiceTests
         await dbContext.ApplicationStatusHistories.ExecuteDeleteAsync();
         await dbContext.MemberAccounts.ExecuteDeleteAsync();
         await dbContext.MembershipApplications.ExecuteDeleteAsync();
+        await dbContext.UserRoles.ExecuteDeleteAsync();
         await dbContext.Users.ExecuteDeleteAsync();
-        await dbContext.Roles.ExecuteDeleteAsync();
     }
 }

@@ -67,14 +67,14 @@ public class SeedWorker(
         // Create MemberAccounts if they don't exist yet
         if (!await db.MemberAccounts.AnyAsync(ct))
         {
-            var memberNumber = 1000;
+            var memberNumber = 1;
 
             db.MemberAccounts.AddRange(
-                CreateMember(sh1.Id, $"SH-{memberNumber++}", "Alice", "Shareholder", "shareholder1@clubbaist.com", MembershipCategory.Shareholder, now),
-                CreateMember(sh2.Id, $"SH-{memberNumber++}", "Bob", "Shareholder", "shareholder2@clubbaist.com", MembershipCategory.Shareholder, now),
-                CreateMember(sh3.Id, $"SH-{memberNumber++}", "Carol", "Shareholder", "shareholder3@clubbaist.com", MembershipCategory.Shareholder, now),
-                CreateMember(silver.Id, $"SH-{memberNumber++}", "Diana", "Silver", "silver@clubbaist.com", MembershipCategory.ShareholderSpouse, now),
-                CreateMember(bronze.Id, $"SH-{memberNumber++}", "Evan", "Bronze", "bronze@clubbaist.com", MembershipCategory.Junior, now)
+                CreateMember(sh1.Id, $"{memberNumber++}", "Alice", "Shareholder", "shareholder1@clubbaist.com", MembershipCategory.Shareholder, now),
+                CreateMember(sh2.Id, $"{memberNumber++}", "Bob", "Shareholder", "shareholder2@clubbaist.com", MembershipCategory.Shareholder, now),
+                CreateMember(sh3.Id, $"{memberNumber++}", "Carol", "Shareholder", "shareholder3@clubbaist.com", MembershipCategory.Shareholder, now),
+                CreateMember(silver.Id, $"{memberNumber++}", "Diana", "Silver", "silver@clubbaist.com", MembershipCategory.ShareholderSpouse, now),
+                CreateMember(bronze.Id, $"{memberNumber++}", "Evan", "Bronze", "bronze@clubbaist.com", MembershipCategory.Junior, now)
             );
 
             await db.SaveChangesAsync(ct);
