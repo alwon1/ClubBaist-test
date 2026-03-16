@@ -59,8 +59,7 @@ else
             @if (isAdmin)
             {
                 <div class="form-floating mb-3">
-                    <select class="form-select" id="bookingMember"
-                            @bind="_bookingMemberStr">
+                    <select class="form-select" id="bookingMember" @bind="BookingMemberId">
                         <option value="">-- Select Member --</option>
                         @foreach (var member in allMembers)
                         {
@@ -106,7 +105,7 @@ else
                                         value="@additionalPlayerIds[index]"
                                         @onchange="(e) => OnPlayerChanged(index, e)">
                                     <option value="@Guid.Empty">-- Select Player --</option>
-                                    @foreach (var member in allMembers.Where(m => m.MemberAccountId != selectedBookingMemberId))
+                                    @foreach (var member in allMembers.Where(m => m.MemberAccountId != _bookingMemberId))
                                     {
                                         <option value="@member.MemberAccountId">
                                             @member.MemberNumber - @member.FirstName @member.LastName
@@ -153,10 +152,18 @@ else
     private string? successMessage;
 
     private MemberAccount<Guid>? currentMember;
-    // Backing field for the admin <select> binding; the Guid property derives from it.
-    private string _bookingMemberStr = "";
-    private Guid selectedBookingMemberId =>
-        Guid.TryParse(_bookingMemberStr, out var id) ? id : Guid.Empty;
+    private Guid _bookingMemberId;
+    // Read/write string property used by the admin <select> @bind.
+    // Stores and retrieves the Guid natively; no Guid→string→Guid roundtrip elsewhere.
+    private string BookingMemberId
+    {
+        get => _bookingMemberId == Guid.Empty ? "" : _bookingMemberId.ToString();
+        set
+        {
+            _bookingMemberId = Guid.TryParse(value, out var id) ? id : Guid.Empty;
+            additionalPlayerIds.RemoveAll(p => p == _bookingMemberId);
+        }
+    }
     private List<MemberAccount<Guid>> allMembers = [];
     private List<Guid> additionalPlayerIds = [];
 
@@ -186,7 +193,7 @@ else
                 return;
             }
 
-            _bookingMemberStr = currentMember?.MemberAccountId.ToString() ?? "";
+            _bookingMemberId = currentMember?.MemberAccountId ?? Guid.Empty;
 
             allMembers = await DbContext.MemberAccounts
                 .Where(m => m.IsActive)
@@ -203,11 +210,6 @@ else
         {
             isLoading = false;
         }
-    }
-
-    private void OnBookingMemberChanged()
-    {
-        additionalPlayerIds.RemoveAll(p => p == selectedBookingMemberId);
     }
 
     private void OnPlayerChanged(int index, ChangeEventArgs e)
@@ -235,7 +237,7 @@ else
     {
         errorMessage = null;
 
-        if (selectedBookingMemberId == Guid.Empty)
+        if (_bookingMemberId == Guid.Empty)
         {
             errorMessage = "Please select a booking member.";
             return;
@@ -246,7 +248,7 @@ else
             .Distinct()
             .ToList();
 
-        if (playerIds.Contains(selectedBookingMemberId))
+        if (playerIds.Contains(_bookingMemberId))
         {
             errorMessage = "The booking member cannot also be listed as an additional player.";
             return;
@@ -256,7 +258,7 @@ else
 
         try
         {
-            var slot = new TeeTimeSlot(slotDate, slotTime, selectedBookingMemberId, playerIds);
+            var slot = new TeeTimeSlot(slotDate, slotTime, _bookingMemberId, playerIds);
             var result = await BookingService.CreateReservationAsync(slot);
 
             if (result < 0)
