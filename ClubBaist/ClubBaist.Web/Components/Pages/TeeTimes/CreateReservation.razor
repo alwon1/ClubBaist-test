@@ -1,0 +1,281 @@
+@page "/teetimes/book"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = AppRoles.AdminOrMember)]
+
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.EntityFrameworkCore
+@using ClubBaist.Domain
+@using ClubBaist.Services
+
+@inject TeeTimeBookingService<Guid> BookingService
+@inject IApplicationDbContext<Guid> DbContext
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Navigation
+@inject ILogger<CreateReservation> Logger
+
+<PageTitle>Book Tee Time - Club Baist</PageTitle>
+
+<h3 class="mb-4">Book a Tee Time</h3>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
+@if (successMessage is not null)
+{
+    <div class="alert alert-success">
+        <p>@successMessage</p>
+        <a href="/teetimes/my" class="btn btn-outline-success mt-2">View My Reservations</a>
+    </div>
+}
+else if (isLoading)
+{
+    <div class="text-center my-4">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+}
+else
+{
+    <div class="card mb-4">
+        <div class="card-header">
+            <strong>Selected Slot</strong>
+        </div>
+        <div class="card-body">
+            <p><strong>Date:</strong> @slotDate.ToString("dddd, MMMM d, yyyy")</p>
+            <p><strong>Time:</strong> @slotTime.ToString("h:mm tt")</p>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <strong>Booking Member</strong>
+        </div>
+        <div class="card-body">
+            @if (isAdmin)
+            {
+                <div class="form-floating mb-3">
+                    <select class="form-select" id="bookingMember" @onchange="OnBookingMemberChanged">
+                        <option value="">-- Select Member --</option>
+                        @foreach (var member in allMembers)
+                        {
+                            <option value="@member.MemberAccountId" selected="@(member.MemberAccountId == selectedBookingMemberId)">
+                                @member.MemberNumber - @member.FirstName @member.LastName
+                            </option>
+                        }
+                    </select>
+                    <label for="bookingMember">Booking Member (Admin Override)</label>
+                </div>
+            }
+            else if (currentMember is not null)
+            {
+                <p>@currentMember.MemberNumber - @currentMember.FirstName @currentMember.LastName</p>
+            }
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <strong>Additional Players</strong>
+            @if (additionalPlayerIds.Count < 3)
+            {
+                <button class="btn btn-sm btn-outline-primary" @onclick="AddPlayerSlot">
+                    + Add Player
+                </button>
+            }
+        </div>
+        <div class="card-body">
+            @if (additionalPlayerIds.Count == 0)
+            {
+                <p class="text-muted">No additional players added.</p>
+            }
+            else
+            {
+                @for (var i = 0; i < additionalPlayerIds.Count; i++)
+                {
+                    var index = i;
+                    <div class="row mb-3 align-items-center">
+                        <div class="col">
+                            <div class="form-floating">
+                                <select class="form-select" id="@($"player-{index}")"
+                                        value="@additionalPlayerIds[index]"
+                                        @onchange="(e) => OnPlayerChanged(index, e)">
+                                    <option value="@Guid.Empty">-- Select Player --</option>
+                                    @foreach (var member in allMembers.Where(m => m.MemberAccountId != selectedBookingMemberId))
+                                    {
+                                        <option value="@member.MemberAccountId">
+                                            @member.MemberNumber - @member.FirstName @member.LastName
+                                        </option>
+                                    }
+                                </select>
+                                <label for="@($"player-{index}")">Player @(index + 2)</label>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <button class="btn btn-sm btn-outline-danger" @onclick="() => RemovePlayerSlot(index)">
+                                Remove
+                            </button>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+
+    <button class="btn btn-primary" @onclick="SubmitReservation" disabled="@isSubmitting">
+        @if (isSubmitting)
+        {
+            <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+        }
+        Book Tee Time
+    </button>
+    <a href="/teetimes" class="btn btn-outline-secondary ms-2">Cancel</a>
+}
+
+@code {
+    [SupplyParameterFromQuery]
+    public string? Date { get; set; }
+
+    [SupplyParameterFromQuery]
+    public string? Time { get; set; }
+
+    private DateOnly slotDate;
+    private TimeOnly slotTime;
+    private bool isLoading = true;
+    private bool isSubmitting;
+    private bool isAdmin;
+    private string? errorMessage;
+    private string? successMessage;
+
+    private MemberAccount<Guid>? currentMember;
+    private Guid selectedBookingMemberId;
+    private List<MemberAccount<Guid>> allMembers = [];
+    private List<Guid> additionalPlayerIds = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            if (!DateOnly.TryParse(Date, out slotDate) || !TimeOnly.TryParse(Time, out slotTime))
+            {
+                errorMessage = "Invalid date or time parameters.";
+                isLoading = false;
+                return;
+            }
+
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            var userId = Guid.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            isAdmin = user.IsInRole(AppRoles.Admin);
+
+            currentMember = await DbContext.MemberAccounts
+                .FirstOrDefaultAsync(m => m.ApplicationUserId == userId);
+
+            if (currentMember is null && !isAdmin)
+            {
+                errorMessage = "Member account not found. Please contact an administrator.";
+                isLoading = false;
+                return;
+            }
+
+            selectedBookingMemberId = currentMember?.MemberAccountId ?? Guid.Empty;
+
+            allMembers = await DbContext.MemberAccounts
+                .Where(m => m.IsActive)
+                .OrderBy(m => m.LastName)
+                .ThenBy(m => m.FirstName)
+                .ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to initialize booking page");
+            errorMessage = "An unexpected error occurred. Please try again later.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void OnBookingMemberChanged(ChangeEventArgs e)
+    {
+        if (Guid.TryParse(e.Value?.ToString(), out var id))
+        {
+            selectedBookingMemberId = id;
+            additionalPlayerIds.RemoveAll(p => p == id);
+        }
+    }
+
+    private void OnPlayerChanged(int index, ChangeEventArgs e)
+    {
+        if (Guid.TryParse(e.Value?.ToString(), out var id))
+        {
+            additionalPlayerIds[index] = id;
+        }
+    }
+
+    private void AddPlayerSlot()
+    {
+        if (additionalPlayerIds.Count < 3)
+        {
+            additionalPlayerIds.Add(Guid.Empty);
+        }
+    }
+
+    private void RemovePlayerSlot(int index)
+    {
+        additionalPlayerIds.RemoveAt(index);
+    }
+
+    private async Task SubmitReservation()
+    {
+        errorMessage = null;
+
+        if (selectedBookingMemberId == Guid.Empty)
+        {
+            errorMessage = "Please select a booking member.";
+            return;
+        }
+
+        var playerIds = additionalPlayerIds
+            .Where(id => id != Guid.Empty)
+            .Distinct()
+            .ToList();
+
+        if (playerIds.Contains(selectedBookingMemberId))
+        {
+            errorMessage = "The booking member cannot also be listed as an additional player.";
+            return;
+        }
+
+        isSubmitting = true;
+
+        try
+        {
+            var slot = new TeeTimeSlot(slotDate, slotTime, selectedBookingMemberId, playerIds);
+            var result = await BookingService.CreateReservationAsync(slot);
+
+            if (result < 0)
+            {
+                errorMessage = "Unable to create reservation. The slot may be full or booking rules prevent this reservation.";
+            }
+            else
+            {
+                successMessage = $"Tee time booked successfully for {slotDate:dddd, MMMM d, yyyy} at {slotTime:h:mm tt}. Remaining spots: {result}.";
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to create reservation");
+            errorMessage = "An unexpected error occurred while creating the reservation. Please try again later.";
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+}

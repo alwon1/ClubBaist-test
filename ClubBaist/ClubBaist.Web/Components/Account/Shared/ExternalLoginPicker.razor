@@ -1,8 +1,7 @@
 ﻿@using Microsoft.AspNetCore.Authentication
 @using Microsoft.AspNetCore.Identity
-@using ClubBaist.Web.Data
 
-@inject SignInManager<ApplicationUser> SignInManager
+@inject SignInManager<IdentityUser<Guid>> SignInManager
 @inject IdentityRedirectManager RedirectManager
 
 @if (externalLogins.Length == 0)

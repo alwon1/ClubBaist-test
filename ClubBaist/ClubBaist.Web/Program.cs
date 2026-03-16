@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
+using ClubBaist.Domain;
+using ClubBaist.Services;
 using ClubBaist.Web.Components;
 using ClubBaist.Web.Components.Account;
-using ClubBaist.Web.Data;
 
 namespace ClubBaist.Web;
 
@@ -12,6 +12,8 @@ public class Program
     public static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
+
+        builder.AddServiceDefaults();
 
         // Add services to the container.
         builder.Services.AddRazorComponents()
@@ -28,21 +30,32 @@ public class Program
             })
             .AddIdentityCookies();
 
-        var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-        builder.Services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseSqlite(connectionString));
+        builder.AddSqlServerDbContext<ApplicationDbContext>("clubbaist");
         builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-        builder.Services.AddIdentityCore<ApplicationUser>(options =>
+        builder.Services.AddIdentityCore<IdentityUser<Guid>>(options =>
             {
                 options.SignIn.RequireConfirmedAccount = true;
                 options.Stores.SchemaVersion = IdentitySchemaVersions.Version3;
             })
+            .AddRoles<IdentityRole<Guid>>()
             .AddEntityFrameworkStores<ApplicationDbContext>()
             .AddSignInManager()
             .AddDefaultTokenProviders();
 
-        builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
+        builder.Services.AddSingleton<IEmailSender<IdentityUser<Guid>>, IdentityNoOpEmailSender>();
+
+        // Domain services
+        builder.Services.AddScoped<IApplicationDbContext<Guid>>(sp =>
+            sp.GetRequiredService<ApplicationDbContext>());
+        builder.Services.AddClubBaistServices<Guid>();
+        builder.Services.AddSeasonService<ApplicationDbContext, Guid>();
+
+        // Authorization policies
+        builder.Services.AddAuthorizationBuilder()
+            .AddPolicy(AppRoles.Admin, policy => policy.RequireRole(AppRoles.Admin))
+            .AddPolicy(AppRoles.MembershipCommittee, policy => policy.RequireRole(AppRoles.Admin, AppRoles.MembershipCommittee))
+            .AddPolicy(AppRoles.Member, policy => policy.RequireRole(AppRoles.Member));
 
         var app = builder.Build();
 
@@ -54,7 +67,6 @@ public class Program
         else
         {
             app.UseExceptionHandler("/Error");
-            // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
             app.UseHsts();
         }
 

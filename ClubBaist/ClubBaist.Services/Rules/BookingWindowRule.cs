@@ -14,6 +14,6 @@ public class BookingWindowRule : IBookingRule
     public Task<int> EvaluateAsync(TeeTimeSlot slot, BookingEvaluationContext context, CancellationToken cancellationToken = default)
     {
         var allowed = _seasonService.GetSeasonForDate(slot.SlotDate) is not null;
-        return Task.FromResult(allowed ? int.MaxValue : 0);
+        return Task.FromResult(allowed ? int.MaxValue : -1);
     }
 }

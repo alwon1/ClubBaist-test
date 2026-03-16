@@ -1,0 +1,295 @@
+@page "/membership/applications/{ApplicationId:guid}"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = AppRoles.AdminOrCommittee)]
+
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.EntityFrameworkCore
+@using ClubBaist.Domain
+@using ClubBaist.Services
+
+@inject IApplicationDbContext<Guid> DbContext
+@inject ApplicationManagementService<Guid> ApplicationService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject ILogger<ReviewApplication> Logger
+
+<PageTitle>Review Application</PageTitle>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Review Application</h2>
+        <a href="/membership/applications" class="btn btn-outline-secondary">Back to Inbox</a>
+    </div>
+
+    @if (_loading)
+    {
+        <div class="d-flex justify-content-center my-4">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else if (_application is null)
+    {
+        <div class="alert alert-warning" role="alert">
+            Application not found.
+        </div>
+    }
+    else
+    {
+        @if (!string.IsNullOrEmpty(_resultMessage))
+        {
+            <div class="alert @(_isError ? "alert-danger" : "alert-success")" role="alert">
+                @_resultMessage
+            </div>
+        }
+
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Applicant Details</h5>
+                        <span class="badge @GetStatusBadgeClass(_application.CurrentStatus) fs-6">
+                            @_application.CurrentStatus
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <strong>First Name:</strong>
+                                <p>@_application.FirstName</p>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Last Name:</strong>
+                                <p>@_application.LastName</p>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <strong>Date of Birth:</strong>
+                                <p>@_application.DateOfBirth.ToString("yyyy-MM-dd")</p>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Email:</strong>
+                                <p>@_application.Email</p>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <strong>Phone:</strong>
+                                <p>@_application.Phone</p>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Alternate Phone:</strong>
+                                <p>@(_application.AlternatePhone ?? "N/A")</p>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <strong>Address:</strong>
+                                <p>@_application.Address</p>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Postal Code:</strong>
+                                <p>@_application.PostalCode</p>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <strong>Occupation:</strong>
+                                <p>@_application.Occupation</p>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Company:</strong>
+                                <p>@_application.CompanyName</p>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <strong>Requested Category:</strong>
+                                <p>@_application.RequestedMembershipCategory</p>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Submitted:</strong>
+                                <p>@_application.SubmittedAt.ToString("yyyy-MM-dd HH:mm")</p>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <strong>Sponsor 1:</strong>
+                                <p>@GetSponsorName(_application.Sponsor1MemberId)</p>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Sponsor 2:</strong>
+                                <p>@GetSponsorName(_application.Sponsor2MemberId)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                @if (_application.StatusHistory.Count > 0)
+                {
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">Status History</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="list-group">
+                                @foreach (var history in _application.StatusHistory.OrderByDescending(h => h.ChangedAt))
+                                {
+                                    <div class="list-group-item">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <span class="badge @GetStatusBadgeClass(history.FromStatus)">@history.FromStatus</span>
+                                                <span class="mx-2">&rarr;</span>
+                                                <span class="badge @GetStatusBadgeClass(history.ToStatus)">@history.ToStatus</span>
+                                            </div>
+                                            <small class="text-muted">@history.ChangedAt.ToString("yyyy-MM-dd HH:mm")</small>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="col-lg-4">
+                @if (_validTransitions.Count > 0)
+                {
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Make Decision</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-floating mb-3">
+                                <select id="newStatus" class="form-select" @bind="_selectedStatus">
+                                    <option value="">-- Select Status --</option>
+                                    @foreach (var status in _validTransitions)
+                                    {
+                                        <option value="@status">@status</option>
+                                    }
+                                </select>
+                                <label for="newStatus">New Status</label>
+                            </div>
+                            <button class="btn btn-primary w-100" @onclick="HandleDecisionAsync" disabled="@(_processing || _selectedStatus is null)">
+                                @if (_processing)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                                }
+                                Submit Decision
+                            </button>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="card">
+                        <div class="card-body text-center text-muted">
+                            <p class="mb-0">No further status transitions are available for this application.</p>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public Guid ApplicationId { get; set; }
+
+    private MembershipApplication<Guid>? _application;
+    private Dictionary<Guid, string> _sponsorNames = new();
+    private List<ApplicationStatus> _validTransitions = [];
+    private ApplicationStatus? _selectedStatus;
+    private bool _loading = true;
+    private bool _processing;
+    private string? _resultMessage;
+    private bool _isError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadApplicationAsync();
+    }
+
+    private async Task LoadApplicationAsync()
+    {
+        _loading = true;
+
+        try
+        {
+            _application = await DbContext.MembershipApplications
+                .Include(a => a.StatusHistory)
+                .FirstOrDefaultAsync(a => a.ApplicationId == ApplicationId);
+
+            if (_application is not null)
+            {
+                _validTransitions = Enum.GetValues<ApplicationStatus>()
+                    .Where(s => _application.CanTransitionTo(s) && s != _application.CurrentStatus)
+                    .ToList();
+
+                var sponsorIds = new[] { _application.Sponsor1MemberId, _application.Sponsor2MemberId };
+                _sponsorNames = await DbContext.MemberAccounts
+                    .Where(m => sponsorIds.Contains(m.MemberAccountId))
+                    .ToDictionaryAsync(
+                        m => m.MemberAccountId,
+                        m => $"{m.FirstName} {m.LastName} ({m.MemberNumber})");
+            }
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task HandleDecisionAsync()
+    {
+        if (_selectedStatus is null || _application is null)
+            return;
+
+        _processing = true;
+        _resultMessage = null;
+        _isError = false;
+
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            var userId = Guid.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+            var result = await ApplicationService.ChangeApplicationStatusAsync(
+                _application.ApplicationId,
+                _selectedStatus.Value,
+                userId,
+                DateTime.UtcNow,
+                CancellationToken.None);
+
+            _resultMessage = $"Application status changed to {result.CurrentStatus} successfully.";
+
+            if (result.MemberCreationResult is not null)
+            {
+                _resultMessage += $" Member account created with member number: {result.MemberCreationResult.MemberNumber}.";
+            }
+
+            _selectedStatus = null;
+            await LoadApplicationAsync();
+        }
+        catch (Exception ex)
+        {
+            _isError = true;
+            Logger.LogError(ex, "Error updating application {ApplicationId} status", ApplicationId);
+            _resultMessage = "An unexpected error occurred while updating the application status. Please try again later.";
+        }
+        finally
+        {
+            _processing = false;
+        }
+    }
+
+    private string GetSponsorName(Guid sponsorId) =>
+        _sponsorNames.TryGetValue(sponsorId, out var name) ? name : sponsorId.ToString();
+
+    private static string GetStatusBadgeClass(ApplicationStatus status) =>
+        UiHelpers.GetStatusBadgeClass(status);
+}

@@ -1,0 +1,205 @@
+@page "/teetimes/my"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = AppRoles.Member)]
+
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.EntityFrameworkCore
+@using ClubBaist.Domain
+@using ClubBaist.Services
+
+@inject TeeTimeBookingService<Guid> BookingService
+@inject IApplicationDbContext<Guid> DbContext
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ILogger<MyReservations> Logger
+
+<PageTitle>My Reservations - Club Baist</PageTitle>
+
+<h3 class="mb-4">My Reservations</h3>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
+@if (!string.IsNullOrEmpty(successMessage))
+{
+    <div class="alert alert-success">@successMessage</div>
+}
+
+<div class="mb-3">
+    <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" id="showPast" checked="@showPast" @onchange="OnTogglePast" />
+        <label class="form-check-label" for="showPast">Show past reservations</label>
+    </div>
+</div>
+
+@if (isLoading)
+{
+    <div class="text-center my-4">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+}
+else if (filteredReservations is not null && filteredReservations.Count > 0)
+{
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Players</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var res in filteredReservations)
+                {
+                    <tr class="@(res.IsCancelled ? "table-secondary" : "")">
+                        <td>@res.SlotDate.ToString("MMM d, yyyy")</td>
+                        <td>@res.SlotTime.ToString("h:mm tt")</td>
+                        <td>@(res.PlayerMemberAccountIds.Count + 1)</td>
+                        <td>
+                            @if (res.IsCancelled)
+                            {
+                                <span class="badge bg-secondary">Cancelled</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-success">Active</span>
+                            }
+                        </td>
+                        <td>
+                            <a href="@($"/teetimes/reservation/{res.ReservationId}")" class="btn btn-sm btn-outline-primary me-1">
+                                View/Edit
+                            </a>
+                            @if (!res.IsCancelled && res.SlotDate >= DateOnly.FromDateTime(DateTime.Today))
+                            {
+                                @if (cancelConfirmId == res.ReservationId)
+                                {
+                                    <button class="btn btn-sm btn-danger me-1" @onclick="() => ConfirmCancel(res.ReservationId)">
+                                        Confirm
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-secondary" @onclick="() => cancelConfirmId = null">
+                                        No
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-sm btn-outline-danger" @onclick="() => cancelConfirmId = res.ReservationId">
+                                        Cancel
+                                    </button>
+                                }
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div class="alert alert-info">No reservations found.</div>
+}
+
+@code {
+    private bool isLoading = true;
+    private bool showPast;
+    private string? errorMessage;
+    private string? successMessage;
+    private Guid? cancelConfirmId;
+
+    private MemberAccount<Guid>? currentMember;
+    private List<Reservation> allReservations = [];
+    private List<Reservation>? filteredReservations;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            var userId = Guid.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+            currentMember = await DbContext.MemberAccounts
+                .FirstOrDefaultAsync(m => m.ApplicationUserId == userId);
+
+            if (currentMember is null)
+            {
+                errorMessage = "Member account not found.";
+                isLoading = false;
+                return;
+            }
+
+            allReservations = (await BookingService.GetMemberReservationsAsync(currentMember.MemberAccountId))
+                .ToList();
+
+            ApplyFilter();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load reservations");
+            errorMessage = "An unexpected error occurred while loading reservations. Please try again later.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void ApplyFilter()
+    {
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        filteredReservations = (showPast
+            ? allReservations
+            : allReservations.Where(r => r.SlotDate >= today))
+            .OrderBy(r => r.SlotDate).ThenBy(r => r.SlotTime)
+            .ToList();
+    }
+
+    private void OnTogglePast(ChangeEventArgs e)
+    {
+        showPast = (bool)(e.Value ?? false);
+        ApplyFilter();
+    }
+
+    private async Task ConfirmCancel(Guid reservationId)
+    {
+        errorMessage = null;
+        successMessage = null;
+        cancelConfirmId = null;
+
+        try
+        {
+            var result = await BookingService.CancelReservationAsync(reservationId);
+
+            if (result)
+            {
+                successMessage = "Reservation cancelled successfully.";
+                await LoadData();
+            }
+            else
+            {
+                errorMessage = "Unable to cancel reservation. It may have already been cancelled.";
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to cancel reservation {ReservationId}", reservationId);
+            errorMessage = "An unexpected error occurred while cancelling the reservation. Please try again later.";
+        }
+    }
+}

@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using System.Linq;
 
 namespace ClubBaist.Tests;
 
@@ -22,27 +21,15 @@ public static class TestServiceHost
 
         var services = new ServiceCollection();
 
-        services.AddDbContext<TestApplicationDbContext>(options => options.UseSqlite(connection));
+        services.AddDbContext<ApplicationDbContext>(options => options.UseSqlite(connection));
 
-        services.AddIdentityCore<IdentityUser<int>>()
-            .AddRoles<IdentityRole<int>>()
-            .AddEntityFrameworkStores<TestApplicationDbContext>();
+        services.AddIdentityCore<IdentityUser<Guid>>()
+            .AddRoles<IdentityRole<Guid>>()
+            .AddEntityFrameworkStores<ApplicationDbContext>();
 
-        services.AddScoped<IApplicationDbContext<int>>(provider => provider.GetRequiredService<TestApplicationDbContext>());
-        services.AddScoped<MemberManagementService<int>>();
-        services.AddScoped<ApplicationManagementService<int>>();
-
-        // SeasonService is a singleton loaded once from DB on first resolution.
-        // The DB is guaranteed to exist before any test scope resolves it.
-        services.AddSingleton<ISeasonService>(provider =>
-        {
-            using var scope = provider.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<TestApplicationDbContext>();
-            var seasons = db.Seasons
-                .Where(s => s.SeasonStatus == SeasonStatus.Active || s.SeasonStatus == SeasonStatus.Planned)
-                .ToList();
-            return new SeasonService(seasons);
-        });
+        services.AddScoped<IApplicationDbContext<Guid>>(provider => provider.GetRequiredService<ApplicationDbContext>());
+        services.AddClubBaistServices<Guid>();
+        services.AddSeasonService<ApplicationDbContext, Guid>();
 
         var provider = services.BuildServiceProvider(new ServiceProviderOptions
         {
@@ -52,7 +39,7 @@ public static class TestServiceHost
 
         using (var initScope = provider.CreateScope())
         {
-            initScope.ServiceProvider.GetRequiredService<TestApplicationDbContext>().Database.EnsureCreated();
+            initScope.ServiceProvider.GetRequiredService<ApplicationDbContext>().Database.EnsureCreated();
         }
 
         return new TestScope(provider.CreateScope(), provider, connection);

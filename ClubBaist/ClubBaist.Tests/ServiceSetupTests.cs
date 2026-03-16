@@ -1,4 +1,5 @@
-﻿using ClubBaist.Services;
+using ClubBaist.Domain;
+using ClubBaist.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,17 +15,17 @@ public sealed class ServiceSetupTests
         using var scope = TestServiceHost.CreateScope();
         var provider = scope.ServiceProvider;
 
-        var dbContext = provider.GetRequiredService<TestApplicationDbContext>();
-        var userManager = provider.GetRequiredService<UserManager<IdentityUser<int>>>();
-        var memberManagementService = provider.GetRequiredService<MemberManagementService<int>>();
-        var applicationManagementService = provider.GetRequiredService<ApplicationManagementService<int>>();
+        var dbContext = provider.GetRequiredService<ApplicationDbContext>();
+        var userManager = provider.GetRequiredService<UserManager<IdentityUser<Guid>>>();
+        var memberManagementService = provider.GetRequiredService<MemberManagementService<Guid>>();
+        var applicationManagementService = provider.GetRequiredService<ApplicationManagementService<Guid>>();
 
         Assert.IsNotNull(dbContext);
         Assert.IsNotNull(userManager);
         Assert.IsNotNull(memberManagementService);
         Assert.IsNotNull(applicationManagementService);
 
-        var user = new IdentityUser<int>
+        var user = new IdentityUser<Guid>
         {
             UserName = $"user-{Guid.NewGuid():N}",
             Email = "setup-test@clubbaist.local"
@@ -33,7 +34,7 @@ public sealed class ServiceSetupTests
         var identityResult = await userManager.CreateAsync(user);
         Assert.IsTrue(identityResult.Succeeded, string.Join(",", identityResult.Errors.Select(error => error.Description)));
 
-        var createMemberRequest = new CreateMemberRequest<int>(
+        var createMemberRequest = new CreateMemberRequest<Guid>(
             user.Id,
             "Test",
             "Member",

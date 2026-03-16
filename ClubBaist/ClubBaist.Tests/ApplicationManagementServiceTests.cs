@@ -15,28 +15,17 @@ public sealed class ApplicationManagementServiceTests
         using var scope = TestServiceHost.CreateScope();
         var provider = scope.ServiceProvider;
 
-        var applicationService = provider.GetRequiredService<ApplicationManagementService<int>>();
-        var userManager = provider.GetRequiredService<UserManager<IdentityUser<int>>>();
-        var dbContext = provider.GetRequiredService<TestApplicationDbContext>();
+        var applicationService = provider.GetRequiredService<ApplicationManagementService<Guid>>();
+        var userManager = provider.GetRequiredService<UserManager<IdentityUser<Guid>>>();
+        var dbContext = provider.GetRequiredService<ApplicationDbContext>();
 
-        var userId = await CreateUniquePositiveIntUserIdAsync(userManager);
-        var identityUser = new IdentityUser<int>
-        {
-            Id = userId,
-            UserName = $"applicant-{userId}",
-            Email = $"applicant-{userId}@example.com"
-        };
-
-        var userCreateResult = await userManager.CreateAsync(identityUser);
-        Assert.IsTrue(
-            userCreateResult.Succeeded,
-            string.Join(",", userCreateResult.Errors.Select(error => error.Description)));
+        var userId = await CreateIdentityUserAsync(userManager);
 
         var sponsor1Id = await CreateSponsorMemberAsync(userManager, dbContext);
         var sponsor2Id = await CreateSponsorMemberAsync(userManager, dbContext);
 
         var submittedAt = new DateTime(2026, 1, 15, 10, 30, 0, DateTimeKind.Utc);
-        var request = new SubmitApplicationRequest<int>(
+        var request = new SubmitApplicationRequest<Guid>(
             ApplicationUserId: userId,
             FirstName: "Jane",
             LastName: "Doe",
@@ -76,9 +65,9 @@ public sealed class ApplicationManagementServiceTests
         using var scope = TestServiceHost.CreateScope();
         var provider = scope.ServiceProvider;
 
-        var applicationService = provider.GetRequiredService<ApplicationManagementService<int>>();
-        var userManager = provider.GetRequiredService<UserManager<IdentityUser<int>>>();
-        var dbContext = provider.GetRequiredService<TestApplicationDbContext>();
+        var applicationService = provider.GetRequiredService<ApplicationManagementService<Guid>>();
+        var userManager = provider.GetRequiredService<UserManager<IdentityUser<Guid>>>();
+        var dbContext = provider.GetRequiredService<ApplicationDbContext>();
 
         await ResetDatabaseAsync(dbContext);
 
@@ -119,9 +108,9 @@ public sealed class ApplicationManagementServiceTests
         using var scope = TestServiceHost.CreateScope();
         var provider = scope.ServiceProvider;
 
-        var applicationService = provider.GetRequiredService<ApplicationManagementService<int>>();
-        var userManager = provider.GetRequiredService<UserManager<IdentityUser<int>>>();
-        var dbContext = provider.GetRequiredService<TestApplicationDbContext>();
+        var applicationService = provider.GetRequiredService<ApplicationManagementService<Guid>>();
+        var userManager = provider.GetRequiredService<UserManager<IdentityUser<Guid>>>();
+        var dbContext = provider.GetRequiredService<ApplicationDbContext>();
 
         await ResetDatabaseAsync(dbContext);
 
@@ -131,7 +120,7 @@ public sealed class ApplicationManagementServiceTests
         var sponsor2Id = await CreateSponsorMemberAsync(userManager, dbContext);
 
         var submittedAt = new DateTime(2026, 2, 15, 9, 0, 0, DateTimeKind.Utc);
-        var submitRequest = new SubmitApplicationRequest<int>(
+        var submitRequest = new SubmitApplicationRequest<Guid>(
             ApplicationUserId: applicantUserId,
             FirstName: "Alex",
             LastName: "Applicant",
@@ -187,9 +176,9 @@ public sealed class ApplicationManagementServiceTests
         using var scope = TestServiceHost.CreateScope();
         var provider = scope.ServiceProvider;
 
-        var applicationService = provider.GetRequiredService<ApplicationManagementService<int>>();
-        var userManager = provider.GetRequiredService<UserManager<IdentityUser<int>>>();
-        var dbContext = provider.GetRequiredService<TestApplicationDbContext>();
+        var applicationService = provider.GetRequiredService<ApplicationManagementService<Guid>>();
+        var userManager = provider.GetRequiredService<UserManager<IdentityUser<Guid>>>();
+        var dbContext = provider.GetRequiredService<ApplicationDbContext>();
 
         await ResetDatabaseAsync(dbContext);
 
@@ -200,7 +189,7 @@ public sealed class ApplicationManagementServiceTests
 
         var submittedAt = new DateTime(2026, 2, 20, 9, 0, 0, DateTimeKind.Utc);
         var submitted = await applicationService.SubmitApplicationAsync(
-            new SubmitApplicationRequest<int>(
+            new SubmitApplicationRequest<Guid>(
                 ApplicationUserId: applicantUserId,
                 FirstName: "Sam",
                 LastName: "Submitter",
@@ -250,9 +239,9 @@ public sealed class ApplicationManagementServiceTests
         using var scope = TestServiceHost.CreateScope();
         var provider = scope.ServiceProvider;
 
-        var applicationService = provider.GetRequiredService<ApplicationManagementService<int>>();
-        var userManager = provider.GetRequiredService<UserManager<IdentityUser<int>>>();
-        var dbContext = provider.GetRequiredService<TestApplicationDbContext>();
+        var applicationService = provider.GetRequiredService<ApplicationManagementService<Guid>>();
+        var userManager = provider.GetRequiredService<UserManager<IdentityUser<Guid>>>();
+        var dbContext = provider.GetRequiredService<ApplicationDbContext>();
 
         await ResetDatabaseAsync(dbContext);
 
@@ -263,7 +252,7 @@ public sealed class ApplicationManagementServiceTests
 
         var submittedAt = new DateTime(2026, 2, 22, 9, 0, 0, DateTimeKind.Utc);
         var submitted = await applicationService.SubmitApplicationAsync(
-            new SubmitApplicationRequest<int>(
+            new SubmitApplicationRequest<Guid>(
                 ApplicationUserId: applicantUserId,
                 FirstName: "Taylor",
                 LastName: "Transition",
@@ -320,8 +309,8 @@ public sealed class ApplicationManagementServiceTests
         using var scope = TestServiceHost.CreateScope();
         var provider = scope.ServiceProvider;
 
-        var applicationService = provider.GetRequiredService<ApplicationManagementService<int>>();
-        var userManager = provider.GetRequiredService<UserManager<IdentityUser<int>>>();
+        var applicationService = provider.GetRequiredService<ApplicationManagementService<Guid>>();
+        var userManager = provider.GetRequiredService<UserManager<IdentityUser<Guid>>>();
 
         var changedByUserId = await CreateIdentityUserAsync(userManager);
         var nonExistentApplicationId = Guid.NewGuid();
@@ -341,16 +330,16 @@ public sealed class ApplicationManagementServiceTests
         using var scope = TestServiceHost.CreateScope();
         var provider = scope.ServiceProvider;
 
-        var applicationService = provider.GetRequiredService<ApplicationManagementService<int>>();
-        var userManager = provider.GetRequiredService<UserManager<IdentityUser<int>>>();
-        var dbContext = provider.GetRequiredService<TestApplicationDbContext>();
+        var applicationService = provider.GetRequiredService<ApplicationManagementService<Guid>>();
+        var userManager = provider.GetRequiredService<UserManager<IdentityUser<Guid>>>();
+        var dbContext = provider.GetRequiredService<ApplicationDbContext>();
 
         var applicantUserId = await CreateIdentityUserAsync(userManager);
         var sponsor1Id = await CreateSponsorMemberAsync(userManager, dbContext);
         var sponsor2Id = await CreateSponsorMemberAsync(userManager, dbContext);
 
         var submitted = await applicationService.SubmitApplicationAsync(
-            new SubmitApplicationRequest<int>(
+            new SubmitApplicationRequest<Guid>(
                 ApplicationUserId: applicantUserId,
                 FirstName: "Robin",
                 LastName: "History",
@@ -366,7 +355,7 @@ public sealed class ApplicationManagementServiceTests
                 Sponsor2MemberId: sponsor2Id,
                 SubmittedAt: DateTime.UtcNow));
 
-        var nonExistentUserId = await CreateUniquePositiveIntUserIdAsync(userManager);
+        var nonExistentUserId = Guid.NewGuid();
 
         await Assert.ThrowsAsync<InvalidOperationException>(async () =>
             await applicationService.RecordStatusHistoryAsync(
@@ -377,68 +366,22 @@ public sealed class ApplicationManagementServiceTests
                 DateTime.UtcNow));
     }
 
-    private static async Task<int> CreateUniquePositiveIntUserIdAsync(UserManager<IdentityUser<int>> userManager)
-    {
-        while (true)
-        {
-            var candidate = Random.Shared.Next(1, int.MaxValue);
-            var exists = await userManager.Users.AnyAsync(user => user.Id == candidate);
+    private static Task<Guid> CreateIdentityUserAsync(UserManager<IdentityUser<Guid>> userManager) =>
+        TestDataFactory.CreateIdentityUserAsync(userManager);
 
-            if (!exists)
-            {
-                return candidate;
-            }
-        }
-    }
+    private static Task<Guid> CreateSponsorMemberAsync(
+        UserManager<IdentityUser<Guid>> userManager,
+        ApplicationDbContext dbContext) =>
+        TestDataFactory.CreateMemberAsync(userManager, dbContext);
 
-    private static async Task<int> CreateIdentityUserAsync(UserManager<IdentityUser<int>> userManager)
-    {
-        var userId = await CreateUniquePositiveIntUserIdAsync(userManager);
-        var user = new IdentityUser<int>
-        {
-            Id = userId,
-            UserName = $"user-{userId}",
-            Email = $"user-{userId}@example.com"
-        };
-
-        var createResult = await userManager.CreateAsync(user);
-        Assert.IsTrue(createResult.Succeeded, string.Join(",", createResult.Errors.Select(error => error.Description)));
-
-        return userId;
-    }
-
-    private static async Task<int> CreateSponsorMemberAsync(
-        UserManager<IdentityUser<int>> userManager,
-        TestApplicationDbContext dbContext)
-    {
-        var userId = await CreateIdentityUserAsync(userManager);
-        dbContext.MemberAccounts.Add(new MemberAccount<int>
-        {
-            ApplicationUserId = userId,
-            MemberNumber = $"M-{userId}",
-            FirstName = "Sponsor",
-            LastName = "Member",
-            DateOfBirth = new DateTime(1975, 1, 1),
-            Email = $"sponsor-{userId}@example.com",
-            Phone = "555-0200",
-            Address = "1 Sponsor Lane",
-            PostalCode = "S1S1S1",
-            MembershipCategory = MembershipCategory.Social,
-            IsActive = true,
-            CreatedAt = DateTime.UtcNow
-        });
-        await dbContext.SaveChangesAsync();
-        return userId;
-    }
-
-    private static MembershipApplication<int> CreateApplication(
-        int userId,
+    private static MembershipApplication<Guid> CreateApplication(
+        Guid userId,
         ApplicationStatus status,
         DateTime submittedAt,
-        int sponsor1Id,
-        int sponsor2Id)
+        Guid sponsor1Id,
+        Guid sponsor2Id)
     {
-        var application = MembershipApplication<int>.Submit(
+        var application = MembershipApplication<Guid>.Submit(
             userId,
             "Seed",
             "Applicant",
@@ -462,7 +405,7 @@ public sealed class ApplicationManagementServiceTests
         return application;
     }
 
-    private static async Task ResetDatabaseAsync(TestApplicationDbContext dbContext)
+    private static async Task ResetDatabaseAsync(ApplicationDbContext dbContext)
     {
         await dbContext.ApplicationStatusHistories.ExecuteDeleteAsync();
         await dbContext.MemberAccounts.ExecuteDeleteAsync();

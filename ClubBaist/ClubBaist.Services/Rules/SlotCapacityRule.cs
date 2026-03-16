@@ -5,7 +5,7 @@ namespace ClubBaist.Services.Rules;
 
 public class SlotCapacityRule<TKey> : IBookingRule where TKey : IEquatable<TKey>
 {
-    private const int MaxCapacity = 4;
+    private const int MaxCapacity = BookingConstants.MaxPlayersPerSlot;
 
     private readonly IApplicationDbContext<TKey> _dbContext;
 
@@ -42,6 +42,6 @@ public class SlotCapacityRule<TKey> : IBookingRule where TKey : IEquatable<TKey>
             ? 0
             : 1 + slot.PlayerMemberAccountIds.Count;
 
-        return Math.Max(0, MaxCapacity - occupancy - requested);
+        return MaxCapacity - occupancy - requested;
     }
 }

@@ -5,7 +5,7 @@ namespace ClubBaist.Services;
 
 public class TeeTimeBookingService<TKey> where TKey : IEquatable<TKey>
 {
-    private const int MaxCapacity = 4;
+    private const int MaxCapacity = BookingConstants.MaxPlayersPerSlot;
 
     private readonly IScheduleTimeService _scheduleTimeService;
     private readonly IReadOnlyList<IBookingRule> _rules;

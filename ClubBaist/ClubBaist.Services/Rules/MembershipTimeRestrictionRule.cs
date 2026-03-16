@@ -10,7 +10,7 @@ public class MembershipTimeRestrictionRule : IBookingRule
             return Task.FromResult(int.MaxValue);
 
         var allowed = IsAllowed(context.MemberCategory.Value, slot.SlotDate, slot.SlotTime);
-        return Task.FromResult(allowed ? int.MaxValue : 0);
+        return Task.FromResult(allowed ? int.MaxValue : -1);
     }
 
     private static bool IsAllowed(MembershipCategory category, DateOnly date, TimeOnly time)

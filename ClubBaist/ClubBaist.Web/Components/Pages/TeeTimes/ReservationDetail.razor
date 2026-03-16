@@ -1,0 +1,378 @@
+@page "/teetimes/reservation/{ReservationId:guid}"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = AppRoles.AdminOrMember)]
+
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.EntityFrameworkCore
+@using ClubBaist.Domain
+@using ClubBaist.Services
+
+@inject TeeTimeBookingService<Guid> BookingService
+@inject IApplicationDbContext<Guid> DbContext
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Navigation
+@inject ILogger<ReservationDetail> Logger
+
+<PageTitle>Reservation Details - Club Baist</PageTitle>
+
+<h3 class="mb-4">Reservation Details</h3>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
+@if (!string.IsNullOrEmpty(successMessage))
+{
+    <div class="alert alert-success">@successMessage</div>
+}
+
+@if (isLoading)
+{
+    <div class="text-center my-4">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+}
+else if (reservation is null)
+{
+    <div class="alert alert-warning">Reservation not found.</div>
+}
+else
+{
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <strong>Reservation Information</strong>
+            @if (reservation.IsCancelled)
+            {
+                <span class="badge bg-secondary">Cancelled</span>
+            }
+            else
+            {
+                <span class="badge bg-success">Active</span>
+            }
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Date:</strong> @reservation.SlotDate.ToString("dddd, MMMM d, yyyy")</p>
+                    <p><strong>Time:</strong> @reservation.SlotTime.ToString("h:mm tt")</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Booking Member:</strong> @GetMemberName(reservation.BookingMemberAccountId)</p>
+                    <p><strong>Total Players:</strong> @(reservation.PlayerMemberAccountIds.Count + 1)</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (!reservation.IsCancelled && isEditMode)
+    {
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <strong>Edit Players</strong>
+                @if (editPlayerIds.Count < 3)
+                {
+                    <button class="btn btn-sm btn-outline-primary" @onclick="AddEditPlayerSlot">
+                        + Add Player
+                    </button>
+                }
+            </div>
+            <div class="card-body">
+                @if (editPlayerIds.Count == 0)
+                {
+                    <p class="text-muted">No additional players.</p>
+                }
+                else
+                {
+                    @for (var i = 0; i < editPlayerIds.Count; i++)
+                    {
+                        var index = i;
+                        <div class="row mb-3 align-items-center">
+                            <div class="col">
+                                <div class="form-floating">
+                                    <select class="form-select" id="@($"edit-player-{index}")"
+                                            value="@editPlayerIds[index]"
+                                            @onchange="(e) => OnEditPlayerChanged(index, e)">
+                                        <option value="@Guid.Empty">-- Select Player --</option>
+                                        @foreach (var member in allMembers.Where(m => m.MemberAccountId != reservation.BookingMemberAccountId))
+                                        {
+                                            <option value="@member.MemberAccountId">
+                                                @member.MemberNumber - @member.FirstName @member.LastName
+                                            </option>
+                                        }
+                                    </select>
+                                    <label for="@($"edit-player-{index}")">Player @(index + 2)</label>
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <button class="btn btn-sm btn-outline-danger" @onclick="() => RemoveEditPlayerSlot(index)">
+                                    Remove
+                                </button>
+                            </div>
+                        </div>
+                    }
+                }
+
+                <div class="mt-3">
+                    <button class="btn btn-primary me-2" @onclick="SaveChanges" disabled="@isSaving">
+                        @if (isSaving)
+                        {
+                            <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                        }
+                        Save Changes
+                    </button>
+                    <button class="btn btn-outline-secondary" @onclick="CancelEdit">Cancel Edit</button>
+                </div>
+            </div>
+        </div>
+    }
+    else if (!reservation.IsCancelled)
+    {
+        <div class="card mb-4">
+            <div class="card-header">
+                <strong>Players</strong>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        <strong>1.</strong> @GetMemberName(reservation.BookingMemberAccountId)
+                        <span class="badge bg-primary ms-2">Booking Member</span>
+                    </li>
+                    @for (var i = 0; i < reservation.PlayerMemberAccountIds.Count; i++)
+                    {
+                        <li class="list-group-item">
+                            <strong>@(i + 2).</strong> @GetMemberName(reservation.PlayerMemberAccountIds[i])
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    }
+
+    @if (!reservation.IsCancelled && reservation.SlotDate >= DateOnly.FromDateTime(DateTime.Today))
+    {
+        <div class="d-flex gap-2">
+            @if (!isEditMode)
+            {
+                <button class="btn btn-outline-primary" @onclick="EnterEditMode">Edit Players</button>
+            }
+
+            @if (showCancelConfirm)
+            {
+                <button class="btn btn-danger" @onclick="ConfirmCancel">Confirm Cancellation</button>
+                <button class="btn btn-outline-secondary" @onclick="() => showCancelConfirm = false">Keep Reservation</button>
+            }
+            else
+            {
+                <button class="btn btn-outline-danger" @onclick="() => showCancelConfirm = true">Cancel Reservation</button>
+            }
+        </div>
+    }
+
+    <div class="mt-3">
+        <a href="/teetimes/my" class="btn btn-outline-secondary">Back to My Reservations</a>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public Guid ReservationId { get; set; }
+
+    private bool isLoading = true;
+    private bool isEditMode;
+    private bool isSaving;
+    private bool showCancelConfirm;
+    private string? errorMessage;
+    private string? successMessage;
+
+    private Reservation? reservation;
+    private List<MemberAccount<Guid>> allMembers = [];
+    private Dictionary<Guid, string> memberNameCache = new();
+    private List<Guid> editPlayerIds = [];
+    private Guid currentMemberAccountId;
+    private bool isAdmin;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        try
+        {
+            // Determine current user identity
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            var userId = Guid.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            isAdmin = user.IsInRole(AppRoles.Admin);
+
+            if (!isAdmin)
+            {
+                var currentMember = await DbContext.MemberAccounts
+                    .FirstOrDefaultAsync(m => m.ApplicationUserId == userId);
+                currentMemberAccountId = currentMember?.MemberAccountId ?? Guid.Empty;
+            }
+
+            reservation = await DbContext.Reservations
+                .FirstOrDefaultAsync(r => r.ReservationId == ReservationId);
+
+            if (reservation is null)
+            {
+                isLoading = false;
+                return;
+            }
+
+            // Non-admin users can only view their own reservations
+            if (!isAdmin && reservation.BookingMemberAccountId != currentMemberAccountId)
+            {
+                reservation = null;
+                isLoading = false;
+                return;
+            }
+
+            // Only load members referenced by this reservation (for display names)
+            var relevantIds = new List<Guid> { reservation.BookingMemberAccountId };
+            relevantIds.AddRange(reservation.PlayerMemberAccountIds);
+
+            var relevantMembers = await DbContext.MemberAccounts
+                .Where(m => relevantIds.Contains(m.MemberAccountId))
+                .ToListAsync();
+
+            memberNameCache = relevantMembers.ToDictionary(
+                m => m.MemberAccountId,
+                m => $"{m.FirstName} {m.LastName} ({m.MemberNumber})");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load reservation {ReservationId}", ReservationId);
+            errorMessage = "An unexpected error occurred while loading the reservation. Please try again later.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private string GetMemberName(Guid memberAccountId)
+    {
+        return memberNameCache.TryGetValue(memberAccountId, out var name)
+            ? name
+            : "Unknown Member";
+    }
+
+    private async Task EnterEditMode()
+    {
+        // Load all active members only when entering edit mode (for player dropdown)
+        if (allMembers.Count == 0)
+        {
+            allMembers = await DbContext.MemberAccounts
+                .Where(m => m.IsActive)
+                .OrderBy(m => m.LastName)
+                .ThenBy(m => m.FirstName)
+                .ToListAsync();
+        }
+
+        editPlayerIds = new List<Guid>(reservation!.PlayerMemberAccountIds);
+        isEditMode = true;
+        successMessage = null;
+    }
+
+    private void CancelEdit()
+    {
+        isEditMode = false;
+        editPlayerIds.Clear();
+    }
+
+    private void OnEditPlayerChanged(int index, ChangeEventArgs e)
+    {
+        if (Guid.TryParse(e.Value?.ToString(), out var id))
+        {
+            editPlayerIds[index] = id;
+        }
+    }
+
+    private void AddEditPlayerSlot()
+    {
+        if (editPlayerIds.Count < 3)
+        {
+            editPlayerIds.Add(Guid.Empty);
+        }
+    }
+
+    private void RemoveEditPlayerSlot(int index)
+    {
+        editPlayerIds.RemoveAt(index);
+    }
+
+    private async Task SaveChanges()
+    {
+        errorMessage = null;
+        successMessage = null;
+        isSaving = true;
+
+        try
+        {
+            var playerIds = editPlayerIds
+                .Where(id => id != Guid.Empty)
+                .Distinct()
+                .ToList();
+
+            var result = await BookingService.UpdateReservationAsync(ReservationId, playerIds);
+
+            if (result < 0)
+            {
+                errorMessage = "Unable to update reservation. The slot may be full or booking rules prevent this change.";
+            }
+            else
+            {
+                successMessage = "Reservation updated successfully.";
+                isEditMode = false;
+                await LoadData();
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to update reservation {ReservationId}", ReservationId);
+            errorMessage = "An unexpected error occurred while updating the reservation. Please try again later.";
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private async Task ConfirmCancel()
+    {
+        errorMessage = null;
+        successMessage = null;
+        showCancelConfirm = false;
+
+        try
+        {
+            var result = await BookingService.CancelReservationAsync(ReservationId);
+
+            if (result)
+            {
+                successMessage = "Reservation cancelled successfully.";
+                await LoadData();
+            }
+            else
+            {
+                errorMessage = "Unable to cancel reservation.";
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to cancel reservation {ReservationId}", ReservationId);
+            errorMessage = "An unexpected error occurred while cancelling the reservation. Please try again later.";
+        }
+    }
+}
