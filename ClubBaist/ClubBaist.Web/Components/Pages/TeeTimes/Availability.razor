@@ -1,6 +1,7 @@
 @page "/teetimes"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = AppRoles.AdminOrMember)]
+@implements IDisposable
 
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Authorization
@@ -14,6 +15,7 @@
 @inject IApplicationDbContext<Guid> DbContext
 @inject AuthenticationStateProvider AuthStateProvider
 @inject ILogger<Availability> Logger
+@inject AvailabilityUpdateService AvailabilityUpdates
 
 <PageTitle>Tee Time Availability - Club Baist</PageTitle>
 
@@ -500,6 +502,24 @@ else if (viewMode == ViewMode.Day && slots is not null)
             ?? DateOnly.FromDateTime(DateTime.Today);
 
         await LoadAvailability();
+
+        AvailabilityUpdates.AvailabilityChanged += OnAvailabilityChanged;
+    }
+
+    private void OnAvailabilityChanged(DateOnly date)
+    {
+        var relevant = viewMode == ViewMode.Week
+            ? weekDates.Contains(date)
+            : date == selectedDate;
+
+        if (!relevant) return;
+
+        _ = InvokeAsync(RefreshCurrentView);
+    }
+
+    public void Dispose()
+    {
+        AvailabilityUpdates.AvailabilityChanged -= OnAvailabilityChanged;
     }
 
     private async Task OnDateChanged(ChangeEventArgs e)

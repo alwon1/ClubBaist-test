@@ -26,6 +26,9 @@ public static class ServiceCollectionExtensions
         // Schedule service
         services.AddSingleton<IScheduleTimeService, DefaultScheduleTimeService>();
 
+        // Live availability notifications
+        services.AddSingleton<AvailabilityUpdateService>();
+
         return services;
     }
 
