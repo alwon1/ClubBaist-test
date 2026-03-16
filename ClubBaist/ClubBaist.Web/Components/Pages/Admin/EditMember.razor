@@ -1,0 +1,272 @@
+@page "/admin/members/{MemberId:guid}"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = AppRoles.Admin)]
+
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.EntityFrameworkCore
+@using ClubBaist.Domain
+@using ClubBaist.Services
+
+@inject MemberManagementService<Guid> MemberService
+@inject IApplicationDbContext<Guid> DbContext
+@inject NavigationManager NavigationManager
+@inject ILogger<EditMember> Logger
+
+<PageTitle>Edit Member - Club Baist</PageTitle>
+
+@if (_loading)
+{
+    <div class="d-flex justify-content-center my-4">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+}
+else if (_member is null)
+{
+    <div class="alert alert-warning">Member not found.</div>
+}
+else
+{
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3>
+                Edit Member
+                <span class="badge bg-secondary ms-2">@_member.MemberNumber</span>
+                <span class="badge @(_member.IsActive ? "bg-success" : "bg-secondary") ms-1">@(_member.IsActive ? "Active" : "Inactive")</span>
+            </h3>
+        </div>
+        <a href="@($"/admin/users/{_member.ApplicationUserId}")" class="btn btn-outline-secondary">Back to User</a>
+    </div>
+
+    @if (!string.IsNullOrEmpty(_resultMessage))
+    {
+        <div class="alert @(_isError ? "alert-danger" : "alert-success") alert-dismissible fade show">
+            @_resultMessage
+            <button type="button" class="btn-close" @onclick="() => _resultMessage = null"></button>
+        </div>
+    }
+
+    <EditForm Model="_model" OnValidSubmit="HandleSubmitAsync" FormName="editMemberForm">
+        <DataAnnotationsValidator />
+
+        <div class="card mb-4">
+            <div class="card-header"><h5 class="mb-0">Personal Information</h5></div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-floating mb-3">
+                            <InputText id="firstName" class="form-control" @bind-Value="_model.FirstName" placeholder="First Name" />
+                            <label for="firstName">First Name</label>
+                            <ValidationMessage For="() => _model.FirstName" />
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating mb-3">
+                            <InputText id="lastName" class="form-control" @bind-Value="_model.LastName" placeholder="Last Name" />
+                            <label for="lastName">Last Name</label>
+                            <ValidationMessage For="() => _model.LastName" />
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-floating mb-3">
+                            <InputDate id="dateOfBirth" class="form-control" @bind-Value="_model.DateOfBirth" />
+                            <label for="dateOfBirth">Date of Birth</label>
+                            <ValidationMessage For="() => _model.DateOfBirth" />
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating mb-3">
+                            <InputText id="email" class="form-control" @bind-Value="_model.Email" placeholder="Email" />
+                            <label for="email">Email</label>
+                            <ValidationMessage For="() => _model.Email" />
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-floating mb-3">
+                            <InputText id="phone" class="form-control" @bind-Value="_model.Phone" placeholder="Phone" />
+                            <label for="phone">Phone</label>
+                            <ValidationMessage For="() => _model.Phone" />
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating mb-3">
+                            <InputText id="alternatePhone" class="form-control" @bind-Value="_model.AlternatePhone" placeholder="Alternate Phone (optional)" />
+                            <label for="alternatePhone">Alternate Phone (optional)</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="form-floating mb-3">
+                            <InputText id="address" class="form-control" @bind-Value="_model.Address" placeholder="Address" />
+                            <label for="address">Address</label>
+                            <ValidationMessage For="() => _model.Address" />
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-floating mb-3">
+                            <InputText id="postalCode" class="form-control" @bind-Value="_model.PostalCode" placeholder="Postal Code" />
+                            <label for="postalCode">Postal Code</label>
+                            <ValidationMessage For="() => _model.PostalCode" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header"><h5 class="mb-0">Membership</h5></div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-floating mb-3">
+                            <InputSelect id="membershipCategory" class="form-select" @bind-Value="_model.MembershipCategory">
+                                @foreach (var cat in Enum.GetValues<MembershipCategory>())
+                                {
+                                    <option value="@cat">@cat</option>
+                                }
+                            </InputSelect>
+                            <label for="membershipCategory">Membership Category</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6 d-flex align-items-center">
+                        <div class="form-check form-switch ms-2">
+                            <InputCheckbox class="form-check-input" id="isActive" @bind-Value="_model.IsActive" />
+                            <label class="form-check-label" for="isActive">Active Member</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" disabled="@_submitting">
+            @if (_submitting)
+            {
+                <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+            }
+            Save Changes
+        </button>
+    </EditForm>
+}
+
+@code {
+    [Parameter]
+    public Guid MemberId { get; set; }
+
+    private MemberAccount<Guid>? _member;
+    private bool _loading = true;
+    private bool _submitting;
+    private string? _resultMessage;
+    private bool _isError;
+
+    private sealed class EditMemberModel
+    {
+        [Required(ErrorMessage = "First name is required.")]
+        public string FirstName { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Last name is required.")]
+        public string LastName { get; set; } = string.Empty;
+
+        [Required]
+        public DateTime DateOfBirth { get; set; }
+
+        [Required(ErrorMessage = "Email is required.")]
+        [EmailAddress(ErrorMessage = "Enter a valid email address.")]
+        public string Email { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Phone is required.")]
+        public string Phone { get; set; } = string.Empty;
+
+        public string? AlternatePhone { get; set; }
+
+        [Required(ErrorMessage = "Address is required.")]
+        public string Address { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Postal code is required.")]
+        public string PostalCode { get; set; } = string.Empty;
+
+        public MembershipCategory MembershipCategory { get; set; }
+        public bool IsActive { get; set; }
+    }
+
+    private readonly EditMemberModel _model = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _loading = true;
+        try
+        {
+            _member = await DbContext.MemberAccounts
+                .FirstOrDefaultAsync(m => m.MemberAccountId == MemberId);
+
+            if (_member is not null)
+            {
+                _model.FirstName = _member.FirstName;
+                _model.LastName = _member.LastName;
+                _model.DateOfBirth = _member.DateOfBirth;
+                _model.Email = _member.Email;
+                _model.Phone = _member.Phone;
+                _model.AlternatePhone = _member.AlternatePhone;
+                _model.Address = _member.Address;
+                _model.PostalCode = _member.PostalCode;
+                _model.MembershipCategory = _member.MembershipCategory;
+                _model.IsActive = _member.IsActive;
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load member {MemberId}", MemberId);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task HandleSubmitAsync()
+    {
+        if (_member is null) return;
+
+        _submitting = true;
+        _resultMessage = null;
+        _isError = false;
+
+        try
+        {
+            await MemberService.UpdateMemberAsync(new UpdateMemberRequest<Guid>(
+                MemberAccountId: MemberId,
+                FirstName: _model.FirstName,
+                LastName: _model.LastName,
+                DateOfBirth: _model.DateOfBirth,
+                Email: _model.Email,
+                Phone: _model.Phone,
+                Address: _model.Address,
+                PostalCode: _model.PostalCode,
+                MembershipCategory: _model.MembershipCategory,
+                IsActive: _model.IsActive,
+                AlternatePhone: _model.AlternatePhone));
+
+            // Refresh local copy to reflect updated values
+            _member = await DbContext.MemberAccounts
+                .FirstOrDefaultAsync(m => m.MemberAccountId == MemberId);
+
+            _resultMessage = "Member profile updated successfully.";
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to update member {MemberId}", MemberId);
+            _resultMessage = "Failed to save changes. Please try again.";
+            _isError = true;
+        }
+        finally
+        {
+            _submitting = false;
+        }
+    }
+}
