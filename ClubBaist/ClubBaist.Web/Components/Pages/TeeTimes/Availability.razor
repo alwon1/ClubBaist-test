@@ -4,6 +4,7 @@
 
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.QuickGrid
 @using ClubBaist.Domain
 @using ClubBaist.Services
 
@@ -53,45 +54,27 @@
 }
 else if (slots is not null)
 {
-    <div class="table-responsive">
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Time</th>
-                    <th>Available Spots</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var slot in slots)
-                {
-                    var rowClass = slot.RemainingCapacity switch
-                    {
-                        BookingConstants.MaxPlayersPerSlot => "table-success",
-                        > 0 => "table-warning",
-                        _ => "table-danger"
-                    };
-                    <tr class="@rowClass">
-                        <td>@slot.Time.ToString("h:mm tt")</td>
-                        <td>@slot.RemainingCapacity / @BookingConstants.MaxPlayersPerSlot</td>
-                        <td>
-                            @if (slot.RemainingCapacity > 0)
-                            {
-                                <a class="btn btn-sm btn-primary"
-                                   href="@($"/teetimes/book?date={selectedDate:yyyy-MM-dd}&time={slot.Time:HH:mm}")">
-                                    Book
-                                </a>
-                            }
-                            else
-                            {
-                                <button class="btn btn-sm btn-secondary" disabled>Full</button>
-                            }
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </div>
+    <QuickGrid Items="@slots.AsQueryable()" Class="table table-striped" RowClass="@GetRowClass">
+        <TemplateColumn Title="Time" SortBy="@(GridSort<SlotAvailability>.ByAscending(s => s.Time))">
+            @context.Time.ToString("h:mm tt")
+        </TemplateColumn>
+        <TemplateColumn Title="Available Spots">
+            @context.RemainingCapacity / @BookingConstants.MaxPlayersPerSlot
+        </TemplateColumn>
+        <TemplateColumn Title="Action">
+            @if (context.RemainingCapacity > 0)
+            {
+                <a class="btn btn-sm btn-primary"
+                   href="@($"/teetimes/book?date={selectedDate:yyyy-MM-dd}&time={context.Time:HH:mm}")">
+                    Book
+                </a>
+            }
+            else
+            {
+                <button class="btn btn-sm btn-secondary" disabled>Full</button>
+            }
+        </TemplateColumn>
+    </QuickGrid>
 }
 
 @code {
@@ -134,4 +117,11 @@ else if (slots is not null)
             isLoading = false;
         }
     }
+
+    private string GetRowClass(SlotAvailability slot) => slot.RemainingCapacity switch
+    {
+        BookingConstants.MaxPlayersPerSlot => "table-success",
+        > 0 => "table-warning",
+        _ => "table-danger"
+    };
 }

@@ -1,5 +1,5 @@
 @page "/teetimes/book"
-@rendermode InteractiveServer
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = AppRoles.AdminOrMember)]
 
 @using System.Security.Claims
@@ -59,11 +59,12 @@ else
             @if (isAdmin)
             {
                 <div class="form-floating mb-3">
-                    <select class="form-select" id="bookingMember" @onchange="OnBookingMemberChanged">
+                    <select class="form-select" id="bookingMember"
+                            @bind="_bookingMemberStr" @bind:after="OnBookingMemberChanged">
                         <option value="">-- Select Member --</option>
                         @foreach (var member in allMembers)
                         {
-                            <option value="@member.MemberAccountId" selected="@(member.MemberAccountId == selectedBookingMemberId)">
+                            <option value="@member.MemberAccountId">
                                 @member.MemberNumber - @member.FirstName @member.LastName
                             </option>
                         }
@@ -152,7 +153,10 @@ else
     private string? successMessage;
 
     private MemberAccount<Guid>? currentMember;
-    private Guid selectedBookingMemberId;
+    // Backing field for the admin <select> binding; the Guid property derives from it.
+    private string _bookingMemberStr = "";
+    private Guid selectedBookingMemberId =>
+        Guid.TryParse(_bookingMemberStr, out var id) ? id : Guid.Empty;
     private List<MemberAccount<Guid>> allMembers = [];
     private List<Guid> additionalPlayerIds = [];
 
@@ -182,7 +186,7 @@ else
                 return;
             }
 
-            selectedBookingMemberId = currentMember?.MemberAccountId ?? Guid.Empty;
+            _bookingMemberStr = currentMember?.MemberAccountId.ToString() ?? "";
 
             allMembers = await DbContext.MemberAccounts
                 .Where(m => m.IsActive)
@@ -201,13 +205,9 @@ else
         }
     }
 
-    private void OnBookingMemberChanged(ChangeEventArgs e)
+    private void OnBookingMemberChanged()
     {
-        if (Guid.TryParse(e.Value?.ToString(), out var id))
-        {
-            selectedBookingMemberId = id;
-            additionalPlayerIds.RemoveAll(p => p == id);
-        }
+        additionalPlayerIds.RemoveAll(p => p == selectedBookingMemberId);
     }
 
     private void OnPlayerChanged(int index, ChangeEventArgs e)

@@ -52,7 +52,7 @@ public class TeeTimeBookingService<TKey> where TKey : IEquatable<TKey>
                     PrecomputedOccupancy: occupancy);
 
                 var slot = new TeeTimeSlot(date, time, Guid.Empty, []);
-                var remaining = await EvaluateRulesAsync(slot, context, cancellationToken);
+                var remaining = Math.Max(0, await EvaluateRulesAsync(slot, context, cancellationToken));
                 slots.Add(new SlotAvailability(time, remaining));
             }
 
