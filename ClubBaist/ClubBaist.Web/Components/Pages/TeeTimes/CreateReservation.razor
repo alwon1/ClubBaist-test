@@ -60,7 +60,7 @@ else
             {
                 <div class="form-floating mb-3">
                     <select class="form-select" id="bookingMember"
-                            @bind="_bookingMemberStr" @bind:after="OnBookingMemberChanged">
+                            @bind="_bookingMemberStr">
                         <option value="">-- Select Member --</option>
                         @foreach (var member in allMembers)
                         {

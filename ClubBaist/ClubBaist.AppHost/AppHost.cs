@@ -1,7 +1,10 @@
+using Microsoft.Extensions.Hosting;
+
 var builder = DistributedApplication.CreateBuilder(args);
 
-var sql = builder.AddSqlServer("sql")
-    .AddDatabase("clubbaist");
+var db = builder.AddSqlServer("sql");
+db.WithLifetime(ContainerLifetime.Persistent);
+    var sql = db.AddDatabase("clubbaist");
 
 var seeder = builder.AddProject<Projects.ClubBaist_Seeder>("seeder")
     .WithReference(sql)
