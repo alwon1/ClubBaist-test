@@ -246,43 +246,11 @@ public sealed class TeeTimeBookingServiceTests
         return scope;
     }
 
-    private static async Task<Guid> CreateMemberAsync(
+    private static Task<Guid> CreateMemberAsync(
         IServiceProvider provider,
-        MembershipCategory category)
-    {
-        var userManager = provider.GetRequiredService<UserManager<IdentityUser<Guid>>>();
-        var dbContext = provider.GetRequiredService<ApplicationDbContext>();
-
-        var userId = Guid.NewGuid();
-        var user = new IdentityUser<Guid>
-        {
-            Id = userId,
-            UserName = $"member-{userId:N}",
-            Email = $"member-{userId:N}@example.com"
-        };
-
-        var result = await userManager.CreateAsync(user);
-        Assert.IsTrue(result.Succeeded, string.Join(",", result.Errors.Select(e => e.Description)));
-
-        var memberAccountId = Guid.NewGuid();
-        dbContext.MemberAccounts.Add(new MemberAccount<Guid>
-        {
-            MemberAccountId = memberAccountId,
-            ApplicationUserId = userId,
-            MemberNumber = $"T-{userId:N}",
-            FirstName = "Test",
-            LastName = "Member",
-            DateOfBirth = new DateTime(1985, 1, 15),
-            Email = user.Email,
-            Phone = "555-0000",
-            Address = "1 Test St",
-            PostalCode = "T0T0T0",
-            MembershipCategory = category,
-            IsActive = true,
-            CreatedAt = DateTime.UtcNow
-        });
-        await dbContext.SaveChangesAsync();
-
-        return memberAccountId;
-    }
+        MembershipCategory category) =>
+        TestDataFactory.CreateMemberAsync(
+            provider.GetRequiredService<UserManager<IdentityUser<Guid>>>(),
+            provider.GetRequiredService<ApplicationDbContext>(),
+            category);
 }

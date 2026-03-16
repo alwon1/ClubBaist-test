@@ -1,6 +1,6 @@
 @page "/teetimes/reservation/{ReservationId:guid}"
 @rendermode InteractiveServer
-@attribute [Authorize(Roles = "Admin,Member")]
+@attribute [Authorize(Roles = AppRoles.AdminOrMember)]
 
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Authorization
@@ -10,7 +10,7 @@
 @using ClubBaist.Services
 
 @inject TeeTimeBookingService<Guid> BookingService
-@inject ApplicationDbContext DbContext
+@inject IApplicationDbContext<Guid> DbContext
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Navigation
 
@@ -190,7 +190,7 @@ else
 
     private Reservation? reservation;
     private List<MemberAccount<Guid>> allMembers = [];
-    private Dictionary<Guid, string> memberNameCache = [];
+    private Dictionary<Guid, string> memberNameCache = new();
     private List<Guid> editPlayerIds = [];
 
     protected override async Task OnInitializedAsync()
@@ -214,20 +214,17 @@ else
                 return;
             }
 
-            allMembers = await DbContext.MemberAccounts
-                .Where(m => m.IsActive)
-                .OrderBy(m => m.LastName)
-                .ThenBy(m => m.FirstName)
-                .ToListAsync();
-
-            // Build name cache for all relevant member IDs
+            // Only load members referenced by this reservation (for display names)
             var relevantIds = new List<Guid> { reservation.BookingMemberAccountId };
             relevantIds.AddRange(reservation.PlayerMemberAccountIds);
 
-            foreach (var member in allMembers)
-            {
-                memberNameCache[member.MemberAccountId] = $"{member.FirstName} {member.LastName} ({member.MemberNumber})";
-            }
+            var relevantMembers = await DbContext.MemberAccounts
+                .Where(m => relevantIds.Contains(m.MemberAccountId))
+                .ToListAsync();
+
+            memberNameCache = relevantMembers.ToDictionary(
+                m => m.MemberAccountId,
+                m => $"{m.FirstName} {m.LastName} ({m.MemberNumber})");
         }
         catch (Exception ex)
         {
@@ -246,8 +243,18 @@ else
             : "Unknown Member";
     }
 
-    private void EnterEditMode()
+    private async Task EnterEditMode()
     {
+        // Load all active members only when entering edit mode (for player dropdown)
+        if (allMembers.Count == 0)
+        {
+            allMembers = await DbContext.MemberAccounts
+                .Where(m => m.IsActive)
+                .OrderBy(m => m.LastName)
+                .ThenBy(m => m.FirstName)
+                .ToListAsync();
+        }
+
         editPlayerIds = new List<Guid>(reservation!.PlayerMemberAccountIds);
         isEditMode = true;
         successMessage = null;

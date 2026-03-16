@@ -366,45 +366,13 @@ public sealed class ApplicationManagementServiceTests
                 DateTime.UtcNow));
     }
 
-    private static async Task<Guid> CreateIdentityUserAsync(UserManager<IdentityUser<Guid>> userManager)
-    {
-        var userId = Guid.NewGuid();
-        var user = new IdentityUser<Guid>
-        {
-            Id = userId,
-            UserName = $"user-{userId:N}",
-            Email = $"user-{userId:N}@example.com"
-        };
+    private static Task<Guid> CreateIdentityUserAsync(UserManager<IdentityUser<Guid>> userManager) =>
+        TestDataFactory.CreateIdentityUserAsync(userManager);
 
-        var createResult = await userManager.CreateAsync(user);
-        Assert.IsTrue(createResult.Succeeded, string.Join(",", createResult.Errors.Select(error => error.Description)));
-
-        return userId;
-    }
-
-    private static async Task<Guid> CreateSponsorMemberAsync(
+    private static Task<Guid> CreateSponsorMemberAsync(
         UserManager<IdentityUser<Guid>> userManager,
-        ApplicationDbContext dbContext)
-    {
-        var userId = await CreateIdentityUserAsync(userManager);
-        dbContext.MemberAccounts.Add(new MemberAccount<Guid>
-        {
-            ApplicationUserId = userId,
-            MemberNumber = $"M-{userId:N}",
-            FirstName = "Sponsor",
-            LastName = "Member",
-            DateOfBirth = new DateTime(1975, 1, 1),
-            Email = $"sponsor-{userId:N}@example.com",
-            Phone = "555-0200",
-            Address = "1 Sponsor Lane",
-            PostalCode = "S1S1S1",
-            MembershipCategory = MembershipCategory.Social,
-            IsActive = true,
-            CreatedAt = DateTime.UtcNow
-        });
-        await dbContext.SaveChangesAsync();
-        return userId;
-    }
+        ApplicationDbContext dbContext) =>
+        TestDataFactory.CreateMemberAsync(userManager, dbContext);
 
     private static MembershipApplication<Guid> CreateApplication(
         Guid userId,

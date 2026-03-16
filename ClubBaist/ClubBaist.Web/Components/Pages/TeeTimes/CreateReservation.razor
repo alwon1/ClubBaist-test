@@ -1,6 +1,6 @@
 @page "/teetimes/book"
 @rendermode InteractiveServer
-@attribute [Authorize(Roles = "Admin,Member")]
+@attribute [Authorize(Roles = AppRoles.AdminOrMember)]
 
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Authorization
@@ -10,7 +10,7 @@
 @using ClubBaist.Services
 
 @inject TeeTimeBookingService<Guid> BookingService
-@inject ApplicationDbContext DbContext
+@inject IApplicationDbContext<Guid> DbContext
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Navigation
 
@@ -169,7 +169,7 @@ else
             var authState = await AuthStateProvider.GetAuthenticationStateAsync();
             var user = authState.User;
             var userId = Guid.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            isAdmin = user.IsInRole("Admin");
+            isAdmin = user.IsInRole(AppRoles.Admin);
 
             currentMember = await DbContext.MemberAccounts
                 .FirstOrDefaultAsync(m => m.ApplicationUserId == userId);

@@ -177,19 +177,6 @@ public sealed class MemberManagementServiceTests
         StringAssert.Contains(ex.Message, "already exists");
     }
 
-    private static async Task<Guid> CreateIdentityUserAsync(UserManager<IdentityUser<Guid>> userManager)
-    {
-        var userId = Guid.NewGuid();
-        var user = new IdentityUser<Guid>
-        {
-            Id = userId,
-            UserName = $"user-{userId:N}",
-            Email = $"user-{userId:N}@example.com"
-        };
-
-        var createResult = await userManager.CreateAsync(user);
-        Assert.IsTrue(createResult.Succeeded, string.Join(",", createResult.Errors.Select(error => error.Description)));
-
-        return userId;
-    }
+    private static Task<Guid> CreateIdentityUserAsync(UserManager<IdentityUser<Guid>> userManager) =>
+        TestDataFactory.CreateIdentityUserAsync(userManager);
 }

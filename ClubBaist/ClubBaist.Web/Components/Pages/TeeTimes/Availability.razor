@@ -1,6 +1,6 @@
 @page "/teetimes"
 @rendermode InteractiveServer
-@attribute [Authorize(Roles = "Admin,Member")]
+@attribute [Authorize(Roles = AppRoles.AdminOrMember)]
 
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Authorization

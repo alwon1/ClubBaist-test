@@ -1,6 +1,6 @@
 @page "/membership/applications"
 @rendermode InteractiveServer
-@attribute [Authorize(Roles = "Admin,MembershipCommittee")]
+@attribute [Authorize(Roles = AppRoles.AdminOrCommittee)]
 
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Authorization
@@ -136,16 +136,6 @@
         }
     }
 
-    private static string GetStatusBadgeClass(ApplicationStatus status)
-    {
-        return status switch
-        {
-            ApplicationStatus.Submitted => "bg-primary",
-            ApplicationStatus.OnHold => "bg-warning text-dark",
-            ApplicationStatus.Waitlisted => "bg-info text-dark",
-            ApplicationStatus.Accepted => "bg-success",
-            ApplicationStatus.Denied => "bg-danger",
-            _ => "bg-secondary"
-        };
-    }
+    private static string GetStatusBadgeClass(ApplicationStatus status) =>
+        UiHelpers.GetStatusBadgeClass(status);
 }

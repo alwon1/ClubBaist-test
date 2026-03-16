@@ -1,11 +1,9 @@
 using ClubBaist.Domain;
 using ClubBaist.Services;
-using ClubBaist.Services.Rules;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using System.Linq;
 
 namespace ClubBaist.Tests;
 
@@ -30,29 +28,8 @@ public static class TestServiceHost
             .AddEntityFrameworkStores<ApplicationDbContext>();
 
         services.AddScoped<IApplicationDbContext<Guid>>(provider => provider.GetRequiredService<ApplicationDbContext>());
-        services.AddScoped<MemberManagementService<Guid>>();
-        services.AddScoped<ApplicationManagementService<Guid>>();
-        services.AddScoped<TeeTimeBookingService<Guid>>();
-
-        // Booking rules
-        services.AddScoped<IBookingRule, BookingWindowRule>();
-        services.AddScoped<IBookingRule, SlotCapacityRule<Guid>>();
-        services.AddScoped<IBookingRule, MembershipTimeRestrictionRule>();
-
-        // Schedule service
-        services.AddSingleton<IScheduleTimeService, DefaultScheduleTimeService>();
-
-        // SeasonService is a singleton loaded once from DB on first resolution.
-        // The DB is guaranteed to exist before any test scope resolves it.
-        services.AddSingleton<ISeasonService>(provider =>
-        {
-            using var scope = provider.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            var seasons = db.Seasons
-                .Where(s => s.SeasonStatus == SeasonStatus.Active || s.SeasonStatus == SeasonStatus.Planned)
-                .ToList();
-            return new SeasonService(seasons);
-        });
+        services.AddClubBaistServices<Guid>();
+        services.AddSeasonService<ApplicationDbContext>();
 
         var provider = services.BuildServiceProvider(new ServiceProviderOptions
         {

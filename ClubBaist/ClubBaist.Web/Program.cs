@@ -2,10 +2,8 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using ClubBaist.Domain;
 using ClubBaist.Services;
-using ClubBaist.Services.Rules;
 using ClubBaist.Web.Components;
 using ClubBaist.Web.Components.Account;
-using Microsoft.EntityFrameworkCore;
 
 namespace ClubBaist.Web;
 
@@ -50,32 +48,14 @@ public class Program
         // Domain services
         builder.Services.AddScoped<IApplicationDbContext<Guid>>(sp =>
             sp.GetRequiredService<ApplicationDbContext>());
-        builder.Services.AddScoped<ApplicationManagementService<Guid>>();
-        builder.Services.AddScoped<MemberManagementService<Guid>>();
-        builder.Services.AddScoped<TeeTimeBookingService<Guid>>();
-
-        // Booking rules
-        builder.Services.AddScoped<IBookingRule, BookingWindowRule>();
-        builder.Services.AddScoped<IBookingRule, SlotCapacityRule<Guid>>();
-        builder.Services.AddScoped<IBookingRule, MembershipTimeRestrictionRule>();
-
-        // Schedule & season services
-        builder.Services.AddSingleton<IScheduleTimeService, DefaultScheduleTimeService>();
-        builder.Services.AddSingleton<ISeasonService>(sp =>
-        {
-            using var scope = sp.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            var seasons = db.Seasons
-                .Where(s => s.SeasonStatus == SeasonStatus.Active || s.SeasonStatus == SeasonStatus.Planned)
-                .ToList();
-            return new SeasonService(seasons);
-        });
+        builder.Services.AddClubBaistServices<Guid>();
+        builder.Services.AddSeasonService<ApplicationDbContext>();
 
         // Authorization policies
         builder.Services.AddAuthorizationBuilder()
-            .AddPolicy("Admin", policy => policy.RequireRole("Admin"))
-            .AddPolicy("MembershipCommittee", policy => policy.RequireRole("Admin", "MembershipCommittee"))
-            .AddPolicy("Member", policy => policy.RequireRole("Member"));
+            .AddPolicy(AppRoles.Admin, policy => policy.RequireRole(AppRoles.Admin))
+            .AddPolicy(AppRoles.MembershipCommittee, policy => policy.RequireRole(AppRoles.Admin, AppRoles.MembershipCommittee))
+            .AddPolicy(AppRoles.Member, policy => policy.RequireRole(AppRoles.Member));
 
         var app = builder.Build();
 

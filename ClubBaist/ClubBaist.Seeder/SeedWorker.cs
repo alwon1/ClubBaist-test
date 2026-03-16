@@ -31,7 +31,7 @@ public class SeedWorker(
 
     private async Task SeedRolesAsync(RoleManager<IdentityRole<Guid>> roleManager)
     {
-        string[] roles = ["Admin", "MembershipCommittee", "Member"];
+        string[] roles = [AppRoles.Admin, AppRoles.MembershipCommittee, AppRoles.Member];
         foreach (var role in roles)
         {
             if (!await roleManager.RoleExistsAsync(role))
@@ -47,21 +47,21 @@ public class SeedWorker(
         var now = DateTime.UtcNow;
 
         // Admin
-        await CreateUserWithRoleAsync(userManager, "admin@clubbaist.com", "Admin");
+        await CreateUserWithRoleAsync(userManager, "admin@clubbaist.com", AppRoles.Admin);
 
         // Membership Committee
-        await CreateUserWithRoleAsync(userManager, "committee@clubbaist.com", "MembershipCommittee");
+        await CreateUserWithRoleAsync(userManager, "committee@clubbaist.com", AppRoles.MembershipCommittee);
 
         // Shareholder members (Gold) - need at least 3 for sponsorship
-        var sh1 = await CreateUserWithRoleAsync(userManager, "shareholder1@clubbaist.com", "Member");
-        var sh2 = await CreateUserWithRoleAsync(userManager, "shareholder2@clubbaist.com", "Member");
-        var sh3 = await CreateUserWithRoleAsync(userManager, "shareholder3@clubbaist.com", "Member");
+        var sh1 = await CreateUserWithRoleAsync(userManager, "shareholder1@clubbaist.com", AppRoles.Member);
+        var sh2 = await CreateUserWithRoleAsync(userManager, "shareholder2@clubbaist.com", AppRoles.Member);
+        var sh3 = await CreateUserWithRoleAsync(userManager, "shareholder3@clubbaist.com", AppRoles.Member);
 
         // Silver member
-        var silver = await CreateUserWithRoleAsync(userManager, "silver@clubbaist.com", "Member");
+        var silver = await CreateUserWithRoleAsync(userManager, "silver@clubbaist.com", AppRoles.Member);
 
         // Bronze member
-        var bronze = await CreateUserWithRoleAsync(userManager, "bronze@clubbaist.com", "Member");
+        var bronze = await CreateUserWithRoleAsync(userManager, "bronze@clubbaist.com", AppRoles.Member);
 
         // Create MemberAccounts if they don't exist yet
         if (!await db.MemberAccounts.AnyAsync())

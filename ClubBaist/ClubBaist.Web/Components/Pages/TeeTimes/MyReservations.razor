@@ -1,6 +1,6 @@
 @page "/teetimes/my"
 @rendermode InteractiveServer
-@attribute [Authorize(Roles = "Member")]
+@attribute [Authorize(Roles = AppRoles.Member)]
 
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Authorization
@@ -10,7 +10,7 @@
 @using ClubBaist.Services
 
 @inject TeeTimeBookingService<Guid> BookingService
-@inject ApplicationDbContext DbContext
+@inject IApplicationDbContext<Guid> DbContext
 @inject AuthenticationStateProvider AuthStateProvider
 
 <PageTitle>My Reservations - Club Baist</PageTitle>
@@ -56,7 +56,7 @@ else if (filteredReservations is not null && filteredReservations.Count > 0)
                 </tr>
             </thead>
             <tbody>
-                @foreach (var res in filteredReservations.OrderBy(r => r.SlotDate).ThenBy(r => r.SlotTime))
+                @foreach (var res in filteredReservations)
                 {
                     <tr class="@(res.IsCancelled ? "table-secondary" : "")">
                         <td>@res.SlotDate.ToString("MMM d, yyyy")</td>
@@ -161,9 +161,11 @@ else
     private void ApplyFilter()
     {
         var today = DateOnly.FromDateTime(DateTime.Today);
-        filteredReservations = showPast
+        filteredReservations = (showPast
             ? allReservations
-            : allReservations.Where(r => r.SlotDate >= today).ToList();
+            : allReservations.Where(r => r.SlotDate >= today))
+            .OrderBy(r => r.SlotDate).ThenBy(r => r.SlotTime)
+            .ToList();
     }
 
     private void OnTogglePast(ChangeEventArgs e)

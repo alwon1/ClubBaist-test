@@ -1,6 +1,6 @@
 @page "/teetimes/staff"
 @rendermode InteractiveServer
-@attribute [Authorize(Roles = "Admin")]
+@attribute [Authorize(Roles = AppRoles.Admin)]
 
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Authorization
@@ -10,7 +10,7 @@
 @using ClubBaist.Services
 
 @inject TeeTimeBookingService<Guid> BookingService
-@inject ApplicationDbContext DbContext
+@inject IApplicationDbContext<Guid> DbContext
 @inject AuthenticationStateProvider AuthStateProvider
 
 <PageTitle>Staff Console - Club Baist</PageTitle>
@@ -141,7 +141,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var res in memberReservations.OrderBy(r => r.SlotDate).ThenBy(r => r.SlotTime))
+                            @foreach (var res in memberReservations)
                             {
                                 <tr class="@(res.IsCancelled ? "table-secondary" : "")">
                                     <td>@res.SlotDate.ToString("MMM d, yyyy")</td>
@@ -255,6 +255,7 @@
         try
         {
             memberReservations = (await BookingService.GetMemberReservationsAsync(member.MemberAccountId))
+                .OrderBy(r => r.SlotDate).ThenBy(r => r.SlotTime)
                 .ToList();
         }
         catch (Exception ex)
