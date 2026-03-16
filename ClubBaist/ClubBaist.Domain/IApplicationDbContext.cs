@@ -13,4 +13,5 @@ public interface IApplicationDbContext<TKey> where TKey : IEquatable<TKey>
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default);
+    IExecutionStrategy CreateExecutionStrategy();
 }
