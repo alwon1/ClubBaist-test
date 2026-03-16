@@ -9,12 +9,11 @@ builder.AddSqlServerDbContext<ApplicationDbContext>("clubbaist");
 
 builder.Services.AddIdentityCore<IdentityUser<Guid>>(options =>
     {
-        options.SignIn.RequireConfirmedAccount = true;
+        options.SignIn.RequireConfirmedAccount = false;
         options.Stores.SchemaVersion = IdentitySchemaVersions.Version3;
     })
     .AddRoles<IdentityRole<Guid>>()
-    .AddEntityFrameworkStores<ApplicationDbContext>()
-    .AddSignInManager();
+    .AddEntityFrameworkStores<ApplicationDbContext>();
 
 builder.Services.AddHostedService<SeedWorker>();
 
