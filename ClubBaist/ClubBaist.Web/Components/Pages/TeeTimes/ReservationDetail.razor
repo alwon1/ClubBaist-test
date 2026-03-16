@@ -13,6 +13,7 @@
 @inject IApplicationDbContext<Guid> DbContext
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Navigation
+@inject ILogger<ReservationDetail> Logger
 
 <PageTitle>Reservation Details - Club Baist</PageTitle>
 
@@ -192,6 +193,8 @@ else
     private List<MemberAccount<Guid>> allMembers = [];
     private Dictionary<Guid, string> memberNameCache = new();
     private List<Guid> editPlayerIds = [];
+    private Guid currentMemberAccountId;
+    private bool isAdmin;
 
     protected override async Task OnInitializedAsync()
     {
@@ -205,11 +208,32 @@ else
 
         try
         {
+            // Determine current user identity
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            var userId = Guid.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            isAdmin = user.IsInRole(AppRoles.Admin);
+
+            if (!isAdmin)
+            {
+                var currentMember = await DbContext.MemberAccounts
+                    .FirstOrDefaultAsync(m => m.ApplicationUserId == userId);
+                currentMemberAccountId = currentMember?.MemberAccountId ?? Guid.Empty;
+            }
+
             reservation = await DbContext.Reservations
                 .FirstOrDefaultAsync(r => r.ReservationId == ReservationId);
 
             if (reservation is null)
             {
+                isLoading = false;
+                return;
+            }
+
+            // Non-admin users can only view their own reservations
+            if (!isAdmin && reservation.BookingMemberAccountId != currentMemberAccountId)
+            {
+                reservation = null;
                 isLoading = false;
                 return;
             }
@@ -228,7 +252,8 @@ else
         }
         catch (Exception ex)
         {
-            errorMessage = $"Failed to load reservation: {ex.Message}";
+            Logger.LogError(ex, "Failed to load reservation {ReservationId}", ReservationId);
+            errorMessage = "An unexpected error occurred while loading the reservation. Please try again later.";
         }
         finally
         {
@@ -315,7 +340,8 @@ else
         }
         catch (Exception ex)
         {
-            errorMessage = $"Failed to update reservation: {ex.Message}";
+            Logger.LogError(ex, "Failed to update reservation {ReservationId}", ReservationId);
+            errorMessage = "An unexpected error occurred while updating the reservation. Please try again later.";
         }
         finally
         {
@@ -345,7 +371,8 @@ else
         }
         catch (Exception ex)
         {
-            errorMessage = $"Failed to cancel reservation: {ex.Message}";
+            Logger.LogError(ex, "Failed to cancel reservation {ReservationId}", ReservationId);
+            errorMessage = "An unexpected error occurred while cancelling the reservation. Please try again later.";
         }
     }
 }

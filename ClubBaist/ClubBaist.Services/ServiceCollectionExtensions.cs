@@ -32,8 +32,9 @@ public static class ServiceCollectionExtensions
     /// Registers <see cref="ISeasonService"/> as a singleton loaded from the database.
     /// Must be called after DbContext registration.
     /// </summary>
-    public static IServiceCollection AddSeasonService<TDbContext>(this IServiceCollection services)
-        where TDbContext : IApplicationDbContext<Guid>
+    public static IServiceCollection AddSeasonService<TDbContext, TKey>(this IServiceCollection services)
+        where TDbContext : IApplicationDbContext<TKey>
+        where TKey : IEquatable<TKey>
     {
         services.AddSingleton<ISeasonService>(provider =>
         {

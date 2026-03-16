@@ -34,7 +34,7 @@ public sealed class BookingRuleTests
     }
 
     [TestMethod]
-    public async Task SlotCapacityRule_AtCapacity_ReturnsZero()
+    public async Task SlotCapacityRule_AtCapacity_ReturnsNegative()
     {
         using var scope = TestServiceHost.CreateScope();
         var provider = scope.ServiceProvider;
@@ -116,7 +116,7 @@ public sealed class BookingRuleTests
     }
 
     [TestMethod]
-    public async Task BookingWindowRule_DateOutsideSeason_ReturnsZero()
+    public async Task BookingWindowRule_DateOutsideSeason_ReturnsNegative()
     {
         using var scope = TestServiceHost.CreateScope();
         var provider = scope.ServiceProvider;

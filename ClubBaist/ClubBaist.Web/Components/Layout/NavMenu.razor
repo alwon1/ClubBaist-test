@@ -20,13 +20,17 @@
 
         <AuthorizeView>
             <Authorized>
-                <AuthorizeView Roles="@AppRoles.Member" Context="memberContext">
+                <AuthorizeView Roles="@AppRoles.AdminOrMember" Context="memberContext">
                     <Authorized>
                         <div class="nav-item px-3">
                             <NavLink class="nav-link" href="teetimes">
                                 <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Tee Times
                             </NavLink>
                         </div>
+                    </Authorized>
+                </AuthorizeView>
+                <AuthorizeView Roles="@AppRoles.Member" Context="memberReservationsContext">
+                    <Authorized>
                         <div class="nav-item px-3">
                             <NavLink class="nav-link" href="teetimes/my">
                                 <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> My Reservations
@@ -37,11 +41,6 @@
 
                 <AuthorizeView Roles="@AppRoles.Admin" Context="adminContext">
                     <Authorized>
-                        <div class="nav-item px-3">
-                            <NavLink class="nav-link" href="teetimes">
-                                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Tee Times
-                            </NavLink>
-                        </div>
                         <div class="nav-item px-3">
                             <NavLink class="nav-link" href="teetimes/staff">
                                 <span class="bi bi-person-workspace" aria-hidden="true"></span> Staff Console

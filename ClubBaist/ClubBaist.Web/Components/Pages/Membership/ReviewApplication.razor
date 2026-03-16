@@ -11,6 +11,7 @@
 @inject IApplicationDbContext<Guid> DbContext
 @inject ApplicationManagementService<Guid> ApplicationService
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@inject ILogger<ReviewApplication> Logger
 
 <PageTitle>Review Application</PageTitle>
 
@@ -277,7 +278,8 @@
         catch (Exception ex)
         {
             _isError = true;
-            _resultMessage = $"Error updating application status: {ex.Message}";
+            Logger.LogError(ex, "Error updating application {ApplicationId} status", ApplicationId);
+            _resultMessage = "An unexpected error occurred while updating the application status. Please try again later.";
         }
         finally
         {

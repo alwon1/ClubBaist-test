@@ -8,6 +8,7 @@
 @using ClubBaist.Services
 
 @inject TeeTimeBookingService<Guid> BookingService
+@inject ILogger<Availability> Logger
 
 <PageTitle>Tee Time Availability - Club Baist</PageTitle>
 
@@ -66,13 +67,13 @@ else if (slots is not null)
                 {
                     var rowClass = slot.RemainingCapacity switch
                     {
-                        4 => "table-success",
+                        BookingConstants.MaxPlayersPerSlot => "table-success",
                         > 0 => "table-warning",
                         _ => "table-danger"
                     };
                     <tr class="@rowClass">
                         <td>@slot.Time.ToString("h:mm tt")</td>
-                        <td>@slot.RemainingCapacity / 4</td>
+                        <td>@slot.RemainingCapacity / @BookingConstants.MaxPlayersPerSlot</td>
                         <td>
                             @if (slot.RemainingCapacity > 0)
                             {
@@ -125,7 +126,8 @@ else if (slots is not null)
         }
         catch (Exception ex)
         {
-            errorMessage = $"Failed to load availability: {ex.Message}";
+            Logger.LogError(ex, "Failed to load availability");
+            errorMessage = "An unexpected error occurred while loading availability. Please try again later.";
         }
         finally
         {

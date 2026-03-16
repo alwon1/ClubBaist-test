@@ -49,7 +49,7 @@ public class Program
         builder.Services.AddScoped<IApplicationDbContext<Guid>>(sp =>
             sp.GetRequiredService<ApplicationDbContext>());
         builder.Services.AddClubBaistServices<Guid>();
-        builder.Services.AddSeasonService<ApplicationDbContext>();
+        builder.Services.AddSeasonService<ApplicationDbContext, Guid>();
 
         // Authorization policies
         builder.Services.AddAuthorizationBuilder()

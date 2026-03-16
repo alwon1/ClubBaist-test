@@ -21,19 +21,20 @@ public class SeedWorker(
         logger.LogInformation("Creating database schema...");
         await db.Database.EnsureCreatedAsync(stoppingToken);
 
-        await SeedRolesAsync(roleManager);
-        await SeedUsersAsync(userManager, db);
+        await SeedRolesAsync(roleManager, stoppingToken);
+        await SeedUsersAsync(userManager, db, stoppingToken);
         await SeedSeasonAsync(db, stoppingToken);
 
         logger.LogInformation("Seeding complete. Stopping seeder.");
         lifetime.StopApplication();
     }
 
-    private async Task SeedRolesAsync(RoleManager<IdentityRole<Guid>> roleManager)
+    private async Task SeedRolesAsync(RoleManager<IdentityRole<Guid>> roleManager, CancellationToken ct)
     {
         string[] roles = [AppRoles.Admin, AppRoles.MembershipCommittee, AppRoles.Member];
         foreach (var role in roles)
         {
+            ct.ThrowIfCancellationRequested();
             if (!await roleManager.RoleExistsAsync(role))
             {
                 await roleManager.CreateAsync(new IdentityRole<Guid> { Name = role });
@@ -42,48 +43,49 @@ public class SeedWorker(
         }
     }
 
-    private async Task SeedUsersAsync(UserManager<IdentityUser<Guid>> userManager, ApplicationDbContext db)
+    private async Task SeedUsersAsync(UserManager<IdentityUser<Guid>> userManager, ApplicationDbContext db, CancellationToken ct)
     {
         var now = DateTime.UtcNow;
 
         // Admin
-        await CreateUserWithRoleAsync(userManager, "admin@clubbaist.com", AppRoles.Admin);
+        await CreateUserWithRoleAsync(userManager, "admin@clubbaist.com", AppRoles.Admin, ct);
 
         // Membership Committee
-        await CreateUserWithRoleAsync(userManager, "committee@clubbaist.com", AppRoles.MembershipCommittee);
+        await CreateUserWithRoleAsync(userManager, "committee@clubbaist.com", AppRoles.MembershipCommittee, ct);
 
         // Shareholder members (Gold) - need at least 3 for sponsorship
-        var sh1 = await CreateUserWithRoleAsync(userManager, "shareholder1@clubbaist.com", AppRoles.Member);
-        var sh2 = await CreateUserWithRoleAsync(userManager, "shareholder2@clubbaist.com", AppRoles.Member);
-        var sh3 = await CreateUserWithRoleAsync(userManager, "shareholder3@clubbaist.com", AppRoles.Member);
+        var sh1 = await CreateUserWithRoleAsync(userManager, "shareholder1@clubbaist.com", AppRoles.Member, ct);
+        var sh2 = await CreateUserWithRoleAsync(userManager, "shareholder2@clubbaist.com", AppRoles.Member, ct);
+        var sh3 = await CreateUserWithRoleAsync(userManager, "shareholder3@clubbaist.com", AppRoles.Member, ct);
 
         // Silver member
-        var silver = await CreateUserWithRoleAsync(userManager, "silver@clubbaist.com", AppRoles.Member);
+        var silver = await CreateUserWithRoleAsync(userManager, "silver@clubbaist.com", AppRoles.Member, ct);
 
         // Bronze member
-        var bronze = await CreateUserWithRoleAsync(userManager, "bronze@clubbaist.com", AppRoles.Member);
+        var bronze = await CreateUserWithRoleAsync(userManager, "bronze@clubbaist.com", AppRoles.Member, ct);
 
         // Create MemberAccounts if they don't exist yet
-        if (!await db.MemberAccounts.AnyAsync())
+        if (!await db.MemberAccounts.AnyAsync(ct))
         {
             var memberNumber = 1000;
 
             db.MemberAccounts.AddRange(
-                CreateMember(sh1!.Id, $"SH-{memberNumber++}", "Alice", "Shareholder", "shareholder1@clubbaist.com", MembershipCategory.Shareholder, now),
-                CreateMember(sh2!.Id, $"SH-{memberNumber++}", "Bob", "Shareholder", "shareholder2@clubbaist.com", MembershipCategory.Shareholder, now),
-                CreateMember(sh3!.Id, $"SH-{memberNumber++}", "Carol", "Shareholder", "shareholder3@clubbaist.com", MembershipCategory.Shareholder, now),
-                CreateMember(silver!.Id, $"SH-{memberNumber++}", "Diana", "Silver", "silver@clubbaist.com", MembershipCategory.ShareholderSpouse, now),
-                CreateMember(bronze!.Id, $"SH-{memberNumber++}", "Evan", "Bronze", "bronze@clubbaist.com", MembershipCategory.Junior, now)
+                CreateMember(sh1.Id, $"SH-{memberNumber++}", "Alice", "Shareholder", "shareholder1@clubbaist.com", MembershipCategory.Shareholder, now),
+                CreateMember(sh2.Id, $"SH-{memberNumber++}", "Bob", "Shareholder", "shareholder2@clubbaist.com", MembershipCategory.Shareholder, now),
+                CreateMember(sh3.Id, $"SH-{memberNumber++}", "Carol", "Shareholder", "shareholder3@clubbaist.com", MembershipCategory.Shareholder, now),
+                CreateMember(silver.Id, $"SH-{memberNumber++}", "Diana", "Silver", "silver@clubbaist.com", MembershipCategory.ShareholderSpouse, now),
+                CreateMember(bronze.Id, $"SH-{memberNumber++}", "Evan", "Bronze", "bronze@clubbaist.com", MembershipCategory.Junior, now)
             );
 
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(ct);
             logger.LogInformation("Seeded {Count} member accounts", 5);
         }
     }
 
-    private async Task<IdentityUser<Guid>?> CreateUserWithRoleAsync(
-        UserManager<IdentityUser<Guid>> userManager, string email, string role)
+    private async Task<IdentityUser<Guid>> CreateUserWithRoleAsync(
+        UserManager<IdentityUser<Guid>> userManager, string email, string role, CancellationToken ct)
     {
+        ct.ThrowIfCancellationRequested();
         var user = await userManager.FindByEmailAsync(email);
         if (user is null)
         {
@@ -96,9 +98,9 @@ public class SeedWorker(
             var result = await userManager.CreateAsync(user, DefaultPassword);
             if (!result.Succeeded)
             {
-                logger.LogError("Failed to create user {Email}: {Errors}",
-                    email, string.Join(", ", result.Errors.Select(e => e.Description)));
-                return null;
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                logger.LogError("Failed to create user {Email}: {Errors}", email, errors);
+                throw new InvalidOperationException($"Failed to create user {email}: {errors}");
             }
             logger.LogInformation("Created user: {Email}", email);
         }

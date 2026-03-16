@@ -12,6 +12,7 @@
 @inject ApplicationManagementService<Guid> ApplicationService
 @inject IApplicationDbContext<Guid> DbContext
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@inject ILogger<Apply> Logger
 
 <PageTitle>Apply for Membership</PageTitle>
 
@@ -218,6 +219,13 @@
 
         try
         {
+            if (_model.Sponsor1MemberId == _model.Sponsor2MemberId)
+            {
+                _errorMessage = "Sponsor 1 and Sponsor 2 must be different members.";
+                _submitting = false;
+                return;
+            }
+
             var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
             var user = authState.User;
             var userId = Guid.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
@@ -233,9 +241,9 @@
                 Phone: _model.Phone!,
                 Email: _model.Email!,
                 DateOfBirth: _model.DateOfBirth,
-                RequestedMembershipCategory: _model.RequestedMembershipCategory,
-                Sponsor1MemberId: _model.Sponsor1MemberId,
-                Sponsor2MemberId: _model.Sponsor2MemberId,
+                RequestedMembershipCategory: _model.RequestedMembershipCategory!.Value,
+                Sponsor1MemberId: _model.Sponsor1MemberId!.Value,
+                Sponsor2MemberId: _model.Sponsor2MemberId!.Value,
                 AlternatePhone: _model.AlternatePhone
             );
 
@@ -246,7 +254,8 @@
         }
         catch (Exception ex)
         {
-            _errorMessage = $"An error occurred while submitting your application: {ex.Message}";
+            Logger.LogError(ex, "Failed to submit membership application");
+            _errorMessage = "An unexpected error occurred while submitting your application. Please try again later.";
         }
         finally
         {
@@ -287,12 +296,12 @@
         public string? AlternatePhone { get; set; }
 
         [Required(ErrorMessage = "Membership category is required.")]
-        public MembershipCategory RequestedMembershipCategory { get; set; }
+        public MembershipCategory? RequestedMembershipCategory { get; set; }
 
         [Required(ErrorMessage = "Sponsor 1 is required.")]
-        public Guid Sponsor1MemberId { get; set; }
+        public Guid? Sponsor1MemberId { get; set; }
 
         [Required(ErrorMessage = "Sponsor 2 is required.")]
-        public Guid Sponsor2MemberId { get; set; }
+        public Guid? Sponsor2MemberId { get; set; }
     }
 }

@@ -12,6 +12,7 @@
 @inject TeeTimeBookingService<Guid> BookingService
 @inject IApplicationDbContext<Guid> DbContext
 @inject AuthenticationStateProvider AuthStateProvider
+@inject ILogger<MyReservations> Logger
 
 <PageTitle>My Reservations - Club Baist</PageTitle>
 
@@ -150,7 +151,8 @@ else
         }
         catch (Exception ex)
         {
-            errorMessage = $"Failed to load reservations: {ex.Message}";
+            Logger.LogError(ex, "Failed to load reservations");
+            errorMessage = "An unexpected error occurred while loading reservations. Please try again later.";
         }
         finally
         {
@@ -196,7 +198,8 @@ else
         }
         catch (Exception ex)
         {
-            errorMessage = $"Failed to cancel reservation: {ex.Message}";
+            Logger.LogError(ex, "Failed to cancel reservation {ReservationId}", reservationId);
+            errorMessage = "An unexpected error occurred while cancelling the reservation. Please try again later.";
         }
     }
 }

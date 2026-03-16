@@ -29,7 +29,7 @@ public static class TestServiceHost
 
         services.AddScoped<IApplicationDbContext<Guid>>(provider => provider.GetRequiredService<ApplicationDbContext>());
         services.AddClubBaistServices<Guid>();
-        services.AddSeasonService<ApplicationDbContext>();
+        services.AddSeasonService<ApplicationDbContext, Guid>();
 
         var provider = services.BuildServiceProvider(new ServiceProviderOptions
         {

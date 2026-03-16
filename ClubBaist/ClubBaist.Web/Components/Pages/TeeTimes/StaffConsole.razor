@@ -12,6 +12,7 @@
 @inject TeeTimeBookingService<Guid> BookingService
 @inject IApplicationDbContext<Guid> DbContext
 @inject AuthenticationStateProvider AuthStateProvider
+@inject ILogger<StaffConsole> Logger
 
 <PageTitle>Staff Console - Club Baist</PageTitle>
 
@@ -225,11 +226,11 @@
 
         try
         {
-            var term = searchTerm.Trim().ToLower();
+            var pattern = $"%{searchTerm.Trim()}%";
             searchResults = await DbContext.MemberAccounts
-                .Where(m => m.FirstName.ToLower().Contains(term)
-                         || m.LastName.ToLower().Contains(term)
-                         || m.MemberNumber.ToLower().Contains(term))
+                .Where(m => EF.Functions.Like(m.FirstName, pattern)
+                         || EF.Functions.Like(m.LastName, pattern)
+                         || EF.Functions.Like(m.MemberNumber, pattern))
                 .OrderBy(m => m.LastName)
                 .ThenBy(m => m.FirstName)
                 .Take(50)
@@ -237,7 +238,8 @@
         }
         catch (Exception ex)
         {
-            errorMessage = $"Search failed: {ex.Message}";
+            Logger.LogError(ex, "Member search failed for term '{SearchTerm}'", searchTerm);
+            errorMessage = "An unexpected error occurred during the search. Please try again later.";
         }
         finally
         {
@@ -260,7 +262,8 @@
         }
         catch (Exception ex)
         {
-            errorMessage = $"Failed to load reservations: {ex.Message}";
+            Logger.LogError(ex, "Failed to load reservations for member {MemberId}", member.MemberAccountId);
+            errorMessage = "An unexpected error occurred while loading reservations. Please try again later.";
         }
         finally
         {
@@ -293,7 +296,8 @@
         }
         catch (Exception ex)
         {
-            errorMessage = $"Failed to cancel reservation: {ex.Message}";
+            Logger.LogError(ex, "Failed to cancel reservation {ReservationId}", reservationId);
+            errorMessage = "An unexpected error occurred while cancelling the reservation. Please try again later.";
         }
     }
 }
