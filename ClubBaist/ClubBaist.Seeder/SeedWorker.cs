@@ -243,7 +243,7 @@ public class SeedWorker(
         }
 
         db.MembershipApplications.AddRange(applications);
-        await db.SaveChangesAsync(ct);
+
 
         // Advance statuses for some applications
         // applications[1] → OnHold
