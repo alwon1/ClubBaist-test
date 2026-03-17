@@ -34,10 +34,8 @@ public class ApplicationManagementService<TKey> where TKey : IEquatable<TKey>
     {
         ArgumentNullException.ThrowIfNull(submitRequest);
         EnsureRequiredKey(submitRequest.ApplicationUserId, nameof(submitRequest.ApplicationUserId));
-        if (submitRequest.Sponsor1MemberId <= 0)
-            throw new ArgumentException("A non-default value is required.", nameof(submitRequest.Sponsor1MemberId));
-        if (submitRequest.Sponsor2MemberId <= 0)
-            throw new ArgumentException("A non-default value is required.", nameof(submitRequest.Sponsor2MemberId));
+        EnsureRequiredMemberId(submitRequest.Sponsor1MemberId, nameof(submitRequest.Sponsor1MemberId));
+        EnsureRequiredMemberId(submitRequest.Sponsor2MemberId, nameof(submitRequest.Sponsor2MemberId));
 
         await EnsureIdentityUserExistsAsync(submitRequest.ApplicationUserId, cancellationToken);
 
@@ -203,6 +201,12 @@ public class ApplicationManagementService<TKey> where TKey : IEquatable<TKey>
         {
             throw new InvalidOperationException("The linked application user does not exist.");
         }
+    }
+
+    private static void EnsureRequiredMemberId(int memberId, string paramName)
+    {
+        if (memberId <= 0)
+            throw new ArgumentException("A non-default value is required.", paramName);
     }
 
     private static void EnsureRequiredKey(TKey key, string paramName)

@@ -21,7 +21,7 @@ public class MemberConflictRule<TKey> : IBookingRule where TKey : IEquatable<TKe
         if (slot.BookingMemberAccountId == 0)
             return int.MaxValue;
 
-        var allMemberIds = new List<int>(slot.PlayerMemberAccountIds) { slot.BookingMemberAccountId };
+        var allMemberIds = new HashSet<int>(slot.PlayerMemberAccountIds) { slot.BookingMemberAccountId };
 
         var query = _dbContext.Reservations
             .Where(r => r.SlotDate == slot.SlotDate && r.SlotTime == slot.SlotTime && !r.IsCancelled);
