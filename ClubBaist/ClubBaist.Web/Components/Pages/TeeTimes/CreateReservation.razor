@@ -135,7 +135,7 @@ else
         }
         Book Tee Time
     </button>
-    <a href="@(BookFor.HasValue ? $"/teetimes?bookFor={BookFor}&date={slotDate:yyyy-MM-dd}" : "/teetimes")"
+    <a href="@(isAdmin ? "/teetimes/staff" : "/teetimes")"
        class="btn btn-outline-secondary ms-2">Cancel</a>
 }
 

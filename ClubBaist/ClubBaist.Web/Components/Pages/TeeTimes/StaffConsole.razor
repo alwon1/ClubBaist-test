@@ -9,6 +9,7 @@
 @using Microsoft.EntityFrameworkCore
 @using ClubBaist.Domain
 @using ClubBaist.Services
+@using ClubBaist.Web.Components.Pages.TeeTimes
 
 @inject TeeTimeBookingService<Guid> BookingService
 @inject IApplicationDbContext<Guid> DbContext
@@ -120,10 +121,10 @@
         <div class="card mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <strong>Reservations for @selectedMember.FirstName @selectedMember.LastName (@selectedMember.MemberNumber)</strong>
-                <a href="@($"/teetimes?bookFor={selectedMember.MemberAccountId}&date={DateOnly.FromDateTime(DateTime.Today):yyyy-MM-dd}")"
-                   class="btn btn-sm btn-primary">
-                    Book on Behalf
-                </a>
+                <button class="btn btn-sm @(showBookingPanel ? "btn-secondary" : "btn-primary")"
+                        @onclick="ToggleBookingPanel">
+                    @(showBookingPanel ? "Hide Availability" : "Book on Behalf")
+                </button>
             </div>
             <div class="card-body">
                 @if (isLoadingReservations)
@@ -192,6 +193,22 @@
                 }
             </div>
         </div>
+
+        @if (showBookingPanel)
+        {
+            <div class="card mb-4">
+                <div class="card-header">
+                    <strong>Availability — as seen by @selectedMember.FirstName @selectedMember.LastName (@selectedMember.MembershipCategory)</strong>
+                </div>
+                <div class="card-body">
+                    <TeeTimeAvailabilityPanel @key="selectedMember.MemberAccountId"
+                        MemberCategory="selectedMember.MembershipCategory"
+                        IsAdmin="true"
+                        CurrentMemberAccountId="Guid.Empty"
+                        BookForMemberId="selectedMember.MemberAccountId" />
+                </div>
+            </div>
+        }
     }
 }
 else
@@ -335,6 +352,7 @@ else
     private MemberAccount<Guid>? selectedMember;
     private List<Reservation>? memberReservations;
     private bool isLoadingReservations;
+    private bool showBookingPanel;
 
     // Reservations view state
     private string reservationSearchTerm = string.Empty;
@@ -431,9 +449,15 @@ else
         }
     }
 
+    private void ToggleBookingPanel()
+    {
+        showBookingPanel = !showBookingPanel;
+    }
+
     private async Task SelectMember(MemberAccount<Guid> member)
     {
         selectedMember = member;
+        showBookingPanel = false;
         cancelConfirmId = null;
         isLoadingReservations = true;
         errorMessage = null;
