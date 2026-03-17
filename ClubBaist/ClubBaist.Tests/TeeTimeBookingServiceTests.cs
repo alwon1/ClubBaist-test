@@ -500,6 +500,53 @@ public sealed class TeeTimeBookingServiceTests
     }
 
     [TestMethod]
+    public async Task GetBookedSlotsWithMembers_MemberAlreadyBooked_UserCanBookIsFalse()
+    {
+        using var scope = CreateScopeWithSeason();
+        var provider = scope.ServiceProvider;
+
+        var bookingService = provider.GetRequiredService<TeeTimeBookingService<Guid>>();
+
+        var booker = await CreateMemberAsync(provider, MembershipCategory.Shareholder);
+
+        // Book the slot for the member
+        await bookingService.CreateReservationAsync(new TeeTimeSlot(SeasonDate, SlotTime, booker, []));
+
+        // Query with the same member's ID — conflict rule should deny
+        var bookedSlots = await bookingService.GetBookedSlotsWithMembersAsync(SeasonDate, MembershipCategory.Shareholder, booker);
+        var targetSlot = bookedSlots.FirstOrDefault(s => s.Time == SlotTime);
+
+        Assert.IsNotNull(targetSlot);
+        Assert.IsFalse(targetSlot.UserCanBook, "UserCanBook should be false when the member is already booked in the slot");
+    }
+
+    [TestMethod]
+    public async Task GetBookedSlotsWithMembers_SlotFull_UserCanBookIsFalse()
+    {
+        using var scope = CreateScopeWithSeason();
+        var provider = scope.ServiceProvider;
+
+        var bookingService = provider.GetRequiredService<TeeTimeBookingService<Guid>>();
+
+        var member1 = await CreateMemberAsync(provider, MembershipCategory.Shareholder);
+        var member2 = await CreateMemberAsync(provider, MembershipCategory.Shareholder);
+        var member3 = await CreateMemberAsync(provider, MembershipCategory.Shareholder);
+        var member4 = await CreateMemberAsync(provider, MembershipCategory.Shareholder);
+
+        // Fill the slot to capacity
+        await bookingService.CreateReservationAsync(new TeeTimeSlot(SeasonDate, SlotTime, member1, [member2]));
+        await bookingService.CreateReservationAsync(new TeeTimeSlot(SeasonDate, SlotTime, member3, [member4]));
+
+        // A new member tries to check availability — slot is full
+        var newMember = await CreateMemberAsync(provider, MembershipCategory.Shareholder);
+        var bookedSlots = await bookingService.GetBookedSlotsWithMembersAsync(SeasonDate, MembershipCategory.Shareholder, newMember);
+        var targetSlot = bookedSlots.FirstOrDefault(s => s.Time == SlotTime);
+
+        Assert.IsNotNull(targetSlot);
+        Assert.IsFalse(targetSlot.UserCanBook, "UserCanBook should be false when the slot is full");
+    }
+
+    [TestMethod]
     public async Task GetAvailability_ReturnsCorrectRemainingCapacity()
     {
         using var scope = CreateScopeWithSeason();

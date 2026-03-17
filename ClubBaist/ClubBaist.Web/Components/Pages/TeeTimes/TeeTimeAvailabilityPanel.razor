@@ -586,7 +586,7 @@ else if (viewMode == ViewMode.Day && slots is not null)
 
         try
         {
-            var rangeResult = await BookingService.GetBookedSlotsWithMembersForRangeAsync(weekDates, MemberCategory);
+            var rangeResult = await BookingService.GetBookedSlotsWithMembersForRangeAsync(weekDates, MemberCategory, CurrentMemberAccountId);
             weeklySlots = weekDates.ToDictionary(d => d, d => rangeResult.GetValueOrDefault(d) ?? []);
             RebuildWeeklyGridRows();
         }
@@ -615,7 +615,7 @@ else if (viewMode == ViewMode.Day && slots is not null)
 
     private async Task RefreshWeekDay(DateOnly date)
     {
-        var daySlots = await BookingService.GetBookedSlotsWithMembersAsync(date, MemberCategory);
+        var daySlots = await BookingService.GetBookedSlotsWithMembersAsync(date, MemberCategory, CurrentMemberAccountId);
         weeklySlots![date] = daySlots;
         RebuildWeeklyGridRows();
         StateHasChanged();
@@ -633,7 +633,7 @@ else if (viewMode == ViewMode.Day && slots is not null)
 
         try
         {
-            slots = await BookingService.GetBookedSlotsWithMembersAsync(selectedDate, MemberCategory);
+            slots = await BookingService.GetBookedSlotsWithMembersAsync(selectedDate, MemberCategory, CurrentMemberAccountId);
         }
         catch (Exception ex)
         {
