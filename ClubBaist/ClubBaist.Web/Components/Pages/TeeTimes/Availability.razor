@@ -464,7 +464,7 @@ else if (viewMode == ViewMode.Day && slots is not null)
     private bool isLoading;
     private string? errorMessage;
     private bool isAdmin;
-    private Guid currentMemberAccountId;
+    private int currentMemberAccountId;
 
     protected override async Task OnInitializedAsync()
     {
@@ -477,7 +477,7 @@ else if (viewMode == ViewMode.Day && slots is not null)
         {
             var member = await DbContext.MemberAccounts
                 .FirstOrDefaultAsync(m => m.ApplicationUserId == userId);
-            currentMemberAccountId = member?.MemberAccountId ?? Guid.Empty;
+            currentMemberAccountId = member?.MemberAccountId ?? 0;
         }
 
         selectedDate = SeasonService.GetNextAvailableDate(DateOnly.FromDateTime(DateTime.Today))

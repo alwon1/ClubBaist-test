@@ -104,7 +104,7 @@ else
                                 <select class="form-select" id="@($"player-{index}")"
                                         value="@additionalPlayerIds[index]"
                                         @onchange="(e) => OnPlayerChanged(index, e)">
-                                    <option value="@Guid.Empty">-- Select Player --</option>
+                                    <option value="0">-- Select Player --</option>
                                     @foreach (var member in allMembers.Where(m => m.MemberAccountId != _bookingMemberId))
                                     {
                                         <option value="@member.MemberAccountId">
@@ -152,20 +152,20 @@ else
     private string? successMessage;
 
     private MemberAccount<Guid>? currentMember;
-    private Guid _bookingMemberId;
+    private int _bookingMemberId;
     // Read/write string property used by the admin <select> @bind.
-    // Stores and retrieves the Guid natively; no Guid→string→Guid roundtrip elsewhere.
+    // Stores and retrieves the int natively; no int→string→int roundtrip elsewhere.
     private string BookingMemberId
     {
-        get => _bookingMemberId == Guid.Empty ? "" : _bookingMemberId.ToString();
+        get => _bookingMemberId == 0 ? "" : _bookingMemberId.ToString();
         set
         {
-            _bookingMemberId = Guid.TryParse(value, out var id) ? id : Guid.Empty;
+            _bookingMemberId = int.TryParse(value, out var id) ? id : 0;
             additionalPlayerIds.RemoveAll(p => p == _bookingMemberId);
         }
     }
     private List<MemberAccount<Guid>> allMembers = [];
-    private List<Guid> additionalPlayerIds = [];
+    private List<int> additionalPlayerIds = [];
 
     protected override async Task OnInitializedAsync()
     {
@@ -193,7 +193,7 @@ else
                 return;
             }
 
-            _bookingMemberId = currentMember?.MemberAccountId ?? Guid.Empty;
+            _bookingMemberId = currentMember?.MemberAccountId ?? 0;
 
             allMembers = await DbContext.MemberAccounts
                 .Where(m => m.IsActive)
@@ -214,7 +214,7 @@ else
 
     private void OnPlayerChanged(int index, ChangeEventArgs e)
     {
-        if (Guid.TryParse(e.Value?.ToString(), out var id))
+        if (int.TryParse(e.Value?.ToString(), out var id))
         {
             additionalPlayerIds[index] = id;
         }
@@ -224,7 +224,7 @@ else
     {
         if (additionalPlayerIds.Count < 3)
         {
-            additionalPlayerIds.Add(Guid.Empty);
+            additionalPlayerIds.Add(0);
         }
     }
 
@@ -237,14 +237,14 @@ else
     {
         errorMessage = null;
 
-        if (_bookingMemberId == Guid.Empty)
+        if (_bookingMemberId == 0)
         {
             errorMessage = "Please select a booking member.";
             return;
         }
 
         var playerIds = additionalPlayerIds
-            .Where(id => id != Guid.Empty)
+            .Where(id => id != 0)
             .Distinct()
             .ToList();
 

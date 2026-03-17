@@ -38,7 +38,7 @@ public class SlotCapacityRule<TKey> : IBookingRule where TKey : IEquatable<TKey>
 
         // Booking member is always player #1; PlayerMemberAccountIds are additional players.
         // For availability queries (Guid.Empty booking member), requested = 0.
-        var requested = slot.BookingMemberAccountId == Guid.Empty
+        var requested = slot.BookingMemberAccountId == 0
             ? 0
             : 1 + slot.PlayerMemberAccountIds.Count;
 

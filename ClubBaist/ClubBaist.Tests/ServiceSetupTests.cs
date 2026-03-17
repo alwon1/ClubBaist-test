@@ -47,7 +47,7 @@ public sealed class ServiceSetupTests
 
         var createMemberResult = await memberManagementService.CreateMemberAsync(createMemberRequest);
 
-        Assert.AreNotEqual(Guid.Empty, createMemberResult.MemberAccountId);
+        Assert.AreNotEqual(0, createMemberResult.MemberAccountId);
         Assert.IsTrue(await dbContext.MemberAccounts.AnyAsync(member => member.MemberAccountId == createMemberResult.MemberAccountId));
     }
 }

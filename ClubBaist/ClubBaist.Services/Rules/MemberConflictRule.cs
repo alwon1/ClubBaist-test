@@ -18,10 +18,10 @@ public class MemberConflictRule<TKey> : IBookingRule where TKey : IEquatable<TKe
     public async Task<int> EvaluateAsync(TeeTimeSlot slot, BookingEvaluationContext context, CancellationToken cancellationToken = default)
     {
         // Availability queries (no specific member) — nothing to check
-        if (slot.BookingMemberAccountId == Guid.Empty)
+        if (slot.BookingMemberAccountId == 0)
             return int.MaxValue;
 
-        var allMemberIds = new List<Guid>(slot.PlayerMemberAccountIds) { slot.BookingMemberAccountId };
+        var allMemberIds = new List<int>(slot.PlayerMemberAccountIds) { slot.BookingMemberAccountId };
 
         var query = _dbContext.Reservations
             .Where(r => r.SlotDate == slot.SlotDate && r.SlotTime == slot.SlotTime && !r.IsCancelled);

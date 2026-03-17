@@ -34,8 +34,10 @@ public class ApplicationManagementService<TKey> where TKey : IEquatable<TKey>
     {
         ArgumentNullException.ThrowIfNull(submitRequest);
         EnsureRequiredKey(submitRequest.ApplicationUserId, nameof(submitRequest.ApplicationUserId));
-        EnsureRequiredKey(submitRequest.Sponsor1MemberId, nameof(submitRequest.Sponsor1MemberId));
-        EnsureRequiredKey(submitRequest.Sponsor2MemberId, nameof(submitRequest.Sponsor2MemberId));
+        if (submitRequest.Sponsor1MemberId <= 0)
+            throw new ArgumentException("A non-default value is required.", nameof(submitRequest.Sponsor1MemberId));
+        if (submitRequest.Sponsor2MemberId <= 0)
+            throw new ArgumentException("A non-default value is required.", nameof(submitRequest.Sponsor2MemberId));
 
         await EnsureIdentityUserExistsAsync(submitRequest.ApplicationUserId, cancellationToken);
 
@@ -234,8 +236,8 @@ public sealed record SubmitApplicationRequest<TKey>(
     string Email,
     DateTime DateOfBirth,
     MembershipCategory RequestedMembershipCategory,
-    TKey Sponsor1MemberId,
-    TKey Sponsor2MemberId,
+    int Sponsor1MemberId,
+    int Sponsor2MemberId,
     string? AlternatePhone = null,
     DateTime? SubmittedAt = null,
     Guid? ApplicationId = null)
