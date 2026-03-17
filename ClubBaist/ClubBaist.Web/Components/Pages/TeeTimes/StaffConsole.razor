@@ -120,7 +120,7 @@
         <div class="card mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <strong>Reservations for @selectedMember.FirstName @selectedMember.LastName (@selectedMember.MemberNumber)</strong>
-                <a href="@($"/teetimes?date={DateOnly.FromDateTime(DateTime.Today):yyyy-MM-dd}")"
+                <a href="@($"/teetimes?bookFor={selectedMember.MemberAccountId}&date={DateOnly.FromDateTime(DateTime.Today):yyyy-MM-dd}")"
                    class="btn btn-sm btn-primary">
                     Book on Behalf
                 </a>
