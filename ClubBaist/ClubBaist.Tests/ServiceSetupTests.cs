@@ -39,10 +39,7 @@ public sealed class ServiceSetupTests
 
         var createMemberRequest = new CreateMemberRequest<Guid>(
             user.Id,
-            "Test",
-            "Member",
             new DateTime(1990, 1, 1),
-            "780-555-0101",
             "123 Main St",
             "T0T0T0",
             ClubBaist.Domain.MembershipCategory.Social);

@@ -272,10 +272,7 @@
             {
                 await MemberService.CreateMemberAsync(new CreateMemberRequest<Guid>(
                     ApplicationUserId: user.Id,
-                    FirstName: _model.FirstName!,
-                    LastName: _model.LastName!,
                     DateOfBirth: _model.DateOfBirth,
-                    Phone: normalizedPhone!,
                     Address: _model.Address!,
                     PostalCode: normalizedPostalCode!,
                     MembershipCategory: _model.MembershipCategory,

@@ -53,30 +53,38 @@ public class ApplicationManagementService<TKey> where TKey : IEquatable<TKey>
             throw new InvalidOperationException($"Failed to create user account: {errors}");
         }
 
-        var submittedAt = submitRequest.SubmittedAt ?? DateTime.UtcNow;
+        try
+        {
+            var submittedAt = submitRequest.SubmittedAt ?? DateTime.UtcNow;
 
-        var membershipApplication = MembershipApplication<TKey>.Submit(
-            (TKey)(object)applicationUser.Id,
-            submitRequest.FirstName,
-            submitRequest.LastName,
-            submitRequest.Occupation,
-            submitRequest.CompanyName,
-            submitRequest.Address,
-            submitRequest.PostalCode,
-            submitRequest.Phone,
-            submitRequest.NewUserEmail,
-            submitRequest.DateOfBirth,
-            submitRequest.RequestedMembershipCategory,
-            submitRequest.Sponsor1MemberId,
-            submitRequest.Sponsor2MemberId,
-            submittedAt,
-            submitRequest.AlternatePhone,
-            submitRequest.ApplicationId);
+            var membershipApplication = MembershipApplication<TKey>.Submit(
+                (TKey)(object)applicationUser.Id,
+                submitRequest.FirstName,
+                submitRequest.LastName,
+                submitRequest.Occupation,
+                submitRequest.CompanyName,
+                submitRequest.Address,
+                submitRequest.PostalCode,
+                NormalizePhone(submitRequest.Phone),
+                submitRequest.NewUserEmail,
+                submitRequest.DateOfBirth,
+                submitRequest.RequestedMembershipCategory,
+                submitRequest.Sponsor1MemberId,
+                submitRequest.Sponsor2MemberId,
+                submittedAt,
+                submitRequest.AlternatePhone is not null ? NormalizePhone(submitRequest.AlternatePhone) : null,
+                submitRequest.ApplicationId);
 
-        _dbContext.MembershipApplications.Add(membershipApplication);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+            _dbContext.MembershipApplications.Add(membershipApplication);
+            await _dbContext.SaveChangesAsync(cancellationToken);
 
-        return new SubmitApplicationResult<TKey>(membershipApplication, applicationUser);
+            return new SubmitApplicationResult<TKey>(membershipApplication, applicationUser);
+        }
+        catch
+        {
+            await _userManager.DeleteAsync(applicationUser);
+            throw;
+        }
     }
 
     public async Task<IReadOnlyList<MembershipApplication<TKey>>> GetActionableApplicationsAsync(
@@ -146,10 +154,7 @@ public class ApplicationManagementService<TKey> where TKey : IEquatable<TKey>
         {
             var createMemberRequest = new CreateMemberRequest<TKey>(
                 application.ApplicationUserId,
-                application.FirstName,
-                application.LastName,
                 application.DateOfBirth,
-                application.Phone,
                 application.Address,
                 application.PostalCode,
                 application.RequestedMembershipCategory,

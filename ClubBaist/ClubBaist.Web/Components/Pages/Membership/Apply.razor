@@ -257,8 +257,6 @@
             }
 
             var normalizedPostalCode = NormalizePostalCode(_model.PostalCode!);
-            var normalizedPhone = NormalizePhone(_model.Phone!);
-            var normalizedAltPhone = _model.AlternatePhone is not null ? NormalizePhone(_model.AlternatePhone) : null;
 
             var request = new SubmitApplicationRequest<Guid>(
                 NewUserEmail: _model.Email!,
@@ -269,12 +267,12 @@
                 CompanyName: _model.CompanyName!,
                 Address: _model.Address!,
                 PostalCode: normalizedPostalCode,
-                Phone: normalizedPhone,
+                Phone: _model.Phone!,
                 DateOfBirth: _model.DateOfBirth,
                 RequestedMembershipCategory: _model.RequestedMembershipCategory!.Value,
                 Sponsor1MemberId: _model.Sponsor1MemberId!.Value,
                 Sponsor2MemberId: _model.Sponsor2MemberId!.Value,
-                AlternatePhone: normalizedAltPhone
+                AlternatePhone: _model.AlternatePhone
             );
 
             SubmitApplicationResult<Guid> result = await ApplicationService.SubmitApplicationAsync(request, CancellationToken.None);
@@ -301,14 +299,6 @@
     {
         var cleaned = postalCode.ToUpperInvariant().Replace(" ", "");
         return cleaned.Length == 6 ? $"{cleaned[..3]} {cleaned[3..]}" : postalCode.ToUpperInvariant();
-    }
-
-    private static string NormalizePhone(string phone)
-    {
-        var digits = new string(phone.Where(char.IsDigit).ToArray());
-        return digits.Length == 10
-            ? $"({digits[..3]}) {digits[3..6]}-{digits[6..]}"
-            : phone;
     }
 
     private sealed class ApplicationFormModel

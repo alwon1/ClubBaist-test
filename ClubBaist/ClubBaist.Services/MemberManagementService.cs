@@ -23,9 +23,6 @@ public class MemberManagementService<TKey> where TKey : IEquatable<TKey>
     {
         ArgumentNullException.ThrowIfNull(createMemberRequest);
         EnsureRequiredKey(createMemberRequest.ApplicationUserId, nameof(createMemberRequest.ApplicationUserId));
-        EnsureRequiredText(createMemberRequest.FirstName, nameof(createMemberRequest.FirstName));
-        EnsureRequiredText(createMemberRequest.LastName, nameof(createMemberRequest.LastName));
-        EnsureRequiredText(createMemberRequest.Phone, nameof(createMemberRequest.Phone));
         EnsureRequiredText(createMemberRequest.Address, nameof(createMemberRequest.Address));
         EnsureRequiredText(createMemberRequest.PostalCode, nameof(createMemberRequest.PostalCode));
 
@@ -63,19 +60,10 @@ public class MemberManagementService<TKey> where TKey : IEquatable<TKey>
             throw;
         }
 
-        // Update ApplicationUser with member's name and phone
         var identityUser = await _userManager.FindByIdAsync(createMemberRequest.ApplicationUserId.ToString()!);
-        if (identityUser is not null)
+        if (identityUser is not null && !await _userManager.IsInRoleAsync(identityUser, AppRoles.Member))
         {
-            identityUser.FirstName = createMemberRequest.FirstName;
-            identityUser.LastName = createMemberRequest.LastName;
-            identityUser.Phone = createMemberRequest.Phone;
-            await _userManager.UpdateAsync(identityUser);
-
-            if (!await _userManager.IsInRoleAsync(identityUser, AppRoles.Member))
-            {
-                await _userManager.AddToRoleAsync(identityUser, AppRoles.Member);
-            }
+            await _userManager.AddToRoleAsync(identityUser, AppRoles.Member);
         }
 
         return new CreateMemberResult(memberAccount.MemberAccountId, memberAccount.MemberNumber, memberAccount.CreatedAt);
@@ -173,10 +161,7 @@ public class MemberManagementService<TKey> where TKey : IEquatable<TKey>
 
 public sealed record CreateMemberRequest<TKey>(
     TKey ApplicationUserId,
-    string FirstName,
-    string LastName,
     DateTime DateOfBirth,
-    string Phone,
     string Address,
     string PostalCode,
     MembershipCategory MembershipCategory,
