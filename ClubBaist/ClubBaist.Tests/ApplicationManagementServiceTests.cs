@@ -369,7 +369,7 @@ public sealed class ApplicationManagementServiceTests
     private static Task<Guid> CreateIdentityUserAsync(UserManager<IdentityUser<Guid>> userManager) =>
         TestDataFactory.CreateIdentityUserAsync(userManager);
 
-    private static Task<Guid> CreateSponsorMemberAsync(
+    private static Task<int> CreateSponsorMemberAsync(
         UserManager<IdentityUser<Guid>> userManager,
         ApplicationDbContext dbContext) =>
         TestDataFactory.CreateMemberAsync(userManager, dbContext);
@@ -378,8 +378,8 @@ public sealed class ApplicationManagementServiceTests
         Guid userId,
         ApplicationStatus status,
         DateTime submittedAt,
-        Guid sponsor1Id,
-        Guid sponsor2Id)
+        int sponsor1Id,
+        int sponsor2Id)
     {
         var application = MembershipApplication<Guid>.Submit(
             userId,

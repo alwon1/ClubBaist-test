@@ -23,7 +23,7 @@ public sealed class BookingRuleTests
 
         var date = new DateOnly(2026, 6, 15);
         var time = new TimeOnly(10, 0);
-        var bookerId = Guid.NewGuid();
+        var bookerId = 1;
 
         var slot = new TeeTimeSlot(date, time, bookerId, []);
         var context = new BookingEvaluationContext(MembershipCategory.Shareholder);
@@ -48,13 +48,13 @@ public sealed class BookingRuleTests
         {
             SlotDate = date,
             SlotTime = time,
-            BookingMemberAccountId = Guid.NewGuid(),
-            PlayerMemberAccountIds = [Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid()]
+            BookingMemberAccountId = 1,
+            PlayerMemberAccountIds = [2, 3, 4]
         });
         await dbContext.SaveChangesAsync();
 
         var rule = new SlotCapacityRule<Guid>(dbContext);
-        var newBookerId = Guid.NewGuid();
+        var newBookerId = 5;
         var slot = new TeeTimeSlot(date, time, newBookerId, []);
         var context = new BookingEvaluationContext(MembershipCategory.Shareholder);
 
@@ -72,7 +72,7 @@ public sealed class BookingRuleTests
 
         var rule = new SlotCapacityRule<Guid>(dbContext);
 
-        var slot = new TeeTimeSlot(new DateOnly(2026, 6, 15), new TimeOnly(10, 0), Guid.Empty, []);
+        var slot = new TeeTimeSlot(new DateOnly(2026, 6, 15), new TimeOnly(10, 0), 0, []);
         var context = new BookingEvaluationContext(null, PrecomputedOccupancy: 2);
 
         var result = await rule.EvaluateAsync(slot, context);
@@ -107,7 +107,7 @@ public sealed class BookingRuleTests
         var seasonService = provider.GetRequiredService<ISeasonService>();
         var rule = new BookingWindowRule(seasonService);
 
-        var slot = new TeeTimeSlot(new DateOnly(2026, 6, 15), new TimeOnly(10, 0), Guid.NewGuid(), []);
+        var slot = new TeeTimeSlot(new DateOnly(2026, 6, 15), new TimeOnly(10, 0), 1, []);
         var context = new BookingEvaluationContext(MembershipCategory.Shareholder);
 
         var result = await rule.EvaluateAsync(slot, context);
@@ -137,7 +137,7 @@ public sealed class BookingRuleTests
         var rule = new BookingWindowRule(seasonService);
 
         // January is outside the season
-        var slot = new TeeTimeSlot(new DateOnly(2026, 1, 15), new TimeOnly(10, 0), Guid.NewGuid(), []);
+        var slot = new TeeTimeSlot(new DateOnly(2026, 1, 15), new TimeOnly(10, 0), 1, []);
         var context = new BookingEvaluationContext(MembershipCategory.Shareholder);
 
         var result = await rule.EvaluateAsync(slot, context);
@@ -175,7 +175,7 @@ public sealed class BookingRuleTests
         var date = GetDateForDayOfWeek(dayOfWeek);
         var time = TimeOnly.Parse(timeStr);
 
-        var slot = new TeeTimeSlot(date, time, Guid.NewGuid(), []);
+        var slot = new TeeTimeSlot(date, time, 1, []);
         var context = new BookingEvaluationContext(category);
 
         var result = await rule.EvaluateAsync(slot, context);
@@ -191,7 +191,7 @@ public sealed class BookingRuleTests
     {
         var rule = new MembershipTimeRestrictionRule();
 
-        var slot = new TeeTimeSlot(new DateOnly(2026, 6, 15), new TimeOnly(10, 0), Guid.Empty, []);
+        var slot = new TeeTimeSlot(new DateOnly(2026, 6, 15), new TimeOnly(10, 0), 0, []);
         var context = new BookingEvaluationContext(null);
 
         var result = await rule.EvaluateAsync(slot, context);
@@ -210,7 +210,7 @@ public sealed class BookingRuleTests
         var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var rule = new MemberConflictRule<Guid>(dbContext);
 
-        var slot = new TeeTimeSlot(new DateOnly(2026, 6, 15), new TimeOnly(10, 0), Guid.NewGuid(), []);
+        var slot = new TeeTimeSlot(new DateOnly(2026, 6, 15), new TimeOnly(10, 0), 1, []);
         var context = new BookingEvaluationContext(MembershipCategory.Shareholder);
 
         var result = await rule.EvaluateAsync(slot, context);
@@ -226,7 +226,7 @@ public sealed class BookingRuleTests
 
         var date = new DateOnly(2026, 6, 15);
         var time = new TimeOnly(10, 0);
-        var memberId = Guid.NewGuid();
+        var memberId = 1;
 
         dbContext.Reservations.Add(new Reservation
         {
@@ -254,8 +254,8 @@ public sealed class BookingRuleTests
 
         var date = new DateOnly(2026, 6, 15);
         var time = new TimeOnly(10, 0);
-        var existingBooker = Guid.NewGuid();
-        var conflictingPlayer = Guid.NewGuid();
+        var existingBooker = 1;
+        var conflictingPlayer = 2;
 
         dbContext.Reservations.Add(new Reservation
         {
@@ -267,7 +267,7 @@ public sealed class BookingRuleTests
         await dbContext.SaveChangesAsync();
 
         var rule = new MemberConflictRule<Guid>(dbContext);
-        var slot = new TeeTimeSlot(date, time, Guid.NewGuid(), [conflictingPlayer]);
+        var slot = new TeeTimeSlot(date, time, 3, [conflictingPlayer]);
         var context = new BookingEvaluationContext(MembershipCategory.Shareholder);
 
         var result = await rule.EvaluateAsync(slot, context);
@@ -283,7 +283,7 @@ public sealed class BookingRuleTests
 
         var date = new DateOnly(2026, 6, 15);
         var time = new TimeOnly(10, 0);
-        var existingBooker = Guid.NewGuid();
+        var existingBooker = 1;
 
         dbContext.Reservations.Add(new Reservation
         {
@@ -296,7 +296,7 @@ public sealed class BookingRuleTests
 
         var rule = new MemberConflictRule<Guid>(dbContext);
         // Try to add existingBooker as a player in a new reservation
-        var slot = new TeeTimeSlot(date, time, Guid.NewGuid(), [existingBooker]);
+        var slot = new TeeTimeSlot(date, time, 2, [existingBooker]);
         var context = new BookingEvaluationContext(MembershipCategory.Shareholder);
 
         var result = await rule.EvaluateAsync(slot, context);
@@ -317,13 +317,13 @@ public sealed class BookingRuleTests
         {
             SlotDate = date,
             SlotTime = time,
-            BookingMemberAccountId = Guid.NewGuid(),
+            BookingMemberAccountId = 1,
             PlayerMemberAccountIds = []
         });
         await dbContext.SaveChangesAsync();
 
         var rule = new MemberConflictRule<Guid>(dbContext);
-        var slot = new TeeTimeSlot(date, time, Guid.Empty, []);
+        var slot = new TeeTimeSlot(date, time, 0, []);
         var context = new BookingEvaluationContext(null, PrecomputedOccupancy: 1);
 
         var result = await rule.EvaluateAsync(slot, context);
@@ -339,7 +339,7 @@ public sealed class BookingRuleTests
 
         var date = new DateOnly(2026, 6, 15);
         var time = new TimeOnly(10, 0);
-        var bookerId = Guid.NewGuid();
+        var bookerId = 1;
         var reservationId = Guid.NewGuid();
 
         dbContext.Reservations.Add(new Reservation
@@ -369,7 +369,7 @@ public sealed class BookingRuleTests
 
         var date = new DateOnly(2026, 6, 15);
         var time = new TimeOnly(10, 0);
-        var memberId = Guid.NewGuid();
+        var memberId = 1;
 
         dbContext.Reservations.Add(new Reservation
         {
@@ -397,7 +397,7 @@ public sealed class BookingRuleTests
         var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
         var date = new DateOnly(2026, 6, 15);
-        var memberId = Guid.NewGuid();
+        var memberId = 1;
 
         dbContext.Reservations.Add(new Reservation
         {

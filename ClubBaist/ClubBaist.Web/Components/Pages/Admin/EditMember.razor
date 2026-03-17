@@ -1,4 +1,4 @@
-@page "/admin/members/{MemberId:guid}"
+@page "/admin/members/{MemberId:int}"
 @rendermode InteractiveServer
 @attribute [Authorize(Roles = AppRoles.Admin)]
 
@@ -156,7 +156,7 @@ else
 
 @code {
     [Parameter]
-    public Guid MemberId { get; set; }
+    public int MemberId { get; set; }
 
     private MemberAccount<Guid>? _member;
     private bool _loading = true;

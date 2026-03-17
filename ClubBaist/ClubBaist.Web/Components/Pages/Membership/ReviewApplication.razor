@@ -200,7 +200,7 @@
     public Guid ApplicationId { get; set; }
 
     private MembershipApplication<Guid>? _application;
-    private Dictionary<Guid, string> _sponsorNames = new();
+    private Dictionary<int, string> _sponsorNames = new();
     private List<ApplicationStatus> _validTransitions = [];
     private ApplicationStatus? _selectedStatus;
     private bool _loading = true;
@@ -287,7 +287,7 @@
         }
     }
 
-    private string GetSponsorName(Guid sponsorId) =>
+    private string GetSponsorName(int sponsorId) =>
         _sponsorNames.TryGetValue(sponsorId, out var name) ? name : sponsorId.ToString();
 
     private static string GetStatusBadgeClass(ApplicationStatus status) =>

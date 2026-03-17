@@ -389,7 +389,7 @@ public sealed class TeeTimeBookingServiceTests
         return scope;
     }
 
-    private static Task<Guid> CreateMemberAsync(
+    private static Task<int> CreateMemberAsync(
         IServiceProvider provider,
         MembershipCategory category) =>
         TestDataFactory.CreateMemberAsync(
