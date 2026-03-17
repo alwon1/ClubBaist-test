@@ -141,10 +141,7 @@ else if (viewMode == ViewMode.Week && weeklySlots is not null)
                                 {
                                     @if (slot.RemainingCapacity > 0 && slot.UserCanBook)
                                     {
-                                        var weekBookUrl = BookForMemberId.HasValue
-                                            ? $"/teetimes/book?date={d:yyyy-MM-dd}&time={slot.Time:HH:mm}&bookFor={BookForMemberId}"
-                                            : $"/teetimes/book?date={d:yyyy-MM-dd}&time={slot.Time:HH:mm}";
-                                        <a href="@weekBookUrl" class="weekly-empty-spot weekly-empty-spot-bookable">+</a>
+                                        <a href="@BuildBookUrl(d, slot.Time)" class="weekly-empty-spot weekly-empty-spot-bookable">+</a>
                                     }
                                     else if (slot.RemainingCapacity > 0)
                                     {
@@ -238,10 +235,7 @@ else if (viewMode == ViewMode.Day && slots is not null)
                             <div class="col-3 px-1">
                                 @if (slot.RemainingCapacity > 0 && slot.UserCanBook)
                                 {
-                                    var bookUrl = BookForMemberId.HasValue
-                                        ? $"/teetimes/book?date={selectedDate:yyyy-MM-dd}&time={slot.Time:HH:mm}&bookFor={BookForMemberId}"
-                                        : $"/teetimes/book?date={selectedDate:yyyy-MM-dd}&time={slot.Time:HH:mm}";
-                                    <a href="@bookUrl" class="empty-slot empty-slot-bookable text-center">+</a>
+                                    <a href="@BuildBookUrl(selectedDate, slot.Time)" class="empty-slot empty-slot-bookable text-center">+</a>
                                 }
                                 else if (slot.RemainingCapacity > 0)
                                 {
@@ -592,12 +586,8 @@ else if (viewMode == ViewMode.Day && slots is not null)
 
         try
         {
-            var result = new Dictionary<DateOnly, IReadOnlyList<BookedSlotWithMembers>>();
-            foreach (var date in weekDates)
-            {
-                result[date] = await BookingService.GetBookedSlotsWithMembersAsync(date, MemberCategory);
-            }
-            weeklySlots = result;
+            var rangeResult = await BookingService.GetBookedSlotsWithMembersForRangeAsync(weekDates, MemberCategory);
+            weeklySlots = weekDates.ToDictionary(d => d, d => rangeResult.GetValueOrDefault(d) ?? []);
             RebuildWeeklyGridRows();
         }
         catch (Exception ex)
@@ -630,6 +620,11 @@ else if (viewMode == ViewMode.Day && slots is not null)
         RebuildWeeklyGridRows();
         StateHasChanged();
     }
+
+    private string BuildBookUrl(DateOnly date, TimeOnly time) =>
+        BookForMemberId.HasValue
+            ? $"/teetimes/book?date={date:yyyy-MM-dd}&time={time:HH:mm}&bookFor={BookForMemberId}"
+            : $"/teetimes/book?date={date:yyyy-MM-dd}&time={time:HH:mm}";
 
     private async Task LoadAvailability()
     {

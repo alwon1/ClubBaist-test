@@ -100,8 +100,6 @@ public class TeeTimeBookingService<TKey> where TKey : IEquatable<TKey>
         MembershipCategory? memberCategory = null,
         CancellationToken cancellationToken = default)
     {
-        var times = _scheduleTimeService.GetScheduleTimes(date);
-
         var reservations = await _dbContext.Reservations
             .AsNoTracking()
             .Where(r => r.SlotDate == date && !r.IsCancelled)
@@ -112,44 +110,79 @@ public class TeeTimeBookingService<TKey> where TKey : IEquatable<TKey>
             .Distinct()
             .ToList();
 
-        var memberList = await _dbContext.MemberAccounts
+        var members = await _dbContext.MemberAccounts
             .AsNoTracking()
             .Where(m => memberIds.Contains(m.MemberAccountId))
             .Select(m => new MemberInfo(m.MemberAccountId, m.FirstName, m.LastName))
+            .ToDictionaryAsync(m => m.MemberAccountId, cancellationToken);
+
+        return await BuildSlotsForDateAsync(date, reservations, members, memberCategory, cancellationToken);
+    }
+
+    public async Task<IReadOnlyDictionary<DateOnly, IReadOnlyList<BookedSlotWithMembers>>> GetBookedSlotsWithMembersForRangeAsync(
+        IReadOnlyList<DateOnly> dates,
+        MembershipCategory? memberCategory = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (dates.Count == 0)
+            return new Dictionary<DateOnly, IReadOnlyList<BookedSlotWithMembers>>();
+
+        var from = dates.Min();
+        var to = dates.Max();
+
+        var reservations = await _dbContext.Reservations
+            .AsNoTracking()
+            .Where(r => r.SlotDate >= from && r.SlotDate <= to && !r.IsCancelled)
             .ToListAsync(cancellationToken);
 
-        var members = memberList.ToDictionary(m => m.MemberAccountId);
+        var memberIds = reservations
+            .SelectMany(r => r.PlayerMemberAccountIds.Append(r.BookingMemberAccountId))
+            .Distinct()
+            .ToList();
 
+        var members = await _dbContext.MemberAccounts
+            .AsNoTracking()
+            .Where(m => memberIds.Contains(m.MemberAccountId))
+            .Select(m => new MemberInfo(m.MemberAccountId, m.FirstName, m.LastName))
+            .ToDictionaryAsync(m => m.MemberAccountId, cancellationToken);
+
+        var byDate = reservations.ToLookup(r => r.SlotDate);
+
+        var result = new Dictionary<DateOnly, IReadOnlyList<BookedSlotWithMembers>>();
+        foreach (var date in dates)
+            result[date] = await BuildSlotsForDateAsync(date, byDate[date], members, memberCategory, cancellationToken);
+
+        return result;
+    }
+
+    private async Task<IReadOnlyList<BookedSlotWithMembers>> BuildSlotsForDateAsync(
+        DateOnly date,
+        IEnumerable<Reservation> reservations,
+        Dictionary<Guid, MemberInfo> members,
+        MembershipCategory? memberCategory,
+        CancellationToken cancellationToken)
+    {
+        var times = _scheduleTimeService.GetScheduleTimes(date);
         var grouped = reservations
             .GroupBy(r => r.SlotTime)
             .ToDictionary(g => g.Key, g => g.ToList());
 
         var result = new List<BookedSlotWithMembers>();
-
         foreach (var time in times)
         {
             grouped.TryGetValue(time, out var slotReservations);
             var playerCount = slotReservations?.Sum(r => r.PlayerMemberAccountIds.Count + 1) ?? 0;
             var remaining = Math.Max(0, MaxCapacity - playerCount);
 
-            bool userCanBook;
-            if (memberCategory is null)
-            {
-                userCanBook = true;
-            }
-            else
-            {
-                var dummySlot = new TeeTimeSlot(date, time, Guid.Empty, []);
-                var permContext = new BookingEvaluationContext(memberCategory, PrecomputedOccupancy: 0);
-                var permResult = await EvaluateRulesAsync(dummySlot, permContext, cancellationToken);
-                userCanBook = permResult >= 0;
-            }
+            var userCanBook = memberCategory is null || await EvaluateRulesAsync(
+                new TeeTimeSlot(date, time, Guid.Empty, []),
+                new BookingEvaluationContext(memberCategory, PrecomputedOccupancy: 0),
+                cancellationToken) >= 0;
 
             var reservationsWithMembers = slotReservations?.Select(r =>
             {
                 var bookingMember = members.TryGetValue(r.BookingMemberAccountId, out var bm)
-                    ? bm
-                    : new MemberInfo(r.BookingMemberAccountId, "Unknown", "Member");
+                    ? bm : new MemberInfo(r.BookingMemberAccountId, "Unknown", "Member");
                 var players = r.PlayerMemberAccountIds
                     .Select(id => members.TryGetValue(id, out var pm) ? pm : new MemberInfo(id, "Unknown", "Member"))
                     .ToList();
@@ -158,7 +191,6 @@ public class TeeTimeBookingService<TKey> where TKey : IEquatable<TKey>
 
             result.Add(new BookedSlotWithMembers(time, remaining, userCanBook, reservationsWithMembers));
         }
-
         return result;
     }
 
