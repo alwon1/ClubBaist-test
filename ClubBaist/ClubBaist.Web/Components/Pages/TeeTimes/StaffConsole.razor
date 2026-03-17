@@ -120,10 +120,19 @@
         <div class="card mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <strong>Reservations for @selectedMember.FirstName @selectedMember.LastName (@selectedMember.MemberNumber)</strong>
-                <button class="btn btn-sm @(showBookingPanel ? "btn-secondary" : "btn-primary")"
-                        @onclick="ToggleBookingPanel">
-                    @(showBookingPanel ? "Hide Availability" : "Book on Behalf")
-                </button>
+                @if (selectedMember.IsActive)
+                {
+                    <button class="btn btn-sm @(showBookingPanel ? "btn-secondary" : "btn-primary")"
+                            @onclick="ToggleBookingPanel">
+                        @(showBookingPanel ? "Hide Availability" : "Book on Behalf")
+                    </button>
+                }
+                else
+                {
+                    <button class="btn btn-sm btn-secondary" disabled title="Booking is not available for inactive members">
+                        Book on Behalf (inactive)
+                    </button>
+                }
             </div>
             <div class="card-body">
                 @if (isLoadingReservations)
