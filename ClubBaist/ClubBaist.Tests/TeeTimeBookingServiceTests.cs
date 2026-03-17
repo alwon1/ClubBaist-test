@@ -25,7 +25,7 @@ public sealed class TeeTimeBookingServiceTests
         var slot = new TeeTimeSlot(SeasonDate, SlotTime, memberId, []);
         var remaining = await bookingService.CreateReservationAsync(slot);
 
-        Assert.IsTrue(remaining >= 0, "CreateReservation should succeed for a valid slot");
+        Assert.IsGreaterThanOrEqualTo(0, remaining, "CreateReservation should succeed for a valid slot");
         Assert.AreEqual(3, remaining); // 4 max - 1 player = 3 remaining
     }
 
@@ -106,7 +106,7 @@ public sealed class TeeTimeBookingServiceTests
         var slot = new TeeTimeSlot(SeasonDate, new TimeOnly(16, 0), memberId, []);
         var result = await bookingService.CreateReservationAsync(slot);
 
-        Assert.IsTrue(result >= 0, "Gold members should be able to book anytime");
+        Assert.IsGreaterThanOrEqualTo(0, result, "Gold members should be able to book anytime");
     }
 
     [TestMethod]
@@ -131,15 +131,15 @@ public sealed class TeeTimeBookingServiceTests
         // Update to replace player2 with player3
         var result = await bookingService.UpdateReservationAsync(reservation.ReservationId, [player3]);
 
-        Assert.IsTrue(result >= 0, "Update should succeed");
+        Assert.IsGreaterThanOrEqualTo(0, result, "Update should succeed");
 
         var updated = await dbContext.Reservations
             .AsNoTracking()
             .FirstAsync(r => r.ReservationId == reservation.ReservationId);
 
-        Assert.AreEqual(1, updated.PlayerMemberAccountIds.Count);
-        Assert.IsTrue(updated.PlayerMemberAccountIds.Contains(player3));
-        Assert.IsFalse(updated.PlayerMemberAccountIds.Contains(player2));
+        Assert.HasCount(1, updated.PlayerMemberAccountIds);
+        Assert.Contains(player3, updated.PlayerMemberAccountIds);
+        Assert.DoesNotContain(player2, updated.PlayerMemberAccountIds);
     }
 
     [TestMethod]
@@ -192,10 +192,10 @@ public sealed class TeeTimeBookingServiceTests
         var member1Reservations = await bookingService.GetMemberReservationsAsync(member1);
         var member2Reservations = await bookingService.GetMemberReservationsAsync(member2);
 
-        Assert.AreEqual(1, member1Reservations.Count);
+        Assert.HasCount(1, member1Reservations);
         Assert.AreEqual(member1, member1Reservations[0].BookingMemberAccountId);
 
-        Assert.AreEqual(1, member2Reservations.Count);
+        Assert.HasCount(1, member2Reservations);
         Assert.AreEqual(member2, member2Reservations[0].BookingMemberAccountId);
     }
 
@@ -211,7 +211,7 @@ public sealed class TeeTimeBookingServiceTests
         // First booking succeeds
         var slot1 = new TeeTimeSlot(SeasonDate, SlotTime, memberId, []);
         var first = await bookingService.CreateReservationAsync(slot1);
-        Assert.IsTrue(first >= 0, "First booking should succeed");
+        Assert.IsGreaterThanOrEqualTo(0, first, "First booking should succeed");
 
         // Second booking at the same slot with the same member should fail
         var slot2 = new TeeTimeSlot(SeasonDate, SlotTime, memberId, []);
@@ -234,7 +234,7 @@ public sealed class TeeTimeBookingServiceTests
         // Book the shared player in the first reservation
         var slot1 = new TeeTimeSlot(SeasonDate, SlotTime, booker1, [sharedPlayer]);
         var first = await bookingService.CreateReservationAsync(slot1);
-        Assert.IsTrue(first >= 0, "First booking should succeed");
+        Assert.IsGreaterThanOrEqualTo(0, first, "First booking should succeed");
 
         // Attempt to add the same player to a second reservation in the same slot
         var slot2 = new TeeTimeSlot(SeasonDate, SlotTime, booker2, [sharedPlayer]);
@@ -291,11 +291,11 @@ public sealed class TeeTimeBookingServiceTests
         var targetSlot = bookedSlots.FirstOrDefault(s => s.Time == SlotTime);
 
         Assert.IsNotNull(targetSlot);
-        Assert.AreEqual(1, targetSlot.Reservations.Count);
+        Assert.HasCount(1, targetSlot.Reservations);
 
         var reservation = targetSlot.Reservations[0];
         Assert.AreEqual(booker, reservation.BookingMember.MemberAccountId);
-        Assert.AreEqual(1, reservation.Players.Count);
+        Assert.HasCount(1, reservation.Players);
         Assert.AreEqual(player, reservation.Players[0].MemberAccountId);
         Assert.AreEqual(2, targetSlot.RemainingCapacity); // 4 max - 2 booked = 2
     }
@@ -312,7 +312,7 @@ public sealed class TeeTimeBookingServiceTests
         var targetSlot = bookedSlots.FirstOrDefault(s => s.Time == SlotTime);
 
         Assert.IsNotNull(targetSlot);
-        Assert.AreEqual(0, targetSlot.Reservations.Count);
+        Assert.IsEmpty(targetSlot.Reservations);
         Assert.AreEqual(BookingConstants.MaxPlayersPerSlot, targetSlot.RemainingCapacity);
     }
 
@@ -334,12 +334,12 @@ public sealed class TeeTimeBookingServiceTests
         var targetSlot = bookedSlots.FirstOrDefault(s => s.Time == SlotTime);
 
         Assert.IsNotNull(targetSlot);
-        Assert.AreEqual(2, targetSlot.Reservations.Count, "Each booking should be its own reservation group");
+        Assert.HasCount(2, targetSlot.Reservations, "Each booking should be its own reservation group");
         Assert.AreEqual(2, targetSlot.RemainingCapacity); // 4 max - 2 booked = 2
 
         var bookerIds = targetSlot.Reservations.Select(r => r.BookingMember.MemberAccountId).ToHashSet();
-        Assert.IsTrue(bookerIds.Contains(booker1));
-        Assert.IsTrue(bookerIds.Contains(booker2));
+        Assert.Contains(booker1, bookerIds);
+        Assert.Contains(booker2, bookerIds);
     }
 
     [TestMethod]
@@ -359,7 +359,7 @@ public sealed class TeeTimeBookingServiceTests
 
         var availability = await bookingService.GetAvailabilityAsync(SeasonDate, SeasonDate);
 
-        Assert.AreEqual(1, availability.Count);
+        Assert.HasCount(1, availability);
         var dayAvail = availability[0];
         Assert.AreEqual(SeasonDate, dayAvail.Date);
 

@@ -60,7 +60,7 @@ public sealed class BookingRuleTests
 
         var result = await rule.EvaluateAsync(slot, context);
 
-        Assert.IsTrue(result < 0, "Should return negative when over capacity");
+        Assert.IsLessThan(0, result, "Should return negative when over capacity");
     }
 
     [TestMethod]
