@@ -27,4 +27,4 @@ jobs:
         run: dotnet build ClubBaist/ClubBaist.slnx --no-restore
 
       - name: Test
-        run: dotnet test --solution ClubBaist/ClubBaist.slnx --no-build --verbosity normal
+        run: dotnet test ClubBaist/ClubBaist.Tests/ClubBaist.Tests.csproj --no-build --verbosity normal
