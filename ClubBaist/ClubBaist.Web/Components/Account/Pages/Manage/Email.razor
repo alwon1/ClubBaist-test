@@ -5,9 +5,10 @@
 @using System.Text.Encodings.Web
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.AspNetCore.WebUtilities
+@using ClubBaist.Domain
 
-@inject UserManager<IdentityUser<Guid>> UserManager
-@inject IEmailSender<IdentityUser<Guid>> EmailSender
+@inject UserManager<ApplicationUser> UserManager
+@inject IEmailSender<ApplicationUser> EmailSender
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
 
@@ -54,7 +55,7 @@
 
 @code {
     private string? message;
-    private IdentityUser<Guid>? user;
+    private ApplicationUser? user;
     private string? email;
     private bool isEmailConfirmed;
 

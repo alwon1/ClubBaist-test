@@ -33,7 +33,7 @@ public class Program
         builder.AddSqlServerDbContext<ApplicationDbContext>("clubbaist");
         builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-        builder.Services.AddIdentityCore<IdentityUser<Guid>>(options =>
+        builder.Services.AddIdentityCore<ApplicationUser>(options =>
             {
                 options.SignIn.RequireConfirmedAccount = false;
                 options.Stores.SchemaVersion = IdentitySchemaVersions.Version3;
@@ -43,7 +43,7 @@ public class Program
             .AddSignInManager()
             .AddDefaultTokenProviders();
 
-        builder.Services.AddSingleton<IEmailSender<IdentityUser<Guid>>, IdentityNoOpEmailSender>();
+        builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 
         // Domain services
         builder.Services.AddScoped<IApplicationDbContext<Guid>>(sp =>

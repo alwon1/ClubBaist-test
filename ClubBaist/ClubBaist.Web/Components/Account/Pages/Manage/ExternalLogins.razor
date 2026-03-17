@@ -2,10 +2,11 @@
 
 @using Microsoft.AspNetCore.Authentication
 @using Microsoft.AspNetCore.Identity
+@using ClubBaist.Domain
 
-@inject UserManager<IdentityUser<Guid>> UserManager
-@inject SignInManager<IdentityUser<Guid>> SignInManager
-@inject IUserStore<IdentityUser<Guid>> UserStore
+@inject UserManager<ApplicationUser> UserManager
+@inject SignInManager<ApplicationUser> SignInManager
+@inject IUserStore<ApplicationUser> UserStore
 @inject IdentityRedirectManager RedirectManager
 
 <PageTitle>Manage your external logins</PageTitle>
@@ -64,7 +65,7 @@
 @code {
     public const string LinkLoginCallbackAction = "LinkLoginCallback";
 
-    private IdentityUser<Guid>? user;
+    private ApplicationUser? user;
     private IList<UserLoginInfo>? currentLogins;
     private IList<AuthenticationScheme>? otherLogins;
     private bool showRemoveButton;
@@ -96,7 +97,7 @@
             .ToList();
 
         string? passwordHash = null;
-        if (UserStore is IUserPasswordStore<IdentityUser<Guid>> userPasswordStore)
+        if (UserStore is IUserPasswordStore<ApplicationUser> userPasswordStore)
         {
             passwordHash = await userPasswordStore.GetPasswordHashAsync(user, HttpContext.RequestAborted);
         }

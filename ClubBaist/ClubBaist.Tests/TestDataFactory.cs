@@ -9,14 +9,17 @@ namespace ClubBaist.Tests;
 /// </summary>
 public static class TestDataFactory
 {
-    public static async Task<Guid> CreateIdentityUserAsync(UserManager<IdentityUser<Guid>> userManager)
+    public static async Task<Guid> CreateIdentityUserAsync(UserManager<ApplicationUser> userManager)
     {
         var userId = Guid.NewGuid();
-        var user = new IdentityUser<Guid>
+        var user = new ApplicationUser
         {
             Id = userId,
             UserName = $"user-{userId:N}",
-            Email = $"user-{userId:N}@example.com"
+            Email = $"user-{userId:N}@example.com",
+            FirstName = "Test",
+            LastName = "User",
+            Phone = "(403) 555-0000"
         };
 
         var result = await userManager.CreateAsync(user);
@@ -26,7 +29,7 @@ public static class TestDataFactory
     }
 
     public static async Task<int> CreateMemberAsync(
-        UserManager<IdentityUser<Guid>> userManager,
+        UserManager<ApplicationUser> userManager,
         ApplicationDbContext dbContext,
         MembershipCategory category = MembershipCategory.Social)
     {
@@ -37,11 +40,7 @@ public static class TestDataFactory
         {
             ApplicationUserId = userId,
             MemberNumber = nextMemberNumber,
-            FirstName = "Test",
-            LastName = "Member",
             DateOfBirth = new DateTime(1985, 1, 15),
-            Email = $"member-{userId:N}@example.com",
-            Phone = "555-0000",
             Address = "1 Test St",
             PostalCode = "T0T0T0",
             MembershipCategory = category,

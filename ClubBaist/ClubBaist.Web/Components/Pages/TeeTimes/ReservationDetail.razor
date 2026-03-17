@@ -101,7 +101,7 @@ else
                                         @foreach (var member in allMembers.Where(m => m.MemberAccountId != reservation.BookingMemberAccountId))
                                         {
                                             <option value="@member.MemberAccountId">
-                                                @member.MemberNumber - @member.FirstName @member.LastName
+                                                @member.MemberNumber - @member.ApplicationUser?.FirstName @member.ApplicationUser?.LastName
                                             </option>
                                         }
                                     </select>
@@ -243,12 +243,13 @@ else
             relevantIds.AddRange(reservation.PlayerMemberAccountIds);
 
             var relevantMembers = await DbContext.MemberAccounts
+                .Include(m => m.ApplicationUser)
                 .Where(m => relevantIds.Contains(m.MemberAccountId))
                 .ToListAsync();
 
             memberNameCache = relevantMembers.ToDictionary(
                 m => m.MemberAccountId,
-                m => $"{m.FirstName} {m.LastName} ({m.MemberNumber})");
+                m => $"{m.ApplicationUser?.FirstName} {m.ApplicationUser?.LastName} ({m.MemberNumber})");
         }
         catch (Exception ex)
         {
@@ -274,9 +275,10 @@ else
         if (allMembers.Count == 0)
         {
             allMembers = await DbContext.MemberAccounts
+                .Include(m => m.ApplicationUser)
                 .Where(m => m.IsActive)
-                .OrderBy(m => m.LastName)
-                .ThenBy(m => m.FirstName)
+                .OrderBy(m => m.ApplicationUser!.LastName)
+                .ThenBy(m => m.ApplicationUser!.FirstName)
                 .ToListAsync();
         }
 

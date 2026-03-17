@@ -1,8 +1,9 @@
 ﻿@page "/Account/Manage/Disable2fa"
 
 @using Microsoft.AspNetCore.Identity
+@using ClubBaist.Domain
 
-@inject UserManager<IdentityUser<Guid>> UserManager
+@inject UserManager<ApplicationUser> UserManager
 @inject IdentityRedirectManager RedirectManager
 @inject ILogger<Disable2fa> Logger
 
@@ -29,7 +30,7 @@
 </div>
 
 @code {
-    private IdentityUser<Guid>? user;
+    private ApplicationUser? user;
 
     [CascadingParameter]
     private HttpContext HttpContext { get; set; } = default!;

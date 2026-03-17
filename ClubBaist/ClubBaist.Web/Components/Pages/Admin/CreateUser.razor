@@ -8,7 +8,7 @@
 @using ClubBaist.Domain
 @using ClubBaist.Services
 
-@inject UserManager<IdentityUser<Guid>> UserManager
+@inject UserManager<ApplicationUser> UserManager
 @inject MemberManagementService<Guid> MemberService
 @inject NavigationManager NavigationManager
 @inject ILogger<CreateUser> Logger
@@ -137,7 +137,7 @@
                     <div class="col-md-6">
                         <div class="form-floating mb-3">
                             <InputText id="phone" class="form-control" @bind-Value="_model.Phone" placeholder="Phone" />
-                            <label for="phone">Phone</label>
+                            <label for="phone">Phone (e.g. (403) 555-1234)</label>
                             <ValidationMessage For="() => _model.Phone" />
                         </div>
                     </div>
@@ -145,6 +145,7 @@
                         <div class="form-floating mb-3">
                             <InputText id="alternatePhone" class="form-control" @bind-Value="_model.AlternatePhone" placeholder="Alternate Phone (optional)" />
                             <label for="alternatePhone">Alternate Phone (optional)</label>
+                            <ValidationMessage For="() => _model.AlternatePhone" />
                         </div>
                     </div>
                 </div>
@@ -159,7 +160,7 @@
                     <div class="col-md-4">
                         <div class="form-floating mb-3">
                             <InputText id="postalCode" class="form-control" @bind-Value="_model.PostalCode" placeholder="Postal Code" />
-                            <label for="postalCode">Postal Code</label>
+                            <label for="postalCode">Postal Code (e.g. T2A 4K3)</label>
                             <ValidationMessage For="() => _model.PostalCode" />
                         </div>
                     </div>
@@ -200,10 +201,18 @@
         public string? FirstName { get; set; }
         public string? LastName { get; set; }
         public DateTime DateOfBirth { get; set; } = DateTime.Today.AddYears(-30);
+
+        [RegularExpression(@"^\(?\d{3}\)?[\s.\-]?\d{3}[\s.\-]?\d{4}$", ErrorMessage = "Enter a valid 10-digit Canadian phone number (e.g. (403) 555-1234).")]
         public string? Phone { get; set; }
+
+        [RegularExpression(@"^\(?\d{3}\)?[\s.\-]?\d{3}[\s.\-]?\d{4}$", ErrorMessage = "Enter a valid 10-digit Canadian phone number (e.g. (403) 555-1234).")]
         public string? AlternatePhone { get; set; }
+
         public string? Address { get; set; }
+
+        [RegularExpression(@"^[A-Za-z]\d[A-Za-z]\s?\d[A-Za-z]\d$", ErrorMessage = "Enter a valid Canadian postal code (e.g. T2A 4K3).")]
         public string? PostalCode { get; set; }
+
         public MembershipCategory MembershipCategory { get; set; } = MembershipCategory.Shareholder;
     }
 
@@ -232,12 +241,19 @@
         _submitting = true;
         try
         {
-            var user = new IdentityUser<Guid>
+            var normalizedPhone = _model.IsMember && _model.Phone is not null ? NormalizePhone(_model.Phone) : null;
+            var normalizedAltPhone = _model.IsMember && _model.AlternatePhone is not null ? NormalizePhone(_model.AlternatePhone) : null;
+            var normalizedPostalCode = _model.IsMember && _model.PostalCode is not null ? NormalizePostalCode(_model.PostalCode) : null;
+
+            var user = new ApplicationUser
             {
                 Id = Guid.NewGuid(),
                 UserName = _model.Email,
                 Email = _model.Email,
-                EmailConfirmed = true
+                EmailConfirmed = true,
+                FirstName = _model.IsMember ? (_model.FirstName ?? string.Empty) : string.Empty,
+                LastName = _model.IsMember ? (_model.LastName ?? string.Empty) : string.Empty,
+                Phone = _model.IsMember ? (normalizedPhone ?? string.Empty) : string.Empty
             };
 
             var createResult = await UserManager.CreateAsync(user, _model.Password);
@@ -251,23 +267,17 @@
                 await UserManager.AddToRoleAsync(user, AppRoles.Admin);
             if (_model.IsMembershipCommittee)
                 await UserManager.AddToRoleAsync(user, AppRoles.MembershipCommittee);
-            if (_model.IsMember)
-                await UserManager.AddToRoleAsync(user, AppRoles.Member);
 
             if (_model.IsMember)
             {
                 await MemberService.CreateMemberAsync(new CreateMemberRequest<Guid>(
                     ApplicationUserId: user.Id,
-                    FirstName: _model.FirstName!,
-                    LastName: _model.LastName!,
                     DateOfBirth: _model.DateOfBirth,
-                    Email: _model.Email,
-                    Phone: _model.Phone!,
                     Address: _model.Address!,
-                    PostalCode: _model.PostalCode!,
+                    PostalCode: normalizedPostalCode!,
                     MembershipCategory: _model.MembershipCategory,
                     IsActive: true,
-                    AlternatePhone: _model.AlternatePhone));
+                    AlternatePhone: normalizedAltPhone));
             }
 
             NavigationManager.NavigateTo($"/admin/users/{user.Id}");
@@ -281,5 +291,19 @@
         {
             _submitting = false;
         }
+    }
+
+    private static string NormalizePostalCode(string postalCode)
+    {
+        var cleaned = postalCode.ToUpperInvariant().Replace(" ", "");
+        return cleaned.Length == 6 ? $"{cleaned[..3]} {cleaned[3..]}" : postalCode.ToUpperInvariant();
+    }
+
+    private static string NormalizePhone(string phone)
+    {
+        var digits = new string(phone.Where(char.IsDigit).ToArray());
+        return digits.Length == 10
+            ? $"({digits[..3]}) {digits[3..6]}-{digits[6..]}"
+            : phone;
     }
 }

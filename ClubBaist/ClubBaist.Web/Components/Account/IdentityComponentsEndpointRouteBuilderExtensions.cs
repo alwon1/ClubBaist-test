@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
+using ClubBaist.Domain;
 using ClubBaist.Web.Components.Account.Pages;
 using ClubBaist.Web.Components.Account.Pages.Manage;
 
@@ -23,7 +24,7 @@ internal static class IdentityComponentsEndpointRouteBuilderExtensions
 
         accountGroup.MapPost("/PerformExternalLogin", (
             HttpContext context,
-            [FromServices] SignInManager<IdentityUser<Guid>> signInManager,
+            [FromServices] SignInManager<ApplicationUser> signInManager,
             [FromForm] string provider,
             [FromForm] string returnUrl) =>
         {
@@ -42,7 +43,7 @@ internal static class IdentityComponentsEndpointRouteBuilderExtensions
 
         accountGroup.MapPost("/Logout", async (
             ClaimsPrincipal user,
-            [FromServices] SignInManager<IdentityUser<Guid>> signInManager,
+            [FromServices] SignInManager<ApplicationUser> signInManager,
             [FromForm] string returnUrl) =>
         {
             await signInManager.SignOutAsync();
@@ -51,8 +52,8 @@ internal static class IdentityComponentsEndpointRouteBuilderExtensions
 
         accountGroup.MapPost("/PasskeyCreationOptions", async (
             HttpContext context,
-            [FromServices] UserManager<IdentityUser<Guid>> userManager,
-            [FromServices] SignInManager<IdentityUser<Guid>> signInManager,
+            [FromServices] UserManager<ApplicationUser> userManager,
+            [FromServices] SignInManager<ApplicationUser> signInManager,
             [FromServices] IAntiforgery antiforgery) =>
         {
             await antiforgery.ValidateRequestAsync(context);
@@ -76,8 +77,8 @@ internal static class IdentityComponentsEndpointRouteBuilderExtensions
 
         accountGroup.MapPost("/PasskeyRequestOptions", async (
             HttpContext context,
-            [FromServices] UserManager<IdentityUser<Guid>> userManager,
-            [FromServices] SignInManager<IdentityUser<Guid>> signInManager,
+            [FromServices] UserManager<ApplicationUser> userManager,
+            [FromServices] SignInManager<ApplicationUser> signInManager,
             [FromServices] IAntiforgery antiforgery,
             [FromQuery] string? username) =>
         {
@@ -92,7 +93,7 @@ internal static class IdentityComponentsEndpointRouteBuilderExtensions
 
         manageGroup.MapPost("/LinkExternalLogin", async (
             HttpContext context,
-            [FromServices] SignInManager<IdentityUser<Guid>> signInManager,
+            [FromServices] SignInManager<ApplicationUser> signInManager,
             [FromForm] string provider) =>
         {
             // Clear the existing external cookie to ensure a clean login process
@@ -112,7 +113,7 @@ internal static class IdentityComponentsEndpointRouteBuilderExtensions
 
         manageGroup.MapPost("/DownloadPersonalData", async (
             HttpContext context,
-            [FromServices] UserManager<IdentityUser<Guid>> userManager,
+            [FromServices] UserManager<ApplicationUser> userManager,
             [FromServices] AuthenticationStateProvider authenticationStateProvider) =>
         {
             var user = await userManager.GetUserAsync(context.User);
@@ -126,7 +127,7 @@ internal static class IdentityComponentsEndpointRouteBuilderExtensions
 
             // Only include personal data for download
             var personalData = new Dictionary<string, string>();
-            var personalDataProps = typeof(IdentityUser<Guid>).GetProperties().Where(
+            var personalDataProps = typeof(ApplicationUser).GetProperties().Where(
                 prop => Attribute.IsDefined(prop, typeof(PersonalDataAttribute)));
             foreach (var p in personalDataProps)
             {

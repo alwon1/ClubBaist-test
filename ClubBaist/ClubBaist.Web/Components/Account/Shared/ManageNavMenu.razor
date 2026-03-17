@@ -1,6 +1,7 @@
 ﻿@using Microsoft.AspNetCore.Identity
+@using ClubBaist.Domain
 
-@inject SignInManager<IdentityUser<Guid>> SignInManager
+@inject SignInManager<ApplicationUser> SignInManager
 
 <ul class="nav nav-pills flex-column">
     <li class="nav-item">

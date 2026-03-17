@@ -363,25 +363,25 @@ public sealed class TeeTimeBookingServiceTests
         var result = await bookingService.GetBookedSlotsWithMembersForRangeAsync([day1, day2]);
 
         // Both dates should be present
-        Assert.AreEqual(2, result.Count);
+        Assert.HasCount(2, result);
         Assert.IsTrue(result.ContainsKey(day1));
         Assert.IsTrue(result.ContainsKey(day2));
 
         // day1: 1 reservation with booker1 + player (2 players → 2 remaining)
         var day1Slot = result[day1].FirstOrDefault(s => s.Time == SlotTime);
         Assert.IsNotNull(day1Slot);
-        Assert.AreEqual(1, day1Slot.Reservations.Count);
+        Assert.HasCount(1, day1Slot.Reservations);
         Assert.AreEqual(booker1, day1Slot.Reservations[0].BookingMember.MemberAccountId);
-        Assert.AreEqual(1, day1Slot.Reservations[0].Players.Count);
+        Assert.HasCount(1, day1Slot.Reservations[0].Players);
         Assert.AreEqual(player, day1Slot.Reservations[0].Players[0].MemberAccountId);
         Assert.AreEqual(2, day1Slot.RemainingCapacity); // 4 max - 2 booked = 2
 
         // day2: 1 reservation with booker2 alone (3 remaining)
         var day2Slot = result[day2].FirstOrDefault(s => s.Time == SlotTime);
         Assert.IsNotNull(day2Slot);
-        Assert.AreEqual(1, day2Slot.Reservations.Count);
+        Assert.HasCount(1, day2Slot.Reservations);
         Assert.AreEqual(booker2, day2Slot.Reservations[0].BookingMember.MemberAccountId);
-        Assert.AreEqual(0, day2Slot.Reservations[0].Players.Count);
+        Assert.IsEmpty(day2Slot.Reservations[0].Players);
         Assert.AreEqual(3, day2Slot.RemainingCapacity); // 4 max - 1 booked = 3
     }
 
@@ -394,7 +394,7 @@ public sealed class TeeTimeBookingServiceTests
         var bookingService = provider.GetRequiredService<TeeTimeBookingService<Guid>>();
         var result = await bookingService.GetBookedSlotsWithMembersForRangeAsync([]);
 
-        Assert.AreEqual(0, result.Count);
+        Assert.IsEmpty(result);
     }
 
     [TestMethod]
@@ -597,7 +597,7 @@ public sealed class TeeTimeBookingServiceTests
         IServiceProvider provider,
         MembershipCategory category) =>
         TestDataFactory.CreateMemberAsync(
-            provider.GetRequiredService<UserManager<IdentityUser<Guid>>>(),
+            provider.GetRequiredService<UserManager<ApplicationUser>>(),
             provider.GetRequiredService<ApplicationDbContext>(),
             category);
 }

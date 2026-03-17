@@ -77,19 +77,12 @@ else
                             <ValidationMessage For="() => _model.DateOfBirth" />
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <div class="form-floating mb-3">
-                            <InputText id="email" class="form-control" @bind-Value="_model.Email" placeholder="Email" />
-                            <label for="email">Email</label>
-                            <ValidationMessage For="() => _model.Email" />
-                        </div>
-                    </div>
                 </div>
                 <div class="row">
                     <div class="col-md-6">
                         <div class="form-floating mb-3">
                             <InputText id="phone" class="form-control" @bind-Value="_model.Phone" placeholder="Phone" />
-                            <label for="phone">Phone</label>
+                            <label for="phone">Phone (e.g. (403) 555-1234)</label>
                             <ValidationMessage For="() => _model.Phone" />
                         </div>
                     </div>
@@ -97,6 +90,7 @@ else
                         <div class="form-floating mb-3">
                             <InputText id="alternatePhone" class="form-control" @bind-Value="_model.AlternatePhone" placeholder="Alternate Phone (optional)" />
                             <label for="alternatePhone">Alternate Phone (optional)</label>
+                            <ValidationMessage For="() => _model.AlternatePhone" />
                         </div>
                     </div>
                 </div>
@@ -111,7 +105,7 @@ else
                     <div class="col-md-4">
                         <div class="form-floating mb-3">
                             <InputText id="postalCode" class="form-control" @bind-Value="_model.PostalCode" placeholder="Postal Code" />
-                            <label for="postalCode">Postal Code</label>
+                            <label for="postalCode">Postal Code (e.g. T2A 4K3)</label>
                             <ValidationMessage For="() => _model.PostalCode" />
                         </div>
                     </div>
@@ -175,19 +169,18 @@ else
         [Required]
         public DateTime DateOfBirth { get; set; }
 
-        [Required(ErrorMessage = "Email is required.")]
-        [EmailAddress(ErrorMessage = "Enter a valid email address.")]
-        public string Email { get; set; } = string.Empty;
-
         [Required(ErrorMessage = "Phone is required.")]
+        [RegularExpression(@"^\(?\d{3}\)?[\s.\-]?\d{3}[\s.\-]?\d{4}$", ErrorMessage = "Enter a valid 10-digit Canadian phone number (e.g. (403) 555-1234).")]
         public string Phone { get; set; } = string.Empty;
 
+        [RegularExpression(@"^\(?\d{3}\)?[\s.\-]?\d{3}[\s.\-]?\d{4}$", ErrorMessage = "Enter a valid 10-digit Canadian phone number (e.g. (403) 555-1234).")]
         public string? AlternatePhone { get; set; }
 
         [Required(ErrorMessage = "Address is required.")]
         public string Address { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Postal code is required.")]
+        [RegularExpression(@"^[A-Za-z]\d[A-Za-z]\s?\d[A-Za-z]\d$", ErrorMessage = "Enter a valid Canadian postal code (e.g. T2A 4K3).")]
         public string PostalCode { get; set; } = string.Empty;
 
         public MembershipCategory MembershipCategory { get; set; }
@@ -202,15 +195,15 @@ else
         try
         {
             _member = await DbContext.MemberAccounts
+                .Include(m => m.ApplicationUser)
                 .FirstOrDefaultAsync(m => m.MemberAccountId == MemberId);
 
             if (_member is not null)
             {
-                _model.FirstName = _member.FirstName;
-                _model.LastName = _member.LastName;
+                _model.FirstName = _member.ApplicationUser?.FirstName ?? string.Empty;
+                _model.LastName = _member.ApplicationUser?.LastName ?? string.Empty;
                 _model.DateOfBirth = _member.DateOfBirth;
-                _model.Email = _member.Email;
-                _model.Phone = _member.Phone;
+                _model.Phone = _member.ApplicationUser?.Phone ?? string.Empty;
                 _model.AlternatePhone = _member.AlternatePhone;
                 _model.Address = _member.Address;
                 _model.PostalCode = _member.PostalCode;
@@ -238,18 +231,21 @@ else
 
         try
         {
+            var normalizedPostalCode = NormalizePostalCode(_model.PostalCode);
+            var normalizedPhone = NormalizePhone(_model.Phone);
+            var normalizedAltPhone = _model.AlternatePhone is not null ? NormalizePhone(_model.AlternatePhone) : null;
+
             _member = await MemberService.UpdateMemberAsync(new UpdateMemberRequest<Guid>(
                 MemberAccountId: MemberId,
                 FirstName: _model.FirstName,
                 LastName: _model.LastName,
                 DateOfBirth: _model.DateOfBirth,
-                Email: _model.Email,
-                Phone: _model.Phone,
+                Phone: normalizedPhone,
                 Address: _model.Address,
-                PostalCode: _model.PostalCode,
+                PostalCode: normalizedPostalCode,
                 MembershipCategory: _model.MembershipCategory,
                 IsActive: _model.IsActive,
-                AlternatePhone: _model.AlternatePhone));
+                AlternatePhone: normalizedAltPhone));
 
             _resultMessage = "Member profile updated successfully.";
         }
@@ -263,5 +259,19 @@ else
         {
             _submitting = false;
         }
+    }
+
+    private static string NormalizePostalCode(string postalCode)
+    {
+        var cleaned = postalCode.ToUpperInvariant().Replace(" ", "");
+        return cleaned.Length == 6 ? $"{cleaned[..3]} {cleaned[3..]}" : postalCode.ToUpperInvariant();
+    }
+
+    private static string NormalizePhone(string phone)
+    {
+        var digits = new string(phone.Where(char.IsDigit).ToArray());
+        return digits.Length == 10
+            ? $"({digits[..3]}) {digits[3..6]}-{digits[6..]}"
+            : phone;
     }
 }

@@ -9,7 +9,7 @@
 @using ClubBaist.Domain
 @using ClubBaist.Services
 
-@inject UserManager<IdentityUser<Guid>> UserManager
+@inject UserManager<ApplicationUser> UserManager
 @inject IApplicationDbContext<Guid> DbContext
 @inject ILogger<EditUser> Logger
 
@@ -52,6 +52,7 @@ else
     <div class="card mb-4">
         <div class="card-header"><h5 class="mb-0">Account</h5></div>
         <div class="card-body">
+            <p class="mb-1"><strong>Name:</strong> @_user.FirstName @_user.LastName</p>
             <p class="mb-1"><strong>Email:</strong> @_user.Email</p>
             <p class="mb-0"><strong>User ID:</strong> <code>@_user.Id</code></p>
         </div>
@@ -135,7 +136,7 @@ else
             @if (_memberAccount is not null)
             {
                 <p class="mb-2">
-                    Member <strong>@_memberAccount.FirstName @_memberAccount.LastName</strong>
+                    Member <strong>@_user.FirstName @_user.LastName</strong>
                     &nbsp;<span class="badge bg-secondary">@_memberAccount.MemberNumber</span>
                     &nbsp;<span class="badge @(_memberAccount.IsActive ? "bg-success" : "bg-secondary")">@(_memberAccount.IsActive ? "Active" : "Inactive")</span>
                 </p>
@@ -158,7 +159,7 @@ else
     [Parameter]
     public Guid UserId { get; set; }
 
-    private IdentityUser<Guid>? _user;
+    private ApplicationUser? _user;
     private MemberAccount<Guid>? _memberAccount;
     private bool _loading = true;
 

@@ -3,8 +3,9 @@
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.Identity
 @using System.Buffers.Text
+@using ClubBaist.Domain
 
-@inject UserManager<IdentityUser<Guid>> UserManager
+@inject UserManager<ApplicationUser> UserManager
 @inject IdentityRedirectManager RedirectManager
 
 <EditForm Model="Input" OnValidSubmit="Rename" FormName="rename-passkey" method="post">
@@ -30,7 +31,7 @@
 </EditForm>
 
 @code {
-    private IdentityUser<Guid>? user;
+    private ApplicationUser? user;
     private UserPasskeyInfo? passkey;
 
     [CascadingParameter]

@@ -1,5 +1,3 @@
-using Microsoft.AspNetCore.Identity;
-
 namespace ClubBaist.Domain;
 
 public class MembershipApplication<TKey> where TKey : IEquatable<TKey>
@@ -8,7 +6,7 @@ public class MembershipApplication<TKey> where TKey : IEquatable<TKey>
 
     public Guid ApplicationId { get; private set; } = Guid.NewGuid();
     public TKey ApplicationUserId { get; private set; } = default!;
-    public IdentityUser<TKey>? ApplicationUser { get; private set; }
+    public ApplicationUser? ApplicationUser { get; private set; }
     public ApplicationStatus CurrentStatus { get; private set; }
     public DateTime SubmittedAt { get; private set; }
     public DateTime LastStatusChangedAt { get; private set; }
@@ -117,10 +115,10 @@ public class MembershipApplication<TKey> where TKey : IEquatable<TKey>
         return history;
     }
 
-    public void AttachApplicationUser(IdentityUser<TKey> applicationUser)
+    public void AttachApplicationUser(ApplicationUser applicationUser)
     {
         ApplicationUser = applicationUser ?? throw new ArgumentNullException(nameof(applicationUser));
-        ApplicationUserId = applicationUser.Id;
+        ApplicationUserId = (TKey)(object)applicationUser.Id;
     }
 
     private static string RequireText(string value, string paramName)

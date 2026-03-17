@@ -114,7 +114,7 @@ public class TeeTimeBookingService<TKey> where TKey : IEquatable<TKey>
         var members = await _dbContext.MemberAccounts
             .AsNoTracking()
             .Where(m => memberIds.Contains(m.MemberAccountId))
-            .Select(m => new MemberInfo(m.MemberAccountId, m.FirstName, m.LastName))
+            .Select(m => new MemberInfo(m.MemberAccountId, m.ApplicationUser!.FirstName, m.ApplicationUser!.LastName))
             .ToDictionaryAsync(m => m.MemberAccountId, cancellationToken);
 
         return await BuildSlotsForDateAsync(date, reservations, members, memberCategory, memberAccountId, cancellationToken);
@@ -145,7 +145,7 @@ public class TeeTimeBookingService<TKey> where TKey : IEquatable<TKey>
         var members = await _dbContext.MemberAccounts
             .AsNoTracking()
             .Where(m => memberIds.Contains(m.MemberAccountId))
-            .Select(m => new MemberInfo(m.MemberAccountId, m.FirstName, m.LastName))
+            .Select(m => new MemberInfo(m.MemberAccountId, m.ApplicationUser!.FirstName, m.ApplicationUser!.LastName))
             .ToDictionaryAsync(m => m.MemberAccountId, cancellationToken);
 
         var byDate = reservations.ToLookup(r => r.SlotDate);

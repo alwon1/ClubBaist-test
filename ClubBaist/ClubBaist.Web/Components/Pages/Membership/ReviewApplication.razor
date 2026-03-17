@@ -231,10 +231,11 @@
 
                 var sponsorIds = new[] { _application.Sponsor1MemberId, _application.Sponsor2MemberId };
                 _sponsorNames = await DbContext.MemberAccounts
+                    .Include(m => m.ApplicationUser)
                     .Where(m => sponsorIds.Contains(m.MemberAccountId))
                     .ToDictionaryAsync(
                         m => m.MemberAccountId,
-                        m => $"{m.FirstName} {m.LastName} ({m.MemberNumber})");
+                        m => $"{m.ApplicationUser?.FirstName} {m.ApplicationUser?.LastName} ({m.MemberNumber})");
             }
         }
         finally

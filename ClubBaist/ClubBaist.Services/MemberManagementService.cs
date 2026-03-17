@@ -1,18 +1,17 @@
 using ClubBaist.Domain;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
 
 namespace ClubBaist.Services;
 
 public class MemberManagementService<TKey> where TKey : IEquatable<TKey>
 {
     private readonly IApplicationDbContext<TKey> _dbContext;
-    private readonly UserManager<IdentityUser<TKey>> _userManager;
+    private readonly UserManager<ApplicationUser> _userManager;
 
     public MemberManagementService(
         IApplicationDbContext<TKey> dbContext,
-        UserManager<IdentityUser<TKey>> userManager)
+        UserManager<ApplicationUser> userManager)
     {
         _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
         _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
@@ -24,10 +23,6 @@ public class MemberManagementService<TKey> where TKey : IEquatable<TKey>
     {
         ArgumentNullException.ThrowIfNull(createMemberRequest);
         EnsureRequiredKey(createMemberRequest.ApplicationUserId, nameof(createMemberRequest.ApplicationUserId));
-        EnsureRequiredText(createMemberRequest.FirstName, nameof(createMemberRequest.FirstName));
-        EnsureRequiredText(createMemberRequest.LastName, nameof(createMemberRequest.LastName));
-        EnsureRequiredText(createMemberRequest.Email, nameof(createMemberRequest.Email));
-        EnsureRequiredText(createMemberRequest.Phone, nameof(createMemberRequest.Phone));
         EnsureRequiredText(createMemberRequest.Address, nameof(createMemberRequest.Address));
         EnsureRequiredText(createMemberRequest.PostalCode, nameof(createMemberRequest.PostalCode));
 
@@ -40,11 +35,7 @@ public class MemberManagementService<TKey> where TKey : IEquatable<TKey>
         {
             ApplicationUserId = createMemberRequest.ApplicationUserId,
             MemberNumber = memberNumber,
-            FirstName = createMemberRequest.FirstName,
-            LastName = createMemberRequest.LastName,
             DateOfBirth = createMemberRequest.DateOfBirth,
-            Email = createMemberRequest.Email,
-            Phone = createMemberRequest.Phone,
             AlternatePhone = createMemberRequest.AlternatePhone,
             Address = createMemberRequest.Address,
             PostalCode = createMemberRequest.PostalCode,
@@ -90,11 +81,7 @@ public class MemberManagementService<TKey> where TKey : IEquatable<TKey>
 
         var now = DateTime.UtcNow;
         member.UpdateProfile(
-            request.FirstName,
-            request.LastName,
             request.DateOfBirth,
-            request.Email,
-            request.Phone,
             request.Address,
             request.PostalCode,
             request.MembershipCategory,
@@ -102,6 +89,17 @@ public class MemberManagementService<TKey> where TKey : IEquatable<TKey>
             request.AlternatePhone);
 
         member.SetActive(request.IsActive, now);
+
+        // Update ApplicationUser with name and phone
+        var identityUser = await _userManager.FindByIdAsync(member.ApplicationUserId.ToString()!);
+        if (identityUser is not null)
+        {
+            identityUser.FirstName = request.FirstName;
+            identityUser.LastName = request.LastName;
+            identityUser.Phone = request.Phone;
+            await _userManager.UpdateAsync(identityUser);
+        }
+
         await _dbContext.SaveChangesAsync(cancellationToken);
         return member;
     }
@@ -116,7 +114,7 @@ public class MemberManagementService<TKey> where TKey : IEquatable<TKey>
     private async Task EnsureIdentityUserExistsAsync(TKey applicationUserId, CancellationToken cancellationToken)
     {
         var exists = await _userManager.Users.AnyAsync(
-            user => user.Id!.Equals(applicationUserId),
+            user => user.Id.Equals(applicationUserId),
             cancellationToken);
 
         if (!exists)
@@ -163,11 +161,7 @@ public class MemberManagementService<TKey> where TKey : IEquatable<TKey>
 
 public sealed record CreateMemberRequest<TKey>(
     TKey ApplicationUserId,
-    string FirstName,
-    string LastName,
     DateTime DateOfBirth,
-    string Email,
-    string Phone,
     string Address,
     string PostalCode,
     MembershipCategory MembershipCategory,
@@ -186,7 +180,6 @@ public sealed record UpdateMemberRequest<TKey>(
     string FirstName,
     string LastName,
     DateTime DateOfBirth,
-    string Email,
     string Phone,
     string Address,
     string PostalCode,

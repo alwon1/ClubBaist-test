@@ -15,7 +15,7 @@ public class SeedWorker(
     {
         using var scope = serviceProvider.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser<Guid>>>();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
 
         logger.LogInformation("Creating database schema...");
@@ -44,7 +44,7 @@ public class SeedWorker(
         }
     }
 
-    private async Task SeedUsersAsync(UserManager<IdentityUser<Guid>> userManager, ApplicationDbContext db, CancellationToken ct)
+    private async Task SeedUsersAsync(UserManager<ApplicationUser> userManager, ApplicationDbContext db, CancellationToken ct)
     {
         var now = DateTime.UtcNow;
 
@@ -83,18 +83,21 @@ public class SeedWorker(
         }
     }
 
-    private async Task<IdentityUser<Guid>> CreateUserWithRoleAsync(
-        UserManager<IdentityUser<Guid>> userManager, string email, string role, CancellationToken ct)
+    private async Task<ApplicationUser> CreateUserWithRoleAsync(
+        UserManager<ApplicationUser> userManager, string email, string role, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
         var user = await userManager.FindByEmailAsync(email);
         if (user is null)
         {
-            user = new IdentityUser<Guid>
+            user = new ApplicationUser
             {
                 UserName = email,
                 Email = email,
-                EmailConfirmed = true
+                EmailConfirmed = true,
+                FirstName = "Seed",
+                LastName = "User",
+                Phone = "(403) 555-0000"
             };
             var result = await userManager.CreateAsync(user, DefaultPassword);
             if (!result.Succeeded)
@@ -122,11 +125,7 @@ public class SeedWorker(
         {
             ApplicationUserId = userId,
             MemberNumber = memberNumber,
-            FirstName = firstName,
-            LastName = lastName,
             DateOfBirth = new DateTime(1985, 1, 15),
-            Email = email,
-            Phone = "403-555-0100",
             Address = "123 Golf Drive",
             PostalCode = "T2P 1A1",
             MembershipCategory = category,
@@ -153,7 +152,7 @@ public class SeedWorker(
     }
 
     private async Task SeedApplicationsAsync(
-        UserManager<IdentityUser<Guid>> userManager, ApplicationDbContext db, CancellationToken ct)
+        UserManager<ApplicationUser> userManager, ApplicationDbContext db, CancellationToken ct)
     {
         if (await db.MembershipApplications.AnyAsync(ct))
             return;
@@ -190,18 +189,21 @@ public class SeedWorker(
             ("jack.waitlist@example.com",  "Jack",   "Waitlist",  new DateTime(1985, 9, 18)),
         };
 
-        var applicantUsers = new List<IdentityUser<Guid>>();
-        foreach (var (email, _, _, _) in applicants)
+        var applicantUsers = new List<ApplicationUser>();
+        foreach (var (email, firstName, lastName, _) in applicants)
         {
             ct.ThrowIfCancellationRequested();
             var user = await userManager.FindByEmailAsync(email);
             if (user is null)
             {
-                user = new IdentityUser<Guid>
+                user = new ApplicationUser
                 {
                     UserName = email,
                     Email = email,
-                    EmailConfirmed = true
+                    EmailConfirmed = true,
+                    FirstName = firstName,
+                    LastName = lastName,
+                    Phone = "(403) 555-0000"
                 };
                 var result = await userManager.CreateAsync(user, DefaultPassword);
                 if (!result.Succeeded)
