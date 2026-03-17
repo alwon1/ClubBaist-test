@@ -82,11 +82,11 @@
                     <TemplateColumn Title="Member #" SortBy="@(GridSort<MemberAccount<Guid>>.ByAscending(m => m.MemberNumber))">
                         @context.MemberNumber
                     </TemplateColumn>
-                    <TemplateColumn Title="Name" SortBy="@(GridSort<MemberAccount<Guid>>.ByAscending(m => m.LastName).ThenAscending(m => m.FirstName))">
-                        @context.FirstName @context.LastName
+                    <TemplateColumn Title="Name" SortBy="@(GridSort<MemberAccount<Guid>>.ByAscending(m => m.ApplicationUser!.LastName).ThenAscending(m => m.ApplicationUser!.FirstName))">
+                        @context.ApplicationUser?.FirstName @context.ApplicationUser?.LastName
                     </TemplateColumn>
                     <TemplateColumn Title="Email">
-                        @context.Email
+                        @context.ApplicationUser?.Email
                     </TemplateColumn>
                     <TemplateColumn Title="Category">
                         @context.MembershipCategory
@@ -119,7 +119,7 @@
     {
         <div class="card mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <strong>Reservations for @selectedMember.FirstName @selectedMember.LastName (@selectedMember.MemberNumber)</strong>
+                <strong>Reservations for @selectedMember.ApplicationUser?.FirstName @selectedMember.ApplicationUser?.LastName (@selectedMember.MemberNumber)</strong>
                 @if (selectedMember.IsActive)
                 {
                     <button class="btn btn-sm @(showBookingPanel ? "btn-secondary" : "btn-primary")"
@@ -206,7 +206,7 @@
         {
             <div class="card mb-4">
                 <div class="card-header">
-                    <strong>Availability — as seen by @selectedMember.FirstName @selectedMember.LastName (@selectedMember.MembershipCategory)</strong>
+                    <strong>Availability — as seen by @selectedMember.ApplicationUser?.FirstName @selectedMember.ApplicationUser?.LastName (@selectedMember.MembershipCategory)</strong>
                 </div>
                 <div class="card-body">
                     <TeeTimeAvailabilityPanel @key="selectedMember.MemberAccountId"
@@ -426,8 +426,9 @@ else
             if (string.IsNullOrWhiteSpace(memberSearchTerm))
             {
                 memberSearchResults = await DbContext.MemberAccounts
-                    .OrderBy(m => m.LastName)
-                    .ThenBy(m => m.FirstName)
+                    .Include(m => m.ApplicationUser)
+                    .OrderBy(m => m.ApplicationUser!.LastName)
+                    .ThenBy(m => m.ApplicationUser!.FirstName)
                     .ToListAsync(cancellationToken);
             }
             else
@@ -435,11 +436,12 @@ else
                 var pattern = $"%{memberSearchTerm.Trim()}%";
                 var memberNumberSearch = int.TryParse(memberSearchTerm.Trim(), out var memberNum) ? (int?)memberNum : null;
                 memberSearchResults = await DbContext.MemberAccounts
-                    .Where(m => EF.Functions.Like(m.FirstName, pattern)
-                             || EF.Functions.Like(m.LastName, pattern)
+                    .Include(m => m.ApplicationUser)
+                    .Where(m => EF.Functions.Like(m.ApplicationUser!.FirstName, pattern)
+                             || EF.Functions.Like(m.ApplicationUser!.LastName, pattern)
                              || (memberNumberSearch != null && m.MemberNumber == memberNumberSearch))
-                    .OrderBy(m => m.LastName)
-                    .ThenBy(m => m.FirstName)
+                    .OrderBy(m => m.ApplicationUser!.LastName)
+                    .ThenBy(m => m.ApplicationUser!.FirstName)
                     .Take(50)
                     .ToListAsync(cancellationToken);
             }
@@ -561,8 +563,8 @@ else
                 var pattern = $"%{reservationSearchTerm.Trim()}%";
                 var reservationMemberNumberSearch = int.TryParse(reservationSearchTerm.Trim(), out var resNum) ? (int?)resNum : null;
                 var matchingMemberIds = DbContext.MemberAccounts
-                    .Where(m => EF.Functions.Like(m.FirstName, pattern)
-                             || EF.Functions.Like(m.LastName, pattern)
+                    .Where(m => EF.Functions.Like(m.ApplicationUser!.FirstName, pattern)
+                             || EF.Functions.Like(m.ApplicationUser!.LastName, pattern)
                              || (reservationMemberNumberSearch != null && m.MemberNumber == reservationMemberNumberSearch))
                     .Select(m => m.MemberAccountId);
                 reservationQuery = reservationQuery.Where(r => matchingMemberIds.Contains(r.BookingMemberAccountId));
@@ -575,6 +577,7 @@ else
 
             var memberIds = reservations.Select(r => r.BookingMemberAccountId).Distinct().ToList();
             var members = await DbContext.MemberAccounts
+                .Include(m => m.ApplicationUser)
                 .Where(m => memberIds.Contains(m.MemberAccountId))
                 .ToDictionaryAsync(m => m.MemberAccountId, cancellationToken);
 
@@ -585,7 +588,7 @@ else
                     r.ReservationId,
                     r.SlotDate,
                     r.SlotTime,
-                    member is not null ? $"{member.FirstName} {member.LastName}" : "Unknown",
+                    member is not null ? $"{member.ApplicationUser?.FirstName} {member.ApplicationUser?.LastName}" : "Unknown",
                     member?.MemberNumber.ToString() ?? "",
                     r.PlayerMemberAccountIds.Count + 1,
                     r.IsCancelled);

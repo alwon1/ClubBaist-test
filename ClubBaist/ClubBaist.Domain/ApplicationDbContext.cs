@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 namespace ClubBaist.Domain;
 
 public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-    : IdentityDbContext<IdentityUser<Guid>, IdentityRole<Guid>, Guid>(options), IApplicationDbContext<Guid>
+    : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>(options), IApplicationDbContext<Guid>
 {
     public DbSet<MembershipApplication<Guid>> MembershipApplications => Set<MembershipApplication<Guid>>();
     public DbSet<MemberAccount<Guid>> MemberAccounts => Set<MemberAccount<Guid>>();
@@ -23,6 +23,13 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+
+        builder.Entity<ApplicationUser>(entity =>
+        {
+            entity.Property(u => u.FirstName).IsRequired().HasMaxLength(100);
+            entity.Property(u => u.LastName).IsRequired().HasMaxLength(100);
+            entity.Property(u => u.Phone).IsRequired();
+        });
 
         builder.Entity<MembershipApplication<Guid>>(entity =>
         {

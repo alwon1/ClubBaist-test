@@ -16,7 +16,7 @@ public sealed class MemberManagementServiceTests
         var provider = scope.ServiceProvider;
 
         var memberService = provider.GetRequiredService<MemberManagementService<Guid>>();
-        var userManager = provider.GetRequiredService<UserManager<IdentityUser<Guid>>>();
+        var userManager = provider.GetRequiredService<UserManager<ApplicationUser>>();
         var dbContext = provider.GetRequiredService<ApplicationDbContext>();
 
         var userId = await CreateIdentityUserAsync(userManager);
@@ -26,7 +26,6 @@ public sealed class MemberManagementServiceTests
             FirstName: "Jane",
             LastName: "Doe",
             DateOfBirth: new DateTime(1990, 5, 20),
-            Email: "jane.doe@example.com",
             Phone: "555-0100",
             Address: "123 Main St",
             PostalCode: "T1T1T1",
@@ -42,10 +41,11 @@ public sealed class MemberManagementServiceTests
             .SingleAsync(item => item.MemberAccountId == result.MemberAccountId);
 
         Assert.AreEqual(userId, persisted.ApplicationUserId);
-        Assert.AreEqual("Jane", persisted.FirstName);
-        Assert.AreEqual("Doe", persisted.LastName);
-        Assert.AreEqual("jane.doe@example.com", persisted.Email);
-        Assert.AreEqual("555-0100", persisted.Phone);
+
+        var identityUser = await userManager.FindByIdAsync(userId.ToString());
+        Assert.AreEqual("Jane", identityUser!.FirstName);
+        Assert.AreEqual("Doe", identityUser.LastName);
+        Assert.AreEqual("555-0100", identityUser.Phone);
         Assert.AreEqual("123 Main St", persisted.Address);
         Assert.AreEqual("T1T1T1", persisted.PostalCode);
     }
@@ -57,7 +57,7 @@ public sealed class MemberManagementServiceTests
         var provider = scope.ServiceProvider;
 
         var memberService = provider.GetRequiredService<MemberManagementService<Guid>>();
-        var userManager = provider.GetRequiredService<UserManager<IdentityUser<Guid>>>();
+        var userManager = provider.GetRequiredService<UserManager<ApplicationUser>>();
         var dbContext = provider.GetRequiredService<ApplicationDbContext>();
 
         var userId = await CreateIdentityUserAsync(userManager);
@@ -67,7 +67,6 @@ public sealed class MemberManagementServiceTests
             FirstName: "  Jane  ",
             LastName: "  Doe  ",
             DateOfBirth: new DateTime(1990, 5, 20),
-            Email: "  jane.doe@example.com  ",
             Phone: "  555-0100  ",
             Address: "  123 Main St  ",
             PostalCode: "  T1T1T1  ",
@@ -80,32 +79,29 @@ public sealed class MemberManagementServiceTests
             .AsNoTracking()
             .SingleAsync(item => item.MemberAccountId == result.MemberAccountId);
 
-        Assert.AreEqual("Jane", persisted.FirstName);
-        Assert.AreEqual("Doe", persisted.LastName);
-        Assert.AreEqual("jane.doe@example.com", persisted.Email);
-        Assert.AreEqual("555-0100", persisted.Phone);
+        var identityUser = await userManager.FindByIdAsync(userId.ToString());
+        Assert.AreEqual("Jane", identityUser!.FirstName);
+        Assert.AreEqual("Doe", identityUser.LastName);
+        Assert.AreEqual("555-0100", identityUser.Phone);
         Assert.AreEqual("123 Main St", persisted.Address);
         Assert.AreEqual("T1T1T1", persisted.PostalCode);
         Assert.AreEqual("555-0199", persisted.AlternatePhone);
     }
 
     [TestMethod]
-    [DataRow("", "LastName", "email@example.com", "555-0000", "1 St", "A1A1A1", "FirstName")]
-    [DataRow("   ", "LastName", "email@example.com", "555-0000", "1 St", "A1A1A1", "FirstName")]
-    [DataRow("FirstName", "", "email@example.com", "555-0000", "1 St", "A1A1A1", "LastName")]
-    [DataRow("FirstName", "   ", "email@example.com", "555-0000", "1 St", "A1A1A1", "LastName")]
-    [DataRow("FirstName", "LastName", "", "555-0000", "1 St", "A1A1A1", "Email")]
-    [DataRow("FirstName", "LastName", "   ", "555-0000", "1 St", "A1A1A1", "Email")]
-    [DataRow("FirstName", "LastName", "email@example.com", "", "1 St", "A1A1A1", "Phone")]
-    [DataRow("FirstName", "LastName", "email@example.com", "   ", "1 St", "A1A1A1", "Phone")]
-    [DataRow("FirstName", "LastName", "email@example.com", "555-0000", "", "A1A1A1", "Address")]
-    [DataRow("FirstName", "LastName", "email@example.com", "555-0000", "   ", "A1A1A1", "Address")]
-    [DataRow("FirstName", "LastName", "email@example.com", "555-0000", "1 St", "", "PostalCode")]
-    [DataRow("FirstName", "LastName", "email@example.com", "555-0000", "1 St", "   ", "PostalCode")]
+    [DataRow("", "LastName", "555-0000", "1 St", "A1A1A1", "FirstName")]
+    [DataRow("   ", "LastName", "555-0000", "1 St", "A1A1A1", "FirstName")]
+    [DataRow("FirstName", "", "555-0000", "1 St", "A1A1A1", "LastName")]
+    [DataRow("FirstName", "   ", "555-0000", "1 St", "A1A1A1", "LastName")]
+    [DataRow("FirstName", "LastName", "", "1 St", "A1A1A1", "Phone")]
+    [DataRow("FirstName", "LastName", "   ", "1 St", "A1A1A1", "Phone")]
+    [DataRow("FirstName", "LastName", "555-0000", "", "A1A1A1", "Address")]
+    [DataRow("FirstName", "LastName", "555-0000", "   ", "A1A1A1", "Address")]
+    [DataRow("FirstName", "LastName", "555-0000", "1 St", "", "PostalCode")]
+    [DataRow("FirstName", "LastName", "555-0000", "1 St", "   ", "PostalCode")]
     public async Task CreateMemberAsync_InvalidProfileField_ThrowsArgumentException(
         string firstName,
         string lastName,
-        string email,
         string phone,
         string address,
         string postalCode,
@@ -115,7 +111,7 @@ public sealed class MemberManagementServiceTests
         var provider = scope.ServiceProvider;
 
         var memberService = provider.GetRequiredService<MemberManagementService<Guid>>();
-        var userManager = provider.GetRequiredService<UserManager<IdentityUser<Guid>>>();
+        var userManager = provider.GetRequiredService<UserManager<ApplicationUser>>();
 
         var userId = await CreateIdentityUserAsync(userManager);
 
@@ -124,7 +120,6 @@ public sealed class MemberManagementServiceTests
             FirstName: firstName,
             LastName: lastName,
             DateOfBirth: new DateTime(1990, 5, 20),
-            Email: email,
             Phone: phone,
             Address: address,
             PostalCode: postalCode,
@@ -143,7 +138,7 @@ public sealed class MemberManagementServiceTests
         var provider = scope.ServiceProvider;
 
         var memberService = provider.GetRequiredService<MemberManagementService<Guid>>();
-        var userManager = provider.GetRequiredService<UserManager<IdentityUser<Guid>>>();
+        var userManager = provider.GetRequiredService<UserManager<ApplicationUser>>();
 
         var userId = await CreateIdentityUserAsync(userManager);
 
@@ -152,7 +147,6 @@ public sealed class MemberManagementServiceTests
             FirstName: "Jane",
             LastName: "Doe",
             DateOfBirth: new DateTime(1990, 5, 20),
-            Email: "jane.doe@example.com",
             Phone: "555-0100",
             Address: "123 Main St",
             PostalCode: "T1T1T1",
@@ -165,7 +159,6 @@ public sealed class MemberManagementServiceTests
             FirstName: "Janet",
             LastName: "Doe",
             DateOfBirth: new DateTime(1991, 1, 10),
-            Email: "janet.doe@example.com",
             Phone: "555-0110",
             Address: "124 Main St",
             PostalCode: "T2T2T2",
@@ -184,7 +177,7 @@ public sealed class MemberManagementServiceTests
         var provider = scope.ServiceProvider;
 
         var memberService = provider.GetRequiredService<MemberManagementService<Guid>>();
-        var userManager = provider.GetRequiredService<UserManager<IdentityUser<Guid>>>();
+        var userManager = provider.GetRequiredService<UserManager<ApplicationUser>>();
         var roleManager = provider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
 
         await roleManager.CreateAsync(new IdentityRole<Guid> { Name = AppRoles.Member });
@@ -196,7 +189,6 @@ public sealed class MemberManagementServiceTests
             FirstName: "Jane",
             LastName: "Doe",
             DateOfBirth: new DateTime(1990, 5, 20),
-            Email: "jane.doe@example.com",
             Phone: "555-0100",
             Address: "123 Main St",
             PostalCode: "T1T1T1",
@@ -216,7 +208,7 @@ public sealed class MemberManagementServiceTests
         var provider = scope.ServiceProvider;
 
         var memberService = provider.GetRequiredService<MemberManagementService<Guid>>();
-        var userManager = provider.GetRequiredService<UserManager<IdentityUser<Guid>>>();
+        var userManager = provider.GetRequiredService<UserManager<ApplicationUser>>();
         var dbContext = provider.GetRequiredService<ApplicationDbContext>();
 
         var userId1 = await CreateIdentityUserAsync(userManager);
@@ -227,7 +219,6 @@ public sealed class MemberManagementServiceTests
             FirstName: "First",
             LastName: "Member",
             DateOfBirth: new DateTime(1990, 1, 1),
-            Email: "first@example.com",
             Phone: "555-0001",
             Address: "1 Main St",
             PostalCode: "T1T1T1",
@@ -238,7 +229,6 @@ public sealed class MemberManagementServiceTests
             FirstName: "Second",
             LastName: "Member",
             DateOfBirth: new DateTime(1991, 2, 2),
-            Email: "second@example.com",
             Phone: "555-0002",
             Address: "2 Main St",
             PostalCode: "T2T2T2",
@@ -250,6 +240,6 @@ public sealed class MemberManagementServiceTests
         Assert.AreEqual(result1.MemberNumber + 1, result2.MemberNumber);
     }
 
-    private static Task<Guid> CreateIdentityUserAsync(UserManager<IdentityUser<Guid>> userManager) =>
+    private static Task<Guid> CreateIdentityUserAsync(UserManager<ApplicationUser> userManager) =>
         TestDataFactory.CreateIdentityUserAsync(userManager);
 }

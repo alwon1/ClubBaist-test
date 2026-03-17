@@ -23,7 +23,7 @@ public static class TestServiceHost
 
         services.AddDbContext<ApplicationDbContext>(options => options.UseSqlite(connection));
 
-        services.AddIdentityCore<IdentityUser<Guid>>()
+        services.AddIdentityCore<ApplicationUser>()
             .AddRoles<IdentityRole<Guid>>()
             .AddEntityFrameworkStores<ApplicationDbContext>();
 

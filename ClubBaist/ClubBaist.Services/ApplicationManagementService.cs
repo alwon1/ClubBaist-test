@@ -1,7 +1,6 @@
 using ClubBaist.Domain;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
 
 namespace ClubBaist.Services;
 
@@ -15,12 +14,12 @@ public class ApplicationManagementService<TKey> where TKey : IEquatable<TKey>
     ];
 
     private readonly IApplicationDbContext<TKey> _dbContext;
-    private readonly UserManager<IdentityUser<TKey>> _userManager;
+    private readonly UserManager<ApplicationUser> _userManager;
     private readonly MemberManagementService<TKey> _memberManagementService;
 
     public ApplicationManagementService(
         IApplicationDbContext<TKey> dbContext,
-        UserManager<IdentityUser<TKey>> userManager,
+        UserManager<ApplicationUser> userManager,
         MemberManagementService<TKey> memberManagementService)
     {
         _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
@@ -28,21 +27,36 @@ public class ApplicationManagementService<TKey> where TKey : IEquatable<TKey>
         _memberManagementService = memberManagementService ?? throw new ArgumentNullException(nameof(memberManagementService));
     }
 
-    public async Task<MembershipApplication<TKey>> SubmitApplicationAsync(
+    public async Task<SubmitApplicationResult<TKey>> SubmitApplicationAsync(
         SubmitApplicationRequest<TKey> submitRequest,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(submitRequest);
-        EnsureRequiredKey(submitRequest.ApplicationUserId, nameof(submitRequest.ApplicationUserId));
         EnsureRequiredMemberId(submitRequest.Sponsor1MemberId, nameof(submitRequest.Sponsor1MemberId));
         EnsureRequiredMemberId(submitRequest.Sponsor2MemberId, nameof(submitRequest.Sponsor2MemberId));
 
-        await EnsureIdentityUserExistsAsync(submitRequest.ApplicationUserId, cancellationToken);
+        var applicationUser = new ApplicationUser
+        {
+            Id = Guid.NewGuid(),
+            UserName = submitRequest.NewUserEmail,
+            Email = submitRequest.NewUserEmail,
+            EmailConfirmed = false,
+            FirstName = submitRequest.FirstName,
+            LastName = submitRequest.LastName,
+            Phone = NormalizePhone(submitRequest.Phone)
+        };
+
+        var createResult = await _userManager.CreateAsync(applicationUser, submitRequest.NewUserPassword);
+        if (!createResult.Succeeded)
+        {
+            var errors = string.Join(" ", createResult.Errors.Select(e => e.Description));
+            throw new InvalidOperationException($"Failed to create user account: {errors}");
+        }
 
         var submittedAt = submitRequest.SubmittedAt ?? DateTime.UtcNow;
 
         var membershipApplication = MembershipApplication<TKey>.Submit(
-            submitRequest.ApplicationUserId,
+            (TKey)(object)applicationUser.Id,
             submitRequest.FirstName,
             submitRequest.LastName,
             submitRequest.Occupation,
@@ -50,7 +64,7 @@ public class ApplicationManagementService<TKey> where TKey : IEquatable<TKey>
             submitRequest.Address,
             submitRequest.PostalCode,
             submitRequest.Phone,
-            submitRequest.Email,
+            submitRequest.NewUserEmail,
             submitRequest.DateOfBirth,
             submitRequest.RequestedMembershipCategory,
             submitRequest.Sponsor1MemberId,
@@ -62,7 +76,7 @@ public class ApplicationManagementService<TKey> where TKey : IEquatable<TKey>
         _dbContext.MembershipApplications.Add(membershipApplication);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
-        return membershipApplication;
+        return new SubmitApplicationResult<TKey>(membershipApplication, applicationUser);
     }
 
     public async Task<IReadOnlyList<MembershipApplication<TKey>>> GetActionableApplicationsAsync(
@@ -135,7 +149,6 @@ public class ApplicationManagementService<TKey> where TKey : IEquatable<TKey>
                 application.FirstName,
                 application.LastName,
                 application.DateOfBirth,
-                application.Email,
                 application.Phone,
                 application.Address,
                 application.PostalCode,
@@ -194,7 +207,7 @@ public class ApplicationManagementService<TKey> where TKey : IEquatable<TKey>
     private async Task EnsureIdentityUserExistsAsync(TKey userId, CancellationToken cancellationToken)
     {
         var exists = await _userManager.Users.AnyAsync(
-            user => user.Id!.Equals(userId),
+            user => user.Id.Equals(userId),
             cancellationToken);
 
         if (!exists)
@@ -226,10 +239,21 @@ public class ApplicationManagementService<TKey> where TKey : IEquatable<TKey>
             throw new ArgumentException("Value is required.", paramName);
         }
     }
+
+    private static string NormalizePhone(string phone)
+    {
+        var digits = new string(phone.Where(char.IsDigit).ToArray());
+        if (digits.Length == 10)
+        {
+            return $"({digits[..3]}) {digits[3..6]}-{digits[6..]}";
+        }
+        return phone;
+    }
 }
 
 public sealed record SubmitApplicationRequest<TKey>(
-    TKey ApplicationUserId,
+    string NewUserEmail,
+    string NewUserPassword,
     string FirstName,
     string LastName,
     string Occupation,
@@ -237,7 +261,6 @@ public sealed record SubmitApplicationRequest<TKey>(
     string Address,
     string PostalCode,
     string Phone,
-    string Email,
     DateTime DateOfBirth,
     MembershipCategory RequestedMembershipCategory,
     int Sponsor1MemberId,
@@ -245,6 +268,11 @@ public sealed record SubmitApplicationRequest<TKey>(
     string? AlternatePhone = null,
     DateTime? SubmittedAt = null,
     Guid? ApplicationId = null)
+    where TKey : IEquatable<TKey>;
+
+public sealed record SubmitApplicationResult<TKey>(
+    MembershipApplication<TKey> MembershipApplication,
+    ApplicationUser ApplicationUser)
     where TKey : IEquatable<TKey>;
 
 public sealed record ActionableApplicationFilter(

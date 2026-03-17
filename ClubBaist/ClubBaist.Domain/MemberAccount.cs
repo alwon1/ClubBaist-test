@@ -1,38 +1,13 @@
-using Microsoft.AspNetCore.Identity;
-
 namespace ClubBaist.Domain;
 
 public class MemberAccount<TKey> where TKey : IEquatable<TKey>
 {
     public int MemberAccountId { get; set; }
     public TKey ApplicationUserId { get; set; } = default!;
-    public IdentityUser<TKey>? ApplicationUser { get; set; }
+    public ApplicationUser? ApplicationUser { get; set; }
     public int MemberNumber { get; set; }
-    public string FirstName
-    {
-        get;
-        set => field = RequireText(value, nameof(FirstName));
-    } = string.Empty;
-
-    public string LastName
-    {
-        get;
-        set => field = RequireText(value, nameof(LastName));
-    } = string.Empty;
 
     public DateTime DateOfBirth { get; set; }
-
-    public string Email
-    {
-        get;
-        set => field = RequireText(value, nameof(Email));
-    } = string.Empty;
-
-    public string Phone
-    {
-        get;
-        set => field = RequireText(value, nameof(Phone));
-    } = string.Empty;
 
     public string? AlternatePhone
     {
@@ -62,22 +37,14 @@ public class MemberAccount<TKey> where TKey : IEquatable<TKey>
     }
 
     public void UpdateProfile(
-        string firstName,
-        string lastName,
         DateTime dateOfBirth,
-        string email,
-        string phone,
         string address,
         string postalCode,
         MembershipCategory membershipCategory,
         DateTime updatedAt,
         string? alternatePhone = null)
     {
-        FirstName = firstName;
-        LastName = lastName;
         DateOfBirth = dateOfBirth;
-        Email = email;
-        Phone = phone;
         AlternatePhone = alternatePhone;
         Address = address;
         PostalCode = postalCode;
@@ -91,10 +58,10 @@ public class MemberAccount<TKey> where TKey : IEquatable<TKey>
         UpdatedAt = updatedAt;
     }
 
-    public void AttachApplicationUser(IdentityUser<TKey> applicationUser)
+    public void AttachApplicationUser(ApplicationUser applicationUser)
     {
         ApplicationUser = applicationUser ?? throw new ArgumentNullException(nameof(applicationUser));
-        ApplicationUserId = applicationUser.Id;
+        ApplicationUserId = (TKey)(object)applicationUser.Id;
     }
 
     private static string RequireText(string value, string paramName)
@@ -103,5 +70,4 @@ public class MemberAccount<TKey> where TKey : IEquatable<TKey>
             ? throw new ArgumentException("Value is required.", paramName)
             : value.Trim();
     }
-
 }

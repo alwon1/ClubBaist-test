@@ -1,5 +1,3 @@
-using Microsoft.AspNetCore.Identity;
-
 namespace ClubBaist.Domain;
 
 public class ApplicationStatusHistory<TKey> where TKey : IEquatable<TKey>
@@ -34,7 +32,7 @@ public class ApplicationStatusHistory<TKey> where TKey : IEquatable<TKey>
     }
 
     public TKey ChangedByUserId { get; set; } = default!;
-    public IdentityUser<TKey>? ChangedByUser { get; set; }
+    public ApplicationUser? ChangedByUser { get; set; }
     public DateTime ChangedAt { get; set; }
 
     public ApplicationStatusHistory()
@@ -63,9 +61,9 @@ public class ApplicationStatusHistory<TKey> where TKey : IEquatable<TKey>
         MembershipApplicationId = membershipApplication.ApplicationId;
     }
 
-    public void AttachChangedByUser(IdentityUser<TKey> changedByUser)
+    public void AttachChangedByUser(ApplicationUser changedByUser)
     {
         ChangedByUser = changedByUser ?? throw new ArgumentNullException(nameof(changedByUser));
-        ChangedByUserId = changedByUser.Id;
+        ChangedByUserId = (TKey)(object)changedByUser.Id;
     }
 }

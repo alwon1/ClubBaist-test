@@ -597,7 +597,7 @@ public sealed class TeeTimeBookingServiceTests
         IServiceProvider provider,
         MembershipCategory category) =>
         TestDataFactory.CreateMemberAsync(
-            provider.GetRequiredService<UserManager<IdentityUser<Guid>>>(),
+            provider.GetRequiredService<UserManager<ApplicationUser>>(),
             provider.GetRequiredService<ApplicationDbContext>(),
             category);
 }

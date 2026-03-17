@@ -10,7 +10,7 @@
 @using ClubBaist.Domain
 @using ClubBaist.Services
 
-@inject UserManager<IdentityUser<Guid>> UserManager
+@inject UserManager<ApplicationUser> UserManager
 @inject IApplicationDbContext<Guid> DbContext
 @inject NavigationManager NavigationManager
 @inject ILogger<UserManagement> Logger

@@ -66,7 +66,7 @@ else
                         @foreach (var member in allMembers)
                         {
                             <option value="@member.MemberAccountId">
-                                @member.MemberNumber - @member.FirstName @member.LastName
+                                @member.MemberNumber - @member.ApplicationUser?.FirstName @member.ApplicationUser?.LastName
                             </option>
                         }
                     </select>
@@ -75,7 +75,7 @@ else
             }
             else if (currentMember is not null)
             {
-                <p>@currentMember.MemberNumber - @currentMember.FirstName @currentMember.LastName</p>
+                <p>@currentMember.MemberNumber - @currentMember.ApplicationUser?.FirstName @currentMember.ApplicationUser?.LastName</p>
             }
         </div>
     </div>
@@ -110,7 +110,7 @@ else
                                     @foreach (var member in allMembers.Where(m => m.MemberAccountId != _bookingMemberId))
                                     {
                                         <option value="@member.MemberAccountId">
-                                            @member.MemberNumber - @member.FirstName @member.LastName
+                                            @member.MemberNumber - @member.ApplicationUser?.FirstName @member.ApplicationUser?.LastName
                                         </option>
                                     }
                                 </select>
@@ -190,6 +190,7 @@ else
             isAdmin = user.IsInRole(AppRoles.Admin);
 
             currentMember = await DbContext.MemberAccounts
+                .Include(m => m.ApplicationUser)
                 .FirstOrDefaultAsync(m => m.ApplicationUserId == userId);
 
             if (currentMember is null && !isAdmin)
@@ -202,9 +203,10 @@ else
             _bookingMemberId = currentMember?.MemberAccountId ?? 0;
 
             allMembers = await DbContext.MemberAccounts
+                .Include(m => m.ApplicationUser)
                 .Where(m => m.IsActive)
-                .OrderBy(m => m.LastName)
-                .ThenBy(m => m.FirstName)
+                .OrderBy(m => m.ApplicationUser!.LastName)
+                .ThenBy(m => m.ApplicationUser!.FirstName)
                 .ToListAsync();
 
             if (isAdmin && BookFor.HasValue && allMembers.Any(m => m.MemberAccountId == BookFor.Value))
