@@ -29,4 +29,12 @@ public static class UiHelpers
         AppRoles.Member => "bg-success",
         _ => "bg-secondary"
     };
+
+    public static string GetSeasonStatusBadgeClass(SeasonStatus status) => status switch
+    {
+        SeasonStatus.Active => "bg-success",
+        SeasonStatus.Planned => "bg-primary",
+        SeasonStatus.Closed => "bg-secondary",
+        _ => "bg-secondary"
+    };
 }
