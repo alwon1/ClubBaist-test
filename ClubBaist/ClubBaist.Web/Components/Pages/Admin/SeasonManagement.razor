@@ -152,8 +152,14 @@
                                 }
                                 else
                                 {
-                                    <button class="btn btn-sm btn-outline-primary me-1" @onclick="() => ShowEditForm(season)" disabled="@_showForm">Edit</button>
-                                    <button class="btn btn-sm btn-outline-danger" @onclick="() => RequestDelete(season.SeasonId)" disabled="@_showForm">Delete</button>
+                                    <button class="btn btn-sm btn-outline-primary me-1"
+                                            @onclick="() => ShowEditForm(season)"
+                                            disabled="@_showForm"
+                                            title="@(_showForm ? "Close the form above before editing" : null)">Edit</button>
+                                    <button class="btn btn-sm btn-outline-danger"
+                                            @onclick="() => RequestDelete(season.SeasonId)"
+                                            disabled="@_showForm"
+                                            title="@(_showForm ? "Close the form above before deleting" : null)">Delete</button>
                                 }
                             </td>
                         </tr>
@@ -302,6 +308,11 @@
             _editingSeasonId = null;
             await LoadSeasonsAsync();
         }
+        catch (DbUpdateException ex)
+        {
+            Logger.LogError(ex, "Failed to save season");
+            _formError = "A season with that name already exists.";
+        }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to save season");
@@ -341,18 +352,27 @@
             var name = season.Name;
             DbContext.Seasons.Remove(season);
             await DbContext.SaveChangesAsync();
-            _confirmDeleteId = null;
             _successMessage = $"Season \"{name}\" deleted successfully.";
+            if (_editingSeasonId == seasonId)
+            {
+                _showForm = false;
+                _editingSeasonId = null;
+            }
             await LoadSeasonsAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            Logger.LogError(ex, "Failed to delete season {SeasonId}", seasonId);
+            _errorMessage = "Cannot delete this season because it has associated reservations.";
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to delete season {SeasonId}", seasonId);
             _errorMessage = "Failed to delete season. Please try again.";
-            _confirmDeleteId = null;
         }
         finally
         {
+            _confirmDeleteId = null;
             _deleting = false;
         }
     }
