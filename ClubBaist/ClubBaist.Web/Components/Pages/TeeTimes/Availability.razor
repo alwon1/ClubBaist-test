@@ -36,7 +36,7 @@ else
 @code {
     private bool isLoading = true;
     private bool isAdmin;
-    private Guid currentMemberAccountId;
+    private int currentMemberAccountId;
     private MembershipCategory? currentMemberCategory;
 
     protected override async Task OnInitializedAsync()
@@ -50,7 +50,7 @@ else
         {
             var member = await DbContext.MemberAccounts
                 .FirstOrDefaultAsync(m => m.ApplicationUserId == userId);
-            currentMemberAccountId = member?.MemberAccountId ?? Guid.Empty;
+            currentMemberAccountId = member?.MemberAccountId ?? 0;
             currentMemberCategory = member?.MembershipCategory;
         }
 

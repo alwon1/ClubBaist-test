@@ -25,7 +25,7 @@ public static class TestDataFactory
         return userId;
     }
 
-    public static async Task<Guid> CreateMemberAsync(
+    public static async Task<int> CreateMemberAsync(
         UserManager<IdentityUser<Guid>> userManager,
         ApplicationDbContext dbContext,
         MembershipCategory category = MembershipCategory.Social)
@@ -33,10 +33,8 @@ public static class TestDataFactory
         var userId = await CreateIdentityUserAsync(userManager);
         var nextMemberNumber = (await dbContext.MemberAccounts.AsNoTracking().MaxAsync(m => (int?)m.MemberNumber) ?? 9999) + 1;
 
-        var memberAccountId = Guid.NewGuid();
-        dbContext.MemberAccounts.Add(new MemberAccount<Guid>
+        var memberAccount = new MemberAccount<Guid>
         {
-            MemberAccountId = memberAccountId,
             ApplicationUserId = userId,
             MemberNumber = nextMemberNumber,
             FirstName = "Test",
@@ -49,9 +47,10 @@ public static class TestDataFactory
             MembershipCategory = category,
             IsActive = true,
             CreatedAt = DateTime.UtcNow
-        });
+        };
+        dbContext.MemberAccounts.Add(memberAccount);
         await dbContext.SaveChangesAsync();
 
-        return memberAccountId;
+        return memberAccount.MemberAccountId;
     }
 }

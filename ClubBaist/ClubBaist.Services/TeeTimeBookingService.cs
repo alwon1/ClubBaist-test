@@ -55,7 +55,7 @@ public class TeeTimeBookingService<TKey> where TKey : IEquatable<TKey>
                     MemberCategory: null,
                     PrecomputedOccupancy: occupancy);
 
-                var slot = new TeeTimeSlot(date, time, Guid.Empty, []);
+                var slot = new TeeTimeSlot(date, time, 0, []);
                 var remaining = Math.Max(0, await EvaluateRulesAsync(slot, context, cancellationToken));
                 slots.Add(new SlotAvailability(time, remaining));
             }
@@ -158,7 +158,7 @@ public class TeeTimeBookingService<TKey> where TKey : IEquatable<TKey>
     private async Task<IReadOnlyList<BookedSlotWithMembers>> BuildSlotsForDateAsync(
         DateOnly date,
         IEnumerable<Reservation> reservations,
-        Dictionary<Guid, MemberInfo> members,
+        Dictionary<int, MemberInfo> members,
         MembershipCategory? memberCategory,
         CancellationToken cancellationToken)
     {
@@ -175,7 +175,7 @@ public class TeeTimeBookingService<TKey> where TKey : IEquatable<TKey>
             var remaining = Math.Max(0, MaxCapacity - playerCount);
 
             var userCanBook = memberCategory is null || await EvaluateRulesAsync(
-                new TeeTimeSlot(date, time, Guid.Empty, []),
+                new TeeTimeSlot(date, time, 0, []),
                 new BookingEvaluationContext(memberCategory, PrecomputedOccupancy: 0),
                 cancellationToken) >= 0;
 
@@ -195,7 +195,7 @@ public class TeeTimeBookingService<TKey> where TKey : IEquatable<TKey>
     }
 
     public async Task<IReadOnlyList<Reservation>> GetMemberReservationsAsync(
-        Guid memberAccountId,
+        int memberAccountId,
         CancellationToken cancellationToken = default)
     {
         return await _dbContext.Reservations
@@ -245,7 +245,7 @@ public class TeeTimeBookingService<TKey> where TKey : IEquatable<TKey>
 
     public async Task<int> UpdateReservationAsync(
         Guid reservationId,
-        List<Guid> playerMemberAccountIds,
+        List<int> playerMemberAccountIds,
         CancellationToken cancellationToken = default)
     {
         var reservation = await _dbContext.Reservations
@@ -320,7 +320,7 @@ public class TeeTimeBookingService<TKey> where TKey : IEquatable<TKey>
         return min == int.MaxValue ? MaxCapacity : Math.Min(min, MaxCapacity);
     }
 
-    private Task<MembershipCategory?> FetchMemberCategoryAsync(Guid memberAccountId, CancellationToken cancellationToken) =>
+    private Task<MembershipCategory?> FetchMemberCategoryAsync(int memberAccountId, CancellationToken cancellationToken) =>
         _dbContext.MemberAccounts
             .Where(m => m.MemberAccountId == memberAccountId)
             .Select(m => (MembershipCategory?)m.MembershipCategory)
@@ -330,6 +330,6 @@ public class TeeTimeBookingService<TKey> where TKey : IEquatable<TKey>
 public sealed record SlotAvailability(TimeOnly Time, int RemainingCapacity);
 public sealed record DayAvailability(DateOnly Date, IReadOnlyList<SlotAvailability> Slots);
 public sealed record BookedSlot(TimeOnly Time, int RemainingCapacity, IReadOnlyList<Reservation> Reservations);
-public sealed record MemberInfo(Guid MemberAccountId, string FirstName, string LastName);
+public sealed record MemberInfo(int MemberAccountId, string FirstName, string LastName);
 public sealed record ReservationWithMembers(Guid ReservationId, MemberInfo BookingMember, IReadOnlyList<MemberInfo> Players);
 public sealed record BookedSlotWithMembers(TimeOnly Time, int RemainingCapacity, bool UserCanBook, IReadOnlyList<ReservationWithMembers> Reservations);

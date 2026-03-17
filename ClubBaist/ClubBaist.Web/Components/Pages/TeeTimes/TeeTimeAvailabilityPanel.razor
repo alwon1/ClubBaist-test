@@ -462,10 +462,10 @@ else if (viewMode == ViewMode.Day && slots is not null)
     [Parameter] public bool IsAdmin { get; set; }
 
     /// <summary>The logged-in member's account ID (used to identify editable reservations for non-admins).</summary>
-    [Parameter] public Guid CurrentMemberAccountId { get; set; }
+    [Parameter] public int CurrentMemberAccountId { get; set; }
 
     /// <summary>When set, booking links include bookFor=&lt;id&gt; so CreateReservation pre-selects this member.</summary>
-    [Parameter] public Guid? BookForMemberId { get; set; }
+    [Parameter] public int? BookForMemberId { get; set; }
 
     // Unique suffix to avoid duplicate HTML id clashes when multiple panels are on the same page.
     private readonly string _id = Guid.NewGuid().ToString("N")[..8];
