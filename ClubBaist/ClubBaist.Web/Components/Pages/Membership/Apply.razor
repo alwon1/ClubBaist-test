@@ -299,9 +299,9 @@
         public MembershipCategory? RequestedMembershipCategory { get; set; }
 
         [Required(ErrorMessage = "Sponsor 1 is required.")]
-        public Guid? Sponsor1MemberId { get; set; }
+        public int? Sponsor1MemberId { get; set; }
 
         [Required(ErrorMessage = "Sponsor 2 is required.")]
-        public Guid? Sponsor2MemberId { get; set; }
+        public int? Sponsor2MemberId { get; set; }
     }
 }

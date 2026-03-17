@@ -24,8 +24,8 @@ public class MembershipApplication<TKey> where TKey : IEquatable<TKey>
     public string Email { get; private set; } = string.Empty;
     public DateTime DateOfBirth { get; private set; }
     public MembershipCategory RequestedMembershipCategory { get; private set; }
-    public TKey Sponsor1MemberId { get; private set; } = default!;
-    public TKey Sponsor2MemberId { get; private set; } = default!;
+    public int Sponsor1MemberId { get; private set; }
+    public int Sponsor2MemberId { get; private set; }
 
     public IReadOnlyList<ApplicationStatusHistory<TKey>> StatusHistory => _statusHistory;
 
@@ -45,8 +45,8 @@ public class MembershipApplication<TKey> where TKey : IEquatable<TKey>
         string email,
         DateTime dateOfBirth,
         MembershipCategory requestedMembershipCategory,
-        TKey sponsor1MemberId,
-        TKey sponsor2MemberId,
+        int sponsor1MemberId,
+        int sponsor2MemberId,
         DateTime submittedAt,
         string? alternatePhone = null,
         Guid? applicationId = null)

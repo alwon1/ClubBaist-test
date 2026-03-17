@@ -177,12 +177,12 @@ public sealed record CreateMemberRequest<TKey>(
     where TKey : IEquatable<TKey>;
 
 public sealed record CreateMemberResult(
-    Guid MemberAccountId,
+    int MemberAccountId,
     int MemberNumber,
     DateTime CreatedAt);
 
 public sealed record UpdateMemberRequest<TKey>(
-    Guid MemberAccountId,
+    int MemberAccountId,
     string FirstName,
     string LastName,
     DateTime DateOfBirth,

@@ -97,7 +97,7 @@ else
                                     <select class="form-select" id="@($"edit-player-{index}")"
                                             value="@editPlayerIds[index]"
                                             @onchange="(e) => OnEditPlayerChanged(index, e)">
-                                        <option value="@Guid.Empty">-- Select Player --</option>
+                                        <option value="0">-- Select Player --</option>
                                         @foreach (var member in allMembers.Where(m => m.MemberAccountId != reservation.BookingMemberAccountId))
                                         {
                                             <option value="@member.MemberAccountId">
@@ -191,9 +191,9 @@ else
 
     private Reservation? reservation;
     private List<MemberAccount<Guid>> allMembers = [];
-    private Dictionary<Guid, string> memberNameCache = new();
-    private List<Guid> editPlayerIds = [];
-    private Guid currentMemberAccountId;
+    private Dictionary<int, string> memberNameCache = new();
+    private List<int> editPlayerIds = [];
+    private int currentMemberAccountId;
     private bool isAdmin;
 
     protected override async Task OnInitializedAsync()
@@ -218,7 +218,7 @@ else
             {
                 var currentMember = await DbContext.MemberAccounts
                     .FirstOrDefaultAsync(m => m.ApplicationUserId == userId);
-                currentMemberAccountId = currentMember?.MemberAccountId ?? Guid.Empty;
+                currentMemberAccountId = currentMember?.MemberAccountId ?? 0;
             }
 
             reservation = await DbContext.Reservations
@@ -239,7 +239,7 @@ else
             }
 
             // Only load members referenced by this reservation (for display names)
-            var relevantIds = new List<Guid> { reservation.BookingMemberAccountId };
+            var relevantIds = new List<int> { reservation.BookingMemberAccountId };
             relevantIds.AddRange(reservation.PlayerMemberAccountIds);
 
             var relevantMembers = await DbContext.MemberAccounts
@@ -261,7 +261,7 @@ else
         }
     }
 
-    private string GetMemberName(Guid memberAccountId)
+    private string GetMemberName(int memberAccountId)
     {
         return memberNameCache.TryGetValue(memberAccountId, out var name)
             ? name
@@ -280,7 +280,7 @@ else
                 .ToListAsync();
         }
 
-        editPlayerIds = new List<Guid>(reservation!.PlayerMemberAccountIds);
+        editPlayerIds = new List<int>(reservation!.PlayerMemberAccountIds);
         isEditMode = true;
         successMessage = null;
     }
@@ -293,7 +293,7 @@ else
 
     private void OnEditPlayerChanged(int index, ChangeEventArgs e)
     {
-        if (Guid.TryParse(e.Value?.ToString(), out var id))
+        if (int.TryParse(e.Value?.ToString(), out var id))
         {
             editPlayerIds[index] = id;
         }
@@ -303,7 +303,7 @@ else
     {
         if (editPlayerIds.Count < 3)
         {
-            editPlayerIds.Add(Guid.Empty);
+            editPlayerIds.Add(0);
         }
     }
 
@@ -321,7 +321,7 @@ else
         try
         {
             var playerIds = editPlayerIds
-                .Where(id => id != Guid.Empty)
+                .Where(id => id != 0)
                 .Distinct()
                 .ToList();
 

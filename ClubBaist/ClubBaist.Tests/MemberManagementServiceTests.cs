@@ -34,7 +34,7 @@ public sealed class MemberManagementServiceTests
 
         var result = await memberService.CreateMemberAsync(request);
 
-        Assert.AreNotEqual(Guid.Empty, result.MemberAccountId);
+        Assert.AreNotEqual(0, result.MemberAccountId);
         Assert.IsTrue(result.MemberNumber >= 10000);
 
         var persisted = await dbContext.MemberAccounts

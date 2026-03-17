@@ -37,6 +37,9 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         builder.Entity<MemberAccount<Guid>>(entity =>
         {
             entity.HasKey(m => m.MemberAccountId);
+            entity.Property(m => m.MemberAccountId)
+                .ValueGeneratedOnAdd()
+                .HasAnnotation("SqlServer:Identity", "1000, 1");
             entity.HasIndex(m => m.MemberNumber).IsUnique();
             entity.HasIndex(m => m.ApplicationUserId).IsUnique();
 
