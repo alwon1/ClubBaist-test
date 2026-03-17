@@ -97,6 +97,7 @@ public class TeeTimeBookingService<TKey> where TKey : IEquatable<TKey>
 
     public async Task<IReadOnlyList<BookedSlotWithMembers>> GetBookedSlotsWithMembersAsync(
         DateOnly date,
+        MembershipCategory? memberCategory = null,
         CancellationToken cancellationToken = default)
     {
         var times = _scheduleTimeService.GetScheduleTimes(date);
@@ -131,6 +132,19 @@ public class TeeTimeBookingService<TKey> where TKey : IEquatable<TKey>
             var playerCount = slotReservations?.Sum(r => r.PlayerMemberAccountIds.Count + 1) ?? 0;
             var remaining = Math.Max(0, MaxCapacity - playerCount);
 
+            bool userCanBook;
+            if (memberCategory is null)
+            {
+                userCanBook = true;
+            }
+            else
+            {
+                var dummySlot = new TeeTimeSlot(date, time, Guid.Empty, []);
+                var permContext = new BookingEvaluationContext(memberCategory, PrecomputedOccupancy: 0);
+                var permResult = await EvaluateRulesAsync(dummySlot, permContext, cancellationToken);
+                userCanBook = permResult >= 0;
+            }
+
             var reservationsWithMembers = slotReservations?.Select(r =>
             {
                 var bookingMember = members.TryGetValue(r.BookingMemberAccountId, out var bm)
@@ -142,7 +156,7 @@ public class TeeTimeBookingService<TKey> where TKey : IEquatable<TKey>
                 return new ReservationWithMembers(r.ReservationId, bookingMember, players);
             }).ToList() ?? [];
 
-            result.Add(new BookedSlotWithMembers(time, remaining, reservationsWithMembers));
+            result.Add(new BookedSlotWithMembers(time, remaining, userCanBook, reservationsWithMembers));
         }
 
         return result;
@@ -286,4 +300,4 @@ public sealed record DayAvailability(DateOnly Date, IReadOnlyList<SlotAvailabili
 public sealed record BookedSlot(TimeOnly Time, int RemainingCapacity, IReadOnlyList<Reservation> Reservations);
 public sealed record MemberInfo(Guid MemberAccountId, string FirstName, string LastName);
 public sealed record ReservationWithMembers(Guid ReservationId, MemberInfo BookingMember, IReadOnlyList<MemberInfo> Players);
-public sealed record BookedSlotWithMembers(TimeOnly Time, int RemainingCapacity, IReadOnlyList<ReservationWithMembers> Reservations);
+public sealed record BookedSlotWithMembers(TimeOnly Time, int RemainingCapacity, bool UserCanBook, IReadOnlyList<ReservationWithMembers> Reservations);
