@@ -2,5 +2,14 @@
   "image": "mcr.microsoft.com/devcontainers/universal:2",
   "features": {
     "ghcr.io/devcontainers/features/dotnet:2": {},
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "anthropic.claude-code",
+        "ms-azuretools.vscode-containers",
+        "ms-dotnettools.csdevkit"
+      ]
+    }
   }
 }
