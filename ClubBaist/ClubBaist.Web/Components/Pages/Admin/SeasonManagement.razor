@@ -381,7 +381,6 @@
             var name = season.Name;
             DbContext.Seasons.Remove(season);
             await DbContext.SaveChangesAsync();
-            _confirmDeleteId = null;
             if (_editingSeasonId == seasonId)
             {
                 _showForm = false;
@@ -394,16 +393,15 @@
         {
             Logger.LogError(ex, "Failed to delete season {SeasonId} (constraint violation)", seasonId);
             _errorMessage = "Cannot delete this season because it has associated reservations.";
-            _confirmDeleteId = null;
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to delete season {SeasonId}", seasonId);
             _errorMessage = "Failed to delete season. Please try again.";
-            _confirmDeleteId = null;
         }
         finally
         {
+            _confirmDeleteId = null;
             _deleting = false;
         }
     }
