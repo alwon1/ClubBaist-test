@@ -343,6 +343,210 @@ public sealed class TeeTimeBookingServiceTests
     }
 
     [TestMethod]
+    public async Task GetBookedSlotsWithMembersForRange_ReturnsCorrectPerDayStructure()
+    {
+        using var scope = CreateScopeWithSeason();
+        var provider = scope.ServiceProvider;
+
+        var bookingService = provider.GetRequiredService<TeeTimeBookingService<Guid>>();
+
+        var day1 = SeasonDate;             // Monday 2026-06-15
+        var day2 = SeasonDate.AddDays(1);  // Tuesday 2026-06-16
+
+        var booker1 = await CreateMemberAsync(provider, MembershipCategory.Shareholder);
+        var booker2 = await CreateMemberAsync(provider, MembershipCategory.Shareholder);
+        var player = await CreateMemberAsync(provider, MembershipCategory.Shareholder);
+
+        await bookingService.CreateReservationAsync(new TeeTimeSlot(day1, SlotTime, booker1, [player]));
+        await bookingService.CreateReservationAsync(new TeeTimeSlot(day2, SlotTime, booker2, []));
+
+        var result = await bookingService.GetBookedSlotsWithMembersForRangeAsync([day1, day2]);
+
+        // Both dates should be present
+        Assert.AreEqual(2, result.Count);
+        Assert.IsTrue(result.ContainsKey(day1));
+        Assert.IsTrue(result.ContainsKey(day2));
+
+        // day1: 1 reservation with booker1 + player (2 players → 2 remaining)
+        var day1Slot = result[day1].FirstOrDefault(s => s.Time == SlotTime);
+        Assert.IsNotNull(day1Slot);
+        Assert.AreEqual(1, day1Slot.Reservations.Count);
+        Assert.AreEqual(booker1, day1Slot.Reservations[0].BookingMember.MemberAccountId);
+        Assert.AreEqual(1, day1Slot.Reservations[0].Players.Count);
+        Assert.AreEqual(player, day1Slot.Reservations[0].Players[0].MemberAccountId);
+        Assert.AreEqual(2, day1Slot.RemainingCapacity); // 4 max - 2 booked = 2
+
+        // day2: 1 reservation with booker2 alone (3 remaining)
+        var day2Slot = result[day2].FirstOrDefault(s => s.Time == SlotTime);
+        Assert.IsNotNull(day2Slot);
+        Assert.AreEqual(1, day2Slot.Reservations.Count);
+        Assert.AreEqual(booker2, day2Slot.Reservations[0].BookingMember.MemberAccountId);
+        Assert.AreEqual(0, day2Slot.Reservations[0].Players.Count);
+        Assert.AreEqual(3, day2Slot.RemainingCapacity); // 4 max - 1 booked = 3
+    }
+
+    [TestMethod]
+    public async Task GetBookedSlotsWithMembersForRange_EmptyDates_ReturnsEmptyDictionary()
+    {
+        using var scope = CreateScopeWithSeason();
+        var provider = scope.ServiceProvider;
+
+        var bookingService = provider.GetRequiredService<TeeTimeBookingService<Guid>>();
+        var result = await bookingService.GetBookedSlotsWithMembersForRangeAsync([]);
+
+        Assert.AreEqual(0, result.Count);
+    }
+
+    [TestMethod]
+    public async Task GetBookedSlotsWithMembers_NullCategory_UserCanBookIsAlwaysTrue()
+    {
+        using var scope = CreateScopeWithSeason();
+        var provider = scope.ServiceProvider;
+
+        var bookingService = provider.GetRequiredService<TeeTimeBookingService<Guid>>();
+
+        // Restricted weekday time; with null category the flag should still be true
+        var restrictedTime = new TimeOnly(16, 0); // Mon 4PM
+        var bookedSlots = await bookingService.GetBookedSlotsWithMembersAsync(SeasonDate, memberCategory: null);
+        var slot = bookedSlots.FirstOrDefault(s => s.Time == restrictedTime);
+
+        Assert.IsNotNull(slot);
+        Assert.IsTrue(slot.UserCanBook, "UserCanBook should be true when no memberCategory is provided");
+    }
+
+    [TestMethod]
+    public async Task GetBookedSlotsWithMembers_ShareholderCategory_UnrestrictedTime_UserCanBookIsTrue()
+    {
+        using var scope = CreateScopeWithSeason();
+        var provider = scope.ServiceProvider;
+
+        var bookingService = provider.GetRequiredService<TeeTimeBookingService<Guid>>();
+
+        // Shareholder (Gold) can book at any time
+        var bookedSlots = await bookingService.GetBookedSlotsWithMembersAsync(
+            SeasonDate, memberCategory: MembershipCategory.Shareholder);
+        var slot = bookedSlots.FirstOrDefault(s => s.Time == new TimeOnly(16, 0)); // Mon 4PM
+
+        Assert.IsNotNull(slot);
+        Assert.IsTrue(slot.UserCanBook, "Shareholder (Gold) members should be able to book at 4PM on a weekday");
+    }
+
+    [TestMethod]
+    public async Task GetBookedSlotsWithMembers_RestrictedCategory_RestrictedTime_UserCanBookIsFalse()
+    {
+        using var scope = CreateScopeWithSeason();
+        var provider = scope.ServiceProvider;
+
+        var bookingService = provider.GetRequiredService<TeeTimeBookingService<Guid>>();
+
+        // ShareholderSpouse (Silver) cannot book Mon-Fri 3PM-5:30PM
+        var restrictedTime = new TimeOnly(16, 0); // Mon 4PM
+        var bookedSlots = await bookingService.GetBookedSlotsWithMembersAsync(
+            SeasonDate, memberCategory: MembershipCategory.ShareholderSpouse);
+        var slot = bookedSlots.FirstOrDefault(s => s.Time == restrictedTime);
+
+        Assert.IsNotNull(slot);
+        Assert.IsFalse(slot.UserCanBook, "Silver members should be restricted on weekdays between 3PM and 5:30PM");
+    }
+
+    [TestMethod]
+    public async Task GetBookedSlotsWithMembers_RestrictedCategory_AllowedTime_UserCanBookIsTrue()
+    {
+        using var scope = CreateScopeWithSeason();
+        var provider = scope.ServiceProvider;
+
+        var bookingService = provider.GetRequiredService<TeeTimeBookingService<Guid>>();
+
+        // ShareholderSpouse (Silver) CAN book before 3PM on weekdays
+        var allowedTime = new TimeOnly(10, 0); // Mon 10AM
+        var bookedSlots = await bookingService.GetBookedSlotsWithMembersAsync(
+            SeasonDate, memberCategory: MembershipCategory.ShareholderSpouse);
+        var slot = bookedSlots.FirstOrDefault(s => s.Time == allowedTime);
+
+        Assert.IsNotNull(slot);
+        Assert.IsTrue(slot.UserCanBook, "Silver members should be allowed to book before 3PM on a weekday");
+    }
+
+    [TestMethod]
+    public async Task GetBookedSlotsWithMembersForRange_UserCanBook_VariesBySlotTimeAndCategory()
+    {
+        using var scope = CreateScopeWithSeason();
+        var provider = scope.ServiceProvider;
+
+        var bookingService = provider.GetRequiredService<TeeTimeBookingService<Guid>>();
+
+        // SeasonDate is a Monday; pass two days
+        var day1 = SeasonDate;
+        var day2 = SeasonDate.AddDays(1); // Tuesday
+
+        // ShareholderSpouse (Silver): restricted Mon-Fri 3PM-5:30PM
+        var result = await bookingService.GetBookedSlotsWithMembersForRangeAsync(
+            [day1, day2], memberCategory: MembershipCategory.ShareholderSpouse);
+
+        // Allowed time: 10AM
+        var allowedSlotDay1 = result[day1].FirstOrDefault(s => s.Time == new TimeOnly(10, 0));
+        Assert.IsNotNull(allowedSlotDay1);
+        Assert.IsTrue(allowedSlotDay1.UserCanBook, "Silver member should be allowed at 10AM on Monday");
+
+        // Restricted time: 4PM on Monday (weekday 3PM-5:30PM restriction)
+        var restrictedSlotDay1 = result[day1].FirstOrDefault(s => s.Time == new TimeOnly(16, 0));
+        Assert.IsNotNull(restrictedSlotDay1);
+        Assert.IsFalse(restrictedSlotDay1.UserCanBook, "Silver member should be restricted at 4PM on Monday");
+
+        // Tuesday restricted time: 4PM should also be false
+        var restrictedSlotDay2 = result[day2].FirstOrDefault(s => s.Time == new TimeOnly(16, 0));
+        Assert.IsNotNull(restrictedSlotDay2);
+        Assert.IsFalse(restrictedSlotDay2.UserCanBook, "Silver member should be restricted at 4PM on Tuesday");
+    }
+
+    [TestMethod]
+    public async Task GetBookedSlotsWithMembers_MemberAlreadyBooked_UserCanBookIsFalse()
+    {
+        using var scope = CreateScopeWithSeason();
+        var provider = scope.ServiceProvider;
+
+        var bookingService = provider.GetRequiredService<TeeTimeBookingService<Guid>>();
+
+        var booker = await CreateMemberAsync(provider, MembershipCategory.Shareholder);
+
+        // Book the slot for the member
+        await bookingService.CreateReservationAsync(new TeeTimeSlot(SeasonDate, SlotTime, booker, []));
+
+        // Query with the same member's ID — conflict rule should deny
+        var bookedSlots = await bookingService.GetBookedSlotsWithMembersAsync(SeasonDate, MembershipCategory.Shareholder, booker);
+        var targetSlot = bookedSlots.FirstOrDefault(s => s.Time == SlotTime);
+
+        Assert.IsNotNull(targetSlot);
+        Assert.IsFalse(targetSlot.UserCanBook, "UserCanBook should be false when the member is already booked in the slot");
+    }
+
+    [TestMethod]
+    public async Task GetBookedSlotsWithMembers_SlotFull_UserCanBookIsFalse()
+    {
+        using var scope = CreateScopeWithSeason();
+        var provider = scope.ServiceProvider;
+
+        var bookingService = provider.GetRequiredService<TeeTimeBookingService<Guid>>();
+
+        var member1 = await CreateMemberAsync(provider, MembershipCategory.Shareholder);
+        var member2 = await CreateMemberAsync(provider, MembershipCategory.Shareholder);
+        var member3 = await CreateMemberAsync(provider, MembershipCategory.Shareholder);
+        var member4 = await CreateMemberAsync(provider, MembershipCategory.Shareholder);
+
+        // Fill the slot to capacity
+        await bookingService.CreateReservationAsync(new TeeTimeSlot(SeasonDate, SlotTime, member1, [member2]));
+        await bookingService.CreateReservationAsync(new TeeTimeSlot(SeasonDate, SlotTime, member3, [member4]));
+
+        // A new member tries to check availability — slot is full
+        var newMember = await CreateMemberAsync(provider, MembershipCategory.Shareholder);
+        var bookedSlots = await bookingService.GetBookedSlotsWithMembersAsync(SeasonDate, MembershipCategory.Shareholder, newMember);
+        var targetSlot = bookedSlots.FirstOrDefault(s => s.Time == SlotTime);
+
+        Assert.IsNotNull(targetSlot);
+        Assert.IsFalse(targetSlot.UserCanBook, "UserCanBook should be false when the slot is full");
+    }
+
+    [TestMethod]
     public async Task GetAvailability_ReturnsCorrectRemainingCapacity()
     {
         using var scope = CreateScopeWithSeason();

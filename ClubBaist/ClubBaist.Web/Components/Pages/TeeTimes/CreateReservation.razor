@@ -28,7 +28,9 @@
 {
     <div class="alert alert-success">
         <p>@successMessage</p>
-        <a href="@(isAdmin ? "/teetimes/staff" : "/teetimes/my")" class="btn btn-outline-success mt-2">View Reservations</a>
+        <a href="@(isAdmin ? "/teetimes/staff" : "/teetimes/my")" class="btn btn-outline-success mt-2">
+            @(isAdmin ? "Back to Staff Console" : "View Reservations")
+        </a>
     </div>
 }
 else if (isLoading)
@@ -133,7 +135,8 @@ else
         }
         Book Tee Time
     </button>
-    <a href="/teetimes" class="btn btn-outline-secondary ms-2">Cancel</a>
+    <a href="@(isAdmin ? "/teetimes/staff" : "/teetimes")"
+       class="btn btn-outline-secondary ms-2">Cancel</a>
 }
 
 @code {
@@ -142,6 +145,9 @@ else
 
     [SupplyParameterFromQuery]
     public string? Time { get; set; }
+
+    [SupplyParameterFromQuery]
+    public int? BookFor { get; set; }
 
     private DateOnly slotDate;
     private TimeOnly slotTime;
@@ -200,6 +206,9 @@ else
                 .OrderBy(m => m.LastName)
                 .ThenBy(m => m.FirstName)
                 .ToListAsync();
+
+            if (isAdmin && BookFor.HasValue && allMembers.Any(m => m.MemberAccountId == BookFor.Value))
+                _bookingMemberId = BookFor.Value;
         }
         catch (Exception ex)
         {

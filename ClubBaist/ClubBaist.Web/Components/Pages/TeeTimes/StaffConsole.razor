@@ -120,10 +120,19 @@
         <div class="card mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <strong>Reservations for @selectedMember.FirstName @selectedMember.LastName (@selectedMember.MemberNumber)</strong>
-                <a href="@($"/teetimes?date={DateOnly.FromDateTime(DateTime.Today):yyyy-MM-dd}")"
-                   class="btn btn-sm btn-primary">
-                    Book on Behalf
-                </a>
+                @if (selectedMember.IsActive)
+                {
+                    <button class="btn btn-sm @(showBookingPanel ? "btn-secondary" : "btn-primary")"
+                            @onclick="ToggleBookingPanel">
+                        @(showBookingPanel ? "Hide Availability" : "Book on Behalf")
+                    </button>
+                }
+                else
+                {
+                    <button class="btn btn-sm btn-secondary" disabled title="Booking is not available for inactive members">
+                        Book on Behalf (inactive)
+                    </button>
+                }
             </div>
             <div class="card-body">
                 @if (isLoadingReservations)
@@ -192,6 +201,22 @@
                 }
             </div>
         </div>
+
+        @if (showBookingPanel)
+        {
+            <div class="card mb-4">
+                <div class="card-header">
+                    <strong>Availability — as seen by @selectedMember.FirstName @selectedMember.LastName (@selectedMember.MembershipCategory)</strong>
+                </div>
+                <div class="card-body">
+                    <TeeTimeAvailabilityPanel @key="selectedMember.MemberAccountId"
+                        MemberCategory="selectedMember.MembershipCategory"
+                        IsAdmin="true"
+                        CurrentMemberAccountId="0"
+                        BookForMemberId="selectedMember.MemberAccountId" />
+                </div>
+            </div>
+        }
     }
 }
 else
@@ -335,6 +360,7 @@ else
     private MemberAccount<Guid>? selectedMember;
     private List<Reservation>? memberReservations;
     private bool isLoadingReservations;
+    private bool showBookingPanel;
 
     // Reservations view state
     private string reservationSearchTerm = string.Empty;
@@ -431,9 +457,15 @@ else
         }
     }
 
+    private void ToggleBookingPanel()
+    {
+        showBookingPanel = !showBookingPanel;
+    }
+
     private async Task SelectMember(MemberAccount<Guid> member)
     {
         selectedMember = member;
+        showBookingPanel = false;
         cancelConfirmId = null;
         isLoadingReservations = true;
         errorMessage = null;

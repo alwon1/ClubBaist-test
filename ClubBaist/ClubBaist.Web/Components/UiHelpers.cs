@@ -15,12 +15,10 @@ public static class UiHelpers
         _ => "bg-secondary"
     };
 
-    public static string GetSlotCapacityClass(int remainingCapacity) => remainingCapacity switch
-    {
-        BookingConstants.MaxPlayersPerSlot => "slot-row-open",
-        > 0 => "slot-row-partial",
-        _ => "slot-row-full"
-    };
+    public static string GetSlotStatusClass(int remainingCapacity, bool userCanBook) =>
+        remainingCapacity == 0 ? "slot-row-full" :
+        userCanBook ? "slot-row-open" :
+        "slot-row-restricted";
 
     public static string GetRoleBadgeClass(string role) => role switch
     {
