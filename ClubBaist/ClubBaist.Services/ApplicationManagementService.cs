@@ -53,11 +53,12 @@ public class ApplicationManagementService<TKey> where TKey : IEquatable<TKey>
             throw new InvalidOperationException($"Failed to create user account: {errors}");
         }
 
+        MembershipApplication<TKey>? membershipApplication = null;
         try
         {
             var submittedAt = submitRequest.SubmittedAt ?? DateTime.UtcNow;
 
-            var membershipApplication = MembershipApplication<TKey>.Submit(
+            membershipApplication = MembershipApplication<TKey>.Submit(
                 (TKey)(object)applicationUser.Id,
                 submitRequest.FirstName,
                 submitRequest.LastName,
@@ -82,6 +83,12 @@ public class ApplicationManagementService<TKey> where TKey : IEquatable<TKey>
         }
         catch
         {
+            // Detach the unsaved application so it doesn't interfere with the compensating user deletion.
+            // EF Core's Remove() on an Added (not-yet-saved) entity detaches it rather than issuing a DELETE.
+            if (membershipApplication is not null)
+            {
+                _dbContext.MembershipApplications.Remove(membershipApplication);
+            }
             await _userManager.DeleteAsync(applicationUser);
             throw;
         }

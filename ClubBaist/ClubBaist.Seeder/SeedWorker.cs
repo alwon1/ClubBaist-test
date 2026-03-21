@@ -19,6 +19,7 @@ public class SeedWorker(
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
 
         logger.LogInformation("Creating database schema...");
+        await db.Database.EnsureDeletedAsync(stoppingToken);
         await db.Database.EnsureCreatedAsync(stoppingToken);
 
         await SeedRolesAsync(roleManager, stoppingToken);

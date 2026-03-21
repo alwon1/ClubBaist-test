@@ -9,7 +9,6 @@
 
 @inject ApplicationManagementService<Guid> ApplicationService
 @inject IApplicationDbContext<Guid> DbContext
-@inject SignInManager<ApplicationUser> SignInManager
 @inject ILogger<Apply> Logger
 
 <PageTitle>Apply for Membership</PageTitle>
@@ -181,28 +180,16 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-floating mb-3">
-                                <InputSelect id="sponsor1" class="form-select" @bind-Value="_model.Sponsor1MemberId">
-                                    <option value="">-- Select Sponsor 1 --</option>
-                                    @foreach (var sponsor in _sponsors)
-                                    {
-                                        <option value="@sponsor.MemberAccountId">@sponsor.ApplicationUser?.FirstName @sponsor.ApplicationUser?.LastName (@sponsor.MemberNumber)</option>
-                                    }
-                                </InputSelect>
-                                <label for="sponsor1">Sponsor 1</label>
-                                <ValidationMessage For="() => _model.Sponsor1MemberId" />
+                                <InputNumber id="sponsor1" class="form-control" @bind-Value="_model.Sponsor1MemberNumber" placeholder="Sponsor 1 Member Number" />
+                                <label for="sponsor1">Sponsor 1 Member Number</label>
+                                <ValidationMessage For="() => _model.Sponsor1MemberNumber" />
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-floating mb-3">
-                                <InputSelect id="sponsor2" class="form-select" @bind-Value="_model.Sponsor2MemberId">
-                                    <option value="">-- Select Sponsor 2 --</option>
-                                    @foreach (var sponsor in _sponsors)
-                                    {
-                                        <option value="@sponsor.MemberAccountId">@sponsor.ApplicationUser?.FirstName @sponsor.ApplicationUser?.LastName (@sponsor.MemberNumber)</option>
-                                    }
-                                </InputSelect>
-                                <label for="sponsor2">Sponsor 2</label>
-                                <ValidationMessage For="() => _model.Sponsor2MemberId" />
+                                <InputNumber id="sponsor2" class="form-control" @bind-Value="_model.Sponsor2MemberNumber" placeholder="Sponsor 2 Member Number" />
+                                <label for="sponsor2">Sponsor 2 Member Number</label>
+                                <ValidationMessage For="() => _model.Sponsor2MemberNumber" />
                             </div>
                         </div>
                     </div>
@@ -224,22 +211,10 @@
 
 @code {
     private ApplicationFormModel _model = new();
-    private List<MemberAccount<Guid>> _sponsors = [];
     private bool _submitting;
     private bool _submitted;
     private string? _successMessage;
     private string? _errorMessage;
-
-    protected override async Task OnInitializedAsync()
-    {
-        _sponsors = await DbContext.MemberAccounts
-            .Include(m => m.ApplicationUser)
-            .Where(m => m.IsActive && m.MembershipCategory == MembershipCategory.Shareholder)
-            .OrderBy(m => m.ApplicationUser!.LastName)
-            .ThenBy(m => m.ApplicationUser!.FirstName)
-            .AsNoTracking()
-            .ToListAsync();
-    }
 
     private async Task HandleSubmitAsync()
     {
@@ -249,9 +224,37 @@
 
         try
         {
-            if (_model.Sponsor1MemberId == _model.Sponsor2MemberId)
+            if (_model.Sponsor1MemberNumber == _model.Sponsor2MemberNumber)
             {
                 _errorMessage = "Sponsor 1 and Sponsor 2 must be different members.";
+                _submitting = false;
+                return;
+            }
+
+            var sponsor1AccountId = await DbContext.MemberAccounts
+                .Where(m => m.MemberNumber == _model.Sponsor1MemberNumber!.Value
+                         && m.IsActive
+                         && m.MembershipCategory == MembershipCategory.Shareholder)
+                .Select(m => (int?)m.MemberAccountId)
+                .FirstOrDefaultAsync();
+
+            if (sponsor1AccountId is null)
+            {
+                _errorMessage = "Sponsor 1 member number was not found or is not an active Shareholder member.";
+                _submitting = false;
+                return;
+            }
+
+            var sponsor2AccountId = await DbContext.MemberAccounts
+                .Where(m => m.MemberNumber == _model.Sponsor2MemberNumber!.Value
+                         && m.IsActive
+                         && m.MembershipCategory == MembershipCategory.Shareholder)
+                .Select(m => (int?)m.MemberAccountId)
+                .FirstOrDefaultAsync();
+
+            if (sponsor2AccountId is null)
+            {
+                _errorMessage = "Sponsor 2 member number was not found or is not an active Shareholder member.";
                 _submitting = false;
                 return;
             }
@@ -270,16 +273,14 @@
                 Phone: _model.Phone!,
                 DateOfBirth: _model.DateOfBirth,
                 RequestedMembershipCategory: _model.RequestedMembershipCategory!.Value,
-                Sponsor1MemberId: _model.Sponsor1MemberId!.Value,
-                Sponsor2MemberId: _model.Sponsor2MemberId!.Value,
+                Sponsor1MemberId: sponsor1AccountId.Value,
+                Sponsor2MemberId: sponsor2AccountId.Value,
                 AlternatePhone: _model.AlternatePhone
             );
 
-            SubmitApplicationResult<Guid> result = await ApplicationService.SubmitApplicationAsync(request, CancellationToken.None);
+            await ApplicationService.SubmitApplicationAsync(request, CancellationToken.None);
 
-            await SignInManager.SignInAsync(result.ApplicationUser, isPersistent: false);
-
-            _successMessage = "Your membership application has been submitted successfully. You will be notified once it has been reviewed.";
+            _successMessage = "Your membership application has been submitted successfully. You can now log in with your new account and will be notified once your application has been reviewed.";
             _submitted = true;
         }
         catch (Exception ex)
@@ -347,10 +348,10 @@
         [Required(ErrorMessage = "Membership category is required.")]
         public MembershipCategory? RequestedMembershipCategory { get; set; }
 
-        [Required(ErrorMessage = "Sponsor 1 is required.")]
-        public int? Sponsor1MemberId { get; set; }
+        [Required(ErrorMessage = "Sponsor 1 member number is required.")]
+        public int? Sponsor1MemberNumber { get; set; }
 
-        [Required(ErrorMessage = "Sponsor 2 is required.")]
-        public int? Sponsor2MemberId { get; set; }
+        [Required(ErrorMessage = "Sponsor 2 member number is required.")]
+        public int? Sponsor2MemberNumber { get; set; }
     }
 }
