@@ -17,9 +17,12 @@ public static class ServiceCollectionExtensions
         services.AddScoped<MemberManagementService<TKey>>();
         services.AddScoped<ApplicationManagementService<TKey>>();
         services.AddScoped<TeeTimeBookingService<TKey>>();
+        services.AddScoped<StandingTeeTimeService<TKey>>();
+        services.AddScoped<ClubEventService<TKey>>();
 
-        // Booking rules
+        // Booking rules (order matters)
         services.AddScoped<IBookingRule, BookingWindowRule>();
+        services.AddScoped<IBookingRule, ClubEventBlockingRule<TKey>>();
         services.AddScoped<IBookingRule, SlotCapacityRule<TKey>>();
         services.AddScoped<IBookingRule, MembershipTimeRestrictionRule>();
         services.AddScoped<IBookingRule, MemberConflictRule<TKey>>();

@@ -213,10 +213,19 @@ public class TeeTimeBookingService<TKey> where TKey : IEquatable<TKey>
         TeeTimeSlot slot,
         CancellationToken cancellationToken = default)
     {
+        var (remaining, _) = await CreateReservationAsync(slot, standingTeeTimeId: null, cancellationToken);
+        return remaining;
+    }
+
+    public async Task<(int Remaining, Guid? ReservationId)> CreateReservationAsync(
+        TeeTimeSlot slot,
+        Guid? standingTeeTimeId,
+        CancellationToken cancellationToken = default)
+    {
         var memberCategory = await FetchMemberCategoryAsync(slot.BookingMemberAccountId, cancellationToken);
 
         if (memberCategory is null)
-            return -1;
+            return (-1, null);
 
         var strategy = _dbContext.CreateExecutionStrategy();
         return await strategy.ExecuteAsync(async () =>
@@ -227,14 +236,15 @@ public class TeeTimeBookingService<TKey> where TKey : IEquatable<TKey>
             var remaining = await EvaluateRulesAsync(slot, context, cancellationToken);
 
             if (remaining < 0)
-                return -1;
+                return (-1, (Guid?)null);
 
             var reservation = new Reservation
             {
                 SlotDate = slot.SlotDate,
                 SlotTime = slot.SlotTime,
                 BookingMemberAccountId = slot.BookingMemberAccountId,
-                PlayerMemberAccountIds = slot.PlayerMemberAccountIds
+                PlayerMemberAccountIds = slot.PlayerMemberAccountIds,
+                StandingTeeTimeId = standingTeeTimeId
             };
 
             _dbContext.Reservations.Add(reservation);
@@ -242,7 +252,7 @@ public class TeeTimeBookingService<TKey> where TKey : IEquatable<TKey>
             await transaction.CommitAsync(cancellationToken);
 
             _availabilityUpdates.Notify(slot.SlotDate);
-            return remaining;
+            return (remaining, reservation.ReservationId);
         });
     }
 

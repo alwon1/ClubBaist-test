@@ -8,4 +8,5 @@ public class Reservation
     public int BookingMemberAccountId { get; set; }
     public List<int> PlayerMemberAccountIds { get; set; } = [];
     public bool IsCancelled { get; set; }
+    public Guid? StandingTeeTimeId { get; set; }
 }

@@ -10,6 +10,8 @@ public interface IApplicationDbContext<TKey> where TKey : IEquatable<TKey>
     DbSet<ApplicationStatusHistory<TKey>> ApplicationStatusHistories { get; }
     DbSet<Season> Seasons { get; }
     DbSet<Reservation> Reservations { get; }
+    DbSet<StandingTeeTime> StandingTeeTimes { get; }
+    DbSet<ClubEvent> ClubEvents { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default);
