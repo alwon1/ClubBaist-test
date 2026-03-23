@@ -13,6 +13,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<ApplicationStatusHistory<Guid>> ApplicationStatusHistories => Set<ApplicationStatusHistory<Guid>>();
     public DbSet<Season> Seasons => Set<Season>();
     public DbSet<Reservation> Reservations => Set<Reservation>();
+    public DbSet<StandingTeeTime> StandingTeeTimes => Set<StandingTeeTime>();
+    public DbSet<ClubEvent> ClubEvents => Set<ClubEvent>();
 
     public Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default) =>
         Database.BeginTransactionAsync(cancellationToken);
@@ -84,6 +86,24 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             entity.HasKey(r => r.ReservationId);
             entity.HasIndex(r => new { r.BookingMemberAccountId, r.SlotDate, r.SlotTime });
             entity.PrimitiveCollection(r => r.PlayerMemberAccountIds);
+        });
+
+        builder.Entity<StandingTeeTime>(entity =>
+        {
+            entity.HasKey(s => s.StandingTeeTimeId);
+            entity.HasOne(s => s.Season)
+                .WithMany()
+                .HasForeignKey(s => s.SeasonId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.PrimitiveCollection(s => s.PlayerMemberAccountIds);
+            entity.HasIndex(s => new { s.SeasonId, s.BookingMemberAccountId, s.DayOfWeek, s.SlotTime });
+        });
+
+        builder.Entity<ClubEvent>(entity =>
+        {
+            entity.HasKey(e => e.ClubEventId);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
+            entity.HasIndex(e => e.EventDate);
         });
     }
 }
