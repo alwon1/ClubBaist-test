@@ -6,10 +6,12 @@ namespace ClubBaist.Services;
 public class ClubEventService<TKey> where TKey : IEquatable<TKey>
 {
     private readonly IApplicationDbContext<TKey> _db;
+    private readonly AvailabilityUpdateService _availabilityUpdates;
 
-    public ClubEventService(IApplicationDbContext<TKey> db)
+    public ClubEventService(IApplicationDbContext<TKey> db, AvailabilityUpdateService availabilityUpdates)
     {
         _db = db;
+        _availabilityUpdates = availabilityUpdates;
     }
 
     public async Task<ClubEvent> CreateAsync(
@@ -20,6 +22,9 @@ public class ClubEventService<TKey> where TKey : IEquatable<TKey>
         string? description = null,
         CancellationToken cancellationToken = default)
     {
+        if (endTime <= startTime)
+            throw new ArgumentException("End time must be after start time", nameof(endTime));
+
         var clubEvent = new ClubEvent
         {
             Name = name,
@@ -31,6 +36,7 @@ public class ClubEventService<TKey> where TKey : IEquatable<TKey>
 
         _db.ClubEvents.Add(clubEvent);
         await _db.SaveChangesAsync(cancellationToken);
+        _availabilityUpdates.Notify(eventDate);
         return clubEvent;
     }
 
@@ -43,11 +49,16 @@ public class ClubEventService<TKey> where TKey : IEquatable<TKey>
         string? description = null,
         CancellationToken cancellationToken = default)
     {
+        if (endTime <= startTime)
+            throw new ArgumentException("End time must be after start time", nameof(endTime));
+
         var clubEvent = await _db.ClubEvents
             .FirstOrDefaultAsync(e => e.ClubEventId == clubEventId, cancellationToken);
 
         if (clubEvent is null)
             return false;
+
+        var oldDate = clubEvent.EventDate;
 
         clubEvent.Name = name;
         clubEvent.EventDate = eventDate;
@@ -56,6 +67,11 @@ public class ClubEventService<TKey> where TKey : IEquatable<TKey>
         clubEvent.Description = description;
 
         await _db.SaveChangesAsync(cancellationToken);
+
+        _availabilityUpdates.Notify(oldDate);
+        if (eventDate != oldDate)
+            _availabilityUpdates.Notify(eventDate);
+
         return true;
     }
 
@@ -71,6 +87,7 @@ public class ClubEventService<TKey> where TKey : IEquatable<TKey>
 
         _db.ClubEvents.Remove(clubEvent);
         await _db.SaveChangesAsync(cancellationToken);
+        _availabilityUpdates.Notify(clubEvent.EventDate);
         return true;
     }
 

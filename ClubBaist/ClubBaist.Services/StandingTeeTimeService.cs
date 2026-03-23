@@ -20,7 +20,6 @@ public class StandingTeeTimeService<TKey> where TKey : IEquatable<TKey>
     }
 
     public async Task<StandingTeeTime?> RequestAsync(
-        Guid seasonId,
         DayOfWeek dayOfWeek,
         TimeOnly slotTime,
         int bookingMemberAccountId,
@@ -38,10 +37,13 @@ public class StandingTeeTimeService<TKey> where TKey : IEquatable<TKey>
         if (playerMemberAccountIds.Count != 3)
             return null;
 
+        if (playerMemberAccountIds.Distinct().Count() != 3)
+            return null;
+
+        if (playerMemberAccountIds.Contains(bookingMemberAccountId))
+            return null;
+
         var alreadyExists = await _db.StandingTeeTimes.AnyAsync(s =>
-            s.SeasonId == seasonId &&
-            s.DayOfWeek == dayOfWeek &&
-            s.SlotTime == slotTime &&
             s.BookingMemberAccountId == bookingMemberAccountId &&
             (s.Status == StandingTeeTimeStatus.Pending || s.Status == StandingTeeTimeStatus.Approved),
             cancellationToken);
@@ -51,7 +53,6 @@ public class StandingTeeTimeService<TKey> where TKey : IEquatable<TKey>
 
         var stt = new StandingTeeTime
         {
-            SeasonId = seasonId,
             DayOfWeek = dayOfWeek,
             SlotTime = slotTime,
             BookingMemberAccountId = bookingMemberAccountId,
@@ -74,13 +75,17 @@ public class StandingTeeTimeService<TKey> where TKey : IEquatable<TKey>
         if (stt is null || stt.Status != StandingTeeTimeStatus.Pending)
             return [];
 
-        var season = await _db.Seasons
-            .FirstOrDefaultAsync(s => s.SeasonId == stt.SeasonId, cancellationToken);
+        var activeSeasons = await _db.Seasons
+            .Where(s => s.SeasonStatus == SeasonStatus.Active || s.SeasonStatus == SeasonStatus.Planned)
+            .ToListAsync(cancellationToken);
 
-        if (season is null)
-            return [];
+        var reservationIds = new List<Guid>();
 
-        var reservationIds = await CreateReservationsForSttAsync(stt, season, cancellationToken);
+        foreach (var season in activeSeasons)
+        {
+            var seasonResIds = await CreateReservationsForSttAsync(stt, season, cancellationToken);
+            reservationIds.AddRange(seasonResIds);
+        }
 
         stt.Status = StandingTeeTimeStatus.Approved;
         await _db.SaveChangesAsync(cancellationToken);
@@ -145,7 +150,7 @@ public class StandingTeeTimeService<TKey> where TKey : IEquatable<TKey>
             return new Dictionary<Guid, IReadOnlyList<Guid>>();
 
         var approvedStts = await _db.StandingTeeTimes
-            .Where(s => s.SeasonId == seasonId && s.Status == StandingTeeTimeStatus.Approved)
+            .Where(s => s.Status == StandingTeeTimeStatus.Approved)
             .ToListAsync(cancellationToken);
 
         var result = new Dictionary<Guid, IReadOnlyList<Guid>>();
@@ -156,16 +161,6 @@ public class StandingTeeTimeService<TKey> where TKey : IEquatable<TKey>
         }
 
         return result;
-    }
-
-    public async Task<IReadOnlyList<StandingTeeTime>> GetBySeasonAsync(
-        Guid seasonId,
-        CancellationToken cancellationToken = default)
-    {
-        return await _db.StandingTeeTimes
-            .AsNoTracking()
-            .Where(s => s.SeasonId == seasonId)
-            .ToListAsync(cancellationToken);
     }
 
     public async Task<IReadOnlyList<StandingTeeTime>> GetByMemberAsync(
@@ -187,8 +182,11 @@ public class StandingTeeTimeService<TKey> where TKey : IEquatable<TKey>
 
         // Find the first date within the season that matches the Standing Tee Time's DayOfWeek,
         // then iterate weekly to avoid unnecessary per-day checks.
-        var daysOffset = ((int)stt.DayOfWeek - (int)season.StartDate.DayOfWeek + 7) % 7;
-        var firstMatchingDate = season.StartDate.AddDays(daysOffset);
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        var searchStart = season.StartDate > today ? season.StartDate : today;
+
+        var daysOffset = ((int)stt.DayOfWeek - (int)searchStart.DayOfWeek + 7) % 7;
+        var firstMatchingDate = searchStart.AddDays(daysOffset);
 
         for (var date = firstMatchingDate; date <= season.EndDate; date = date.AddDays(7))
         {
