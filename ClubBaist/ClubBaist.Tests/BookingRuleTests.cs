@@ -420,6 +420,149 @@ public sealed class BookingRuleTests
 
     #endregion
 
+    #region ClubEventBlockingRule
+
+    [TestMethod]
+    public async Task ClubEventBlockingRule_NoEvents_ReturnsMaxValue()
+    {
+        using var scope = TestServiceHost.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var rule = new ClubEventBlockingRule<Guid>(dbContext);
+
+        var slot = new TeeTimeSlot(new DateOnly(2026, 6, 15), new TimeOnly(10, 0), 0, []);
+        var context = new BookingEvaluationContext(null);
+
+        var result = await rule.EvaluateAsync(slot, context);
+
+        Assert.AreEqual(int.MaxValue, result);
+    }
+
+    [TestMethod]
+    public async Task ClubEventBlockingRule_SlotDuringEvent_ReturnsNegative()
+    {
+        using var scope = TestServiceHost.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+        var date = new DateOnly(2026, 6, 15);
+        dbContext.ClubEvents.Add(new ClubEvent
+        {
+            Name = "Member Day",
+            EventDate = date,
+            StartTime = new TimeOnly(9, 0),
+            EndTime = new TimeOnly(11, 0)
+        });
+        await dbContext.SaveChangesAsync();
+
+        var rule = new ClubEventBlockingRule<Guid>(dbContext);
+        var slot = new TeeTimeSlot(date, new TimeOnly(10, 0), 0, []);
+        var context = new BookingEvaluationContext(null);
+
+        var result = await rule.EvaluateAsync(slot, context);
+
+        Assert.AreEqual(-1, result, "Slot during an event should be blocked");
+    }
+
+    [TestMethod]
+    public async Task ClubEventBlockingRule_SlotOutsideEvent_ReturnsMaxValue()
+    {
+        using var scope = TestServiceHost.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+        var date = new DateOnly(2026, 6, 15);
+        dbContext.ClubEvents.Add(new ClubEvent
+        {
+            Name = "Member Day",
+            EventDate = date,
+            StartTime = new TimeOnly(9, 0),
+            EndTime = new TimeOnly(11, 0)
+        });
+        await dbContext.SaveChangesAsync();
+
+        var rule = new ClubEventBlockingRule<Guid>(dbContext);
+        var slot = new TeeTimeSlot(date, new TimeOnly(12, 0), 0, []);
+        var context = new BookingEvaluationContext(null);
+
+        var result = await rule.EvaluateAsync(slot, context);
+
+        Assert.AreEqual(int.MaxValue, result, "Slot outside the event window should not be blocked");
+    }
+
+    [TestMethod]
+    public async Task ClubEventBlockingRule_OptionA_PrefetchedContext_BlocksCorrectly()
+    {
+        // Option A: caller supplies BlockedEventsByDate — no DB query is issued by the rule.
+        using var scope = TestServiceHost.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var rule = new ClubEventBlockingRule<Guid>(dbContext);
+
+        var date = new DateOnly(2026, 6, 15);
+        var prefetchedEvent = new ClubEvent
+        {
+            Name = "Prefetched Event",
+            EventDate = date,
+            StartTime = new TimeOnly(8, 0),
+            EndTime = new TimeOnly(10, 0)
+        };
+
+        var eventsByDate = new Dictionary<DateOnly, IReadOnlyList<ClubEvent>>
+        {
+            [date] = [prefetchedEvent]
+        };
+
+        var blockedSlot = new TeeTimeSlot(date, new TimeOnly(9, 0), 0, []);
+        var freeSlot = new TeeTimeSlot(date, new TimeOnly(11, 0), 0, []);
+        var context = new BookingEvaluationContext(null, BlockedEventsByDate: eventsByDate);
+
+        Assert.AreEqual(-1, await rule.EvaluateAsync(blockedSlot, context));
+        Assert.AreEqual(int.MaxValue, await rule.EvaluateAsync(freeSlot, context));
+    }
+
+    [TestMethod]
+    public async Task ClubEventBlockingRule_OptionB_PerDateCacheReducesQueries()
+    {
+        // Option B: rule caches per date — second evaluation for the same date
+        // reads from the in-memory cache, not the DB.
+        using var scope = TestServiceHost.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+        var date = new DateOnly(2026, 6, 15);
+        dbContext.ClubEvents.Add(new ClubEvent
+        {
+            Name = "Cached Event",
+            EventDate = date,
+            StartTime = new TimeOnly(9, 0),
+            EndTime = new TimeOnly(11, 0)
+        });
+        await dbContext.SaveChangesAsync();
+
+        var rule = new ClubEventBlockingRule<Guid>(dbContext);
+
+        // First call — populates the cache for this date.
+        var first = await rule.EvaluateAsync(
+            new TeeTimeSlot(date, new TimeOnly(10, 0), 0, []),
+            new BookingEvaluationContext(null));
+
+        // Second call — served from cache; add a new event to verify DB is NOT re-queried.
+        dbContext.ClubEvents.Add(new ClubEvent
+        {
+            Name = "Post-cache Event",
+            EventDate = date,
+            StartTime = new TimeOnly(13, 0),
+            EndTime = new TimeOnly(14, 0)
+        });
+        await dbContext.SaveChangesAsync();
+
+        var second = await rule.EvaluateAsync(
+            new TeeTimeSlot(date, new TimeOnly(13, 30), 0, []),
+            new BookingEvaluationContext(null));
+
+        Assert.AreEqual(-1, first, "First slot should be blocked");
+        Assert.AreEqual(int.MaxValue, second,
+            "Cache is used for the same date — post-cache event should not be seen");
+    }
+
+    #endregion
+
     /// <summary>
     /// Returns a DateOnly in June 2026 matching the specified day of week.
     /// </summary>

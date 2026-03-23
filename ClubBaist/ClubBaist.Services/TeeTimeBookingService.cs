@@ -41,6 +41,17 @@ public class TeeTimeBookingService<TKey> where TKey : IEquatable<TKey>
                 g => g.Key,
                 g => g.Sum(r => r.PlayerMemberAccountIds.Count + 1));
 
+        // Option A: prefetch all club events for the range in one query.
+        var eventsInRange = await _dbContext.ClubEvents
+            .AsNoTracking()
+            .Where(e => e.EventDate >= from && e.EventDate <= to)
+            .ToListAsync(cancellationToken);
+
+        var eventsByDate = eventsInRange
+            .GroupBy(e => e.EventDate)
+            .ToDictionary(g => g.Key, g => (IReadOnlyList<ClubEvent>)g.ToList())
+            as IReadOnlyDictionary<DateOnly, IReadOnlyList<ClubEvent>>;
+
         var days = new List<DayAvailability>();
 
         for (var date = from; date <= to; date = date.AddDays(1))
@@ -53,7 +64,8 @@ public class TeeTimeBookingService<TKey> where TKey : IEquatable<TKey>
                 occupancyBySlot.TryGetValue((date, time), out var occupancy);
                 var context = new BookingEvaluationContext(
                     MemberCategory: null,
-                    PrecomputedOccupancy: occupancy);
+                    PrecomputedOccupancy: occupancy,
+                    BlockedEventsByDate: eventsByDate);
 
                 var slot = new TeeTimeSlot(date, time, 0, []);
                 var remaining = Math.Max(0, await EvaluateRulesAsync(slot, context, cancellationToken));
