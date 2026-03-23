@@ -420,6 +420,176 @@ public sealed class BookingRuleTests
 
     #endregion
 
+    #region ClubEventBlockingRule
+
+    [TestMethod]
+    public async Task ClubEventBlockingRule_NoEventOnDate_ReturnsMaxValue()
+    {
+        using var scope = TestServiceHost.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var rule = new ClubEventBlockingRule<Guid>(dbContext);
+
+        var slot = new TeeTimeSlot(new DateOnly(2026, 6, 15), new TimeOnly(10, 0), 1, []);
+        var context = new BookingEvaluationContext(MembershipCategory.Shareholder);
+
+        var result = await rule.EvaluateAsync(slot, context);
+
+        Assert.AreEqual(int.MaxValue, result, "No event on date should allow booking");
+    }
+
+    [TestMethod]
+    public async Task ClubEventBlockingRule_SlotWithinEventWindow_ReturnsNegative()
+    {
+        using var scope = TestServiceHost.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+        var eventDate = new DateOnly(2026, 6, 15);
+        dbContext.ClubEvents.Add(new ClubEvent
+        {
+            Name = "Club Championship",
+            EventDate = eventDate,
+            StartTime = new TimeOnly(8, 0),
+            EndTime = new TimeOnly(14, 0)
+        });
+        await dbContext.SaveChangesAsync();
+
+        var rule = new ClubEventBlockingRule<Guid>(dbContext);
+        var slot = new TeeTimeSlot(eventDate, new TimeOnly(10, 0), 1, []);
+        var context = new BookingEvaluationContext(MembershipCategory.Shareholder);
+
+        var result = await rule.EvaluateAsync(slot, context);
+
+        Assert.AreEqual(-1, result, "Slot within event window should be blocked");
+    }
+
+    [TestMethod]
+    public async Task ClubEventBlockingRule_SlotBeforeEvent_ReturnsMaxValue()
+    {
+        using var scope = TestServiceHost.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+        var eventDate = new DateOnly(2026, 6, 15);
+        dbContext.ClubEvents.Add(new ClubEvent
+        {
+            Name = "Afternoon Event",
+            EventDate = eventDate,
+            StartTime = new TimeOnly(13, 0),
+            EndTime = new TimeOnly(17, 0)
+        });
+        await dbContext.SaveChangesAsync();
+
+        var rule = new ClubEventBlockingRule<Guid>(dbContext);
+        var slot = new TeeTimeSlot(eventDate, new TimeOnly(10, 0), 1, []);
+        var context = new BookingEvaluationContext(MembershipCategory.Shareholder);
+
+        var result = await rule.EvaluateAsync(slot, context);
+
+        Assert.AreEqual(int.MaxValue, result, "Slot before event window should not be blocked");
+    }
+
+    [TestMethod]
+    public async Task ClubEventBlockingRule_SlotAfterEvent_ReturnsMaxValue()
+    {
+        using var scope = TestServiceHost.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+        var eventDate = new DateOnly(2026, 6, 15);
+        dbContext.ClubEvents.Add(new ClubEvent
+        {
+            Name = "Morning Event",
+            EventDate = eventDate,
+            StartTime = new TimeOnly(7, 0),
+            EndTime = new TimeOnly(11, 0)
+        });
+        await dbContext.SaveChangesAsync();
+
+        var rule = new ClubEventBlockingRule<Guid>(dbContext);
+        var slot = new TeeTimeSlot(eventDate, new TimeOnly(14, 0), 1, []);
+        var context = new BookingEvaluationContext(MembershipCategory.Shareholder);
+
+        var result = await rule.EvaluateAsync(slot, context);
+
+        Assert.AreEqual(int.MaxValue, result, "Slot after event window should not be blocked");
+    }
+
+    [TestMethod]
+    public async Task ClubEventBlockingRule_EventOnDifferentDate_ReturnsMaxValue()
+    {
+        using var scope = TestServiceHost.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+        dbContext.ClubEvents.Add(new ClubEvent
+        {
+            Name = "Other Day Event",
+            EventDate = new DateOnly(2026, 6, 16),
+            StartTime = new TimeOnly(8, 0),
+            EndTime = new TimeOnly(18, 0)
+        });
+        await dbContext.SaveChangesAsync();
+
+        var rule = new ClubEventBlockingRule<Guid>(dbContext);
+        var slot = new TeeTimeSlot(new DateOnly(2026, 6, 15), new TimeOnly(10, 0), 1, []);
+        var context = new BookingEvaluationContext(MembershipCategory.Shareholder);
+
+        var result = await rule.EvaluateAsync(slot, context);
+
+        Assert.AreEqual(int.MaxValue, result, "Event on a different date should not block this slot");
+    }
+
+    [TestMethod]
+    public async Task ClubEventBlockingRule_SlotAtExactStartTime_ReturnsNegative()
+    {
+        using var scope = TestServiceHost.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+        var eventDate = new DateOnly(2026, 6, 15);
+        var startTime = new TimeOnly(9, 0);
+        dbContext.ClubEvents.Add(new ClubEvent
+        {
+            Name = "Start Boundary Event",
+            EventDate = eventDate,
+            StartTime = startTime,
+            EndTime = new TimeOnly(12, 0)
+        });
+        await dbContext.SaveChangesAsync();
+
+        var rule = new ClubEventBlockingRule<Guid>(dbContext);
+        var slot = new TeeTimeSlot(eventDate, startTime, 1, []);
+        var context = new BookingEvaluationContext(MembershipCategory.Shareholder);
+
+        var result = await rule.EvaluateAsync(slot, context);
+
+        Assert.AreEqual(-1, result, "Slot exactly at event start time should be blocked");
+    }
+
+    [TestMethod]
+    public async Task ClubEventBlockingRule_SlotAtExactEndTime_ReturnsNegative()
+    {
+        using var scope = TestServiceHost.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+        var eventDate = new DateOnly(2026, 6, 15);
+        var endTime = new TimeOnly(12, 0);
+        dbContext.ClubEvents.Add(new ClubEvent
+        {
+            Name = "End Boundary Event",
+            EventDate = eventDate,
+            StartTime = new TimeOnly(9, 0),
+            EndTime = endTime
+        });
+        await dbContext.SaveChangesAsync();
+
+        var rule = new ClubEventBlockingRule<Guid>(dbContext);
+        var slot = new TeeTimeSlot(eventDate, endTime, 1, []);
+        var context = new BookingEvaluationContext(MembershipCategory.Shareholder);
+
+        var result = await rule.EvaluateAsync(slot, context);
+
+        Assert.AreEqual(-1, result, "Slot exactly at event end time should be blocked");
+    }
+
+    #endregion
+
     /// <summary>
     /// Returns a DateOnly in June 2026 matching the specified day of week.
     /// </summary>
