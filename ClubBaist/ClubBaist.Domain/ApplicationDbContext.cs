@@ -93,7 +93,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         {
             entity.HasKey(s => s.StandingTeeTimeId);
             entity.PrimitiveCollection(s => s.PlayerMemberAccountIds);
-            entity.HasIndex(s => new { s.SeasonId, s.DayOfWeek, s.SlotTime, s.BookingMemberAccountId });
+            entity.HasIndex(s => new { s.DayOfWeek, s.SlotTime, s.BookingMemberAccountId });
         });
 
         builder.Entity<ClubEvent>(entity =>
