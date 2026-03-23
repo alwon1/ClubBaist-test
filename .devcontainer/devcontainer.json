@@ -2,22 +2,24 @@
     "image": "mcr.microsoft.com/devcontainers/dotnet:dev-10.0-noble",
     "features": {
       "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+      "ghcr.io/devcontainers/features/github-cli:1": {},
       "ghcr.io/devcontainers/features/powershell:1": {},
       "ghcr.io/devcontainers/features/node:1": {},
       "ghcr.io/devcontainers/features/python:1": {},
       "ghcr.io/devcontainers-extra/features/uv:1": {}
     },
     "onCreateCommand": "curl -sSL https://aspire.dev/install.sh | bash",
+    "postCreateCommand": "npm install -g @anthropic-ai/claude-code",
     "postStartCommand": "dotnet dev-certs https --trust",
     "customizations": {
       "vscode": {
         "extensions": [
           "anthropic.claude-code",
+          "github.copilot-chat",
           "ms-azuretools.vscode-containers",
           "ms-dotnettools.csdevkit",
           "GitHub.remotehub",
-          "ms-azuretools.vscode-docker",
-          "ms-dotnettools.csharp"
+          "ms-vscode.powershell"
         ]
       }
     }
