@@ -185,11 +185,13 @@ public class StandingTeeTimeService<TKey> where TKey : IEquatable<TKey>
     {
         var reservationIds = new List<Guid>();
 
-        for (var date = season.StartDate; date <= season.EndDate; date = date.AddDays(1))
-        {
-            if (date.DayOfWeek != stt.DayOfWeek)
-                continue;
+        // Find the first date within the season that matches the Standing Tee Time's DayOfWeek,
+        // then iterate weekly to avoid unnecessary per-day checks.
+        var daysOffset = ((int)stt.DayOfWeek - (int)season.StartDate.DayOfWeek + 7) % 7;
+        var firstMatchingDate = season.StartDate.AddDays(daysOffset);
 
+        for (var date = firstMatchingDate; date <= season.EndDate; date = date.AddDays(7))
+        {
             var slot = new TeeTimeSlot(date, stt.SlotTime, stt.BookingMemberAccountId, stt.PlayerMemberAccountIds);
             var (remaining, reservationId) = await _bookingService.CreateReservationAsync(slot, stt.StandingTeeTimeId, cancellationToken);
 
