@@ -39,9 +39,6 @@ public class StandingTeeTimeService<TKey> where TKey : IEquatable<TKey>
             return null;
 
         var alreadyExists = await _db.StandingTeeTimes.AnyAsync(s =>
-            s.SeasonId == seasonId &&
-            s.DayOfWeek == dayOfWeek &&
-            s.SlotTime == slotTime &&
             s.BookingMemberAccountId == bookingMemberAccountId &&
             (s.Status == StandingTeeTimeStatus.Pending || s.Status == StandingTeeTimeStatus.Approved),
             cancellationToken);
