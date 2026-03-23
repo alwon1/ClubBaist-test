@@ -87,6 +87,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             entity.HasIndex(r => new { r.BookingMemberAccountId, r.SlotDate, r.SlotTime });
             entity.PrimitiveCollection(r => r.PlayerMemberAccountIds);
             entity.Property(r => r.StandingTeeTimeId);
+            entity.HasIndex(r => new { r.StandingTeeTimeId, r.SlotDate });
         });
 
         builder.Entity<StandingTeeTime>(entity =>
