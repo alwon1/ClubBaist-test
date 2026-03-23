@@ -20,7 +20,6 @@ public class StandingTeeTimeService<TKey> where TKey : IEquatable<TKey>
     }
 
     public async Task<StandingTeeTime?> RequestAsync(
-        Guid seasonId,
         DayOfWeek dayOfWeek,
         TimeOnly slotTime,
         int bookingMemberAccountId,
@@ -39,7 +38,6 @@ public class StandingTeeTimeService<TKey> where TKey : IEquatable<TKey>
             return null;
 
         var alreadyExists = await _db.StandingTeeTimes.AnyAsync(s =>
-            s.SeasonId == seasonId &&
             s.DayOfWeek == dayOfWeek &&
             s.SlotTime == slotTime &&
             s.BookingMemberAccountId == bookingMemberAccountId &&
@@ -51,7 +49,6 @@ public class StandingTeeTimeService<TKey> where TKey : IEquatable<TKey>
 
         var stt = new StandingTeeTime
         {
-            SeasonId = seasonId,
             DayOfWeek = dayOfWeek,
             SlotTime = slotTime,
             BookingMemberAccountId = bookingMemberAccountId,
@@ -66,6 +63,7 @@ public class StandingTeeTimeService<TKey> where TKey : IEquatable<TKey>
 
     public async Task<IReadOnlyList<Guid>> ApproveAsync(
         Guid standingTeeTimeId,
+        Guid seasonId,
         CancellationToken cancellationToken = default)
     {
         var stt = await _db.StandingTeeTimes
@@ -75,7 +73,7 @@ public class StandingTeeTimeService<TKey> where TKey : IEquatable<TKey>
             return [];
 
         var season = await _db.Seasons
-            .FirstOrDefaultAsync(s => s.SeasonId == stt.SeasonId, cancellationToken);
+            .FirstOrDefaultAsync(s => s.SeasonId == seasonId, cancellationToken);
 
         if (season is null)
             return [];
@@ -145,7 +143,7 @@ public class StandingTeeTimeService<TKey> where TKey : IEquatable<TKey>
             return new Dictionary<Guid, IReadOnlyList<Guid>>();
 
         var approvedStts = await _db.StandingTeeTimes
-            .Where(s => s.SeasonId == seasonId && s.Status == StandingTeeTimeStatus.Approved)
+            .Where(s => s.Status == StandingTeeTimeStatus.Approved)
             .ToListAsync(cancellationToken);
 
         var result = new Dictionary<Guid, IReadOnlyList<Guid>>();
@@ -156,16 +154,6 @@ public class StandingTeeTimeService<TKey> where TKey : IEquatable<TKey>
         }
 
         return result;
-    }
-
-    public async Task<IReadOnlyList<StandingTeeTime>> GetBySeasonAsync(
-        Guid seasonId,
-        CancellationToken cancellationToken = default)
-    {
-        return await _db.StandingTeeTimes
-            .AsNoTracking()
-            .Where(s => s.SeasonId == seasonId)
-            .ToListAsync(cancellationToken);
     }
 
     public async Task<IReadOnlyList<StandingTeeTime>> GetByMemberAsync(
