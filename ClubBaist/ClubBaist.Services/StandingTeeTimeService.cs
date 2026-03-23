@@ -38,6 +38,12 @@ public class StandingTeeTimeService<TKey> where TKey : IEquatable<TKey>
         if (playerMemberAccountIds.Count != 3)
             return null;
 
+        if (playerMemberAccountIds.Distinct().Count() != 3)
+            return null;
+
+        if (playerMemberAccountIds.Contains(bookingMemberAccountId))
+            return null;
+
         var alreadyExists = await _db.StandingTeeTimes.AnyAsync(s =>
             s.SeasonId == seasonId &&
             s.DayOfWeek == dayOfWeek &&
