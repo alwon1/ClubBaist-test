@@ -185,7 +185,10 @@ public class StandingTeeTimeService<TKey> where TKey : IEquatable<TKey>
     {
         var reservationIds = new List<Guid>();
 
-        for (var date = season.StartDate; date <= season.EndDate; date = date.AddDays(1))
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        var startDate = today > season.StartDate ? today : season.StartDate;
+
+        for (var date = startDate; date <= season.EndDate; date = date.AddDays(1))
         {
             if (date.DayOfWeek != stt.DayOfWeek)
                 continue;
