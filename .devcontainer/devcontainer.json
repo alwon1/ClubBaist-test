@@ -15,7 +15,9 @@
           "anthropic.claude-code",
           "ms-azuretools.vscode-containers",
           "ms-dotnettools.csdevkit",
-          "GitHub.remotehub"
+          "GitHub.remotehub",
+          "ms-azuretools.vscode-docker",
+          "ms-dotnettools.csharp"
         ]
       }
     }
