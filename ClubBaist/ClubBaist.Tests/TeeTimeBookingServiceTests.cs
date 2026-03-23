@@ -30,6 +30,61 @@ public sealed class TeeTimeBookingServiceTests
     }
 
     [TestMethod]
+    public async Task CreateReservationWithStandingTeeTimeId_ValidSlot_ReturnsReservationId()
+    {
+        using var scope = CreateScopeWithSeason();
+        var provider = scope.ServiceProvider;
+
+        var bookingService = provider.GetRequiredService<TeeTimeBookingService<Guid>>();
+        var memberId = await CreateMemberAsync(provider, MembershipCategory.Shareholder);
+        var standingId = Guid.NewGuid();
+
+        var slot = new TeeTimeSlot(SeasonDate, SlotTime, memberId, []);
+        var (remaining, reservationId) = await bookingService.CreateReservationAsync(slot, standingId);
+
+        Assert.IsGreaterThanOrEqualTo(0, remaining, "CreateReservation should succeed for a valid slot");
+        Assert.IsNotNull(reservationId, "ReservationId should be returned on success");
+        Assert.AreNotEqual(Guid.Empty, reservationId.Value, "ReservationId should not be an empty Guid");
+    }
+
+    [TestMethod]
+    public async Task CreateReservationWithStandingTeeTimeId_ValidSlot_PersistsStandingTeeTimeId()
+    {
+        using var scope = CreateScopeWithSeason();
+        var provider = scope.ServiceProvider;
+
+        var bookingService = provider.GetRequiredService<TeeTimeBookingService<Guid>>();
+        var dbContext = provider.GetRequiredService<ApplicationDbContext>();
+        var memberId = await CreateMemberAsync(provider, MembershipCategory.Shareholder);
+        var standingId = Guid.NewGuid();
+
+        var slot = new TeeTimeSlot(SeasonDate, SlotTime, memberId, []);
+        var (_, reservationId) = await bookingService.CreateReservationAsync(slot, standingId);
+
+        Assert.IsNotNull(reservationId, "ReservationId should be returned on success");
+        var saved = await dbContext.Reservations.FindAsync(reservationId.Value);
+        Assert.IsNotNull(saved, "Reservation should be persisted in the database");
+        Assert.AreEqual(standingId, saved.StandingTeeTimeId, "StandingTeeTimeId should be stored on the Reservation");
+    }
+
+    [TestMethod]
+    public async Task CreateReservationWithStandingTeeTimeId_InvalidMember_ReturnsNullReservationId()
+    {
+        using var scope = CreateScopeWithSeason();
+        var provider = scope.ServiceProvider;
+
+        var bookingService = provider.GetRequiredService<TeeTimeBookingService<Guid>>();
+        var standingId = Guid.NewGuid();
+
+        // Use a member account ID that does not exist in the database
+        var slot = new TeeTimeSlot(SeasonDate, SlotTime, -1, []);
+        var (remaining, reservationId) = await bookingService.CreateReservationAsync(slot, standingId);
+
+        Assert.AreEqual(-1, remaining, "Should fail when the booking member does not exist");
+        Assert.IsNull(reservationId, "ReservationId should be null when the booking fails");
+    }
+
+    [TestMethod]
     public async Task CreateReservation_SlotFull_ReturnsNegative()
     {
         using var scope = CreateScopeWithSeason();
