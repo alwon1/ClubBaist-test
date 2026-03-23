@@ -274,6 +274,28 @@ public sealed class TeeTimeBookingServiceTests
     }
 
     [TestMethod]
+    public async Task CreateReservationAsync_WithStandingTeeTimeId_PersistsId()
+    {
+        using var scope = CreateScopeWithSeason();
+        var provider = scope.ServiceProvider;
+        var bookingService = provider.GetRequiredService<TeeTimeBookingService<Guid>>();
+        var dbContext = provider.GetRequiredService<ApplicationDbContext>();
+
+        var bookerId = await CreateMemberAsync(provider, MembershipCategory.Shareholder);
+        var standingTeeTimeId = Guid.NewGuid();
+
+        var slot = new TeeTimeSlot(SeasonDate, SlotTime, bookerId, []);
+        var (remaining, reservationId) = await bookingService.CreateReservationAsync(slot, standingTeeTimeId);
+
+        Assert.AreEqual(3, remaining, "A single player booking should leave 3 spots remaining");
+        Assert.IsNotNull(reservationId, "Reservation ID should be returned");
+
+        var reservation = await dbContext.Reservations.FindAsync(reservationId);
+        Assert.IsNotNull(reservation);
+        Assert.AreEqual(standingTeeTimeId, reservation.StandingTeeTimeId, "StandingTeeTimeId should be persisted");
+    }
+
+    [TestMethod]
     public async Task GetBookedSlotsWithMembers_ReturnsCorrectReservationGroups()
     {
         using var scope = CreateScopeWithSeason();
