@@ -20,6 +20,9 @@ public class ClubEventService<TKey> where TKey : IEquatable<TKey>
         string? description = null,
         CancellationToken cancellationToken = default)
     {
+        if (endTime <= startTime)
+            throw new ArgumentException("endTime must be later than startTime.", nameof(endTime));
+
         var clubEvent = new ClubEvent
         {
             Name = name,
@@ -43,6 +46,9 @@ public class ClubEventService<TKey> where TKey : IEquatable<TKey>
         string? description = null,
         CancellationToken cancellationToken = default)
     {
+        if (endTime <= startTime)
+            throw new ArgumentException("endTime must be later than startTime.", nameof(endTime));
+
         var clubEvent = await _db.ClubEvents
             .FirstOrDefaultAsync(e => e.ClubEventId == clubEventId, cancellationToken);
 
