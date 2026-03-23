@@ -20,6 +20,9 @@ public class ClubEventService<TKey> where TKey : IEquatable<TKey>
         string? description = null,
         CancellationToken cancellationToken = default)
     {
+        if (endTime <= startTime)
+            throw new ArgumentException("EndTime must be later than StartTime.", nameof(endTime));
+
         var clubEvent = new ClubEvent
         {
             Name = name,
@@ -48,6 +51,9 @@ public class ClubEventService<TKey> where TKey : IEquatable<TKey>
 
         if (clubEvent is null)
             return false;
+
+        if (endTime <= startTime)
+            throw new ArgumentException("EndTime must be later than StartTime.", nameof(endTime));
 
         clubEvent.Name = name;
         clubEvent.EventDate = eventDate;
