@@ -1,4 +1,4 @@
-using Azure.Provisioning.AppService;
+//using Azure.Provisioning.AppService;
 using Microsoft.Extensions.Hosting;
 
 var builder = DistributedApplication.CreateBuilder(args);
