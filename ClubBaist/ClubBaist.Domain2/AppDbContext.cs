@@ -1,12 +1,15 @@
 using System.Data;
+using ClubBaist.Domain2.Entities;
 using ClubBaist.Domain2.Entities.Membership;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage;
 
 namespace ClubBaist.Domain2;
 
-public class AppDbContext : DbContext
+public class AppDbContext : IdentityDbContext<ClubBaistUser, IdentityRole<Guid>, Guid>, IAppDbContext2
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
@@ -27,6 +30,8 @@ public class AppDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        base.OnModelCreating(modelBuilder);
+
         modelBuilder.Entity<TeeTimeBooking>(entity =>
         {
             entity.HasMany(b => b.AdditionalParticipants)
