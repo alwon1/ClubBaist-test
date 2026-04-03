@@ -79,12 +79,25 @@ public class MembershipApplicationService(IAppDbContext2 db, UserManager<ClubBai
                     EmailConfirmed = true,
                 };
 
-                var result = await userManager.CreateAsync(user, "ChangeMe123!");
+                var password = GenerateOneTimePassword();
+                var result = await userManager.CreateAsync(user, password);
                 if (!result.Succeeded)
                 {
                     foreach (var error in result.Errors)
                     {
                         logger.LogError("User creation failed for {Email}: {Code} - {Description}", application.Email, error.Code, error.Description);
+                    }
+
+                    await transaction.RollbackAsync();
+                    return false;
+                }
+
+                var roleResult = await userManager.AddToRoleAsync(user, AppRoles.Member);
+                if (!roleResult.Succeeded)
+                {
+                    foreach (var error in roleResult.Errors)
+                    {
+                        logger.LogError("Role assignment failed for {Email}: {Code} - {Description}", application.Email, error.Code, error.Description);
                     }
 
                     await transaction.RollbackAsync();
@@ -143,6 +156,38 @@ public class MembershipApplicationService(IAppDbContext2 db, UserManager<ClubBai
 
         application.Status = status;
         return await db.SaveChangesAsync() > 0;
+    }
+
+    /// <summary>
+    /// Generates a cryptographically random one-time password that satisfies the default
+    /// ASP.NET Core Identity password policy (uppercase, lowercase, digit, non-alphanumeric).
+    /// The user must reset this password on first login.
+    /// </summary>
+    private static string GenerateOneTimePassword()
+    {
+        const string upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        const string lower = "abcdefghijklmnopqrstuvwxyz";
+        const string digits = "0123456789";
+        const string special = "!@#$%^&*";
+        const string all = upper + lower + digits + special;
+
+        Span<char> password = stackalloc char[16];
+        password[0] = upper[System.Security.Cryptography.RandomNumberGenerator.GetInt32(upper.Length)];
+        password[1] = lower[System.Security.Cryptography.RandomNumberGenerator.GetInt32(lower.Length)];
+        password[2] = digits[System.Security.Cryptography.RandomNumberGenerator.GetInt32(digits.Length)];
+        password[3] = special[System.Security.Cryptography.RandomNumberGenerator.GetInt32(special.Length)];
+
+        for (var i = 4; i < password.Length; i++)
+            password[i] = all[System.Security.Cryptography.RandomNumberGenerator.GetInt32(all.Length)];
+
+        // Shuffle so the required characters aren't always at fixed positions
+        for (var i = password.Length - 1; i > 0; i--)
+        {
+            var j = System.Security.Cryptography.RandomNumberGenerator.GetInt32(i + 1);
+            (password[i], password[j]) = (password[j], password[i]);
+        }
+
+        return new string(password);
     }
 }
 

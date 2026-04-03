@@ -75,6 +75,11 @@ public class SeasonService2(IAppDbContext2 db)
     /// Generates all tee-time slots for a season using the supplied operating hours.
     /// Slots are 15-minute windows with alternating 7-minute / 8-minute durations starting
     /// from <see cref="OperatingHours.Open"/> up to (but not exceeding) <see cref="OperatingHours.Close"/>.
+    /// <para>
+    /// Slot <see cref="TeeTimeSlot.Start"/> values are stored as <see cref="DateTimeKind.Unspecified"/>
+    /// (local club wall-clock time). All booking-time comparisons must use the same basis —
+    /// see <c>PastSlotRule</c> which explicitly uses <c>DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Unspecified)</c>.
+    /// </para>
     /// </summary>
     public static IEnumerable<TeeTimeSlot> GenerateSlots(
         Season season,
@@ -85,8 +90,11 @@ public class SeasonService2(IAppDbContext2 db)
             if (!operatingHours.TryGetValue(date.DayOfWeek, out var hours))
                 hours = OperatingHours.Default;
 
-            var open = date.ToDateTime(hours.Open);
-            var close = date.ToDateTime(hours.Close);
+            // Slot times are local club wall-clock time (DateTimeKind.Unspecified).
+            // DateOnly.ToDateTime already returns Unspecified; the explicit SpecifyKind
+            // call below makes the intent clear and guards against future refactors.
+            var open  = DateTime.SpecifyKind(date.ToDateTime(hours.Open),  DateTimeKind.Unspecified);
+            var close = DateTime.SpecifyKind(date.ToDateTime(hours.Close), DateTimeKind.Unspecified);
 
             // Slots sit in 15-minute windows; slot n within a window has:
             //   offset = (n / 2) * 15 + (n % 2) * 7  minutes from open
