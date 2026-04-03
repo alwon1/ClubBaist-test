@@ -217,11 +217,12 @@
                     : Enum.GetValues<ApplicationStatus>().Where(s => s != _application.Status).ToList();
 
                 var sponsorIds = new[] { _application.Sponsor1MemberId, _application.Sponsor2MemberId };
-                _sponsorNames = await DbContext.MemberShips
-                    .Include(m => m.User)
-                    .Include(m => m.MembershipLevel)
-                    .Where(m => sponsorIds.Contains(m.Id))
-                    .ToDictionaryAsync(m => m.Id, m => $"{m.User.FirstName} {m.User.LastName} ({m.MembershipNumber})");
+                _sponsorNames = (await DbContext.MemberShips
+                        .Include(m => m.User)
+                        .Include(m => m.MembershipLevel)
+                        .Where(m => sponsorIds.Contains(m.Id))
+                        .ToListAsync())
+                    .ToDictionary(m => m.Id, m => $"{m.User.FirstName} {m.User.LastName} ({m.MembershipNumber})");
 
                 _levels = await DbContext.MembershipLevels.ToListAsync();
             }

@@ -124,9 +124,8 @@
             var memberShips = await DbContext.MemberShips
                 .Include(m => m.User)
                 .Include(m => m.MembershipLevel)
-                .Select(m => new { UserId = m.User.Id, m.MembershipNumber, m.Id })
                 .ToListAsync();
-            var memberByUser = memberShips.ToDictionary(m => m.UserId);
+            var memberByUser = memberShips.ToDictionary(m => m.User.Id, m => new { m.MembershipNumber, m.Id });
 
             var rows = new List<UserRow>();
             foreach (var user in users)
