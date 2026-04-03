@@ -20,10 +20,6 @@ db.RunAsContainer();
 var sql  = db.AddDatabase("clubbaist");
 var sql2 = db.AddDatabase("clubbaist2");
 
-var seeder = builder.AddProject<Projects.ClubBaist_Seeder>("seeder")
-    .WithReference(sql)
-    .WaitFor(sql);
-
 var seeder2 = builder.AddProject<Projects.ClubBaist_Seeder2>("seeder2")
     .WithReference(sql2)
     .WaitFor(sql2);
@@ -31,13 +27,13 @@ var seeder2 = builder.AddProject<Projects.ClubBaist_Seeder2>("seeder2")
 builder.AddProject<Projects.ClubBaist_Benchmark>("benchmark")
     .WithReference(sql)
     .WithReference(sql2)
-    .WaitFor(seeder)
+    .WaitFor(sql)
     .WaitFor(seeder2);
 
 builder.AddProject<Projects.ClubBaist_Web>("web").PublishAsAzureAppServiceWebsite((infra, site) =>
     {
     }).WithExternalHttpEndpoints()
     .WithReference(sql)
-    .WaitFor(seeder);
+    .WaitFor(sql);
 
 builder.Build().Run();

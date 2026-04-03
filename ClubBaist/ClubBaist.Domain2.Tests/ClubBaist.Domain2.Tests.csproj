@@ -11,6 +11,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.5" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.5" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.5" />
     <PackageReference Include="MSTest" Version="4.0.2" />
   </ItemGroup>
 
@@ -20,6 +23,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ClubBaist.Domain2\ClubBaist.Domain2.csproj" />
+    <ProjectReference Include="..\ClubBaist.Services2\ClubBaist.Services2.csproj" />
   </ItemGroup>
 
 </Project>

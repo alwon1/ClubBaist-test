@@ -30,5 +30,6 @@ public class TeeTimeBooking
 
     public List<MemberShipInfo> AdditionalParticipants { get; set; } = new(3);
 
+    [NotMapped]
     public IReadOnlyList<MemberShipInfo> Participants => [BookingMember, ..AdditionalParticipants];
 }

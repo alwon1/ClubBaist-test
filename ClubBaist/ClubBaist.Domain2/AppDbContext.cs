@@ -44,6 +44,12 @@ public class AppDbContext : IdentityDbContext<ClubBaistUser, IdentityRole<Guid>,
                       stored: true);
         });
 
+        modelBuilder.Entity<MemberShipInfo>()
+            .HasOne(member => member.User)
+            .WithOne()
+            .HasForeignKey<MemberShipInfo>(member => member.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         modelBuilder.Entity<MembershipApplication>()
             .HasOne(a => a.RequestedMembershipLevel)
             .WithMany()

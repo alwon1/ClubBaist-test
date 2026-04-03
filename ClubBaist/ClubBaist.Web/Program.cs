@@ -7,12 +7,14 @@ using ClubBaist.Services2.Membership;
 using ClubBaist.Services2.Membership.Applications;
 using ClubBaist.Web.Components;
 using ClubBaist.Web.Components.Account;
+using ClubBaist.Web.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace ClubBaist.Web;
 
 public class Program
 {
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
 
@@ -33,7 +35,13 @@ public class Program
             })
             .AddIdentityCookies();
 
-        builder.AddSqlServerDbContext<AppDbContext>("clubbaist");
+        builder.AddSqlServerDbContext<AppDbContext>(
+            "clubbaist",
+            configureDbContextOptions: options =>
+            {
+                options.UseSeeding((context, storeCreated) => AppDbContextSeed.Seed((AppDbContext)context, storeCreated));
+                options.UseAsyncSeeding((context, storeCreated, cancellationToken) => AppDbContextSeed.SeedAsync((AppDbContext)context, storeCreated, cancellationToken));
+            });
         builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
         builder.Services.AddIdentityCore<ClubBaistUser>(options =>
@@ -54,7 +62,6 @@ public class Program
         builder.Services.AddScoped<MembershipApplicationService>();
         builder.Services.AddScoped<MembershipService>();
         builder.Services.AddScoped<MembershipLevelService>();
-        builder.Services.AddTeeTimeBookingServices2();
         // Authorization policies
         builder.Services.AddAuthorizationBuilder()
             .AddPolicy(AppRoles.Admin, policy => policy.RequireRole(AppRoles.Admin))
@@ -62,6 +69,8 @@ public class Program
             .AddPolicy(AppRoles.Member, policy => policy.RequireRole(AppRoles.Member));
 
         var app = builder.Build();
+
+        await EnsureDatabaseInitializedAsync(app);
 
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())
@@ -86,6 +95,21 @@ public class Program
         // Add additional endpoints required by the Identity /Account Razor components.
         app.MapAdditionalIdentityEndpoints();
 
-        app.Run();
+        await app.RunAsync();
+    }
+
+    private static async Task EnsureDatabaseInitializedAsync(WebApplication app)
+    {
+        await using var scope = app.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        var hasMigrations = db.Database.GetMigrations().Any();
+        if (hasMigrations)
+        {
+            await db.Database.MigrateAsync();
+            return;
+        }
+
+        await db.Database.EnsureCreatedAsync();
     }
 }

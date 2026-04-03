@@ -2,7 +2,7 @@
 
 // ─── Shared helpers ─────────────────────────────────────────────────────────
 
-file static class Builders
+internal static class Builders
 {
     public static MembershipLevel Level(int id = 1, string name = "Basic") =>
         new() { Id = id, Name = name };
