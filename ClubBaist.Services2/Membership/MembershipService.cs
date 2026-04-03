@@ -29,7 +29,6 @@ public class MembershipService(IAppDbContext2 db)
         }
 
         membership.MembershipLevelId = membershipLevelId;
-        membership.MembershipLevel = membershipLevel;
         await db.SaveChangesAsync();
         return true;
     }

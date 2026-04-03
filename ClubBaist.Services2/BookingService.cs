@@ -186,11 +186,16 @@ public class BookingService(IEnumerable<IBookingRule> rules, IAppDbContext2 db, 
 
     private async Task<TeeTimeEvaluation> EvaluateBookingAsync(TeeTimeBooking request, int? excludeBookingId = null)
     {
-        var matchingSlots = await db.TeeTimeSlots
-            .Where(slot => slot.Start == request.TeeTimeSlotStart)
-            .ToListAsync();
+        var slot = await db.TeeTimeSlots
+            .AsNoTracking()
+            .FirstOrDefaultAsync(item => item.Start == request.TeeTimeSlotStart);
 
-        return matchingSlots
+        if (slot is null)
+        {
+            return default;
+        }
+
+        return new[] { slot }
             .AsQueryable()
             .Evaluate(rules, request, excludeBookingId)
             .FirstOrDefault();
