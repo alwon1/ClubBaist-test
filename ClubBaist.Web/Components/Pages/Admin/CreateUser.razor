@@ -276,22 +276,39 @@
                 return;
             }
 
-            if (_model.IsAdmin)
-                await UserManager.AddToRoleAsync(user, AppRoles.Admin);
-            if (_model.IsMembershipCommittee)
-                await UserManager.AddToRoleAsync(user, AppRoles.MembershipCommittee);
+            var rolesToAssign = new List<string>();
+            if (_model.IsAdmin) rolesToAssign.Add(AppRoles.Admin);
+            if (_model.IsMembershipCommittee) rolesToAssign.Add(AppRoles.MembershipCommittee);
+            if (_model.IsMember) rolesToAssign.Add(AppRoles.Member);
+
+            foreach (var role in rolesToAssign)
+            {
+                var roleResult = await UserManager.AddToRoleAsync(user, role);
+                if (!roleResult.Succeeded)
+                {
+                    Logger.LogError("Failed to assign role '{Role}' to '{Email}': {Errors}", role, user.Email,
+                        string.Join(", ", roleResult.Errors.Select(e => $"{e.Code}: {e.Description}")));
+                    await UserManager.DeleteAsync(user);
+                    _errorMessage = $"Failed to assign role '{role}': {string.Join(" ", roleResult.Errors.Select(e => e.Description))}";
+                    return;
+                }
+            }
 
             if (_model.IsMember)
             {
-                await UserManager.AddToRoleAsync(user, AppRoles.Member);
-                var level = _levels.First(l => l.Id == _model.MembershipLevelId!.Value);
-                var memberShipInfo = new MemberShipInfo
+                try
                 {
-                    User = user,
-                    MembershipLevel = level
-                };
-                DbContext.MemberShips.Add(memberShipInfo);
-                await DbContext.SaveChangesAsync();
+                    var level = _levels.First(l => l.Id == _model.MembershipLevelId!.Value);
+                    DbContext.MemberShips.Add(new MemberShipInfo { User = user, MembershipLevel = level });
+                    await DbContext.SaveChangesAsync();
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex, "Failed to save membership record for '{Email}'; rolling back user creation", user.Email);
+                    await UserManager.DeleteAsync(user);
+                    _errorMessage = "Failed to save membership record. Please try again.";
+                    return;
+                }
             }
 
             NavigationManager.NavigateTo($"/admin/users/{user.Id}");
