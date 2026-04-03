@@ -34,14 +34,14 @@ public class AppDbContext : IdentityDbContext<ClubBaistUser, IdentityRole<Guid>,
 
         modelBuilder.Entity<TeeTimeBooking>(entity =>
         {
-            entity.HasMany(b => b.AdditionalParticipants)
-                  .WithMany()
-                  .UsingEntity(j => j.ToTable("BookingAdditionalParticipant"));
+            entity.HasOne(booking => booking.BookingMember)
+                .WithMany()
+                .HasForeignKey(booking => booking.BookingMemberId)
+                .OnDelete(DeleteBehavior.Restrict);
 
-            entity.Property(b => b.ParticipantCount)
-                  .HasComputedColumnSql(
-                      "(1 + (SELECT COUNT(*) FROM [BookingAdditionalParticipant] WHERE [TeeTimeBookingId] = [Id]))",
-                      stored: true);
+            entity.HasMany(booking => booking.AdditionalParticipants)
+                .WithMany()
+                .UsingEntity(join => join.ToTable("BookingAdditionalParticipant"));
         });
 
         modelBuilder.Entity<MemberShipInfo>()

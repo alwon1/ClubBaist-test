@@ -1,11 +1,7 @@
 <Project Sdk="Aspire.AppHost.Sdk/13.2.0">
 
   <ItemGroup>
-    <ProjectReference Include="..\ClubBaist.Tests\ClubBaist.Tests.csproj" />
     <ProjectReference Include="..\ClubBaist.Web\ClubBaist.Web.csproj" />
-    <ProjectReference Include="..\ClubBaist.Seeder\ClubBaist.Seeder.csproj" />
-    <ProjectReference Include="..\ClubBaist.Seeder2\ClubBaist.Seeder2.csproj" />
-    <ProjectReference Include="..\ClubBaist.Benchmark\ClubBaist.Benchmark.csproj" />
   </ItemGroup>
 
   <ItemGroup>
