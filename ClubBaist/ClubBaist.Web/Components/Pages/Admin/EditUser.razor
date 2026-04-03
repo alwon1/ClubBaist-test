@@ -6,11 +6,11 @@
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
-@using ClubBaist.Domain
-@using ClubBaist.Services
+@using ClubBaist.Domain2
+@using ClubBaist.Services2
 
-@inject UserManager<ApplicationUser> UserManager
-@inject IApplicationDbContext<Guid> DbContext
+@inject UserManager<ClubBaistUser> UserManager
+@inject IAppDbContext2 DbContext
 @inject ILogger<EditUser> Logger
 
 <PageTitle>Manage User - Club Baist</PageTitle>
@@ -137,10 +137,9 @@ else
             {
                 <p class="mb-2">
                     Member <strong>@_user.FirstName @_user.LastName</strong>
-                    &nbsp;<span class="badge bg-secondary">@_memberAccount.MemberNumber</span>
-                    &nbsp;<span class="badge @(_memberAccount.IsActive ? "bg-success" : "bg-secondary")">@(_memberAccount.IsActive ? "Active" : "Inactive")</span>
+                    &nbsp;<span class="badge bg-secondary">@_memberAccount.MembershipNumber</span>
                 </p>
-                <a href="@($"/admin/members/{_memberAccount.MemberAccountId}")" class="btn btn-outline-primary">
+                <a href="@($"/admin/members/{_memberAccount.Id}")" class="btn btn-outline-primary">
                     Edit Member Profile
                 </a>
             }
@@ -159,8 +158,8 @@ else
     [Parameter]
     public Guid UserId { get; set; }
 
-    private ApplicationUser? _user;
-    private MemberAccount<Guid>? _memberAccount;
+    private ClubBaistUser? _user;
+    private MemberShipInfo? _memberAccount;
     private bool _loading = true;
 
     private bool _roleAdmin;
@@ -195,8 +194,10 @@ else
             _roleCommittee = roles.Contains(AppRoles.MembershipCommittee);
             _roleMember = roles.Contains(AppRoles.Member);
 
-            _memberAccount = await DbContext.MemberAccounts
-                .FirstOrDefaultAsync(m => m.ApplicationUserId == UserId);
+            _memberAccount = await DbContext.MemberShips
+                .Include(m => m.User)
+                .Include(m => m.MembershipLevel)
+                .FirstOrDefaultAsync(m => m.User.Id == UserId);
         }
         catch (Exception ex)
         {

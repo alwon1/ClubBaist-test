@@ -4,10 +4,13 @@
 
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Authorization
-@using ClubBaist.Domain
-@using ClubBaist.Services
+@using Microsoft.EntityFrameworkCore
+@using ClubBaist.Domain2
+@using ClubBaist.Domain2.Entities.Membership
+@using ClubBaist.Services2
+@using ClubBaist.Services2.Membership.Applications
 
-@inject ApplicationManagementService<Guid> ApplicationService
+@inject MembershipApplicationService ApplicationService
 
 <PageTitle>Application Inbox</PageTitle>
 
@@ -63,9 +66,8 @@
                         <th>First Name</th>
                         <th>Last Name</th>
                         <th>Email</th>
-                        <th>Category</th>
+                        <th>Requested Level</th>
                         <th>Status</th>
-                        <th>Submitted</th>
                         <th>Action</th>
                     </tr>
                 </thead>
@@ -76,15 +78,14 @@
                             <td>@app.FirstName</td>
                             <td>@app.LastName</td>
                             <td>@app.Email</td>
-                            <td>@app.RequestedMembershipCategory</td>
+                            <td>@app.RequestedMembershipLevel?.Name</td>
                             <td>
-                                <span class="badge @GetStatusBadgeClass(app.CurrentStatus)">
-                                    @app.CurrentStatus
+                                <span class="badge @GetStatusBadgeClass(app.Status)">
+                                    @app.Status
                                 </span>
                             </td>
-                            <td>@app.SubmittedAt.ToString("yyyy-MM-dd")</td>
                             <td>
-                                <a href="/membership/applications/@app.ApplicationId" class="btn btn-sm btn-outline-primary">
+                                <a href="/membership/applications/@app.Id" class="btn btn-sm btn-outline-primary">
                                     Review
                                 </a>
                             </td>
@@ -97,7 +98,7 @@
 </div>
 
 @code {
-    private IReadOnlyList<MembershipApplication<Guid>>? _applications;
+    private List<MembershipApplication>? _applications;
     private ApplicationStatus? _selectedStatus;
     private bool _loading = true;
 
@@ -127,8 +128,15 @@
 
         try
         {
-            var filter = new ActionableApplicationFilter(Status: _selectedStatus);
-            _applications = await ApplicationService.GetActionableApplicationsAsync(filter, CancellationToken.None);
+            IQueryable<MembershipApplication> query = ApplicationService.GetMembershipApplications()
+                .Include(a => a.RequestedMembershipLevel);
+
+            if (_selectedStatus.HasValue)
+                query = query.Where(a => a.Status == _selectedStatus.Value);
+            else
+                query = query.Where(a => a.Status != ApplicationStatus.Accepted && a.Status != ApplicationStatus.Denied);
+
+            _applications = await query.OrderBy(a => a.Id).ToListAsync();
         }
         finally
         {

@@ -1,4 +1,4 @@
-@page "/teetimes/reservation/{ReservationId:guid}"
+@page "/teetimes/reservation/{BookingId:int}"
 @rendermode InteractiveServer
 @attribute [Authorize(Roles = AppRoles.AdminOrMember)]
 
@@ -6,13 +6,13 @@
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.EntityFrameworkCore
-@using ClubBaist.Domain
-@using ClubBaist.Services
+@using ClubBaist.Domain2
+@using ClubBaist.Domain2.Entities
+@using ClubBaist.Services2
 
-@inject TeeTimeBookingService<Guid> BookingService
-@inject IApplicationDbContext<Guid> DbContext
+@inject BookingService BookingService
+@inject IAppDbContext2 DbContext
 @inject AuthenticationStateProvider AuthStateProvider
-@inject NavigationManager Navigation
 @inject ILogger<ReservationDetail> Logger
 
 <PageTitle>Reservation Details - Club Baist</PageTitle>
@@ -37,7 +37,7 @@
         </div>
     </div>
 }
-else if (reservation is null)
+else if (booking is null)
 {
     <div class="alert alert-warning">Reservation not found.</div>
 }
@@ -46,30 +46,30 @@ else
     <div class="card mb-4">
         <div class="card-header d-flex justify-content-between align-items-center">
             <strong>Reservation Information</strong>
-            @if (reservation.IsCancelled)
+            @if (booking.TeeTimeSlotStart >= DateTime.Now)
             {
-                <span class="badge bg-secondary">Cancelled</span>
+                <span class="badge bg-success">Upcoming</span>
             }
             else
             {
-                <span class="badge bg-success">Active</span>
+                <span class="badge bg-secondary">Past</span>
             }
         </div>
         <div class="card-body">
             <div class="row">
                 <div class="col-md-6">
-                    <p><strong>Date:</strong> @reservation.SlotDate.ToString("dddd, MMMM d, yyyy")</p>
-                    <p><strong>Time:</strong> @reservation.SlotTime.ToString("h:mm tt")</p>
+                    <p><strong>Date:</strong> @booking.TeeTimeSlotStart.ToString("dddd, MMMM d, yyyy")</p>
+                    <p><strong>Time:</strong> @booking.TeeTimeSlotStart.ToString("h:mm tt")</p>
                 </div>
                 <div class="col-md-6">
-                    <p><strong>Booking Member:</strong> @GetMemberName(reservation.BookingMemberAccountId)</p>
-                    <p><strong>Total Players:</strong> @(reservation.PlayerMemberAccountIds.Count + 1)</p>
+                    <p><strong>Booking Member:</strong> @MemberName(booking.BookingMember)</p>
+                    <p><strong>Total Players:</strong> @(booking.AdditionalParticipants.Count + 1)</p>
                 </div>
             </div>
         </div>
     </div>
 
-    @if (!reservation.IsCancelled && isEditMode)
+    @if (booking.TeeTimeSlotStart >= DateTime.Now && isEditMode)
     {
         <div class="card mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
@@ -98,10 +98,10 @@ else
                                             value="@editPlayerIds[index]"
                                             @onchange="(e) => OnEditPlayerChanged(index, e)">
                                         <option value="0">-- Select Player --</option>
-                                        @foreach (var member in allMembers.Where(m => m.MemberAccountId != reservation.BookingMemberAccountId))
+                                        @foreach (var member in allMembers.Where(m => m.Id != booking.BookingMemberId))
                                         {
-                                            <option value="@member.MemberAccountId">
-                                                @member.MemberNumber - @member.ApplicationUser?.FirstName @member.ApplicationUser?.LastName
+                                            <option value="@member.Id">
+                                                @member.MembershipNumber - @member.User.FirstName @member.User.LastName
                                             </option>
                                         }
                                     </select>
@@ -130,7 +130,7 @@ else
             </div>
         </div>
     }
-    else if (!reservation.IsCancelled)
+    else if (booking.TeeTimeSlotStart >= DateTime.Now)
     {
         <div class="card mb-4">
             <div class="card-header">
@@ -139,13 +139,13 @@ else
             <div class="card-body">
                 <ul class="list-group list-group-flush">
                     <li class="list-group-item">
-                        <strong>1.</strong> @GetMemberName(reservation.BookingMemberAccountId)
+                        <strong>1.</strong> @MemberName(booking.BookingMember)
                         <span class="badge bg-primary ms-2">Booking Member</span>
                     </li>
-                    @for (var i = 0; i < reservation.PlayerMemberAccountIds.Count; i++)
+                    @for (var i = 0; i < booking.AdditionalParticipants.Count; i++)
                     {
                         <li class="list-group-item">
-                            <strong>@(i + 2).</strong> @GetMemberName(reservation.PlayerMemberAccountIds[i])
+                            <strong>@(i + 2).</strong> @MemberName(booking.AdditionalParticipants[i])
                         </li>
                     }
                 </ul>
@@ -153,7 +153,7 @@ else
         </div>
     }
 
-    @if (!reservation.IsCancelled && reservation.SlotDate >= DateOnly.FromDateTime(DateTime.Today))
+    @if (booking.TeeTimeSlotStart >= DateTime.Now)
     {
         <div class="d-flex gap-2">
             @if (!isEditMode)
@@ -180,7 +180,7 @@ else
 
 @code {
     [Parameter]
-    public Guid ReservationId { get; set; }
+    public int BookingId { get; set; }
 
     private bool isLoading = true;
     private bool isEditMode;
@@ -189,11 +189,10 @@ else
     private string? errorMessage;
     private string? successMessage;
 
-    private Reservation? reservation;
-    private List<MemberAccount<Guid>> allMembers = [];
-    private Dictionary<int, string> memberNameCache = new();
+    private TeeTimeBooking? booking;
+    private List<MemberShipInfo> allMembers = [];
     private List<int> editPlayerIds = [];
-    private int currentMemberAccountId;
+    private int currentMemberId;
     private bool isAdmin;
 
     protected override async Task OnInitializedAsync()
@@ -208,7 +207,6 @@ else
 
         try
         {
-            // Determine current user identity
             var authState = await AuthStateProvider.GetAuthenticationStateAsync();
             var user = authState.User;
             var userId = Guid.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
@@ -216,44 +214,30 @@ else
 
             if (!isAdmin)
             {
-                var currentMember = await DbContext.MemberAccounts
-                    .FirstOrDefaultAsync(m => m.ApplicationUserId == userId);
-                currentMemberAccountId = currentMember?.MemberAccountId ?? 0;
+                var currentMember = await DbContext.MemberShips
+                    .FirstOrDefaultAsync(m => m.User.Id == userId);
+                currentMemberId = currentMember?.Id ?? 0;
             }
 
-            reservation = await DbContext.Reservations
-                .FirstOrDefaultAsync(r => r.ReservationId == ReservationId);
+            booking = await DbContext.TeeTimeBookings
+                .Include(b => b.BookingMember).ThenInclude(m => m.User)
+                .Include(b => b.BookingMember).ThenInclude(m => m.MembershipLevel)
+                .Include(b => b.AdditionalParticipants).ThenInclude(m => m.User)
+                .Include(b => b.AdditionalParticipants).ThenInclude(m => m.MembershipLevel)
+                .FirstOrDefaultAsync(b => b.Id == BookingId);
 
-            if (reservation is null)
+            if (booking is null) { isLoading = false; return; }
+
+            if (!isAdmin && booking.BookingMemberId != currentMemberId)
             {
+                booking = null;
                 isLoading = false;
                 return;
             }
-
-            // Non-admin users can only view their own reservations
-            if (!isAdmin && reservation.BookingMemberAccountId != currentMemberAccountId)
-            {
-                reservation = null;
-                isLoading = false;
-                return;
-            }
-
-            // Only load members referenced by this reservation (for display names)
-            var relevantIds = new List<int> { reservation.BookingMemberAccountId };
-            relevantIds.AddRange(reservation.PlayerMemberAccountIds);
-
-            var relevantMembers = await DbContext.MemberAccounts
-                .Include(m => m.ApplicationUser)
-                .Where(m => relevantIds.Contains(m.MemberAccountId))
-                .ToListAsync();
-
-            memberNameCache = relevantMembers.ToDictionary(
-                m => m.MemberAccountId,
-                m => $"{m.ApplicationUser?.FirstName} {m.ApplicationUser?.LastName} ({m.MemberNumber})");
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Failed to load reservation {ReservationId}", ReservationId);
+            Logger.LogError(ex, "Failed to load booking {BookingId}", BookingId);
             errorMessage = "An unexpected error occurred while loading the reservation. Please try again later.";
         }
         finally
@@ -262,27 +246,22 @@ else
         }
     }
 
-    private string GetMemberName(int memberAccountId)
-    {
-        return memberNameCache.TryGetValue(memberAccountId, out var name)
-            ? name
-            : "Unknown Member";
-    }
+    private static string MemberName(MemberShipInfo m) =>
+        $"{m.User.FirstName} {m.User.LastName} ({m.MembershipNumber})";
 
     private async Task EnterEditMode()
     {
-        // Load all active members only when entering edit mode (for player dropdown)
         if (allMembers.Count == 0)
         {
-            allMembers = await DbContext.MemberAccounts
-                .Include(m => m.ApplicationUser)
-                .Where(m => m.IsActive)
-                .OrderBy(m => m.ApplicationUser!.LastName)
-                .ThenBy(m => m.ApplicationUser!.FirstName)
+            allMembers = await DbContext.MemberShips
+                .Include(m => m.User)
+                .Include(m => m.MembershipLevel)
+                .OrderBy(m => m.User.LastName)
+                .ThenBy(m => m.User.FirstName)
                 .ToListAsync();
         }
 
-        editPlayerIds = new List<int>(reservation!.PlayerMemberAccountIds);
+        editPlayerIds = booking!.AdditionalParticipants.Select(p => p.Id).ToList();
         isEditMode = true;
         successMessage = null;
     }
@@ -296,17 +275,13 @@ else
     private void OnEditPlayerChanged(int index, ChangeEventArgs e)
     {
         if (int.TryParse(e.Value?.ToString(), out var id))
-        {
             editPlayerIds[index] = id;
-        }
     }
 
     private void AddEditPlayerSlot()
     {
         if (editPlayerIds.Count < 3)
-        {
             editPlayerIds.Add(0);
-        }
     }
 
     private void RemoveEditPlayerSlot(int index)
@@ -322,14 +297,14 @@ else
 
         try
         {
-            var playerIds = editPlayerIds
-                .Where(id => id != 0)
-                .Distinct()
-                .ToList();
+            var playerIds = editPlayerIds.Where(id => id != 0).Distinct().ToList();
+            var participants = await DbContext.MemberShips
+                .Where(m => playerIds.Contains(m.Id))
+                .ToListAsync();
 
-            var result = await BookingService.UpdateReservationAsync(ReservationId, playerIds);
+            var result = await BookingService.UpdateBookingAsync(BookingId, participants);
 
-            if (result < 0)
+            if (!result)
             {
                 errorMessage = "Unable to update reservation. The slot may be full or booking rules prevent this change.";
             }
@@ -342,7 +317,7 @@ else
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Failed to update reservation {ReservationId}", ReservationId);
+            Logger.LogError(ex, "Failed to update booking {BookingId}", BookingId);
             errorMessage = "An unexpected error occurred while updating the reservation. Please try again later.";
         }
         finally
@@ -359,7 +334,7 @@ else
 
         try
         {
-            var result = await BookingService.CancelReservationAsync(ReservationId);
+            var result = await BookingService.CancelBookingAsync(BookingId);
 
             if (result)
             {
@@ -373,7 +348,7 @@ else
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Failed to cancel reservation {ReservationId}", ReservationId);
+            Logger.LogError(ex, "Failed to cancel booking {BookingId}", BookingId);
             errorMessage = "An unexpected error occurred while cancelling the reservation. Please try again later.";
         }
     }

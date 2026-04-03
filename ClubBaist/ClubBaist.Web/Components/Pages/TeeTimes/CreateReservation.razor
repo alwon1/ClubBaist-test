@@ -6,11 +6,12 @@
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.EntityFrameworkCore
-@using ClubBaist.Domain
-@using ClubBaist.Services
+@using ClubBaist.Domain2
+@using ClubBaist.Domain2.Entities
+@using ClubBaist.Services2
 
-@inject TeeTimeBookingService<Guid> BookingService
-@inject IApplicationDbContext<Guid> DbContext
+@inject BookingService BookingService
+@inject IAppDbContext2 DbContext
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Navigation
 @inject ILogger<CreateReservation> Logger
@@ -65,8 +66,8 @@ else
                         <option value="">-- Select Member --</option>
                         @foreach (var member in allMembers)
                         {
-                            <option value="@member.MemberAccountId">
-                                @member.MemberNumber - @member.ApplicationUser?.FirstName @member.ApplicationUser?.LastName
+                            <option value="@member.Id">
+                                @member.MembershipNumber - @member.User.FirstName @member.User.LastName
                             </option>
                         }
                     </select>
@@ -75,7 +76,7 @@ else
             }
             else if (currentMember is not null)
             {
-                <p>@currentMember.MemberNumber - @currentMember.ApplicationUser?.FirstName @currentMember.ApplicationUser?.LastName</p>
+                <p>@currentMember.MembershipNumber - @currentMember.User.FirstName @currentMember.User.LastName</p>
             }
         </div>
     </div>
@@ -107,10 +108,10 @@ else
                                         value="@additionalPlayerIds[index]"
                                         @onchange="(e) => OnPlayerChanged(index, e)">
                                     <option value="0">-- Select Player --</option>
-                                    @foreach (var member in allMembers.Where(m => m.MemberAccountId != _bookingMemberId))
+                                    @foreach (var member in allMembers.Where(m => m.Id != _bookingMemberId))
                                     {
-                                        <option value="@member.MemberAccountId">
-                                            @member.MemberNumber - @member.ApplicationUser?.FirstName @member.ApplicationUser?.LastName
+                                        <option value="@member.Id">
+                                            @member.MembershipNumber - @member.User.FirstName @member.User.LastName
                                         </option>
                                     }
                                 </select>
@@ -157,10 +158,8 @@ else
     private string? errorMessage;
     private string? successMessage;
 
-    private MemberAccount<Guid>? currentMember;
+    private MemberShipInfo? currentMember;
     private int _bookingMemberId;
-    // Read/write string property used by the admin <select> @bind.
-    // Stores and retrieves the int natively; no int→string→int roundtrip elsewhere.
     private string BookingMemberId
     {
         get => _bookingMemberId == 0 ? "" : _bookingMemberId.ToString();
@@ -170,7 +169,7 @@ else
             additionalPlayerIds.RemoveAll(p => p == _bookingMemberId);
         }
     }
-    private List<MemberAccount<Guid>> allMembers = [];
+    private List<MemberShipInfo> allMembers = [];
     private List<int> additionalPlayerIds = [];
 
     protected override async Task OnInitializedAsync()
@@ -189,9 +188,10 @@ else
             var userId = Guid.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
             isAdmin = user.IsInRole(AppRoles.Admin);
 
-            currentMember = await DbContext.MemberAccounts
-                .Include(m => m.ApplicationUser)
-                .FirstOrDefaultAsync(m => m.ApplicationUserId == userId);
+            currentMember = await DbContext.MemberShips
+                .Include(m => m.User)
+                .Include(m => m.MembershipLevel)
+                .FirstOrDefaultAsync(m => m.User.Id == userId);
 
             if (currentMember is null && !isAdmin)
             {
@@ -200,16 +200,16 @@ else
                 return;
             }
 
-            _bookingMemberId = currentMember?.MemberAccountId ?? 0;
+            _bookingMemberId = currentMember?.Id ?? 0;
 
-            allMembers = await DbContext.MemberAccounts
-                .Include(m => m.ApplicationUser)
-                .Where(m => m.IsActive)
-                .OrderBy(m => m.ApplicationUser!.LastName)
-                .ThenBy(m => m.ApplicationUser!.FirstName)
+            allMembers = await DbContext.MemberShips
+                .Include(m => m.User)
+                .Include(m => m.MembershipLevel)
+                .OrderBy(m => m.User.LastName)
+                .ThenBy(m => m.User.FirstName)
                 .ToListAsync();
 
-            if (isAdmin && BookFor.HasValue && allMembers.Any(m => m.MemberAccountId == BookFor.Value))
+            if (isAdmin && BookFor.HasValue && allMembers.Any(m => m.Id == BookFor.Value))
                 _bookingMemberId = BookFor.Value;
         }
         catch (Exception ex)
@@ -226,17 +226,13 @@ else
     private void OnPlayerChanged(int index, ChangeEventArgs e)
     {
         if (int.TryParse(e.Value?.ToString(), out var id))
-        {
             additionalPlayerIds[index] = id;
-        }
     }
 
     private void AddPlayerSlot()
     {
         if (additionalPlayerIds.Count < 3)
-        {
             additionalPlayerIds.Add(0);
-        }
     }
 
     private void RemovePlayerSlot(int index)
@@ -254,10 +250,7 @@ else
             return;
         }
 
-        var playerIds = additionalPlayerIds
-            .Where(id => id != 0)
-            .Distinct()
-            .ToList();
+        var playerIds = additionalPlayerIds.Where(id => id != 0).Distinct().ToList();
 
         if (playerIds.Contains(_bookingMemberId))
         {
@@ -269,16 +262,45 @@ else
 
         try
         {
-            var slot = new TeeTimeSlot(slotDate, slotTime, _bookingMemberId, playerIds);
-            var result = await BookingService.CreateReservationAsync(slot);
+            var slotStart = slotDate.ToDateTime(slotTime);
+            var slot = await DbContext.TeeTimeSlots.FirstOrDefaultAsync(s => s.Start == slotStart);
+            if (slot is null)
+            {
+                errorMessage = "The selected time slot does not exist.";
+                return;
+            }
 
-            if (result < 0)
+            var bookingMember = await DbContext.MemberShips
+                .Include(m => m.MembershipLevel)
+                .FirstOrDefaultAsync(m => m.Id == _bookingMemberId);
+            if (bookingMember is null)
+            {
+                errorMessage = "Booking member not found.";
+                return;
+            }
+
+            var additionalParticipants = await DbContext.MemberShips
+                .Where(m => playerIds.Contains(m.Id))
+                .ToListAsync();
+
+            var booking = new TeeTimeBooking
+            {
+                TeeTimeSlotStart = slotStart,
+                TeeTimeSlot = slot,
+                BookingMemberId = bookingMember.Id,
+                BookingMember = bookingMember,
+                AdditionalParticipants = additionalParticipants
+            };
+
+            var result = await BookingService.CreateBooking(booking);
+
+            if (!result)
             {
                 errorMessage = "Unable to create reservation. The slot may be full or booking rules prevent this reservation.";
             }
             else
             {
-                successMessage = $"Tee time booked successfully for {slotDate:dddd, MMMM d, yyyy} at {slotTime:h:mm tt}. Remaining spots: {result}.";
+                successMessage = $"Tee time booked successfully for {slotDate:dddd, MMMM d, yyyy} at {slotTime:h:mm tt}.";
             }
         }
         catch (Exception ex)

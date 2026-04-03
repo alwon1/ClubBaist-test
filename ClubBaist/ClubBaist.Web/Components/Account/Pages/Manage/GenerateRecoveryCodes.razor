@@ -1,9 +1,9 @@
 ﻿@page "/Account/Manage/GenerateRecoveryCodes"
 
 @using Microsoft.AspNetCore.Identity
-@using ClubBaist.Domain
+@using ClubBaist.Domain2
 
-@inject UserManager<ApplicationUser> UserManager
+@inject UserManager<ClubBaistUser> UserManager
 @inject IdentityRedirectManager RedirectManager
 @inject ILogger<GenerateRecoveryCodes> Logger
 
@@ -39,7 +39,7 @@ else
 
 @code {
     private string? message;
-    private ApplicationUser? user;
+    private ClubBaistUser? user;
     private IEnumerable<string>? recoveryCodes;
 
     [CascadingParameter]

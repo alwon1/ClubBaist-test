@@ -6,11 +6,12 @@
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.EntityFrameworkCore
-@using ClubBaist.Domain
-@using ClubBaist.Services
+@using ClubBaist.Domain2
+@using ClubBaist.Domain2.Entities
+@using ClubBaist.Services2
 
-@inject TeeTimeBookingService<Guid> BookingService
-@inject IApplicationDbContext<Guid> DbContext
+@inject IAppDbContext2 DbContext
+@inject BookingService BookingService
 @inject AuthenticationStateProvider AuthStateProvider
 @inject ILogger<MyReservations> Logger
 
@@ -43,37 +44,37 @@
         </div>
     </div>
 }
-else if (filteredReservations is not null && filteredReservations.Count > 0)
+else if (filteredBookings is not null && filteredBookings.Count > 0)
 {
-    <QuickGrid Items="@filteredReservations.AsQueryable()" Class="table table-striped" RowClass="@(r => r.IsCancelled ? "table-secondary" : "")">
-        <TemplateColumn Title="Date" SortBy="@(GridSort<Reservation>.ByAscending(r => r.SlotDate))">
-            @context.SlotDate.ToString("MMM d, yyyy")
+    <QuickGrid Items="@filteredBookings.AsQueryable()" Class="table table-striped">
+        <TemplateColumn Title="Date" SortBy="@(GridSort<TeeTimeBooking>.ByAscending(b => b.TeeTimeSlotStart))">
+            @context.TeeTimeSlotStart.ToString("MMM d, yyyy")
         </TemplateColumn>
-        <TemplateColumn Title="Time" SortBy="@(GridSort<Reservation>.ByAscending(r => r.SlotTime))">
-            @context.SlotTime.ToString("h:mm tt")
+        <TemplateColumn Title="Time" SortBy="@(GridSort<TeeTimeBooking>.ByAscending(b => b.TeeTimeSlotStart))">
+            @context.TeeTimeSlotStart.ToString("h:mm tt")
         </TemplateColumn>
         <TemplateColumn Title="Players">
-            @(context.PlayerMemberAccountIds.Count + 1)
+            @(context.AdditionalParticipants.Count + 1)
         </TemplateColumn>
         <TemplateColumn Title="Status">
-            @if (context.IsCancelled)
+            @if (context.TeeTimeSlotStart >= DateTime.Now)
             {
-                <span class="badge bg-secondary">Cancelled</span>
+                <span class="badge bg-success">Upcoming</span>
             }
             else
             {
-                <span class="badge bg-success">Active</span>
+                <span class="badge bg-secondary">Past</span>
             }
         </TemplateColumn>
         <TemplateColumn Title="Actions">
-            <a href="@($"/teetimes/reservation/{context.ReservationId}")" class="btn btn-sm btn-outline-primary me-1">
+            <a href="@($"/teetimes/reservation/{context.Id}")" class="btn btn-sm btn-outline-primary me-1">
                 View/Edit
             </a>
-            @if (!context.IsCancelled && context.SlotDate >= DateOnly.FromDateTime(DateTime.Today))
+            @if (context.TeeTimeSlotStart >= DateTime.Now)
             {
-                @if (cancelConfirmId == context.ReservationId)
+                @if (cancelConfirmId == context.Id)
                 {
-                    <button class="btn btn-sm btn-danger me-1" @onclick="() => ConfirmCancel(context.ReservationId)">
+                    <button class="btn btn-sm btn-danger me-1" @onclick="() => ConfirmCancel(context.Id)">
                         Confirm
                     </button>
                     <button class="btn btn-sm btn-outline-secondary" @onclick="() => cancelConfirmId = null">
@@ -82,7 +83,7 @@ else if (filteredReservations is not null && filteredReservations.Count > 0)
                 }
                 else
                 {
-                    <button class="btn btn-sm btn-outline-danger" @onclick="() => cancelConfirmId = context.ReservationId">
+                    <button class="btn btn-sm btn-outline-danger" @onclick="() => cancelConfirmId = context.Id">
                         Cancel
                     </button>
                 }
@@ -100,11 +101,11 @@ else
     private bool showPast;
     private string? errorMessage;
     private string? successMessage;
-    private Guid? cancelConfirmId;
+    private int? cancelConfirmId;
 
-    private MemberAccount<Guid>? currentMember;
-    private List<Reservation> allReservations = [];
-    private List<Reservation>? filteredReservations;
+    private int currentMemberId;
+    private List<TeeTimeBooking> allBookings = [];
+    private List<TeeTimeBooking>? filteredBookings;
 
     protected override async Task OnInitializedAsync()
     {
@@ -122,18 +123,22 @@ else
             var user = authState.User;
             var userId = Guid.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-            currentMember = await DbContext.MemberAccounts
-                .FirstOrDefaultAsync(m => m.ApplicationUserId == userId);
+            var member = await DbContext.MemberShips
+                .FirstOrDefaultAsync(m => m.User.Id == userId);
 
-            if (currentMember is null)
+            if (member is null)
             {
                 errorMessage = "Member account not found.";
                 isLoading = false;
                 return;
             }
 
-            allReservations = (await BookingService.GetMemberReservationsAsync(currentMember.MemberAccountId))
-                .ToList();
+            currentMemberId = member.Id;
+
+            allBookings = await DbContext.TeeTimeBookings
+                .Include(b => b.AdditionalParticipants)
+                .Where(b => b.BookingMemberId == currentMemberId)
+                .ToListAsync();
 
             ApplyFilter();
         }
@@ -150,11 +155,10 @@ else
 
     private void ApplyFilter()
     {
-        var today = DateOnly.FromDateTime(DateTime.Today);
-        filteredReservations = (showPast
-            ? allReservations
-            : allReservations.Where(r => r.SlotDate >= today))
-            .OrderBy(r => r.SlotDate).ThenBy(r => r.SlotTime)
+        filteredBookings = (showPast
+            ? allBookings
+            : allBookings.Where(b => b.TeeTimeSlotStart >= DateTime.Now))
+            .OrderBy(b => b.TeeTimeSlotStart)
             .ToList();
     }
 
@@ -164,7 +168,7 @@ else
         ApplyFilter();
     }
 
-    private async Task ConfirmCancel(Guid reservationId)
+    private async Task ConfirmCancel(int bookingId)
     {
         errorMessage = null;
         successMessage = null;
@@ -172,7 +176,7 @@ else
 
         try
         {
-            var result = await BookingService.CancelReservationAsync(reservationId);
+            var result = await BookingService.CancelBookingAsync(bookingId);
 
             if (result)
             {
@@ -181,12 +185,12 @@ else
             }
             else
             {
-                errorMessage = "Unable to cancel reservation. It may have already been cancelled.";
+                errorMessage = "Unable to cancel reservation.";
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Failed to cancel reservation {ReservationId}", reservationId);
+            Logger.LogError(ex, "Failed to cancel booking {BookingId}", bookingId);
             errorMessage = "An unexpected error occurred while cancelling the reservation. Please try again later.";
         }
     }

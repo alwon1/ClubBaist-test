@@ -1,5 +1,4 @@
-using ClubBaist.Domain;
-using ClubBaist.Services;
+using ClubBaist.Domain2.Entities.Membership;
 
 namespace ClubBaist.Web.Components;
 
@@ -25,14 +24,6 @@ public static class UiHelpers
         AppRoles.Admin => "bg-danger",
         AppRoles.MembershipCommittee => "bg-warning text-dark",
         AppRoles.Member => "bg-success",
-        _ => "bg-secondary"
-    };
-
-    public static string GetSeasonStatusBadgeClass(SeasonStatus status) => status switch
-    {
-        SeasonStatus.Active => "bg-success",
-        SeasonStatus.Planned => "bg-primary",
-        SeasonStatus.Closed => "bg-secondary",
         _ => "bg-secondary"
     };
 }
