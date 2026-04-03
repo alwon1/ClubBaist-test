@@ -8,6 +8,9 @@ public class SpecialEventBlockingRule(IQueryable<SpecialEvent> specialEvents) : 
     public IQueryable<TeeTimeEvaluation> Evaluate(IQueryable<TeeTimeEvaluation> query, MembershipLevel membershipLevel) =>
         Filter(query);
 
+    public IQueryable<TeeTimeEvaluation> Evaluate(IQueryable<TeeTimeEvaluation> query, MemberShipInfo member) =>
+        Filter(query);
+
     private IQueryable<TeeTimeEvaluation> Filter(IQueryable<TeeTimeEvaluation> query) =>
         query.Select(p => p.SpotsRemaining < 0 ? p :
             specialEvents.Any(e => e.Start <= p.Slot.Start && e.End > p.Slot.Start)

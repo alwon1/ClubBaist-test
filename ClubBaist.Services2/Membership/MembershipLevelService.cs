@@ -1,54 +1,65 @@
-using System;
 using ClubBaist.Domain2;
-using Microsoft.IdentityModel.Tokens;
+using Microsoft.EntityFrameworkCore;
 
 namespace ClubBaist.Services2.Membership;
 
-public class MembershipLevelService(AppDbContext db)
+public class MembershipLevelService(IAppDbContext2 db)
 {
     public async Task<bool> CreateMembershipLevelAsync(string name, string shortCode)
     {
-        var trans = await db.BeginTransactionAsync(isolationLevel: System.Data.IsolationLevel.Snapshot);
-        try
+        var strategy = db.CreateExecutionStrategy();
+        return await strategy.ExecuteAsync(async () =>
         {
-            var membershipLevel = new MembershipLevel
+            await using var trans = await db.BeginTransactionAsync(isolationLevel: System.Data.IsolationLevel.Snapshot);
+            try
             {
-                Name = name,
-                ShortCode = shortCode
-            };
-            db.MembershipLevels.Add(membershipLevel);
-            await db.SaveChangesAsync();
-            await trans.CommitAsync();
-            return true;
-        }
-        catch
-        {
-            await trans.RollbackAsync();
-            throw;
-        }
+                var membershipLevel = new MembershipLevel
+                {
+                    Name = name,
+                    ShortCode = shortCode
+                };
+                db.MembershipLevels.Add(membershipLevel);
+                await db.SaveChangesAsync();
+                await trans.CommitAsync();
+                return true;
+            }
+            catch
+            {
+                await trans.RollbackAsync();
+                throw;
+            }
+        });
     }
 
-    public async Task<bool> UpdateMembershipLevelAsync(MembershipLevel membershipLevel) => await UpdateMembershipLevelAsync(membershipLevel.Id, membershipLevel.Name, membershipLevel.ShortCode);
+    public async Task<bool> UpdateMembershipLevelAsync(MembershipLevel membershipLevel) =>
+        await UpdateMembershipLevelAsync(membershipLevel.Id, membershipLevel.Name, membershipLevel.ShortCode);
+
     public async Task<bool> UpdateMembershipLevelAsync(int id, string name, string shortCode)
     {
-        var trans = await db.BeginTransactionAsync(isolationLevel: System.Data.IsolationLevel.Snapshot);
-        try
+        var strategy = db.CreateExecutionStrategy();
+        return await strategy.ExecuteAsync(async () =>
         {
-            var membershipLevel = await db.MembershipLevels.FindAsync(id);
-            if (membershipLevel == null)
+            await using var trans = await db.BeginTransactionAsync(isolationLevel: System.Data.IsolationLevel.Snapshot);
+            try
             {
-                return false;
+                var membershipLevel = await db.MembershipLevels.FindAsync(id);
+                if (membershipLevel == null)
+                {
+                    await trans.RollbackAsync();
+                    return false;
+                }
+
+                membershipLevel.Name = name;
+                membershipLevel.ShortCode = shortCode;
+                await db.SaveChangesAsync();
+                await trans.CommitAsync();
+                return true;
             }
-            membershipLevel.Name = name;
-            membershipLevel.ShortCode = shortCode;
-            await db.SaveChangesAsync();
-            await trans.CommitAsync();
-            return true;
-        }
-        catch
-        {
-            await trans.RollbackAsync();
-            throw;
-        }
+            catch
+            {
+                await trans.RollbackAsync();
+                throw;
+            }
+        });
     }
 }

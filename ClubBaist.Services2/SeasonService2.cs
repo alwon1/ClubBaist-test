@@ -44,15 +44,31 @@ public class SeasonService2(IAppDbContext2 db)
         IReadOnlyDictionary<DayOfWeek, OperatingHours> operatingHours,
         CancellationToken cancellationToken = default)
     {
-        var season = new Season { Name = name, StartDate = start, EndDate = end };
-        db.Seasons.Add(season);
-        await db.SaveChangesAsync(cancellationToken);
+        ArgumentNullException.ThrowIfNull(operatingHours);
 
-        var slots = GenerateSlots(season, operatingHours).ToList();
-        await db.TeeTimeSlots.AddRangeAsync(slots, cancellationToken);
-        await db.SaveChangesAsync(cancellationToken);
+        var strategy = db.CreateExecutionStrategy();
+        return await strategy.ExecuteAsync(async () =>
+        {
+            await using var transaction = await db.BeginTransactionAsync(System.Data.IsolationLevel.Snapshot, cancellationToken);
+            try
+            {
+                var season = new Season { Name = name, StartDate = start, EndDate = end };
+                db.Seasons.Add(season);
+                await db.SaveChangesAsync(cancellationToken);
 
-        return season;
+                var slots = GenerateSlots(season, operatingHours).ToList();
+                await db.TeeTimeSlots.AddRangeAsync(slots, cancellationToken);
+                await db.SaveChangesAsync(cancellationToken);
+
+                await transaction.CommitAsync(cancellationToken);
+                return season;
+            }
+            catch
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                throw;
+            }
+        });
     }
 
     /// <summary>

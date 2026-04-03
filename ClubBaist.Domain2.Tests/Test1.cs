@@ -122,6 +122,34 @@ public class MaxParticipantsRuleTests
         Assert.AreEqual(4, result.SpotsRemaining);
         Assert.IsNull(result.RejectionReason);
     }
+
+    [TestMethod]
+    public void MembershipLevelOverload_RecalculatesRemainingSpots_AndPreservesReason()
+    {
+        var slot  = Builders.SlotAt(8);
+        var level = Builders.Level();
+        var rule  = new MaxParticipantsRule(Enumerable.Empty<TeeTimeBooking>().AsQueryable(), 4);
+
+        var result = rule.Evaluate(Builders.Seed(slot, 99, "Heads up"), level).Single();
+
+        Assert.AreEqual(4, result.SpotsRemaining);
+        Assert.AreEqual("Heads up", result.RejectionReason);
+    }
+
+    [TestMethod]
+    public void MemberOverload_DelegatesToMembershipLevelOverload()
+    {
+        var slot   = Builders.SlotAt(8);
+        var level  = Builders.Level();
+        var member = Builders.MakeMember(Builders.Id1, level);
+        var rule   = new MaxParticipantsRule(Enumerable.Empty<TeeTimeBooking>().AsQueryable(), 4);
+
+        var fromMember = rule.Evaluate(Builders.Seed(slot), member).Single();
+        var fromLevel = rule.Evaluate(Builders.Seed(slot), level).Single();
+
+        Assert.AreEqual(fromLevel.SpotsRemaining, fromMember.SpotsRemaining);
+        Assert.AreEqual(fromLevel.RejectionReason, fromMember.RejectionReason);
+    }
 }
 
 // ─── DuplicateBookingRule ────────────────────────────────────────────────────
@@ -287,6 +315,51 @@ public class DuplicateBookingRuleTests
             .Evaluate(Builders.Seed(requestedSlot), booking).Single();
 
         Assert.IsNull(result.RejectionReason);
+    }
+
+    [TestMethod]
+    public void MemberAvailability_WithNearbyBooking_KeepsCapacityButAddsReason()
+    {
+        var requestedSlot = Builders.SlotAt(8);
+        var nearbySlot = Builders.MakeSlot(requestedSlot.Start.AddHours(1));
+        var member = Builders.MakeMember(Builders.Id1);
+        var nearbyBooking = Builders.MakeBooking(nearbySlot, member);
+
+        var result = new DuplicateBookingRule(new[] { nearbyBooking }.AsQueryable())
+            .Evaluate(Builders.Seed(requestedSlot, 3), member).Single();
+
+        Assert.AreEqual(3, result.SpotsRemaining);
+        StringAssert.Contains(result.RejectionReason, "You have a booking within 2");
+    }
+
+    [TestMethod]
+    public void MemberAvailability_OutsideWindow_Allows()
+    {
+        var requestedSlot = Builders.SlotAt(8);
+        var farSlot = Builders.MakeSlot(requestedSlot.Start.AddHours(3));
+        var member = Builders.MakeMember(Builders.Id1);
+        var farBooking = Builders.MakeBooking(farSlot, member);
+
+        var result = new DuplicateBookingRule(new[] { farBooking }.AsQueryable())
+            .Evaluate(Builders.Seed(requestedSlot, 2), member).Single();
+
+        Assert.AreEqual(2, result.SpotsRemaining);
+        Assert.IsNull(result.RejectionReason);
+    }
+
+    [TestMethod]
+    public void MemberAvailability_AlreadyRejected_PassesThrough()
+    {
+        var requestedSlot = Builders.SlotAt(8);
+        var nearbySlot = Builders.MakeSlot(requestedSlot.Start.AddHours(1));
+        var member = Builders.MakeMember(Builders.Id1);
+        var nearbyBooking = Builders.MakeBooking(nearbySlot, member);
+
+        var result = new DuplicateBookingRule(new[] { nearbyBooking }.AsQueryable())
+            .Evaluate(Builders.Seed(requestedSlot, -7, "Blocked elsewhere"), member).Single();
+
+        Assert.AreEqual(-7, result.SpotsRemaining);
+        Assert.AreEqual("Blocked elsewhere", result.RejectionReason);
     }
 }
 
@@ -508,6 +581,21 @@ public class SpecialEventBlockingRuleTests
 
         Assert.AreEqual(fromLevel.SpotsRemaining, fromContext.SpotsRemaining);
         Assert.AreEqual(fromLevel.RejectionReason, fromContext.RejectionReason);
+    }
+
+    [TestMethod]
+    public void MemberAvailabilityQuery_IsAlsoBlockedBySpecialEvents()
+    {
+        var slot = Builders.SlotAt(9);
+        var ev = Builders.Event("Member Tournament", slot.Start.AddHours(-1), slot.Start.AddHours(2));
+        var level = Builders.Level();
+        var member = Builders.MakeMember(Builders.Id1, level);
+        var rule = new SpecialEventBlockingRule(new[] { ev }.AsQueryable());
+
+        var result = rule.Evaluate(Builders.Seed(slot), member).Single();
+
+        Assert.AreEqual(-3, result.SpotsRemaining);
+        StringAssert.Contains(result.RejectionReason, "Member Tournament");
     }
 }
 

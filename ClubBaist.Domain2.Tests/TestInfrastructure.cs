@@ -39,6 +39,7 @@ internal sealed class Domain2TestHost : IAsyncDisposable
         services.AddTeeTimeBookingServices2();
         services.AddScoped<MembershipApplicationService>();
         services.AddScoped<MembershipService>();
+        services.AddScoped<MembershipLevelService>();
 
         var provider = services.BuildServiceProvider();
 

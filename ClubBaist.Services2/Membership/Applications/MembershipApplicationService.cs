@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 
 namespace ClubBaist.Services2.Membership.Applications;
 
-public class MembershipApplicationService(AppDbContext db, UserManager<ClubBaistUser> userManager, ILogger<MembershipApplicationService> logger)
+public class MembershipApplicationService(IAppDbContext2 db, UserManager<ClubBaistUser> userManager, ILogger<MembershipApplicationService> logger)
 {
     public IQueryable<MembershipApplication> GetMembershipApplications() => db.MembershipApplications.AsNoTracking();
 
@@ -34,67 +34,83 @@ public class MembershipApplicationService(AppDbContext db, UserManager<ClubBaist
 
     public async Task<bool> ApproveMembershipApplicationAsync(int applicationId, int membershipLevelId)
     {
-        await db.BeginTransactionAsync(System.Data.IsolationLevel.Snapshot);
-        try
+        var strategy = db.CreateExecutionStrategy();
+        return await strategy.ExecuteAsync(async () =>
         {
-            var application = await db.MembershipApplications.FindAsync(applicationId);
-            if (application is null)
+            await using var transaction = await db.BeginTransactionAsync(System.Data.IsolationLevel.Snapshot);
+            try
             {
-                logger.LogWarning("Approve requested for non-existent application {ApplicationId}", applicationId);
-                return false;
+                var application = await db.MembershipApplications.FindAsync(applicationId);
+                if (application is null)
+                {
+                    logger.LogWarning("Approve requested for non-existent application {ApplicationId}", applicationId);
+                    await transaction.RollbackAsync();
+                    return false;
+                }
+
+                if (application.Status is ApplicationStatus.Accepted or ApplicationStatus.Denied)
+                {
+                    logger.LogWarning("Application {ApplicationId} is already {Status}; cannot approve.", applicationId, application.Status);
+                    await transaction.RollbackAsync();
+                    return false;
+                }
+
+                var membershipLevel = await db.MembershipLevels.FindAsync(membershipLevelId);
+                if (membershipLevel is null)
+                {
+                    logger.LogWarning("MembershipLevel {LevelId} not found; cannot approve application {ApplicationId}.", membershipLevelId, applicationId);
+                    await transaction.RollbackAsync();
+                    return false;
+                }
+
+                var user = new ClubBaistUser
+                {
+                    UserName = application.Email,
+                    Email = application.Email,
+                    FirstName = application.FirstName,
+                    LastName = application.LastName,
+                    DateOfBirth = application.DateOfBirth,
+                    PhoneNumber = application.Phone,
+                    AlternatePhoneNumber = application.AlternatePhone,
+                    AddressLine1 = application.Address,
+                    PostalCode = application.PostalCode,
+                    City = "Unknown",
+                    Province = "Unknown",
+                    EmailConfirmed = true,
+                };
+
+                var result = await userManager.CreateAsync(user, "ChangeMe123!");
+                if (!result.Succeeded)
+                {
+                    foreach (var error in result.Errors)
+                    {
+                        logger.LogError("User creation failed for {Email}: {Code} - {Description}", application.Email, error.Code, error.Description);
+                    }
+
+                    await transaction.RollbackAsync();
+                    return false;
+                }
+
+                db.MemberShips.Add(new MemberShipInfo { User = user, MembershipLevel = membershipLevel });
+                application.Status = ApplicationStatus.Accepted;
+
+                var saved = await db.SaveChangesAsync() > 0;
+                if (!saved)
+                {
+                    await transaction.RollbackAsync();
+                    return false;
+                }
+
+                await transaction.CommitAsync();
+                return true;
             }
-
-            if (application.Status is ApplicationStatus.Accepted or ApplicationStatus.Denied)
+            catch (Exception ex)
             {
-                logger.LogWarning("Application {ApplicationId} is already {Status}; cannot approve.", applicationId, application.Status);
-                return false;
+                logger.LogError(ex, "Error approving membership application {ApplicationId}", applicationId);
+                await transaction.RollbackAsync();
+                throw;
             }
-
-            var membershipLevel = await db.MembershipLevels.FindAsync(membershipLevelId);
-            if (membershipLevel is null)
-            {
-                logger.LogWarning("MembershipLevel {LevelId} not found; cannot approve application {ApplicationId}.", membershipLevelId, applicationId);
-                await db.Database.RollbackTransactionAsync();
-                return false;
-            }
-
-            var user = new ClubBaistUser
-            {
-                UserName = application.Email,
-                Email = application.Email,
-                FirstName = application.FirstName,
-                LastName = application.LastName,
-                DateOfBirth = application.DateOfBirth,
-                PhoneNumber = application.Phone,
-                AlternatePhoneNumber = application.AlternatePhone,
-                AddressLine1 = application.Address,
-                PostalCode = application.PostalCode,
-                City = "Unknown",
-                Province = "Unknown",
-                EmailConfirmed = true,
-            };
-
-            var result = await userManager.CreateAsync(user, "ChangeMe123!");
-            if (!result.Succeeded)
-            {
-                foreach (var error in result.Errors)
-                    logger.LogError("User creation failed for {Email}: {Code} - {Description}", application.Email, error.Code, error.Description);
-                await db.Database.RollbackTransactionAsync();
-                return false;
-            }
-
-            db.MemberShips.Add(new MemberShipInfo { User = user, MembershipLevel = membershipLevel });
-            application.Status = ApplicationStatus.Accepted;
-
-            await db.SaveChangesAsync();
-            await db.Database.CommitTransactionAsync();
-            return true;
-        }
-        catch
-        {
-            await db.Database.RollbackTransactionAsync();
-            throw;
-        }
+        });
     }
 
     public async Task<bool> DenyApplicationAsync(int applicationId)
