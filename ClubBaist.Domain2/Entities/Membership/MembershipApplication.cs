@@ -37,7 +37,7 @@ public class MembershipApplication
     public required string Address { get; set; }
     [DisplayName("Postal Code")]
     [Required(ErrorMessage = "Postal code is required.")]
-    [Length(6,6)]
+    [StringLength(7, MinimumLength = 6, ErrorMessage = "Postal code must be 6 or 7 characters.")]
     [RegularExpression(@"^[A-Za-z]\d[A-Za-z][ -]?\d[A-Za-z]\d$", ErrorMessage = "Invalid postal code format.")]
     public required string PostalCode { get; set; }
     [Required(ErrorMessage = "Phone number is required.")]
