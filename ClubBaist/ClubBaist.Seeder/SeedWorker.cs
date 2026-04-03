@@ -1,4 +1,5 @@
 using ClubBaist.Domain;
+using ClubBaist.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -26,6 +27,7 @@ public class SeedWorker(
         await SeedUsersAsync(userManager, db, stoppingToken);
         await SeedSeasonAsync(db, stoppingToken);
         await SeedApplicationsAsync(userManager, db, stoppingToken);
+        await SeedBulkReservationsAsync(db, stoppingToken);
 
         logger.LogInformation("Seeding complete. Stopping seeder.");
         lifetime.StopApplication();
@@ -259,5 +261,111 @@ public class SeedWorker(
 
         await db.SaveChangesAsync(ct);
         logger.LogInformation("Seeded {Count} in-progress membership applications", applications.Count);
+    }
+
+    /// <summary>
+    /// Seeds 20 additional bulk members then fills ~30% of tee-time slots across the season
+    /// with randomised reservations for performance benchmarking.
+    /// </summary>
+    private async Task SeedBulkReservationsAsync(ApplicationDbContext db, CancellationToken ct)
+    {
+        if (await db.Reservations.AnyAsync(ct))
+        {
+            logger.LogInformation("Reservations already seeded — skipping bulk seed.");
+            return;
+        }
+
+        // ------------------------------------------------------------------
+        // 1. Create 20 bulk members across the three meaningful categories
+        // ------------------------------------------------------------------
+        const int BulkMemberCount = 20;
+        var categories = new[]
+        {
+            MembershipCategory.Shareholder,       // Gold — unrestricted
+            MembershipCategory.ShareholderSpouse, // Silver — time-restricted
+            MembershipCategory.Junior,            // Bronze — time-restricted
+        };
+
+        var existingMax = await db.MemberAccounts.MaxAsync(m => (int?)m.MemberNumber, ct) ?? 10004;
+        var memberNumber = existingMax + 1;
+        var bulkMemberIds = new List<int>();
+
+        for (var i = 0; i < BulkMemberCount; i++)
+        {
+            var category = categories[i % categories.Length];
+            var member = new MemberAccount<Guid>
+            {
+                ApplicationUserId = Guid.NewGuid(),
+                MemberNumber = memberNumber++,
+                DateOfBirth = new DateTime(1980 + (i % 30), 1 + (i % 12), 1 + (i % 28)),
+                Address = $"{100 + i} Benchmark Ave",
+                PostalCode = "T2P 3C3",
+                MembershipCategory = category,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow,
+            };
+            db.MemberAccounts.Add(member);
+        }
+
+        await db.SaveChangesAsync(ct);
+
+        var bulkMembers = await db.MemberAccounts
+            .OrderByDescending(m => m.MemberNumber)
+            .Take(BulkMemberCount)
+            .Select(m => m.MemberAccountId)
+            .ToListAsync(ct);
+
+        // ------------------------------------------------------------------
+        // 2. Generate slot times for every day in the season
+        // ------------------------------------------------------------------
+        var season = await db.Seasons.FirstAsync(ct);
+        var scheduleService = new DefaultScheduleTimeService();
+        var rng = new Random(42); // fixed seed for reproducibility
+
+        var reservations = new List<Reservation>();
+
+        for (var date = season.StartDate; date <= season.EndDate; date = date.AddDays(1))
+        {
+            var times = scheduleService.GetScheduleTimes(date);
+
+            foreach (var time in times)
+            {
+                // ~30% of slots get a booking
+                if (rng.NextDouble() > 0.30) continue;
+
+                var booker = bulkMembers[rng.Next(bulkMembers.Count)];
+
+                // 1–3 additional players, sampled without repetition
+                var playerCount = rng.Next(0, 3);
+                var players = bulkMembers
+                    .Where(id => id != booker)
+                    .OrderBy(_ => rng.Next())
+                    .Take(playerCount)
+                    .ToList();
+
+                reservations.Add(new Reservation
+                {
+                    SlotDate = date,
+                    SlotTime = time,
+                    BookingMemberAccountId = booker,
+                    PlayerMemberAccountIds = players,
+                    IsCancelled = false
+                });
+            }
+        }
+
+        // Save in batches to avoid oversized transactions
+        const int BatchSize = 500;
+        for (var i = 0; i < reservations.Count; i += BatchSize)
+        {
+            ct.ThrowIfCancellationRequested();
+            db.Reservations.AddRange(reservations.Skip(i).Take(BatchSize));
+            await db.SaveChangesAsync(ct);
+        }
+
+        logger.LogInformation(
+            "Bulk seed complete: {Members} members, {Reservations} reservations across {Days} days",
+            BulkMemberCount, reservations.Count,
+            (season.EndDate.ToDateTime(TimeOnly.MinValue) - season.StartDate.ToDateTime(TimeOnly.MinValue)).Days + 1);
     }
 }
