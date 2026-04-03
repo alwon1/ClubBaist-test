@@ -25,8 +25,8 @@ public class TeeTimeBooking
     [Required]
     public required MemberShipInfo BookingMember { get; init; }
 
-    [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
-    public int ParticipantCount { get; private set; }
+    [NotMapped]
+    public int ParticipantCount => 1 + AdditionalParticipants.Count;
 
     public List<MemberShipInfo> AdditionalParticipants { get; set; } = new(3);
 

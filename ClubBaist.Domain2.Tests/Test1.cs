@@ -58,9 +58,9 @@ internal static class Builders
 }
 
 // ─── MaxParticipantsRule ─────────────────────────────────────────────────────
-// Note: TeeTimeBooking.ParticipantCount is a DB-computed column (private set),
-// so it is always 0 in memory. Tests exercise rule logic; capacity-full path
-// can only be verified against a real database.
+// Note: TeeTimeBooking.ParticipantCount is a [NotMapped] computed property
+// (1 + AdditionalParticipants.Count). It is calculated in memory from the
+// loaded navigation collection; DB-side queries use 1 + AdditionalParticipants.Count directly.
 
 [TestClass]
 public class MaxParticipantsRuleTests
@@ -74,7 +74,7 @@ public class MaxParticipantsRuleTests
 
         var result = rule.Evaluate(Builders.Seed(slot), booking).Single();
 
-        // ParticipantCount is 0 in memory: 4 - 0 existing - 0 incoming = 4
+        // No existing bookings; SpotsRemaining = maxParticipants - existing = 4 - 0 = 4
         Assert.AreEqual(4, result.SpotsRemaining);
         Assert.IsNull(result.RejectionReason);
     }

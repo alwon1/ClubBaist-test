@@ -463,7 +463,7 @@ public class BookingServiceTests
             BookingMember = member
         };
 
-        var created = await bookingService.CreateBooking(booking);
+        var created = await bookingService.CreateBookingAsync(booking);
 
         Assert.IsFalse(created);
     }

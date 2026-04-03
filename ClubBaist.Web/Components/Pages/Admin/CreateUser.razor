@@ -276,12 +276,12 @@
                 return;
             }
 
-            var rolesToAssign = new List<string>();
-            if (_model.IsAdmin) rolesToAssign.Add(AppRoles.Admin);
-            if (_model.IsMembershipCommittee) rolesToAssign.Add(AppRoles.MembershipCommittee);
-            if (_model.IsMember) rolesToAssign.Add(AppRoles.Member);
+            // Assign non-member roles, validating each result
+            var nonMemberRoles = new List<string>();
+            if (_model.IsAdmin) nonMemberRoles.Add(AppRoles.Admin);
+            if (_model.IsMembershipCommittee) nonMemberRoles.Add(AppRoles.MembershipCommittee);
 
-            foreach (var role in rolesToAssign)
+            foreach (var role in nonMemberRoles)
             {
                 var roleResult = await UserManager.AddToRoleAsync(user, role);
                 if (!roleResult.Succeeded)
@@ -294,17 +294,32 @@
                 }
             }
 
+            // Member role + membership record are saved atomically in a single transaction
             if (_model.IsMember)
             {
+                await using var transaction = await DbContext.BeginTransactionAsync(System.Data.IsolationLevel.ReadCommitted);
                 try
                 {
+                    var memberRoleResult = await UserManager.AddToRoleAsync(user, AppRoles.Member);
+                    if (!memberRoleResult.Succeeded)
+                    {
+                        Logger.LogError("Failed to assign Member role to '{Email}': {Errors}", user.Email,
+                            string.Join(", ", memberRoleResult.Errors.Select(e => $"{e.Code}: {e.Description}")));
+                        await transaction.RollbackAsync();
+                        await UserManager.DeleteAsync(user);
+                        _errorMessage = $"Failed to assign Member role: {string.Join(" ", memberRoleResult.Errors.Select(e => e.Description))}";
+                        return;
+                    }
+
                     var level = _levels.First(l => l.Id == _model.MembershipLevelId!.Value);
                     DbContext.MemberShips.Add(new MemberShipInfo { User = user, MembershipLevel = level });
                     await DbContext.SaveChangesAsync();
+                    await transaction.CommitAsync();
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogError(ex, "Failed to save membership record for '{Email}'; rolling back user creation", user.Email);
+                    Logger.LogError(ex, "Failed to create membership record for '{Email}'; rolling back", user.Email);
+                    await transaction.RollbackAsync();
                     await UserManager.DeleteAsync(user);
                     _errorMessage = "Failed to save membership record. Please try again.";
                     return;

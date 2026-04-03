@@ -14,7 +14,7 @@ public class MaxParticipantsRule(IQueryable<TeeTimeBooking> bookings, int maxPar
         // (the DB-computed ParticipantCount column is 0 before the row is saved).
         var incoming = 1 + booking.AdditionalParticipants.Count;
         return query
-            .Select(p => new { p, existing = bookings.Where(b => b.TeeTimeSlotStart == p.Slot.Start && (excludeBookingId == null || b.Id != excludeBookingId)).Sum(b => b.ParticipantCount) })
+            .Select(p => new { p, existing = bookings.Where(b => b.TeeTimeSlotStart == p.Slot.Start && (excludeBookingId == null || b.Id != excludeBookingId)).Sum(b => 1 + b.AdditionalParticipants.Count) })
             .Select(x => x.p.SpotsRemaining < 0 ? x.p :
                 x.existing + incoming > maxParticipants
                     ? new TeeTimeEvaluation(x.p.Slot, 0, "Tee time is full")
@@ -23,7 +23,7 @@ public class MaxParticipantsRule(IQueryable<TeeTimeBooking> bookings, int maxPar
 
     public IQueryable<TeeTimeEvaluation> Evaluate(IQueryable<TeeTimeEvaluation> query, MembershipLevel membershipLevel) =>
         query
-            .Select(p => new { p, existing = bookings.Where(b => b.TeeTimeSlotStart == p.Slot.Start).Sum(b => b.ParticipantCount) })
+            .Select(p => new { p, existing = bookings.Where(b => b.TeeTimeSlotStart == p.Slot.Start).Sum(b => 1 + b.AdditionalParticipants.Count) })
             .Select(x => x.p.SpotsRemaining < 0 ? x.p :
                 x.existing >= maxParticipants
                     ? new TeeTimeEvaluation(x.p.Slot, 0, "Tee time is full")

@@ -7,7 +7,7 @@ namespace ClubBaist.Services2;
 
 public class BookingService(IEnumerable<IBookingRule> rules, IAppDbContext2 db, ILogger<BookingService> logger)
 {
-    public async Task<bool> CreateBooking(TeeTimeBooking request)
+    public async Task<bool> CreateBookingAsync(TeeTimeBooking request)
     {
         var strategy = db.CreateExecutionStrategy();
         return await strategy.ExecuteAsync(async () =>

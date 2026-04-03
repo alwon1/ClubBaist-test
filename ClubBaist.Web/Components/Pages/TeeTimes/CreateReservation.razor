@@ -191,7 +191,7 @@ else
             currentMember = await DbContext.MemberShips
                 .Include(m => m.User)
                 .Include(m => m.MembershipLevel)
-                .FirstOrDefaultAsync(m => m.User.Id == userId);
+                .FirstOrDefaultAsync(m => m.UserId == userId);
 
             if (currentMember is null && !isAdmin)
             {
@@ -292,7 +292,7 @@ else
                 AdditionalParticipants = additionalParticipants
             };
 
-            var result = await BookingService.CreateBooking(booking);
+            var result = await BookingService.CreateBookingAsync(booking);
 
             if (!result)
             {
