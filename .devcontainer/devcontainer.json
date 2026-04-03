@@ -19,7 +19,10 @@
           "ms-azuretools.vscode-containers",
           "ms-dotnettools.csdevkit",
           "GitHub.remotehub",
-          "ms-vscode.powershell"
+          "ms-azuretools.vscode-docker",
+          "ms-dotnettools.csharp",
+          "ms-vscode.powershell",
+          "GitHub.vscode-pull-request-github"
         ]
       }
     }
