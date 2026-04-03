@@ -21,10 +21,10 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Restore dependencies
-        run: dotnet restore ClubBaist/ClubBaist.slnx
+        run: dotnet restore ClubBaist.slnx
 
       - name: Build
-        run: dotnet build ClubBaist/ClubBaist.slnx --no-restore
+        run: dotnet build ClubBaist.slnx --no-restore
 
       - name: Test
-        run: dotnet test --project ClubBaist/ClubBaist.Tests/ClubBaist.Tests.csproj --no-build --verbosity normal
+        run: dotnet test
