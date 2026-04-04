@@ -22,6 +22,7 @@ public interface IAppDbContext2
     DbSet<MembershipLevelTeeTimeAvailability> MembershipLevelTeeTimeAvailabilities { get; }
     DbSet<SpecialEvent> SpecialEvents { get; }
     DbSet<Season> Seasons { get; }
+    DbSet<StandingTeeTime> StandingTeeTimes { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     Task<IDbContextTransaction> BeginTransactionAsync(IsolationLevel isolationLevel, CancellationToken cancellationToken = default);

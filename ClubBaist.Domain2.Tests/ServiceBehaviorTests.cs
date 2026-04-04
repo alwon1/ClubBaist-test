@@ -272,6 +272,7 @@ public class MembershipLevelServiceTests
         public DbSet<MembershipLevelTeeTimeAvailability> MembershipLevelTeeTimeAvailabilities => inner.MembershipLevelTeeTimeAvailabilities;
         public DbSet<SpecialEvent> SpecialEvents => inner.SpecialEvents;
         public DbSet<Season> Seasons => inner.Seasons;
+        public DbSet<StandingTeeTime> StandingTeeTimes => inner.StandingTeeTimes;
 
         public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) =>
             throwOnSave
@@ -495,7 +496,7 @@ public class BookingServiceTests
             BookingMemberId = member.Id,
             BookingMember = member
         };
-        db.TeeTimeBookings.Add(booking);
+        slot.Bookings.Add(booking);
         await db.SaveChangesAsync();
 
         Assert.IsTrue(await bookingService.CancelBookingAsync(booking.Id));
