@@ -9,7 +9,7 @@ public class DuplicateBookingRule(IQueryable<TeeTimeBooking> bookings, double co
 {
     public IQueryable<TeeTimeEvaluation> Evaluate(IQueryable<TeeTimeEvaluation> query, TeeTimeBooking booking, int? excludeBookingId = null)
     {
-        var participantIds = booking.Participants.Select(p => p.Id).ToList();
+        var participantIds = booking.ParticipantIds.ToList();
         return query.Select(p => p.SpotsRemaining < 0 ? p :
             bookings.Any(b => (excludeBookingId == null || b.Id != excludeBookingId)
                            && b.TeeTimeSlotStart > p.Slot.Start.AddHours(-conflictWindowHours)

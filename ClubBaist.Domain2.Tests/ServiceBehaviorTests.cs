@@ -348,7 +348,7 @@ public class BookingServiceTests
             TeeTimeSlot = slot,
             BookingMemberId = bookingMember.Id,
             BookingMember = bookingMember,
-            AdditionalParticipants = new List<MemberShipInfo> { firstParticipant }
+            AdditionalParticipants = [BookingParticipant.FromMember(firstParticipant)]
         };
         db.TeeTimeBookings.Add(booking);
         await db.SaveChangesAsync();
@@ -398,7 +398,7 @@ public class BookingServiceTests
             TeeTimeSlot = firstSlot,
             BookingMemberId = bookingMember.Id,
             BookingMember = bookingMember,
-            AdditionalParticipants = new List<MemberShipInfo> { existingParticipant }
+            AdditionalParticipants = [BookingParticipant.FromMember(existingParticipant)]
         };
 
         var nearbyBooking = new TeeTimeBooking
@@ -407,7 +407,7 @@ public class BookingServiceTests
             TeeTimeSlot = nearbySlot,
             BookingMemberId = secondBookingMember.Id,
             BookingMember = secondBookingMember,
-            AdditionalParticipants = new List<MemberShipInfo> { conflictingParticipant }
+            AdditionalParticipants = [BookingParticipant.FromMember(conflictingParticipant)]
         };
 
         db.TeeTimeBookings.AddRange(originalBooking, nearbyBooking);

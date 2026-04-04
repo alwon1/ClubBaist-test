@@ -136,7 +136,7 @@ public sealed class BookingPerformanceTests
                 TeeTimeSlot = slot,
                 BookingMemberId = bookingMember.Id,
                 BookingMember = bookingMember,
-                AdditionalParticipants = additionalParticipants
+                AdditionalParticipants = additionalParticipants.Select(BookingParticipant.FromMember).ToList()
             });
         }
 
@@ -162,7 +162,7 @@ public sealed class BookingPerformanceTests
             TeeTimeSlot = targetSlot,
             BookingMemberId = members[0].Id,
             BookingMember = members[0],
-            AdditionalParticipants = [members[1], members[2]]
+            AdditionalParticipants = [BookingParticipant.FromMember(members[1]), BookingParticipant.FromMember(members[2])]
         };
     }
 

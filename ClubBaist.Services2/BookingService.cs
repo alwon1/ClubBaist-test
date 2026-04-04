@@ -118,7 +118,6 @@ public class BookingService(IEnumerable<IBookingRule> rules, IAppDbContext2 db, 
                 .Include(b => b.BookingMember)
                     .ThenInclude(m => m.MembershipLevel)
                 .Include(b => b.AdditionalParticipants)
-                    .ThenInclude(m => m.MembershipLevel)
                 .FirstOrDefaultAsync(b => b.Id == bookingId);
 
             if (booking is null)
@@ -153,7 +152,7 @@ public class BookingService(IEnumerable<IBookingRule> rules, IAppDbContext2 db, 
                 TeeTimeSlot = booking.TeeTimeSlot,
                 BookingMemberId = booking.BookingMemberId,
                 BookingMember = booking.BookingMember,
-                AdditionalParticipants = participants
+                AdditionalParticipants = participants.Select(BookingParticipant.FromMember).ToList()
             };
 
             var evaluation = await EvaluateBookingAsync(proposedBooking, booking.Id);
@@ -171,7 +170,7 @@ public class BookingService(IEnumerable<IBookingRule> rules, IAppDbContext2 db, 
             }
 
             booking.AdditionalParticipants.Clear();
-            booking.AdditionalParticipants.AddRange(participants);
+            booking.AdditionalParticipants.AddRange(participants.Select(BookingParticipant.FromMember));
 
             await db.SaveChangesAsync();
             logger.LogInformation("Booking {BookingId} updated with {ParticipantCount} additional participants", bookingId, participants.Count);
