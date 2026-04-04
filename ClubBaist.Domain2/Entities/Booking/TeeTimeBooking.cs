@@ -7,6 +7,7 @@ namespace ClubBaist.Domain2;
 [Index(nameof(TeeTimeSlotStart))]
 [Index(nameof(BookingMemberId))]
 [Index(nameof(TeeTimeSlotStart), nameof(BookingMemberId), IsUnique = true)]
+[Owned]
 public class TeeTimeBooking
 {
     [Key]

@@ -38,7 +38,10 @@ public class AppDbContext : IdentityDbContext<ClubBaistUser, IdentityRole<Guid>,
                 .WithMany()
                 .HasForeignKey(booking => booking.BookingMemberId)
                 .OnDelete(DeleteBehavior.Restrict);
-
+            entity.OwnsMany(booking => booking.AdditionalParticipants, navbuilder =>
+            {
+                navbuilder.ToJson();
+            });
             entity.HasMany(booking => booking.AdditionalParticipants)
                 .WithMany()
                 .UsingEntity(join => join.ToTable("BookingAdditionalParticipant"));
