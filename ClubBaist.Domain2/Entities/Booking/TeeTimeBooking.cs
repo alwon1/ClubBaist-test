@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using ClubBaist.Domain2.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace ClubBaist.Domain2;
@@ -24,6 +25,11 @@ public class TeeTimeBooking
 
     [Required]
     public required MemberShipInfo BookingMember { get; init; }
+
+    public int? StandingTeeTimeId { get; set; }
+
+    [ForeignKey(nameof(StandingTeeTimeId))]
+    public StandingTeeTime? StandingTeeTime { get; set; }
 
     [NotMapped]
     public int ParticipantCount => 1 + AdditionalParticipants.Count;
