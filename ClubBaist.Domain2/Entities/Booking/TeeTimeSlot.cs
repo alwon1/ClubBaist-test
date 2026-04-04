@@ -22,5 +22,6 @@ public class TeeTimeSlot
 
     public List<TeeTimeBooking> Bookings => field ??= new();
 
+    [NotMapped]
     public int BookedSpots => Bookings.Sum(b => b.ParticipantCount);
 }

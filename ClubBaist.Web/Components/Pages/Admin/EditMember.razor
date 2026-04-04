@@ -238,7 +238,13 @@ else
             _member.User.AddressLine1 = _model.Address;
             _member.User.PostalCode = normalizedPostalCode;
 
-            var newLevel = _levels.First(l => l.Id == _model.MembershipLevelId);
+            var newLevel = _levels.FirstOrDefault(l => l.Id == _model.MembershipLevelId);
+            if (newLevel is null)
+            {
+                _resultMessage = "The selected membership level was not found. Please refresh and try again.";
+                _isError = true;
+                return;
+            }
             _member.MembershipLevel = newLevel;
 
             await DbContext.SaveChangesAsync();

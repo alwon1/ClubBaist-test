@@ -283,6 +283,12 @@ else
                 .Where(m => playerIds.Contains(m.Id))
                 .ToListAsync();
 
+            if (additionalParticipants.Count != playerIds.Count)
+            {
+                errorMessage = "One or more selected participants could not be found. Please refresh and try again.";
+                return;
+            }
+
             var booking = new TeeTimeBooking
             {
                 TeeTimeSlotStart = slotStart,
@@ -296,7 +302,7 @@ else
 
             if (!result)
             {
-                errorMessage = "Unable to create reservation. The slot may be full or booking rules prevent this reservation.";
+                errorMessage = "Unable to create booking. The slot may be full or booking rules prevent this booking.";
             }
             else
             {
@@ -305,8 +311,8 @@ else
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Failed to create reservation");
-            errorMessage = "An unexpected error occurred while creating the reservation. Please try again later.";
+            Logger.LogError(ex, "Failed to create booking");
+            errorMessage = "An unexpected error occurred while creating the booking. Please try again later.";
         }
         finally
         {

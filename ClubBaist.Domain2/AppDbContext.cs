@@ -47,8 +47,7 @@ public class AppDbContext : IdentityDbContext<ClubBaistUser, IdentityRole<Guid>,
         var escapedDatabaseName = databaseName.Replace("]", "]]" );
         var sqlBuilder = new SqlConnectionStringBuilder(connectionString)
         {
-            InitialCatalog = "master",
-            TrustServerCertificate = true
+            InitialCatalog = "master"
         };
 
         await using var connection = new SqlConnection(sqlBuilder.ConnectionString);
