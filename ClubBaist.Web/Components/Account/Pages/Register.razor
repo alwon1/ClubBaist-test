@@ -5,12 +5,12 @@
 @using System.Text.Encodings.Web
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.AspNetCore.WebUtilities
-@using ClubBaist.Domain
+@using ClubBaist.Domain2
 
-@inject UserManager<ApplicationUser> UserManager
-@inject IUserStore<ApplicationUser> UserStore
-@inject SignInManager<ApplicationUser> SignInManager
-@inject IEmailSender<ApplicationUser> EmailSender
+@inject UserManager<ClubBaistUser> UserManager
+@inject IUserStore<ClubBaistUser> UserStore
+@inject SignInManager<ClubBaistUser> SignInManager
+@inject IEmailSender<ClubBaistUser> EmailSender
 @inject ILogger<Register> Logger
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
@@ -109,26 +109,26 @@
         }
     }
 
-    private ApplicationUser CreateUser()
+    private ClubBaistUser CreateUser()
     {
         try
         {
-            return new ApplicationUser();
+            return new ClubBaistUser();
         }
         catch
         {
-            throw new InvalidOperationException($"Can't create an instance of '{nameof(ApplicationUser)}'. " +
-                $"Ensure that '{nameof(ApplicationUser)}' is not an abstract class and has a parameterless constructor.");
+            throw new InvalidOperationException($"Can't create an instance of '{nameof(ClubBaistUser)}'. " +
+                $"Ensure that '{nameof(ClubBaistUser)}' is not an abstract class and has a parameterless constructor.");
         }
     }
 
-    private IUserEmailStore<ApplicationUser> GetEmailStore()
+    private IUserEmailStore<ClubBaistUser> GetEmailStore()
     {
         if (!UserManager.SupportsUserEmail)
         {
             throw new NotSupportedException("The default UI requires a user store with email support.");
         }
-        return (IUserEmailStore<ApplicationUser>)UserStore;
+        return (IUserEmailStore<ClubBaistUser>)UserStore;
     }
 
     private sealed class InputModel

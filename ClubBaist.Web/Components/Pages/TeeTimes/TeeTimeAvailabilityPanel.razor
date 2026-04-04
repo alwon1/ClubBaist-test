@@ -1,11 +1,11 @@
-@using ClubBaist.Domain
-@using ClubBaist.Services
+@using ClubBaist.Domain2
+@using ClubBaist.Domain2.Entities
+@using ClubBaist.Domain2.Entities.Membership
+@using ClubBaist.Services2
 @using Microsoft.AspNetCore.Components.QuickGrid
-@implements IDisposable
+@using Microsoft.EntityFrameworkCore
 
-@inject TeeTimeBookingService<Guid> BookingService
-@inject ISeasonService SeasonService
-@inject AvailabilityUpdateService AvailabilityUpdates
+@inject IAppDbContext2 DbContext
 @inject ILogger<TeeTimeAvailabilityPanel> Logger
 
 @if (!string.IsNullOrEmpty(errorMessage))
@@ -106,44 +106,45 @@ else if (viewMode == ViewMode.Week && weeklySlots is not null)
                     <ChildContent>
                         @{
                             var slot = context.Slots.GetValueOrDefault(d);
-                            var cellBg = slot is null ? "weekly-no-data" : UiHelpers.GetSlotStatusClass(slot.RemainingCapacity, slot.UserCanBook);
-                            var emptyCount = slot is null ? 0 :
-                                BookingConstants.MaxPlayersPerSlot - slot.Reservations.Sum(r => 1 + r.Players.Count);
+                            var remaining = slot is null ? 0 : RemainingCapacity(slot);
+                            var userCanBook = slot is not null && CanBook(slot);
+                            var cellBg = slot is null ? "weekly-no-data" : UiHelpers.GetSlotStatusClass(remaining, userCanBook);
+                            var emptyCount = slot is null ? 0 : MaxSpotsPerSlot - slot.Bookings.Sum(b => b.ParticipantCount);
                         }
                         <div class="weekly-cell-inner @cellBg">
                             @if (slot is not null)
                             {
-                                @foreach (var res in slot.Reservations)
+                                @foreach (var booking in slot.Bookings)
                                 {
-                                    var canEdit = IsAdmin || res.BookingMember.MemberAccountId == CurrentMemberAccountId;
+                                    var canEdit = IsAdmin || booking.BookingMember.Id == CurrentMemberId;
                                     if (canEdit)
                                     {
-                                        <a href="/teetimes/reservation/@res.ReservationId" class="text-decoration-none d-block">
-                                            <span class="badge bg-primary weekly-badge" title="@res.BookingMember.FirstName @res.BookingMember.LastName">
-                                                @res.BookingMember.FirstName
+                                        <a href="/teetimes/reservation/@booking.Id" class="text-decoration-none d-block">
+                                            <span class="badge bg-primary weekly-badge" title="@booking.BookingMember.User.FirstName @booking.BookingMember.User.LastName">
+                                                @booking.BookingMember.User.FirstName
                                             </span>
                                         </a>
                                     }
                                     else
                                     {
-                                        <span class="badge bg-primary weekly-badge" title="@res.BookingMember.FirstName @res.BookingMember.LastName">
-                                            @res.BookingMember.FirstName
+                                        <span class="badge bg-primary weekly-badge" title="@booking.BookingMember.User.FirstName @booking.BookingMember.User.LastName">
+                                            @booking.BookingMember.User.FirstName
                                         </span>
                                     }
-                                    @foreach (var player in res.Players)
+                                    @foreach (var player in booking.AdditionalParticipants)
                                     {
-                                        <span class="badge bg-secondary weekly-badge" title="@player.FirstName @player.LastName">
-                                            @player.FirstName
+                                        <span class="badge bg-secondary weekly-badge" title="@player.User.FirstName @player.User.LastName">
+                                            @player.User.FirstName
                                         </span>
                                     }
                                 }
                                 @for (var i = 0; i < emptyCount; i++)
                                 {
-                                    @if (slot.RemainingCapacity > 0 && slot.UserCanBook)
+                                    @if (remaining > 0 && userCanBook)
                                     {
-                                        <a href="@BuildBookUrl(d, slot.Time)" class="weekly-empty-spot weekly-empty-spot-bookable">+</a>
+                                        <a href="@BuildBookUrl(d, SlotTime(slot))" class="weekly-empty-spot weekly-empty-spot-bookable">+</a>
                                     }
-                                    else if (slot.RemainingCapacity > 0)
+                                    else if (remaining > 0)
                                     {
                                         <div class="weekly-empty-spot weekly-empty-spot-restricted" title="Not available at this time for your membership">—</div>
                                     }
@@ -166,41 +167,43 @@ else if (viewMode == ViewMode.Day && slots is not null)
     <div class="tee-time-grid">
         @foreach (var slot in slots)
         {
-            var totalBooked = slot.Reservations.Sum(r => 1 + r.Players.Count);
-            var emptyCount = BookingConstants.MaxPlayersPerSlot - totalBooked;
-            var rowBg = UiHelpers.GetSlotStatusClass(slot.RemainingCapacity, slot.UserCanBook);
+            var totalBooked = slot.BookedSpots;
+            var emptyCount = MaxSpotsPerSlot - totalBooked;
+            var remaining = RemainingCapacity(slot);
+            var userCanBook = CanBook(slot);
+            var rowBg = UiHelpers.GetSlotStatusClass(remaining, userCanBook);
 
             <div class="slot-row @rowBg d-flex align-items-center border-bottom py-2 gap-3">
                 <div class="slot-time fw-bold text-nowrap">
-                    @slot.Time.ToString("h:mm tt")
+                    @SlotTime(slot).ToString("h:mm tt")
                 </div>
 
                 <div class="slot-members flex-grow-1">
                     <div class="row g-1 flex-nowrap m-0">
-                        @foreach (var res in slot.Reservations)
+                        @foreach (var booking in slot.Bookings)
                         {
-                            var memberCount = 1 + res.Players.Count;
+                            var memberCount = 1 + booking.AdditionalParticipants.Count;
                             var outerCol = $"col-{memberCount * 3}";
                             var innerCol = $"col-{12 / memberCount}";
-                            var canEdit = IsAdmin || res.BookingMember.MemberAccountId == CurrentMemberAccountId;
+                            var canEdit = IsAdmin || booking.BookingMember.Id == CurrentMemberId;
 
                             <div class="@outerCol px-1">
                                 @if (canEdit)
                                 {
-                                    <a href="/teetimes/reservation/@res.ReservationId"
+                                    <a href="/teetimes/reservation/@booking.Id"
                                        class="d-block text-decoration-none reservation-box reservation-editable"
                                        title="Edit reservation">
                                         <div class="row g-1 m-0">
                                             <div class="@innerCol px-1">
-                                                <span class="badge bg-primary w-100 member-badge" title="@res.BookingMember.FirstName @res.BookingMember.LastName">
-                                                    @res.BookingMember.FirstName @res.BookingMember.LastName
+                                                <span class="badge bg-primary w-100 member-badge" title="@booking.BookingMember.User.FirstName @booking.BookingMember.User.LastName">
+                                                    @booking.BookingMember.User.FirstName @booking.BookingMember.User.LastName
                                                 </span>
                                             </div>
-                                            @foreach (var player in res.Players)
+                                            @foreach (var player in booking.AdditionalParticipants)
                                             {
                                                 <div class="@innerCol px-1">
-                                                    <span class="badge bg-secondary w-100 member-badge" title="@player.FirstName @player.LastName">
-                                                        @player.FirstName @player.LastName
+                                                    <span class="badge bg-secondary w-100 member-badge" title="@player.User.FirstName @player.User.LastName">
+                                                        @player.User.FirstName @player.User.LastName
                                                     </span>
                                                 </div>
                                             }
@@ -212,15 +215,15 @@ else if (viewMode == ViewMode.Day && slots is not null)
                                     <div class="reservation-box">
                                         <div class="row g-1 m-0">
                                             <div class="@innerCol px-1">
-                                                <span class="badge bg-primary w-100 member-badge" title="@res.BookingMember.FirstName @res.BookingMember.LastName">
-                                                    @res.BookingMember.FirstName @res.BookingMember.LastName
+                                                <span class="badge bg-primary w-100 member-badge" title="@booking.BookingMember.User.FirstName @booking.BookingMember.User.LastName">
+                                                    @booking.BookingMember.User.FirstName @booking.BookingMember.User.LastName
                                                 </span>
                                             </div>
-                                            @foreach (var player in res.Players)
+                                            @foreach (var player in booking.AdditionalParticipants)
                                             {
                                                 <div class="@innerCol px-1">
-                                                    <span class="badge bg-secondary w-100 member-badge" title="@player.FirstName @player.LastName">
-                                                        @player.FirstName @player.LastName
+                                                    <span class="badge bg-secondary w-100 member-badge" title="@player.User.FirstName @player.User.LastName">
+                                                        @player.User.FirstName @player.User.LastName
                                                     </span>
                                                 </div>
                                             }
@@ -233,11 +236,11 @@ else if (viewMode == ViewMode.Day && slots is not null)
                         @for (var i = 0; i < emptyCount; i++)
                         {
                             <div class="col-3 px-1">
-                                @if (slot.RemainingCapacity > 0 && slot.UserCanBook)
+                                @if (remaining > 0 && userCanBook)
                                 {
-                                    <a href="@BuildBookUrl(selectedDate, slot.Time)" class="empty-slot empty-slot-bookable text-center">+</a>
+                                    <a href="@BuildBookUrl(selectedDate, SlotTime(slot))" class="empty-slot empty-slot-bookable text-center">+</a>
                                 }
-                                else if (slot.RemainingCapacity > 0)
+                                else if (remaining > 0)
                                 {
                                     <div class="empty-slot empty-slot-restricted text-center" title="Not available at this time for your membership">—</div>
                                 }
@@ -451,18 +454,17 @@ else if (viewMode == ViewMode.Day && slots is not null)
 @code {
     private enum ViewMode { Day, Week }
 
+    private const int MaxSpotsPerSlot = 4;
+
     private record WeeklySlotRow(
         TimeOnly Time,
-        IReadOnlyDictionary<DateOnly, BookedSlotWithMembers?> Slots);
-
-    /// <summary>Whose time restrictions to apply for colour coding.</summary>
-    [Parameter] public MembershipCategory? MemberCategory { get; set; }
+        IReadOnlyDictionary<DateOnly, TeeTimeSlot?> Slots);
 
     /// <summary>Whether the viewer is an admin (all reservations editable).</summary>
     [Parameter] public bool IsAdmin { get; set; }
 
-    /// <summary>The logged-in member's account ID (used to identify editable reservations for non-admins).</summary>
-    [Parameter] public int CurrentMemberAccountId { get; set; }
+    /// <summary>The logged-in member's MemberShipInfo.Id (used to identify editable reservations for non-admins).</summary>
+    [Parameter] public int CurrentMemberId { get; set; }
 
     /// <summary>When set, booking links include bookFor=&lt;id&gt; so CreateReservation pre-selects this member.</summary>
     [Parameter] public int? BookForMemberId { get; set; }
@@ -472,48 +474,43 @@ else if (viewMode == ViewMode.Day && slots is not null)
 
     private ViewMode viewMode = ViewMode.Day;
     private DateOnly selectedDate = DateOnly.FromDateTime(DateTime.Today);
-    private IReadOnlyList<BookedSlotWithMembers>? slots;
-    private Dictionary<DateOnly, IReadOnlyList<BookedSlotWithMembers>>? weeklySlots;
+    private IReadOnlyList<TeeTimeSlot>? slots;
+    private Dictionary<DateOnly, IReadOnlyList<TeeTimeSlot>>? weeklySlots;
     private List<DateOnly> weekDates = new();
     private List<WeeklySlotRow> weeklyGridRows = [];
     private bool isLoading;
     private string? errorMessage;
+    private ICollection<MembershipLevelTeeTimeAvailability>? _memberAvailabilities;
 
     protected override async Task OnInitializedAsync()
     {
-        selectedDate = SeasonService.GetNextAvailableDate(DateOnly.FromDateTime(DateTime.Today))
-            ?? DateOnly.FromDateTime(DateTime.Today);
+        if (!IsAdmin && CurrentMemberId > 0)
+        {
+            var member = await DbContext.MemberShips
+                .Include(m => m.MembershipLevel).ThenInclude(l => l.Availabilities)
+                .FirstOrDefaultAsync(m => m.Id == CurrentMemberId);
+            _memberAvailabilities = member?.MembershipLevel?.Availabilities;
+        }
 
         await LoadAvailability();
-
-        AvailabilityUpdates.AvailabilityChanged += OnAvailabilityChanged;
     }
 
-    private void OnAvailabilityChanged(DateOnly date)
+    private bool CanBook(TeeTimeSlot slot)
     {
-        var relevant = viewMode == ViewMode.Week
-            ? weekDates.Count > 0 && date >= weekDates[0] && date <= weekDates[6]
-            : date == selectedDate;
-
-        if (!relevant) return;
-
-        _ = InvokeAsync(async () =>
-        {
-            try
-            {
-                if (viewMode == ViewMode.Week && weeklySlots is not null)
-                    await RefreshWeekDay(date);
-                else
-                    await LoadAvailability();
-            }
-            catch (Exception ex) { Logger.LogError(ex, "Live refresh failed for {Date}", date); }
-        });
+        if (slot.Start <= DateTime.Now) return false;
+        if ((MaxSpotsPerSlot - slot.BookedSpots) <= 0) return false;
+        if (IsAdmin) return true;
+        if (_memberAvailabilities is null || !_memberAvailabilities.Any()) return false;
+        var dow = slot.Start.DayOfWeek;
+        var timeOfDay = TimeOnly.FromDateTime(slot.Start);
+        return _memberAvailabilities.Any(a =>
+            a.DayOfWeek == dow &&
+            timeOfDay >= a.StartTime &&
+            timeOfDay < a.EndTime);
     }
 
-    public void Dispose()
-    {
-        AvailabilityUpdates.AvailabilityChanged -= OnAvailabilityChanged;
-    }
+    private static TimeOnly SlotTime(TeeTimeSlot slot) => TimeOnly.FromDateTime(slot.Start);
+    private int RemainingCapacity(TeeTimeSlot slot) => MaxSpotsPerSlot - slot.BookedSpots;
 
     private async Task OnDateChanged(ChangeEventArgs e)
     {
@@ -586,8 +583,10 @@ else if (viewMode == ViewMode.Day && slots is not null)
 
         try
         {
-            var rangeResult = await BookingService.GetBookedSlotsWithMembersForRangeAsync(weekDates, MemberCategory, CurrentMemberAccountId);
-            weeklySlots = weekDates.ToDictionary(d => d, d => rangeResult.GetValueOrDefault(d) ?? []);
+            var dict = new Dictionary<DateOnly, IReadOnlyList<TeeTimeSlot>>();
+            foreach (var date in weekDates)
+                dict[date] = await QuerySlotsAsync(date);
+            weeklySlots = dict;
             RebuildWeeklyGridRows();
         }
         catch (Exception ex)
@@ -604,21 +603,25 @@ else if (viewMode == ViewMode.Day && slots is not null)
     private void RebuildWeeklyGridRows()
     {
         if (weeklySlots is null) { weeklyGridRows = []; return; }
-        var times = weeklySlots.Values.FirstOrDefault(s => s.Count > 0)?.Select(s => s.Time) ?? [];
+        var times = weeklySlots.Values.FirstOrDefault(s => s.Count > 0)?.Select(SlotTime) ?? [];
         weeklyGridRows = times.Select(time => new WeeklySlotRow(
             time,
             weekDates.ToDictionary(
                 d => d,
-                d => weeklySlots.GetValueOrDefault(d)?.FirstOrDefault(s => s.Time == time))
+                d => weeklySlots.GetValueOrDefault(d)?.FirstOrDefault(s => SlotTime(s) == time))
         )).ToList();
     }
 
-    private async Task RefreshWeekDay(DateOnly date)
+    private async Task<IReadOnlyList<TeeTimeSlot>> QuerySlotsAsync(DateOnly date)
     {
-        var daySlots = await BookingService.GetBookedSlotsWithMembersAsync(date, MemberCategory, CurrentMemberAccountId);
-        weeklySlots![date] = daySlots;
-        RebuildWeeklyGridRows();
-        StateHasChanged();
+        var startOfDay = date.ToDateTime(TimeOnly.MinValue);
+        var endOfDay = startOfDay.AddDays(1);
+        return await DbContext.TeeTimeSlots
+            .Where(s => s.Start >= startOfDay && s.Start < endOfDay)
+            .Include(s => s.Bookings).ThenInclude(b => b.BookingMember).ThenInclude(m => m.User)
+            .Include(s => s.Bookings).ThenInclude(b => b.AdditionalParticipants).ThenInclude(p => p.User)
+            .OrderBy(s => s.Start)
+            .ToListAsync();
     }
 
     private string BuildBookUrl(DateOnly date, TimeOnly time) =>
@@ -633,7 +636,7 @@ else if (viewMode == ViewMode.Day && slots is not null)
 
         try
         {
-            slots = await BookingService.GetBookedSlotsWithMembersAsync(selectedDate, MemberCategory, CurrentMemberAccountId);
+            slots = await QuerySlotsAsync(selectedDate);
         }
         catch (Exception ex)
         {

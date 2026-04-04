@@ -5,11 +5,13 @@
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Identity
-@using ClubBaist.Domain
-@using ClubBaist.Services
+@using Microsoft.EntityFrameworkCore
+@using ClubBaist.Domain2
+@using ClubBaist.Domain2.Entities.Membership
+@using ClubBaist.Services2
 
-@inject UserManager<ApplicationUser> UserManager
-@inject MemberManagementService<Guid> MemberService
+@inject UserManager<ClubBaistUser> UserManager
+@inject IAppDbContext2 DbContext
 @inject NavigationManager NavigationManager
 @inject ILogger<CreateUser> Logger
 
@@ -123,13 +125,14 @@
                     </div>
                     <div class="col-md-6">
                         <div class="form-floating mb-3">
-                            <InputSelect id="membershipCategory" class="form-select" @bind-Value="_model.MembershipCategory">
-                                @foreach (var cat in Enum.GetValues<MembershipCategory>())
+                            <InputSelect id="membershipLevel" class="form-select" @bind-Value="_model.MembershipLevelId">
+                                <option value="">-- Select Level --</option>
+                                @foreach (var level in _levels)
                                 {
-                                    <option value="@cat">@cat</option>
+                                    <option value="@level.Id">@level.Name</option>
                                 }
                             </InputSelect>
-                            <label for="membershipCategory">Membership Category</label>
+                            <label for="membershipLevel">Membership Level</label>
                         </div>
                     </div>
                 </div>
@@ -213,12 +216,18 @@
         [RegularExpression(@"^[A-Za-z]\d[A-Za-z]\s?\d[A-Za-z]\d$", ErrorMessage = "Enter a valid Canadian postal code (e.g. T2A 4K3).")]
         public string? PostalCode { get; set; }
 
-        public MembershipCategory MembershipCategory { get; set; } = MembershipCategory.Shareholder;
+        public int? MembershipLevelId { get; set; }
     }
 
     private readonly CreateUserModel _model = new();
+    private List<MembershipLevel> _levels = [];
     private bool _submitting;
     private string? _errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _levels = await DbContext.MembershipLevels.ToListAsync();
+    }
 
     private async Task HandleSubmitAsync()
     {
@@ -231,7 +240,8 @@
                 string.IsNullOrWhiteSpace(_model.LastName) ||
                 string.IsNullOrWhiteSpace(_model.Phone) ||
                 string.IsNullOrWhiteSpace(_model.Address) ||
-                string.IsNullOrWhiteSpace(_model.PostalCode))
+                string.IsNullOrWhiteSpace(_model.PostalCode) ||
+                _model.MembershipLevelId is null)
             {
                 _errorMessage = "All member profile fields are required when assigning the Member role.";
                 return;
@@ -245,15 +255,18 @@
             var normalizedAltPhone = _model.IsMember && _model.AlternatePhone is not null ? NormalizePhone(_model.AlternatePhone) : null;
             var normalizedPostalCode = _model.IsMember && _model.PostalCode is not null ? NormalizePostalCode(_model.PostalCode) : null;
 
-            var user = new ApplicationUser
+            var user = new ClubBaistUser
             {
-                Id = Guid.NewGuid(),
                 UserName = _model.Email,
                 Email = _model.Email,
                 EmailConfirmed = true,
                 FirstName = _model.IsMember ? (_model.FirstName ?? string.Empty) : string.Empty,
                 LastName = _model.IsMember ? (_model.LastName ?? string.Empty) : string.Empty,
-                Phone = _model.IsMember ? (normalizedPhone ?? string.Empty) : string.Empty
+                PhoneNumber = _model.IsMember ? (normalizedPhone ?? string.Empty) : string.Empty,
+                DateOfBirth = _model.IsMember ? _model.DateOfBirth : default,
+                AddressLine1 = _model.IsMember ? (_model.Address ?? string.Empty) : string.Empty,
+                PostalCode = _model.IsMember ? (normalizedPostalCode ?? string.Empty) : string.Empty,
+                AlternatePhoneNumber = _model.IsMember ? normalizedAltPhone : null
             };
 
             var createResult = await UserManager.CreateAsync(user, _model.Password);
@@ -263,21 +276,54 @@
                 return;
             }
 
-            if (_model.IsAdmin)
-                await UserManager.AddToRoleAsync(user, AppRoles.Admin);
-            if (_model.IsMembershipCommittee)
-                await UserManager.AddToRoleAsync(user, AppRoles.MembershipCommittee);
+            // Assign non-member roles, validating each result
+            var nonMemberRoles = new List<string>();
+            if (_model.IsAdmin) nonMemberRoles.Add(AppRoles.Admin);
+            if (_model.IsMembershipCommittee) nonMemberRoles.Add(AppRoles.MembershipCommittee);
 
+            foreach (var role in nonMemberRoles)
+            {
+                var roleResult = await UserManager.AddToRoleAsync(user, role);
+                if (!roleResult.Succeeded)
+                {
+                    Logger.LogError("Failed to assign role '{Role}' to '{Email}': {Errors}", role, user.Email,
+                        string.Join(", ", roleResult.Errors.Select(e => $"{e.Code}: {e.Description}")));
+                    await UserManager.DeleteAsync(user);
+                    _errorMessage = $"Failed to assign role '{role}': {string.Join(" ", roleResult.Errors.Select(e => e.Description))}";
+                    return;
+                }
+            }
+
+            // Member role + membership record are saved atomically in a single transaction
             if (_model.IsMember)
             {
-                await MemberService.CreateMemberAsync(new CreateMemberRequest<Guid>(
-                    ApplicationUserId: user.Id,
-                    DateOfBirth: _model.DateOfBirth,
-                    Address: _model.Address!,
-                    PostalCode: normalizedPostalCode!,
-                    MembershipCategory: _model.MembershipCategory,
-                    IsActive: true,
-                    AlternatePhone: normalizedAltPhone));
+                await using var transaction = await DbContext.BeginTransactionAsync(System.Data.IsolationLevel.ReadCommitted);
+                try
+                {
+                    var memberRoleResult = await UserManager.AddToRoleAsync(user, AppRoles.Member);
+                    if (!memberRoleResult.Succeeded)
+                    {
+                        Logger.LogError("Failed to assign Member role to '{Email}': {Errors}", user.Email,
+                            string.Join(", ", memberRoleResult.Errors.Select(e => $"{e.Code}: {e.Description}")));
+                        await transaction.RollbackAsync();
+                        await UserManager.DeleteAsync(user);
+                        _errorMessage = $"Failed to assign Member role: {string.Join(" ", memberRoleResult.Errors.Select(e => e.Description))}";
+                        return;
+                    }
+
+                    var level = _levels.First(l => l.Id == _model.MembershipLevelId!.Value);
+                    DbContext.MemberShips.Add(new MemberShipInfo { User = user, MembershipLevel = level });
+                    await DbContext.SaveChangesAsync();
+                    await transaction.CommitAsync();
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex, "Failed to create membership record for '{Email}'; rolling back", user.Email);
+                    await transaction.RollbackAsync();
+                    await UserManager.DeleteAsync(user);
+                    _errorMessage = "Failed to save membership record. Please try again.";
+                    return;
+                }
             }
 
             NavigationManager.NavigateTo($"/admin/users/{user.Id}");

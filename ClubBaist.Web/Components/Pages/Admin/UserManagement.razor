@@ -7,11 +7,11 @@
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
-@using ClubBaist.Domain
-@using ClubBaist.Services
+@using ClubBaist.Domain2
+@using ClubBaist.Services2
 
-@inject UserManager<ApplicationUser> UserManager
-@inject IApplicationDbContext<Guid> DbContext
+@inject UserManager<ClubBaistUser> UserManager
+@inject IAppDbContext2 DbContext
 @inject NavigationManager NavigationManager
 @inject ILogger<UserManagement> Logger
 
@@ -79,9 +79,9 @@
                     <a href="@($"/admin/users/{context.UserId}")" class="btn btn-sm btn-outline-primary me-1">
                         Manage
                     </a>
-                    @if (context.MemberAccountId.HasValue)
+                    @if (context.MemberShipInfoId.HasValue)
                     {
-                        <a href="@($"/admin/members/{context.MemberAccountId.Value}")" class="btn btn-sm btn-outline-secondary">
+                        <a href="@($"/admin/members/{context.MemberShipInfoId.Value}")" class="btn btn-sm btn-outline-secondary">
                             Edit Member
                         </a>
                     }
@@ -101,7 +101,7 @@
         string Email,
         List<string> Roles,
         string? MemberNumber,
-        int? MemberAccountId);
+        int? MemberShipInfoId);
 
     private List<UserRow>? _rows;
     private List<UserRow>? _allRows;
@@ -121,10 +121,11 @@
         try
         {
             var users = await UserManager.Users.ToListAsync();
-            var memberAccounts = await DbContext.MemberAccounts
-                .Select(m => new { m.ApplicationUserId, m.MemberNumber, m.MemberAccountId })
+            var memberShips = await DbContext.MemberShips
+                .Include(m => m.User)
+                .Include(m => m.MembershipLevel)
                 .ToListAsync();
-            var memberByUser = memberAccounts.ToDictionary(m => m.ApplicationUserId);
+            var memberByUser = memberShips.ToDictionary(m => m.User.Id, m => new { m.MembershipNumber, m.Id });
 
             var rows = new List<UserRow>();
             foreach (var user in users)
@@ -135,8 +136,8 @@
                     user.Id,
                     user.Email ?? user.UserName ?? user.Id.ToString(),
                     roles,
-                    member?.MemberNumber.ToString(),
-                    member?.MemberAccountId));
+                    member?.MembershipNumber,
+                    member?.Id));
             }
 
             _allRows = rows.OrderBy(r => r.Email).ToList();

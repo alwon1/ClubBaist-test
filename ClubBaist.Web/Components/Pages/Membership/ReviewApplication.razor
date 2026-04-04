@@ -1,16 +1,17 @@
-@page "/membership/applications/{ApplicationId:guid}"
+@page "/membership/applications/{ApplicationId:int}"
 @rendermode InteractiveServer
 @attribute [Authorize(Roles = AppRoles.AdminOrCommittee)]
 
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
-@using ClubBaist.Domain
-@using ClubBaist.Services
+@using ClubBaist.Domain2
+@using ClubBaist.Domain2.Entities.Membership
+@using ClubBaist.Services2
+@using ClubBaist.Services2.Membership.Applications
 
-@inject IApplicationDbContext<Guid> DbContext
-@inject ApplicationManagementService<Guid> ApplicationService
-@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IAppDbContext2 DbContext
+@inject MembershipApplicationService ApplicationService
 @inject ILogger<ReviewApplication> Logger
 
 <PageTitle>Review Application</PageTitle>
@@ -49,8 +50,8 @@
                 <div class="card mb-4">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">Applicant Details</h5>
-                        <span class="badge @GetStatusBadgeClass(_application.CurrentStatus) fs-6">
-                            @_application.CurrentStatus
+                        <span class="badge @GetStatusBadgeClass(_application.Status) fs-6">
+                            @_application.Status
                         </span>
                     </div>
                     <div class="card-body">
@@ -106,12 +107,8 @@
                         </div>
                         <div class="row mb-3">
                             <div class="col-md-6">
-                                <strong>Requested Category:</strong>
-                                <p>@_application.RequestedMembershipCategory</p>
-                            </div>
-                            <div class="col-md-6">
-                                <strong>Submitted:</strong>
-                                <p>@_application.SubmittedAt.ToString("yyyy-MM-dd HH:mm")</p>
+                                <strong>Requested Level:</strong>
+                                <p>@_application.RequestedMembershipLevel?.Name</p>
                             </div>
                         </div>
                         <div class="row mb-3">
@@ -126,32 +123,6 @@
                         </div>
                     </div>
                 </div>
-
-                @if (_application.StatusHistory.Count > 0)
-                {
-                    <div class="card mb-4">
-                        <div class="card-header">
-                            <h5 class="mb-0">Status History</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="list-group">
-                                @foreach (var history in _application.StatusHistory.OrderByDescending(h => h.ChangedAt))
-                                {
-                                    <div class="list-group-item">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <div>
-                                                <span class="badge @GetStatusBadgeClass(history.FromStatus)">@history.FromStatus</span>
-                                                <span class="mx-2">&rarr;</span>
-                                                <span class="badge @GetStatusBadgeClass(history.ToStatus)">@history.ToStatus</span>
-                                            </div>
-                                            <small class="text-muted">@history.ChangedAt.ToString("yyyy-MM-dd HH:mm")</small>
-                                        </div>
-                                    </div>
-                                }
-                            </div>
-                        </div>
-                    </div>
-                }
             </div>
 
             <div class="col-lg-4">
@@ -172,7 +143,21 @@
                                 </select>
                                 <label for="newStatus">New Status</label>
                             </div>
-                            <button class="btn btn-primary w-100" @onclick="HandleDecisionAsync" disabled="@(_processing || _selectedStatus is null)">
+                            @if (_selectedStatus == ApplicationStatus.Accepted)
+                            {
+                                <div class="form-floating mb-3">
+                                    <select id="membershipLevel" class="form-select" @bind="_selectedLevelId">
+                                        <option value="">-- Select Level --</option>
+                                        @foreach (var level in _levels)
+                                        {
+                                            <option value="@level.Id">@level.Name</option>
+                                        }
+                                    </select>
+                                    <label for="membershipLevel">Membership Level</label>
+                                </div>
+                            }
+                            <button class="btn btn-primary w-100" @onclick="HandleDecisionAsync"
+                                    disabled="@(_processing || _selectedStatus is null)">
                                 @if (_processing)
                                 {
                                     <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
@@ -197,12 +182,14 @@
 
 @code {
     [Parameter]
-    public Guid ApplicationId { get; set; }
+    public int ApplicationId { get; set; }
 
-    private MembershipApplication<Guid>? _application;
+    private MembershipApplication? _application;
     private Dictionary<int, string> _sponsorNames = new();
     private List<ApplicationStatus> _validTransitions = [];
     private ApplicationStatus? _selectedStatus;
+    private List<MembershipLevel> _levels = [];
+    private int? _selectedLevelId;
     private bool _loading = true;
     private bool _processing;
     private string? _resultMessage;
@@ -220,23 +207,29 @@
         try
         {
             _application = await DbContext.MembershipApplications
-                .Include(a => a.StatusHistory)
-                .FirstOrDefaultAsync(a => a.ApplicationId == ApplicationId);
+                .Include(a => a.RequestedMembershipLevel)
+                .FirstOrDefaultAsync(a => a.Id == ApplicationId);
 
             if (_application is not null)
             {
-                _validTransitions = Enum.GetValues<ApplicationStatus>()
-                    .Where(s => _application.CanTransitionTo(s) && s != _application.CurrentStatus)
-                    .ToList();
+                _validTransitions = _application.Status == ApplicationStatus.Accepted || _application.Status == ApplicationStatus.Denied
+                    ? []
+                    : Enum.GetValues<ApplicationStatus>().Where(s => s != _application.Status).ToList();
 
                 var sponsorIds = new[] { _application.Sponsor1MemberId, _application.Sponsor2MemberId };
-                _sponsorNames = await DbContext.MemberAccounts
-                    .Include(m => m.ApplicationUser)
-                    .Where(m => sponsorIds.Contains(m.MemberAccountId))
-                    .ToDictionaryAsync(
-                        m => m.MemberAccountId,
-                        m => $"{m.ApplicationUser?.FirstName} {m.ApplicationUser?.LastName} ({m.MemberNumber})");
+                _sponsorNames = (await DbContext.MemberShips
+                        .Include(m => m.User)
+                        .Include(m => m.MembershipLevel)
+                        .Where(m => sponsorIds.Contains(m.Id))
+                        .ToListAsync())
+                    .ToDictionary(m => m.Id, m => $"{m.User.FirstName} {m.User.LastName} ({m.MembershipNumber})");
+
+                _levels = await DbContext.MembershipLevels.ToListAsync();
             }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load application {ApplicationId}", ApplicationId);
         }
         finally
         {
@@ -255,26 +248,40 @@
 
         try
         {
-            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-            var user = authState.User;
-            var userId = Guid.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
-
-            var result = await ApplicationService.ChangeApplicationStatusAsync(
-                _application.ApplicationId,
-                _selectedStatus.Value,
-                userId,
-                DateTime.UtcNow,
-                CancellationToken.None);
-
-            _resultMessage = $"Application status changed to {result.CurrentStatus} successfully.";
-
-            if (result.MemberCreationResult is not null)
+            bool result;
+            if (_selectedStatus == ApplicationStatus.Accepted)
             {
-                _resultMessage += $" Member account created with member number: {result.MemberCreationResult.MemberNumber}.";
+                if (_selectedLevelId is null)
+                {
+                    _resultMessage = "Please select a membership level before approving.";
+                    _isError = true;
+                    return;
+                }
+                result = await ApplicationService.ApproveMembershipApplicationAsync(ApplicationId, _selectedLevelId.Value);
+                if (result) _resultMessage = "Application approved. Member account created successfully.";
+            }
+            else if (_selectedStatus == ApplicationStatus.Denied)
+            {
+                result = await ApplicationService.DenyApplicationAsync(ApplicationId);
+                if (result) _resultMessage = "Application denied.";
+            }
+            else
+            {
+                result = await ApplicationService.SetApplicationStatusAsync(ApplicationId, _selectedStatus.Value);
+                if (result) _resultMessage = $"Application status changed to {_selectedStatus.Value}.";
             }
 
-            _selectedStatus = null;
-            await LoadApplicationAsync();
+            if (!result)
+            {
+                _isError = true;
+                _resultMessage = "Failed to update application status. Please try again.";
+            }
+            else
+            {
+                _selectedStatus = null;
+                _selectedLevelId = null;
+                await LoadApplicationAsync();
+            }
         }
         catch (Exception ex)
         {
@@ -289,7 +296,7 @@
     }
 
     private string GetSponsorName(int sponsorId) =>
-        _sponsorNames.TryGetValue(sponsorId, out var name) ? name : sponsorId.ToString();
+        _sponsorNames.TryGetValue(sponsorId, out var name) ? name : $"Member #{sponsorId}";
 
     private static string GetStatusBadgeClass(ApplicationStatus status) =>
         UiHelpers.GetStatusBadgeClass(status);

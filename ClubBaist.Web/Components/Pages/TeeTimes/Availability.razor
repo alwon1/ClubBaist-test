@@ -6,10 +6,8 @@
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.EntityFrameworkCore
-@using ClubBaist.Domain
-@using ClubBaist.Services
 
-@inject IApplicationDbContext<Guid> DbContext
+@inject IAppDbContext2 DbContext
 @inject AuthenticationStateProvider AuthStateProvider
 
 <PageTitle>Tee Time Availability - Club Baist</PageTitle>
@@ -19,9 +17,8 @@
 @if (!isLoading)
 {
     <TeeTimeAvailabilityPanel
-        MemberCategory="currentMemberCategory"
         IsAdmin="isAdmin"
-        CurrentMemberAccountId="currentMemberAccountId"
+        CurrentMemberId="currentMemberId"
         BookForMemberId="null" />
 }
 else
@@ -36,8 +33,7 @@ else
 @code {
     private bool isLoading = true;
     private bool isAdmin;
-    private int currentMemberAccountId;
-    private MembershipCategory? currentMemberCategory;
+    private int currentMemberId;
 
     protected override async Task OnInitializedAsync()
     {
@@ -48,12 +44,12 @@ else
 
         if (!isAdmin)
         {
-            var member = await DbContext.MemberAccounts
-                .FirstOrDefaultAsync(m => m.ApplicationUserId == userId);
-            currentMemberAccountId = member?.MemberAccountId ?? 0;
-            currentMemberCategory = member?.MembershipCategory;
+            var member = await DbContext.MemberShips
+                .FirstOrDefaultAsync(m => m.UserId == userId);
+            currentMemberId = member?.Id ?? 0;
         }
 
         isLoading = false;
     }
 }
+

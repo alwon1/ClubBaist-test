@@ -2,9 +2,7 @@
 using Microsoft.Extensions.Hosting;
 
 var builder = DistributedApplication.CreateBuilder(args);
-// Add Azure Container Apps environment
-var compose = builder.AddDockerComposeEnvironment("compose");
-
+var db = builder.AddSqlServer("sql").WithLifetime(ContainerLifetime.Session);
 //var appServiceEnv = builder.AddAzureAppServiceEnvironment("app-service-env");
 // appServiceEnv.ConfigureInfrastructure(infra =>
 // {
@@ -17,17 +15,16 @@ var compose = builder.AddDockerComposeEnvironment("compose");
 //         Tier = "Free"
 //     };
 // });
-var db = builder.AddSqlServer("sql");
-
+//var db = builder.AddAzureSqlServer("sql");
+//db.RunAsContainer();
 //db.WithLifetime(ContainerLifetime.Persistent);
 var sql = db.AddDatabase("clubbaist");
-var seeder = builder.AddProject<Projects.ClubBaist_Seeder>("seeder")
-    .WithReference(sql)
-    .WaitFor(sql);
+
 
 builder.AddProject<Projects.ClubBaist_Web>("web")
+    .AsHttp2Service()
     .WithExternalHttpEndpoints()
-    .WithReference(sql)
-    .WaitFor(seeder);
+    .WithReference(sql).WithReference(db)
+    .WaitFor(sql);
 
 builder.Build().Run();

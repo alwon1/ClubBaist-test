@@ -5,9 +5,11 @@
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
-@using ClubBaist.Domain
+@using ClubBaist.Domain2
+@using ClubBaist.Services2
 
-@inject IApplicationDbContext<Guid> DbContext
+@inject IAppDbContext2 DbContext
+@inject SeasonService2 SeasonService
 @inject ILogger<SeasonManagement> Logger
 
 <PageTitle>Season Management - Club Baist</PageTitle>
@@ -68,17 +70,6 @@
                             <ValidationMessage For="() => _model.EndDate" />
                         </div>
                     </div>
-                    <div class="col-md-2">
-                        <div class="form-floating mb-3">
-                            <InputSelect id="status" class="form-select" @bind-Value="_model.SeasonStatus">
-                                @foreach (var status in Enum.GetValues<SeasonStatus>())
-                                {
-                                    <option value="@status">@status</option>
-                                }
-                            </InputSelect>
-                            <label for="status">Status</label>
-                        </div>
-                    </div>
                 </div>
 
                 @if (!string.IsNullOrEmpty(_formError))
@@ -120,7 +111,6 @@
                         <th>Name</th>
                         <th>Start Date</th>
                         <th>End Date</th>
-                        <th>Status</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -132,13 +122,10 @@
                             <td class="align-middle">@season.StartDate.ToString("MMM d, yyyy")</td>
                             <td class="align-middle">@season.EndDate.ToString("MMM d, yyyy")</td>
                             <td class="align-middle">
-                                <span class="badge @UiHelpers.GetSeasonStatusBadgeClass(season.SeasonStatus)">@season.SeasonStatus</span>
-                            </td>
-                            <td class="align-middle">
-                                @if (_confirmDeleteId == season.SeasonId)
+                                @if (_confirmDeleteId == season.Id)
                                 {
                                     <span class="me-2 text-danger fw-semibold">Delete this season?</span>
-                                    <button class="btn btn-sm btn-danger me-1" @onclick="() => ConfirmDeleteAsync(season.SeasonId)" disabled="@_deleting">
+                                    <button class="btn btn-sm btn-danger me-1" @onclick="() => ConfirmDeleteAsync(season.Id)" disabled="@_deleting">
                                         @if (_deleting)
                                         {
                                             <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
@@ -154,7 +141,7 @@
                                 {
                                     <button class="btn btn-sm btn-outline-primary me-1" @onclick="() => ShowEditForm(season)" disabled="@_showForm"
                                             title="@(_showForm ? "Close the form above before editing" : null)">Edit</button>
-                                    <button class="btn btn-sm btn-outline-danger" @onclick="() => RequestDelete(season.SeasonId)" disabled="@_showForm"
+                                    <button class="btn btn-sm btn-outline-danger" @onclick="() => RequestDelete(season.Id)" disabled="@_showForm"
                                             title="@(_showForm ? "Close the form above before deleting" : null)">Delete</button>
                                 }
                             </td>
@@ -176,8 +163,8 @@
     private bool _showForm;
     private bool _submitting;
     private bool _deleting;
-    private Guid? _editingSeasonId;
-    private Guid? _confirmDeleteId;
+    private int? _editingSeasonId;
+    private int? _confirmDeleteId;
     private string? _errorMessage;
     private string? _successMessage;
     private string? _formError;
@@ -193,8 +180,6 @@
 
         [Required(ErrorMessage = "End date is required.")]
         public DateOnly EndDate { get; set; } = DateOnly.FromDateTime(DateTime.Today.AddMonths(6));
-
-        public SeasonStatus SeasonStatus { get; set; } = SeasonStatus.Planned;
     }
 
     private readonly SeasonModel _model = new();
@@ -230,7 +215,6 @@
         _model.Name = string.Empty;
         _model.StartDate = DateOnly.FromDateTime(DateTime.Today);
         _model.EndDate = DateOnly.FromDateTime(DateTime.Today.AddMonths(6));
-        _model.SeasonStatus = SeasonStatus.Planned;
         _formError = null;
         _confirmDeleteId = null;
         _showForm = true;
@@ -238,11 +222,10 @@
 
     private void ShowEditForm(Season season)
     {
-        _editingSeasonId = season.SeasonId;
+        _editingSeasonId = season.Id;
         _model.Name = season.Name;
         _model.StartDate = season.StartDate;
         _model.EndDate = season.EndDate;
-        _model.SeasonStatus = season.SeasonStatus;
         _formError = null;
         _confirmDeleteId = null;
         _showForm = true;
@@ -268,33 +251,24 @@
 
         // Duplicate name check (case-insensitive)
         var nameLower = _model.Name.ToLower();
-        var editId = _editingSeasonId ?? Guid.Empty;
+        var editId = _editingSeasonId ?? 0;
         var nameExists = await DbContext.Seasons.AnyAsync(s =>
             s.Name.ToLower() == nameLower &&
-            (!_editingSeasonId.HasValue || s.SeasonId != editId));
+            (!_editingSeasonId.HasValue || s.Id != editId));
         if (nameExists)
         {
             _formError = "A season with that name already exists.";
             return;
         }
 
-        // Date overlap check
-        var overlapExists = await DbContext.Seasons.AnyAsync(s =>
-            s.StartDate <= _model.EndDate && s.EndDate >= _model.StartDate &&
-            (!_editingSeasonId.HasValue || s.SeasonId != editId));
-        if (overlapExists)
+        // Date overlap check (only for new seasons since dates are init-only)
+        if (!_editingSeasonId.HasValue)
         {
-            _formError = "This season's dates overlap with an existing season.";
-            return;
-        }
-
-        // Status transition guard: closed season cannot go back to Active
-        if (_editingSeasonId.HasValue && _model.SeasonStatus == SeasonStatus.Active)
-        {
-            var current = _seasons?.FirstOrDefault(s => s.SeasonId == _editingSeasonId.Value);
-            if (current?.SeasonStatus == SeasonStatus.Closed)
+            var overlapExists = await DbContext.Seasons.AnyAsync(s =>
+                s.StartDate <= _model.EndDate && s.EndDate >= _model.StartDate);
+            if (overlapExists)
             {
-                _formError = "A closed season cannot be set back to Active.";
+                _formError = "This season's dates overlap with an existing season.";
                 return;
             }
         }
@@ -308,7 +282,7 @@
         {
             if (_editingSeasonId.HasValue)
             {
-                var season = await DbContext.Seasons.FirstOrDefaultAsync(s => s.SeasonId == _editingSeasonId.Value);
+                var season = await DbContext.Seasons.FirstOrDefaultAsync(s => s.Id == _editingSeasonId.Value);
                 if (season is null)
                 {
                     _formError = "Season not found.";
@@ -316,24 +290,13 @@
                 }
 
                 season.Name = _model.Name;
-                season.StartDate = _model.StartDate;
-                season.EndDate = _model.EndDate;
-                season.SeasonStatus = _model.SeasonStatus;
                 await DbContext.SaveChangesAsync();
                 _successMessage = $"Season \"{season.Name}\" updated successfully.";
             }
             else
             {
-                var season = new Season
-                {
-                    Name = _model.Name,
-                    StartDate = _model.StartDate,
-                    EndDate = _model.EndDate,
-                    SeasonStatus = _model.SeasonStatus
-                };
-                DbContext.Seasons.Add(season);
-                await DbContext.SaveChangesAsync();
-                _successMessage = $"Season \"{season.Name}\" added successfully.";
+                var season = await SeasonService.CreateSeasonAsync(_model.Name, _model.StartDate, _model.EndDate);
+                _successMessage = $"Season \"{season.Name}\" added successfully with tee time slots generated.";
             }
 
             _showForm = false;
@@ -356,7 +319,7 @@
         }
     }
 
-    private void RequestDelete(Guid seasonId)
+    private void RequestDelete(int seasonId)
     {
         _confirmDeleteId = seasonId;
     }
@@ -366,7 +329,7 @@
         _confirmDeleteId = null;
     }
 
-    private async Task ConfirmDeleteAsync(Guid seasonId)
+    private async Task ConfirmDeleteAsync(int seasonId)
     {
         _deleting = true;
         _errorMessage = null;
@@ -374,7 +337,7 @@
 
         try
         {
-            var season = await DbContext.Seasons.FirstOrDefaultAsync(s => s.SeasonId == seasonId);
+            var season = await DbContext.Seasons.FirstOrDefaultAsync(s => s.Id == seasonId);
             if (season is null)
             {
                 _errorMessage = "Season not found.";
@@ -395,7 +358,7 @@
         catch (Microsoft.EntityFrameworkCore.DbUpdateException ex)
         {
             Logger.LogError(ex, "Failed to delete season {SeasonId} (constraint violation)", seasonId);
-            _errorMessage = "Cannot delete this season because it has associated reservations.";
+            _errorMessage = "Cannot delete this season because it has associated tee time slots or bookings.";
         }
         catch (Exception ex)
         {

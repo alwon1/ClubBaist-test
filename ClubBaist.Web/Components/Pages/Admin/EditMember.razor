@@ -5,11 +5,11 @@
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
-@using ClubBaist.Domain
-@using ClubBaist.Services
+@using ClubBaist.Domain2
+@using ClubBaist.Domain2.Entities.Membership
+@using ClubBaist.Services2
 
-@inject MemberManagementService<Guid> MemberService
-@inject IApplicationDbContext<Guid> DbContext
+@inject IAppDbContext2 DbContext
 @inject ILogger<EditMember> Logger
 
 <PageTitle>Edit Member - Club Baist</PageTitle>
@@ -32,11 +32,10 @@ else
         <div>
             <h3>
                 Edit Member
-                <span class="badge bg-secondary ms-2">@_member.MemberNumber</span>
-                <span class="badge @(_member.IsActive ? "bg-success" : "bg-secondary") ms-1">@(_member.IsActive ? "Active" : "Inactive")</span>
+                <span class="badge bg-secondary ms-2">@_member.MembershipNumber</span>
             </h3>
         </div>
-        <a href="@($"/admin/users/{_member.ApplicationUserId}")" class="btn btn-outline-secondary">Back to User</a>
+        <a href="@($"/admin/users/{_member.User.Id}")" class="btn btn-outline-secondary">Back to User</a>
     </div>
 
     @if (!string.IsNullOrEmpty(_resultMessage))
@@ -119,19 +118,13 @@ else
                 <div class="row">
                     <div class="col-md-6">
                         <div class="form-floating mb-3">
-                            <InputSelect id="membershipCategory" class="form-select" @bind-Value="_model.MembershipCategory">
-                                @foreach (var cat in Enum.GetValues<MembershipCategory>())
+                            <InputSelect id="membershipLevel" class="form-select" @bind-Value="_model.MembershipLevelId">
+                                @foreach (var level in _levels)
                                 {
-                                    <option value="@cat">@cat</option>
+                                    <option value="@level.Id">@level.Name</option>
                                 }
                             </InputSelect>
-                            <label for="membershipCategory">Membership Category</label>
-                        </div>
-                    </div>
-                    <div class="col-md-6 d-flex align-items-center">
-                        <div class="form-check form-switch ms-2">
-                            <InputCheckbox class="form-check-input" id="isActive" @bind-Value="_model.IsActive" />
-                            <label class="form-check-label" for="isActive">Active Member</label>
+                            <label for="membershipLevel">Membership Level</label>
                         </div>
                     </div>
                 </div>
@@ -152,7 +145,8 @@ else
     [Parameter]
     public int MemberId { get; set; }
 
-    private MemberAccount<Guid>? _member;
+    private MemberShipInfo? _member;
+    private List<MembershipLevel> _levels = [];
     private bool _loading = true;
     private bool _submitting;
     private string? _resultMessage;
@@ -183,8 +177,7 @@ else
         [RegularExpression(@"^[A-Za-z]\d[A-Za-z]\s?\d[A-Za-z]\d$", ErrorMessage = "Enter a valid Canadian postal code (e.g. T2A 4K3).")]
         public string PostalCode { get; set; } = string.Empty;
 
-        public MembershipCategory MembershipCategory { get; set; }
-        public bool IsActive { get; set; }
+        public int MembershipLevelId { get; set; }
     }
 
     private readonly EditMemberModel _model = new();
@@ -194,21 +187,23 @@ else
         _loading = true;
         try
         {
-            _member = await DbContext.MemberAccounts
-                .Include(m => m.ApplicationUser)
-                .FirstOrDefaultAsync(m => m.MemberAccountId == MemberId);
+            _levels = await DbContext.MembershipLevels.ToListAsync();
+
+            _member = await DbContext.MemberShips
+                .Include(m => m.User)
+                .Include(m => m.MembershipLevel)
+                .FirstOrDefaultAsync(m => m.Id == MemberId);
 
             if (_member is not null)
             {
-                _model.FirstName = _member.ApplicationUser?.FirstName ?? string.Empty;
-                _model.LastName = _member.ApplicationUser?.LastName ?? string.Empty;
-                _model.DateOfBirth = _member.DateOfBirth;
-                _model.Phone = _member.ApplicationUser?.Phone ?? string.Empty;
-                _model.AlternatePhone = _member.AlternatePhone;
-                _model.Address = _member.Address;
-                _model.PostalCode = _member.PostalCode;
-                _model.MembershipCategory = _member.MembershipCategory;
-                _model.IsActive = _member.IsActive;
+                _model.FirstName = _member.User.FirstName ?? string.Empty;
+                _model.LastName = _member.User.LastName ?? string.Empty;
+                _model.DateOfBirth = _member.User.DateOfBirth;
+                _model.Phone = _member.User.PhoneNumber ?? string.Empty;
+                _model.AlternatePhone = _member.User.AlternatePhoneNumber;
+                _model.Address = _member.User.AddressLine1 ?? string.Empty;
+                _model.PostalCode = _member.User.PostalCode ?? string.Empty;
+                _model.MembershipLevelId = _member.MembershipLevel.Id;
             }
         }
         catch (Exception ex)
@@ -235,18 +230,24 @@ else
             var normalizedPhone = NormalizePhone(_model.Phone);
             var normalizedAltPhone = _model.AlternatePhone is not null ? NormalizePhone(_model.AlternatePhone) : null;
 
-            _member = await MemberService.UpdateMemberAsync(new UpdateMemberRequest<Guid>(
-                MemberAccountId: MemberId,
-                FirstName: _model.FirstName,
-                LastName: _model.LastName,
-                DateOfBirth: _model.DateOfBirth,
-                Phone: normalizedPhone,
-                Address: _model.Address,
-                PostalCode: normalizedPostalCode,
-                MembershipCategory: _model.MembershipCategory,
-                IsActive: _model.IsActive,
-                AlternatePhone: normalizedAltPhone));
+            _member.User.FirstName = _model.FirstName;
+            _member.User.LastName = _model.LastName;
+            _member.User.DateOfBirth = _model.DateOfBirth;
+            _member.User.PhoneNumber = normalizedPhone;
+            _member.User.AlternatePhoneNumber = normalizedAltPhone;
+            _member.User.AddressLine1 = _model.Address;
+            _member.User.PostalCode = normalizedPostalCode;
 
+            var newLevel = _levels.FirstOrDefault(l => l.Id == _model.MembershipLevelId);
+            if (newLevel is null)
+            {
+                _resultMessage = "The selected membership level was not found. Please refresh and try again.";
+                _isError = true;
+                return;
+            }
+            _member.MembershipLevel = newLevel;
+
+            await DbContext.SaveChangesAsync();
             _resultMessage = "Member profile updated successfully.";
         }
         catch (Exception ex)
