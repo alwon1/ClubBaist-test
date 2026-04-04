@@ -107,6 +107,23 @@ public class MaxParticipantsRuleTests
     }
 
     [TestMethod]
+    public void FullSlot_RejectsBooking_WithNegativeSpotsRemaining()
+    {
+        var slot = Builders.SlotAt(8);
+        slot.Bookings.Add(Builders.MakeBooking(slot, Builders.MakeMember(Builders.Id1)));
+        slot.Bookings.Add(Builders.MakeBooking(slot, Builders.MakeMember(Builders.Id2)));
+        slot.Bookings.Add(Builders.MakeBooking(slot, Builders.MakeMember(Builders.Id3)));
+        slot.Bookings.Add(Builders.MakeBooking(slot, Builders.MakeMember(Builders.Id3 + 1)));
+        var incoming = Builders.MakeBooking(slot, Builders.MakeMember(Builders.Id3 + 2));
+        var rule = new MaxParticipantsRule(slot.Bookings.AsQueryable(), 4);
+
+        var result = rule.Evaluate(Builders.Seed(slot), incoming).Single();
+
+        Assert.IsLessThan(0, result.SpotsRemaining);
+        Assert.AreEqual("Tee time is full", result.RejectionReason);
+    }
+
+    [TestMethod]
     public void ExcludeBookingId_FiltersMatchingBookingFromSum()
     {
         var slot   = Builders.SlotAt(8);

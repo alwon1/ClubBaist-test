@@ -28,7 +28,7 @@ public class MaxParticipantsRule(IQueryable<TeeTimeBooking> bookings, int maxPar
                 x.SpotsRemaining < 0
                     ? x.SpotsRemaining
                     : x.Existing + incoming > maxParticipants
-                        ? 0
+                        ? -(x.Existing + incoming - maxParticipants)
                         : maxParticipants - x.Existing,
                 x.SpotsRemaining < 0
                     ? x.RejectionReason
