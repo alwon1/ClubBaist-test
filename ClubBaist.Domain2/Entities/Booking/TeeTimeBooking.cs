@@ -45,8 +45,11 @@ public class BookingParticipant
 {
     public int Id { get; init; }
 
+    public MemberShipInfo? Member { get; init; }
+
     public static BookingParticipant FromMember(MemberShipInfo member) => new()
     {
-        Id = member.Id
+        Id = member.Id,
+        Member = member
     };
 }

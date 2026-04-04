@@ -53,6 +53,10 @@ public class AppDbContext : IdentityDbContext<ClubBaistUser, IdentityRole<Guid>,
                     .ValueGeneratedNever();
                 navbuilder.HasKey("TeeTimeBookingId", nameof(BookingParticipant.Id));
                 navbuilder.ToTable("BookingAdditionalParticipant");
+                navbuilder.HasOne(participant => participant.Member)
+                    .WithMany()
+                    .HasForeignKey(participant => participant.Id)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
         });
 

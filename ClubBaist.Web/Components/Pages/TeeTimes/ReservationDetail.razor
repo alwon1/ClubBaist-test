@@ -145,7 +145,7 @@ else
                     @for (var i = 0; i < booking.AdditionalParticipants.Count; i++)
                     {
                         <li class="list-group-item">
-                            <strong>@(i + 2).</strong> @MemberName(booking.AdditionalParticipants[i])
+                            <strong>@(i + 2).</strong> @MemberName(booking.AdditionalParticipants[i].Member!)
                         </li>
                     }
                 </ul>
@@ -222,8 +222,7 @@ else
             booking = await DbContext.TeeTimeBookings
                 .Include(b => b.BookingMember).ThenInclude(m => m.User)
                 .Include(b => b.BookingMember).ThenInclude(m => m.MembershipLevel)
-                .Include(b => b.AdditionalParticipants).ThenInclude(m => m.User)
-                .Include(b => b.AdditionalParticipants).ThenInclude(m => m.MembershipLevel)
+                .Include(b => b.AdditionalParticipants).ThenInclude(p => p.Member)
                 .FirstOrDefaultAsync(b => b.Id == BookingId);
 
             if (booking is null) { isLoading = false; return; }
