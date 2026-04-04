@@ -33,7 +33,29 @@ public class BookingService(IEnumerable<IBookingRule> rules, IAppDbContext2 db, 
                     return false;
                 }
 
-                db.TeeTimeBookings.Add(request);
+                var slot = await db.TeeTimeSlots
+                    .Include(item => item.Bookings)
+                    .FirstOrDefaultAsync(item => item.Start == request.TeeTimeSlotStart);
+
+                if (slot is null)
+                {
+                    logger.LogWarning("Booking rejected for member {MemberId} on slot {SlotStart}: slot was not found during save",
+                        request.BookingMemberId, request.TeeTimeSlotStart);
+                    await transaction.RollbackAsync();
+                    return false;
+                }
+
+                slot.Bookings.Add(new TeeTimeBooking
+                {
+                    TeeTimeSlotStart = slot.Start,
+                    TeeTimeSlot = slot,
+                    BookingMemberId = request.BookingMemberId,
+                    BookingMember = request.BookingMember,
+                    StandingTeeTimeId = request.StandingTeeTimeId,
+                    StandingTeeTime = request.StandingTeeTime,
+                    AdditionalParticipants = [.. request.AdditionalParticipants]
+                });
+
                 var saved = await db.SaveChangesAsync() > 0;
                 if (!saved)
                 {
@@ -66,7 +88,11 @@ public class BookingService(IEnumerable<IBookingRule> rules, IAppDbContext2 db, 
             await using var transaction = await db.BeginTransactionAsync(System.Data.IsolationLevel.Snapshot);
             try
             {
-                var booking = await db.TeeTimeBookings.FindAsync(bookingId);
+                var slot = await db.TeeTimeSlots
+                    .Include(item => item.Bookings)
+                    .FirstOrDefaultAsync(item => item.Bookings.Any(booking => booking.Id == bookingId));
+                var booking = slot?.Bookings.SingleOrDefault(item => item.Id == bookingId);
+
                 if (booking is null)
                 {
                     logger.LogWarning("Cancel requested for non-existent booking {BookingId}", bookingId);
@@ -74,7 +100,7 @@ public class BookingService(IEnumerable<IBookingRule> rules, IAppDbContext2 db, 
                     return false;
                 }
 
-                db.TeeTimeBookings.Remove(booking);
+                slot!.Bookings.Remove(booking);
                 var saved = await db.SaveChangesAsync() > 0;
                 if (!saved)
                 {
@@ -113,12 +139,15 @@ public class BookingService(IEnumerable<IBookingRule> rules, IAppDbContext2 db, 
 
         try
         {
-            var booking = await db.TeeTimeBookings
-                .Include(b => b.TeeTimeSlot)
-                .Include(b => b.BookingMember)
-                    .ThenInclude(m => m.MembershipLevel)
-                .Include(b => b.AdditionalParticipants)
-                .FirstOrDefaultAsync(b => b.Id == bookingId);
+            var slot = await db.TeeTimeSlots
+                .Include(item => item.Bookings)
+                    .ThenInclude(item => item.BookingMember)
+                        .ThenInclude(item => item.MembershipLevel)
+                .Include(item => item.Bookings)
+                    .ThenInclude(item => item.AdditionalParticipants)
+                        .ThenInclude(item => item.MembershipLevel)
+                .FirstOrDefaultAsync(item => item.Bookings.Any(booking => booking.Id == bookingId));
+            var booking = slot?.Bookings.SingleOrDefault(item => item.Id == bookingId);
 
             if (booking is null)
             {
@@ -152,7 +181,7 @@ public class BookingService(IEnumerable<IBookingRule> rules, IAppDbContext2 db, 
                 TeeTimeSlot = booking.TeeTimeSlot,
                 BookingMemberId = booking.BookingMemberId,
                 BookingMember = booking.BookingMember,
-                AdditionalParticipants = participants.Select(BookingParticipant.FromMember).ToList()
+                AdditionalParticipants = participants
             };
 
             var evaluation = await EvaluateBookingAsync(proposedBooking, booking.Id);
@@ -170,7 +199,7 @@ public class BookingService(IEnumerable<IBookingRule> rules, IAppDbContext2 db, 
             }
 
             booking.AdditionalParticipants.Clear();
-            booking.AdditionalParticipants.AddRange(participants.Select(BookingParticipant.FromMember));
+            booking.AdditionalParticipants.AddRange(participants);
 
             await db.SaveChangesAsync();
             logger.LogInformation("Booking {BookingId} updated with {ParticipantCount} additional participants", bookingId, participants.Count);

@@ -136,11 +136,14 @@ public sealed class BookingPerformanceTests
                 TeeTimeSlot = slot,
                 BookingMemberId = bookingMember.Id,
                 BookingMember = bookingMember,
-                AdditionalParticipants = additionalParticipants.Select(BookingParticipant.FromMember).ToList()
+                AdditionalParticipants = additionalParticipants
             });
         }
 
-        await db.TeeTimeBookings.AddRangeAsync(bookings);
+        foreach (var booking in bookings)
+        {
+            booking.TeeTimeSlot.Bookings.Add(booking);
+        }
 
         for (var i = 0; i < 24; i++)
         {
@@ -162,7 +165,7 @@ public sealed class BookingPerformanceTests
             TeeTimeSlot = targetSlot,
             BookingMemberId = members[0].Id,
             BookingMember = members[0],
-            AdditionalParticipants = [BookingParticipant.FromMember(members[1]), BookingParticipant.FromMember(members[2])]
+            AdditionalParticipants = [members[1], members[2]]
         };
     }
 

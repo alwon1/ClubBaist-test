@@ -46,7 +46,18 @@ internal sealed class Domain2TestHost : IAsyncDisposable
         await using (var scope = provider.CreateAsyncScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
+
             await db.Database.EnsureCreatedAsync();
+
+            foreach (var roleName in new[] { AppRoles.Admin, AppRoles.MembershipCommittee, AppRoles.Member, AppRoles.Shareholder })
+            {
+                if (!await roleManager.RoleExistsAsync(roleName))
+                {
+                    var result = await roleManager.CreateAsync(new IdentityRole<Guid>(roleName));
+                    Assert.IsTrue(result.Succeeded, string.Join(", ", result.Errors.Select(error => error.Description)));
+                }
+            }
         }
 
         return new Domain2TestHost(provider);

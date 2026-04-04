@@ -10,11 +10,21 @@ public class PastSlotRule : IBookingRule
 {
     public IQueryable<TeeTimeEvaluation> Evaluate(IQueryable<TeeTimeEvaluation> query, TeeTimeBooking booking, int? excludeBookingId = null)
     {
-        var currentLocalTime = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Unspecified);
+        var nowLocal = DateTime.Now;
+        var nowUtc = DateTime.UtcNow;
+        var nowUnspecified = DateTime.SpecifyKind(nowLocal, DateTimeKind.Unspecified);
 
         return query.Select(p => p.SpotsRemaining < 0 ? p :
-            p.Slot.Start < currentLocalTime
+            IsPastSlot(p.Slot.Start, nowLocal, nowUtc, nowUnspecified)
                 ? new TeeTimeEvaluation(p.Slot, -5, "Cannot book a tee time in the past")
                 : p);
     }
+
+    private static bool IsPastSlot(DateTime slotStart, DateTime nowLocal, DateTime nowUtc, DateTime nowUnspecified) =>
+        slotStart.Kind switch
+        {
+            DateTimeKind.Utc => slotStart < nowUtc,
+            DateTimeKind.Local => slotStart < nowLocal,
+            _ => slotStart < nowUnspecified
+        };
 }

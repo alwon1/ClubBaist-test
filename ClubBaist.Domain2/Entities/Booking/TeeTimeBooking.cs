@@ -34,22 +34,8 @@ public class TeeTimeBooking
     [NotMapped]
     public int ParticipantCount => 1 + AdditionalParticipants.Count;
 
-    public List<BookingParticipant> AdditionalParticipants { get; set; } = new(3);
+    public List<MemberShipInfo> AdditionalParticipants { get; set; } = new(3);
 
     [NotMapped]
     public IReadOnlyList<int> ParticipantIds => [BookingMemberId, ..AdditionalParticipants.Select(participant => participant.Id)];
-}
-
-[Owned]
-public class BookingParticipant
-{
-    public int Id { get; init; }
-
-    public MemberShipInfo? Member { get; init; }
-
-    public static BookingParticipant FromMember(MemberShipInfo member) => new()
-    {
-        Id = member.Id,
-        Member = member
-    };
 }

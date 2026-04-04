@@ -7,7 +7,11 @@ using Microsoft.Extensions.Logging;
 
 namespace ClubBaist.Services2.Membership.Applications;
 
-public class MembershipApplicationService(IAppDbContext2 db, UserManager<ClubBaistUser> userManager, ILogger<MembershipApplicationService> logger)
+public class MembershipApplicationService(
+    IAppDbContext2 db,
+    UserManager<ClubBaistUser> userManager,
+    RoleManager<IdentityRole<Guid>> roleManager,
+    ILogger<MembershipApplicationService> logger)
 {
     public IQueryable<MembershipApplication> GetMembershipApplications() => db.MembershipApplications.AsNoTracking();
 
@@ -89,6 +93,21 @@ public class MembershipApplicationService(IAppDbContext2 db, UserManager<ClubBai
 
                     await transaction.RollbackAsync();
                     return false;
+                }
+
+                if (!await roleManager.RoleExistsAsync(AppRoles.Member))
+                {
+                    var createRoleResult = await roleManager.CreateAsync(new IdentityRole<Guid> { Name = AppRoles.Member });
+                    if (!createRoleResult.Succeeded)
+                    {
+                        foreach (var error in createRoleResult.Errors)
+                        {
+                            logger.LogError("Role creation failed for {Role}: {Code} - {Description}", AppRoles.Member, error.Code, error.Description);
+                        }
+
+                        await transaction.RollbackAsync();
+                        return false;
+                    }
                 }
 
                 var roleResult = await userManager.AddToRoleAsync(user, AppRoles.Member);

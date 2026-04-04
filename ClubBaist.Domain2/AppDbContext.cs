@@ -33,16 +33,23 @@ public class AppDbContext : IdentityDbContext<ClubBaistUser, IdentityRole<Guid>,
     {
         base.OnModelCreating(modelBuilder);
 
+        modelBuilder.Entity<TeeTimeSlot>(entity =>
+        {
+            entity.Navigation(slot => slot.Bookings).AutoInclude();
+
+        });
         modelBuilder.Entity<TeeTimeBooking>(entity =>
         {
             entity.HasOne(booking => booking.BookingMember)
                 .WithMany()
                 .HasForeignKey(booking => booking.BookingMemberId)
-                .OnDelete(DeleteBehavior.Restrict);
-
+                .OnDelete(DeleteBehavior.Cascade);
             entity.HasOne(booking => booking.StandingTeeTime)
                 .WithMany()
                 .HasForeignKey(booking => booking.StandingTeeTimeId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.Navigation(booking => booking.BookingMember).AutoInclude();
+            entity.Navigation(booking => booking.StandingTeeTime).AutoInclude();
                 .OnDelete(DeleteBehavior.SetNull);
 
             entity.OwnsMany(booking => booking.AdditionalParticipants, navbuilder =>
@@ -72,12 +79,6 @@ public class AppDbContext : IdentityDbContext<ClubBaistUser, IdentityRole<Guid>,
             entity.Navigation(standing => standing.BookingMember).AutoInclude();
             entity.Navigation(standing => standing.AdditionalParticipants).AutoInclude();
         });
-
-        modelBuilder.Entity<MemberShipInfo>()
-            .HasOne(member => member.User)
-            .WithOne()
-            .HasForeignKey<MemberShipInfo>(member => member.UserId)
-            .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<MemberShipInfo>()
             .Navigation(member => member.User)

@@ -349,9 +349,9 @@ public class BookingServiceTests
             TeeTimeSlot = slot,
             BookingMemberId = bookingMember.Id,
             BookingMember = bookingMember,
-            AdditionalParticipants = [BookingParticipant.FromMember(firstParticipant)]
+            AdditionalParticipants = [firstParticipant]
         };
-        db.TeeTimeBookings.Add(booking);
+        slot.Bookings.Add(booking);
         await db.SaveChangesAsync();
 
         var updated = await bookingService.UpdateBookingAsync(booking.Id, [secondParticipant]);
@@ -399,7 +399,7 @@ public class BookingServiceTests
             TeeTimeSlot = firstSlot,
             BookingMemberId = bookingMember.Id,
             BookingMember = bookingMember,
-            AdditionalParticipants = [BookingParticipant.FromMember(existingParticipant)]
+            AdditionalParticipants = [existingParticipant]
         };
 
         var nearbyBooking = new TeeTimeBooking
@@ -408,10 +408,11 @@ public class BookingServiceTests
             TeeTimeSlot = nearbySlot,
             BookingMemberId = secondBookingMember.Id,
             BookingMember = secondBookingMember,
-            AdditionalParticipants = [BookingParticipant.FromMember(conflictingParticipant)]
+            AdditionalParticipants = [conflictingParticipant]
         };
 
-        db.TeeTimeBookings.AddRange(originalBooking, nearbyBooking);
+        firstSlot.Bookings.Add(originalBooking);
+        nearbySlot.Bookings.Add(nearbyBooking);
         await db.SaveChangesAsync();
 
         var updated = await bookingService.UpdateBookingAsync(originalBooking.Id, [conflictingParticipant]);
