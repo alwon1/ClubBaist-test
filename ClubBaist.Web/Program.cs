@@ -107,9 +107,11 @@ public class Program
         if (hasMigrations)
         {
             await db.Database.MigrateAsync();
+            await db.EnsureSqlServerSnapshotIsolationAsync();
             return;
         }
 
         await db.Database.EnsureCreatedAsync();
+        await db.EnsureSqlServerSnapshotIsolationAsync();
     }
 }

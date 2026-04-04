@@ -14,12 +14,6 @@ public static class ServiceCollectionExtensions2
     public static IServiceCollection AddTeeTimeBookingServices2(this IServiceCollection services)
     {
         // Rules that need IQueryable<T> pulled from the scoped DbContext
-        services.AddScoped<IBookingRule>(sp =>
-        {
-            var db = sp.GetRequiredService<IAppDbContext2>();
-            return new SeasonValidationRule(db.Seasons);
-        });
-
         services.AddScoped<IBookingRule>(_ => new PastSlotRule());
 
         services.AddScoped<IBookingRule>(sp =>

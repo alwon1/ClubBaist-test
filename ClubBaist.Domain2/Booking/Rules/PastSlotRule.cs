@@ -12,9 +12,17 @@ public class PastSlotRule : IBookingRule
     {
         var currentLocalTime = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Unspecified);
 
-        return query.Select(p => p.SpotsRemaining < 0 ? p :
-            p.Slot.Start < currentLocalTime
-                ? new TeeTimeEvaluation(p.Slot, -5, "Cannot book a tee time in the past")
-                : p);
+        return query.Select(p => new TeeTimeEvaluation(
+            p.Slot,
+            p.SpotsRemaining < 0
+                ? p.SpotsRemaining
+                : p.Slot.Start < currentLocalTime
+                    ? -5
+                    : p.SpotsRemaining,
+            p.SpotsRemaining < 0
+                ? p.RejectionReason
+                : p.Slot.Start < currentLocalTime
+                    ? "Cannot book a tee time in the past"
+                    : p.RejectionReason));
     }
 }

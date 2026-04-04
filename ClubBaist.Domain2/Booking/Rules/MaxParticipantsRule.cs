@@ -14,20 +14,50 @@ public class MaxParticipantsRule(IQueryable<TeeTimeBooking> bookings, int maxPar
         // (the DB-computed ParticipantCount column is 0 before the row is saved).
         var incoming = 1 + booking.AdditionalParticipants.Count;
         return query
-            .Select(p => new { p, existing = bookings.Where(b => b.TeeTimeSlotStart == p.Slot.Start && (excludeBookingId == null || b.Id != excludeBookingId)).Sum(b => 1 + b.AdditionalParticipants.Count) })
-            .Select(x => x.p.SpotsRemaining < 0 ? x.p :
-                x.existing + incoming > maxParticipants
-                    ? new TeeTimeEvaluation(x.p.Slot, 0, "Tee time is full")
-                    : new TeeTimeEvaluation(x.p.Slot, maxParticipants - x.existing, x.p.RejectionReason));
+            .Select(p => new
+            {
+                p.Slot,
+                p.SpotsRemaining,
+                p.RejectionReason,
+                Existing = bookings
+                    .Where(b => b.TeeTimeSlotStart == p.Slot.Start && (excludeBookingId == null || b.Id != excludeBookingId))
+                    .Sum(b => 1 + b.AdditionalParticipants.Count)
+            })
+            .Select(x => new TeeTimeEvaluation(
+                x.Slot,
+                x.SpotsRemaining < 0
+                    ? x.SpotsRemaining
+                    : x.Existing + incoming > maxParticipants
+                        ? 0
+                        : maxParticipants - x.Existing,
+                x.SpotsRemaining < 0
+                    ? x.RejectionReason
+                    : x.Existing + incoming > maxParticipants
+                        ? "Tee time is full"
+                        : x.RejectionReason));
     }
 
     public IQueryable<TeeTimeEvaluation> Evaluate(IQueryable<TeeTimeEvaluation> query, MembershipLevel membershipLevel) =>
         query
-            .Select(p => new { p, existing = bookings.Where(b => b.TeeTimeSlotStart == p.Slot.Start).Sum(b => 1 + b.AdditionalParticipants.Count) })
-            .Select(x => x.p.SpotsRemaining < 0 ? x.p :
-                x.existing >= maxParticipants
-                    ? new TeeTimeEvaluation(x.p.Slot, 0, "Tee time is full")
-                    : new TeeTimeEvaluation(x.p.Slot, maxParticipants - x.existing, x.p.RejectionReason));
+            .Select(p => new
+            {
+                p.Slot,
+                p.SpotsRemaining,
+                p.RejectionReason,
+                Existing = bookings.Where(b => b.TeeTimeSlotStart == p.Slot.Start).Sum(b => 1 + b.AdditionalParticipants.Count)
+            })
+            .Select(x => new TeeTimeEvaluation(
+                x.Slot,
+                x.SpotsRemaining < 0
+                    ? x.SpotsRemaining
+                    : x.Existing >= maxParticipants
+                        ? 0
+                        : maxParticipants - x.Existing,
+                x.SpotsRemaining < 0
+                    ? x.RejectionReason
+                    : x.Existing >= maxParticipants
+                        ? "Tee time is full"
+                        : x.RejectionReason));
 
     public IQueryable<TeeTimeEvaluation> Evaluate(IQueryable<TeeTimeEvaluation> query, MemberShipInfo member) =>
         Evaluate(query, member.MembershipLevel);

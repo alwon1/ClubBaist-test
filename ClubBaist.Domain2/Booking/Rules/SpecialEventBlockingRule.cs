@@ -13,9 +13,26 @@ public class SpecialEventBlockingRule(IQueryable<SpecialEvent> specialEvents) : 
 
     private IQueryable<TeeTimeEvaluation> Filter(IQueryable<TeeTimeEvaluation> query) =>
         query
-            .Select(p => new { p, eventName = specialEvents.Where(e => e.Start <= p.Slot.Start && e.End > p.Slot.Start).Select(e => e.Name).FirstOrDefault() })
-            .Select(x => x.p.SpotsRemaining < 0 ? x.p :
-                x.eventName == null
-                    ? x.p
-                    : new TeeTimeEvaluation(x.p.Slot, -3, "This time is blocked by the special event: " + x.eventName));
+            .Select(p => new
+            {
+                p.Slot,
+                p.SpotsRemaining,
+                p.RejectionReason,
+                EventName = specialEvents
+                    .Where(e => e.Start <= p.Slot.Start && e.End > p.Slot.Start)
+                    .Select(e => e.Name)
+                    .FirstOrDefault()
+            })
+            .Select(x => new TeeTimeEvaluation(
+                x.Slot,
+                x.SpotsRemaining < 0
+                    ? x.SpotsRemaining
+                    : x.EventName == null
+                        ? x.SpotsRemaining
+                        : -3,
+                x.SpotsRemaining < 0
+                    ? x.RejectionReason
+                    : x.EventName == null
+                        ? x.RejectionReason
+                        : "This time is blocked by the special event: " + x.EventName));
 }

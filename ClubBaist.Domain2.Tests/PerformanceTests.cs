@@ -79,8 +79,8 @@ public sealed class BookingPerformanceTests
         TestContext.WriteLine($"Current BookingService path completed {iterations} evaluations in {elapsed.TotalMilliseconds:N1} ms");
 
         Assert.IsTrue(
-            elapsed < TimeSpan.FromSeconds(2.5),
-            $"Expected {iterations} evaluations to complete within 2500 ms, but took {elapsed.TotalMilliseconds:N1} ms.");
+            elapsed < TimeSpan.FromSeconds(5),
+            $"Expected {iterations} evaluations to complete within 5000 ms against the AppHost-backed database, but took {elapsed.TotalMilliseconds:N1} ms.");
     }
 
     private static async Task<TeeTimeBooking> SeedScenarioAsync(IServiceProvider provider)
@@ -136,7 +136,7 @@ public sealed class BookingPerformanceTests
                 TeeTimeSlot = slot,
                 BookingMemberId = bookingMember.Id,
                 BookingMember = bookingMember,
-                AdditionalParticipants = additionalParticipants.Select(BookingParticipant.FromMember).ToList()
+                AdditionalParticipants = additionalParticipants.ToList()
             });
         }
 
@@ -162,7 +162,7 @@ public sealed class BookingPerformanceTests
             TeeTimeSlot = targetSlot,
             BookingMemberId = members[0].Id,
             BookingMember = members[0],
-            AdditionalParticipants = [BookingParticipant.FromMember(members[1]), BookingParticipant.FromMember(members[2])]
+            AdditionalParticipants = [members[1], members[2]]
         };
     }
 

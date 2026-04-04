@@ -133,8 +133,8 @@ else if (viewMode == ViewMode.Week && weeklySlots is not null)
                                     }
                                     @foreach (var player in booking.AdditionalParticipants)
                                     {
-                                        <span class="badge bg-secondary weekly-badge" title="@player.Member!.User.FirstName @player.Member!.User.LastName">
-                                            @player.Member!.User.FirstName
+                                        <span class="badge bg-secondary weekly-badge" title="@player.User.FirstName @player.User.LastName">
+                                            @player.User.FirstName
                                         </span>
                                     }
                                 }
@@ -202,8 +202,8 @@ else if (viewMode == ViewMode.Day && slots is not null)
                                             @foreach (var player in booking.AdditionalParticipants)
                                             {
                                                 <div class="@innerCol px-1">
-                                                    <span class="badge bg-secondary w-100 member-badge" title="@player.Member!.User.FirstName @player.Member!.User.LastName">
-                                                        @player.Member!.User.FirstName @player.Member!.User.LastName
+                                                    <span class="badge bg-secondary w-100 member-badge" title="@player.User.FirstName @player.User.LastName">
+                                                        @player.User.FirstName @player.User.LastName
                                                     </span>
                                                 </div>
                                             }
@@ -222,8 +222,8 @@ else if (viewMode == ViewMode.Day && slots is not null)
                                             @foreach (var player in booking.AdditionalParticipants)
                                             {
                                                 <div class="@innerCol px-1">
-                                                    <span class="badge bg-secondary w-100 member-badge" title="@player.Member!.User.FirstName @player.Member!.User.LastName">
-                                                        @player.Member!.User.FirstName @player.Member!.User.LastName
+                                                    <span class="badge bg-secondary w-100 member-badge" title="@player.User.FirstName @player.User.LastName">
+                                                        @player.User.FirstName @player.User.LastName
                                                     </span>
                                                 </div>
                                             }
@@ -619,7 +619,7 @@ else if (viewMode == ViewMode.Day && slots is not null)
         return await DbContext.TeeTimeSlots
             .Where(s => s.Start >= startOfDay && s.Start < endOfDay)
             .Include(s => s.Bookings).ThenInclude(b => b.BookingMember).ThenInclude(m => m.User)
-            .Include(s => s.Bookings).ThenInclude(b => b.AdditionalParticipants).ThenInclude(p => p.Member)
+            .Include(s => s.Bookings).ThenInclude(b => b.AdditionalParticipants).ThenInclude(p => p.User)
             .OrderBy(s => s.Start)
             .ToListAsync();
     }

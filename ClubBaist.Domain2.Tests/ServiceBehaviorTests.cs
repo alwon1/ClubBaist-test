@@ -287,38 +287,6 @@ public class MembershipLevelServiceTests
 }
 
 [TestClass]
-public class SeasonValidationRuleCoverageTests
-{
-    [TestMethod]
-    public void SlotWithinSeason_AllowsBooking()
-    {
-        var date = new DateTime(2026, 6, 15, 10, 0, 0);
-        var season = new Season { Name = "2026 Season", StartDate = new DateOnly(2026, 4, 1), EndDate = new DateOnly(2026, 9, 30) };
-        var slot = new TeeTimeSlot { Start = date, SeasonId = season.Id };
-
-        var result = new SeasonValidationRule(new[] { season }.AsQueryable())
-            .Evaluate(Builders.Seed(slot), Builders.Level())
-            .Single();
-
-        Assert.IsNull(result.RejectionReason);
-    }
-
-    [TestMethod]
-    public void SlotOutsideSeason_RejectsWithNegativeFour()
-    {
-        var season = new Season { Name = "2026 Season", StartDate = new DateOnly(2026, 4, 1), EndDate = new DateOnly(2026, 9, 30) };
-        var slot = new TeeTimeSlot { Start = new DateTime(2026, 1, 15, 10, 0, 0), SeasonId = season.Id };
-
-        var result = new SeasonValidationRule(new[] { season }.AsQueryable())
-            .Evaluate(Builders.Seed(slot), Builders.Level())
-            .Single();
-
-        Assert.AreEqual(-4, result.SpotsRemaining);
-        StringAssert.Contains(result.RejectionReason, "outside");
-    }
-}
-
-[TestClass]
 public class BookingServiceTests
 {
     [TestMethod]
@@ -349,7 +317,7 @@ public class BookingServiceTests
             TeeTimeSlot = slot,
             BookingMemberId = bookingMember.Id,
             BookingMember = bookingMember,
-            AdditionalParticipants = [BookingParticipant.FromMember(firstParticipant)]
+            AdditionalParticipants = [firstParticipant]
         };
         db.TeeTimeBookings.Add(booking);
         await db.SaveChangesAsync();
@@ -399,7 +367,7 @@ public class BookingServiceTests
             TeeTimeSlot = firstSlot,
             BookingMemberId = bookingMember.Id,
             BookingMember = bookingMember,
-            AdditionalParticipants = [BookingParticipant.FromMember(existingParticipant)]
+            AdditionalParticipants = [existingParticipant]
         };
 
         var nearbyBooking = new TeeTimeBooking
@@ -408,7 +376,7 @@ public class BookingServiceTests
             TeeTimeSlot = nearbySlot,
             BookingMemberId = secondBookingMember.Id,
             BookingMember = secondBookingMember,
-            AdditionalParticipants = [BookingParticipant.FromMember(conflictingParticipant)]
+            AdditionalParticipants = [conflictingParticipant]
         };
 
         db.TeeTimeBookings.AddRange(originalBooking, nearbyBooking);

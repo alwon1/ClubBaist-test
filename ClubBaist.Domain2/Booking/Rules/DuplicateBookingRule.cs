@@ -10,14 +10,30 @@ public class DuplicateBookingRule(IQueryable<TeeTimeBooking> bookings, double co
     public IQueryable<TeeTimeEvaluation> Evaluate(IQueryable<TeeTimeEvaluation> query, TeeTimeBooking booking, int? excludeBookingId = null)
     {
         var participantIds = booking.ParticipantIds.ToList();
-        return query.Select(p => p.SpotsRemaining < 0 ? p :
-            bookings.Any(b => (excludeBookingId == null || b.Id != excludeBookingId)
-                           && b.TeeTimeSlotStart > p.Slot.Start.AddHours(-conflictWindowHours)
-                           && b.TeeTimeSlotStart < p.Slot.Start.AddHours(conflictWindowHours)
-                           && (participantIds.Contains(b.BookingMemberId)
-                               || b.AdditionalParticipants.Any(m => participantIds.Contains(m.Id))))
-                ? new TeeTimeEvaluation(p.Slot, -2, $"One or more participants have a booking within {conflictWindowHours} hours of this tee time")
-                : p);
+        return query
+            .Select(p => new
+            {
+                p.Slot,
+                p.SpotsRemaining,
+                p.RejectionReason,
+                HasConflict = bookings.Any(b => (excludeBookingId == null || b.Id != excludeBookingId)
+                    && b.TeeTimeSlotStart > p.Slot.Start.AddHours(-conflictWindowHours)
+                    && b.TeeTimeSlotStart < p.Slot.Start.AddHours(conflictWindowHours)
+                    && (participantIds.Contains(b.BookingMemberId)
+                        || b.AdditionalParticipants.Any(m => participantIds.Contains(m.Id))))
+            })
+            .Select(x => new TeeTimeEvaluation(
+                x.Slot,
+                x.SpotsRemaining < 0
+                    ? x.SpotsRemaining
+                    : x.HasConflict
+                        ? -2
+                        : x.SpotsRemaining,
+                x.SpotsRemaining < 0
+                    ? x.RejectionReason
+                    : x.HasConflict
+                        ? $"One or more participants have a booking within {conflictWindowHours} hours of this tee time"
+                        : x.RejectionReason));
     }
 
     /// <summary>
@@ -28,13 +44,25 @@ public class DuplicateBookingRule(IQueryable<TeeTimeBooking> bookings, double co
     public IQueryable<TeeTimeEvaluation> Evaluate(IQueryable<TeeTimeEvaluation> query, MemberShipInfo member)
     {
         var memberId = member.Id;
-        return query.Select(p => p.SpotsRemaining < 0 ? p :
-            bookings.Any(b => b.TeeTimeSlotStart > p.Slot.Start.AddHours(-conflictWindowHours)
-                           && b.TeeTimeSlotStart < p.Slot.Start.AddHours(conflictWindowHours)
-                           && (b.BookingMemberId == memberId
-                               || b.AdditionalParticipants.Any(m => m.Id == memberId)))
-                ? new TeeTimeEvaluation(p.Slot, p.SpotsRemaining, $"You have a booking within {conflictWindowHours} hours of this tee time")
-                : p);
+        return query
+            .Select(p => new
+            {
+                p.Slot,
+                p.SpotsRemaining,
+                p.RejectionReason,
+                HasConflict = bookings.Any(b => b.TeeTimeSlotStart > p.Slot.Start.AddHours(-conflictWindowHours)
+                    && b.TeeTimeSlotStart < p.Slot.Start.AddHours(conflictWindowHours)
+                    && (b.BookingMemberId == memberId
+                        || b.AdditionalParticipants.Any(m => m.Id == memberId)))
+            })
+            .Select(x => new TeeTimeEvaluation(
+                x.Slot,
+                x.SpotsRemaining,
+                x.SpotsRemaining < 0
+                    ? x.RejectionReason
+                    : x.HasConflict
+                        ? $"You have a booking within {conflictWindowHours} hours of this tee time"
+                        : x.RejectionReason));
     }
 }
 

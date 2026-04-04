@@ -3,6 +3,7 @@ using ClubBaist.Domain2.Entities;
 using ClubBaist.Domain2.Entities.Membership;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -29,6 +30,42 @@ public class AppDbContext : IdentityDbContext<ClubBaistUser, IdentityRole<Guid>,
     public IExecutionStrategy CreateExecutionStrategy() =>
         Database.CreateExecutionStrategy();
 
+    public async Task EnsureSqlServerSnapshotIsolationAsync(CancellationToken cancellationToken = default)
+    {
+        if (!Database.IsSqlServer())
+        {
+            return;
+        }
+
+        var connectionString = Database.GetConnectionString();
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            return;
+        }
+
+        var databaseName = Database.GetDbConnection().Database;
+        var escapedDatabaseName = databaseName.Replace("]", "]]" );
+        var sqlBuilder = new SqlConnectionStringBuilder(connectionString)
+        {
+            InitialCatalog = "master",
+            TrustServerCertificate = true
+        };
+
+        await using var connection = new SqlConnection(sqlBuilder.ConnectionString);
+        await connection.OpenAsync(cancellationToken);
+
+        var commandText = $"""
+            IF DB_ID(N'{databaseName.Replace("'", "''")}') IS NOT NULL
+            BEGIN
+                ALTER DATABASE [{escapedDatabaseName}] SET ALLOW_SNAPSHOT_ISOLATION ON;
+                ALTER DATABASE [{escapedDatabaseName}] SET READ_COMMITTED_SNAPSHOT ON WITH ROLLBACK IMMEDIATE;
+            END
+            """;
+
+        await using var command = new SqlCommand(commandText, connection);
+        await command.ExecuteNonQueryAsync(cancellationToken);
+    }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -45,19 +82,9 @@ public class AppDbContext : IdentityDbContext<ClubBaistUser, IdentityRole<Guid>,
                 .HasForeignKey(booking => booking.StandingTeeTimeId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            entity.OwnsMany(booking => booking.AdditionalParticipants, navbuilder =>
-            {
-                navbuilder.WithOwner().HasForeignKey("TeeTimeBookingId");
-                navbuilder.Property(participant => participant.Id)
-                    .HasColumnName("MemberShipInfoId")
-                    .ValueGeneratedNever();
-                navbuilder.HasKey("TeeTimeBookingId", nameof(BookingParticipant.Id));
-                navbuilder.ToTable("BookingAdditionalParticipant");
-                navbuilder.HasOne(participant => participant.Member)
-                    .WithMany()
-                    .HasForeignKey(participant => participant.Id)
-                    .OnDelete(DeleteBehavior.Restrict);
-            });
+            entity.HasMany(booking => booking.AdditionalParticipants)
+                .WithMany()
+                .UsingEntity(join => join.ToTable("BookingAdditionalParticipant"));
         });
 
         modelBuilder.Entity<StandingTeeTime>(entity =>

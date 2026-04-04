@@ -108,7 +108,7 @@ public class StandingTeeTimePhaseOneTests
             BookingMember = bookingMember,
             StandingTeeTimeId = standing.Id,
             StandingTeeTime = standing,
-            AdditionalParticipants = [BookingParticipant.FromMember(participant)]
+            AdditionalParticipants = [participant]
         };
 
         db.TeeTimeBookings.Add(generatedBooking);

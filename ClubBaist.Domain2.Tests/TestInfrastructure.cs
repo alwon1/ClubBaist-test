@@ -1,17 +1,22 @@
+using Aspire.Hosting;
+using Aspire.Hosting.Testing;
 using ClubBaist.Domain2.Entities;
 using ClubBaist.Domain2.Entities.Membership;
 using ClubBaist.Services2;
 using ClubBaist.Services2.Membership;
 using ClubBaist.Services2.Membership.Applications;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ClubBaist.Domain2.Tests;
 
 internal sealed class Domain2TestHost : IAsyncDisposable
 {
+    private static readonly SemaphoreSlim AppLock = new(1, 1);
+    private static DistributedApplication? distributedApp;
+
     private Domain2TestHost(ServiceProvider services)
     {
         Services = services;
@@ -21,11 +26,17 @@ internal sealed class Domain2TestHost : IAsyncDisposable
 
     public static async Task<Domain2TestHost> CreateAsync()
     {
+        var baseConnectionString = await GetConnectionStringAsync();
+        var sqlBuilder = new SqlConnectionStringBuilder(baseConnectionString)
+        {
+            InitialCatalog = $"clubbaist-domain2-tests-{Guid.NewGuid():N}",
+            TrustServerCertificate = true
+        };
+
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddDbContext<AppDbContext>(options =>
-            options.UseInMemoryDatabase($"clubbaist-domain2-tests-{Guid.NewGuid():N}")
-                .ConfigureWarnings(warnings => warnings.Ignore(InMemoryEventId.TransactionIgnoredWarning)));
+            options.UseSqlServer(sqlBuilder.ConnectionString, sql => sql.EnableRetryOnFailure()));
 
         services.AddIdentityCore<ClubBaistUser>(options =>
             {
@@ -47,6 +58,17 @@ internal sealed class Domain2TestHost : IAsyncDisposable
         {
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
             await db.Database.EnsureCreatedAsync();
+            await db.EnsureSqlServerSnapshotIsolationAsync();
+
+            if (!await db.Roles.AnyAsync())
+            {
+                db.Roles.AddRange(
+                    new IdentityRole<Guid> { Name = AppRoles.Admin, NormalizedName = AppRoles.Admin.ToUpperInvariant() },
+                    new IdentityRole<Guid> { Name = AppRoles.MembershipCommittee, NormalizedName = AppRoles.MembershipCommittee.ToUpperInvariant() },
+                    new IdentityRole<Guid> { Name = AppRoles.Member, NormalizedName = AppRoles.Member.ToUpperInvariant() },
+                    new IdentityRole<Guid> { Name = AppRoles.Shareholder, NormalizedName = AppRoles.Shareholder.ToUpperInvariant() });
+                await db.SaveChangesAsync();
+            }
         }
 
         return new Domain2TestHost(provider);
@@ -56,7 +78,34 @@ internal sealed class Domain2TestHost : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
+        await using var scope = Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        await db.Database.EnsureDeletedAsync();
         await Services.DisposeAsync();
+    }
+
+    private static async Task<string> GetConnectionStringAsync()
+    {
+        if (distributedApp is null)
+        {
+            await AppLock.WaitAsync();
+            try
+            {
+                if (distributedApp is null)
+                {
+                    var builder = await DistributedApplicationTestingBuilder.CreateAsync<Projects.ClubBaist_AppHost>();
+                    distributedApp = await builder.BuildAsync();
+                    await distributedApp.StartAsync();
+                }
+            }
+            finally
+            {
+                AppLock.Release();
+            }
+        }
+
+        return await distributedApp.GetConnectionStringAsync("clubbaist")
+            ?? throw new InvalidOperationException("The AppHost did not provide a connection string for 'clubbaist'.");
     }
 }
 

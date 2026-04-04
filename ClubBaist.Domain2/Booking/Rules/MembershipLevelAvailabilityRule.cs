@@ -6,14 +6,30 @@ public class MembershipLevelAvailabilityRule(IQueryable<MembershipLevelTeeTimeAv
         Evaluate(query, booking.BookingMember.MembershipLevel);
 
     public IQueryable<TeeTimeEvaluation> Evaluate(IQueryable<TeeTimeEvaluation> query, MembershipLevel membershipLevel) =>
-        query.Select(p => p.SpotsRemaining < 0 ? p :
-            availabilities.Any(a =>
+        query
+            .Select(p => new
+            {
+                p.Slot,
+                p.SpotsRemaining,
+                p.RejectionReason,
+                IsAvailable = availabilities.Any(a =>
                     a.MembershipLevel.Id == membershipLevel.Id &&
                     a.DayOfWeek == p.Slot.Start.DayOfWeek &&
                     a.StartTime <= TimeOnly.FromDateTime(p.Slot.Start) &&
                     a.EndTime >= TimeOnly.FromDateTime(p.Slot.Start))
-                ? p
-                : new TeeTimeEvaluation(p.Slot, -1, $"Not available to {membershipLevel.Name} members at this time"));
+            })
+            .Select(x => new TeeTimeEvaluation(
+                x.Slot,
+                x.SpotsRemaining < 0
+                    ? x.SpotsRemaining
+                    : x.IsAvailable
+                        ? x.SpotsRemaining
+                        : -1,
+                x.SpotsRemaining < 0
+                    ? x.RejectionReason
+                    : x.IsAvailable
+                        ? x.RejectionReason
+                        : $"Not available to {membershipLevel.Name} members at this time"));
 
     public IQueryable<TeeTimeEvaluation> Evaluate(IQueryable<TeeTimeEvaluation> query, MemberShipInfo member) =>
         Evaluate(query, member.MembershipLevel);

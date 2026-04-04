@@ -159,7 +159,7 @@ public class BookingService(IEnumerable<IBookingRule> rules, IAppDbContext2 db, 
                     TeeTimeSlot = booking.TeeTimeSlot,
                     BookingMemberId = booking.BookingMemberId,
                     BookingMember = booking.BookingMember,
-                    AdditionalParticipants = participants.Select(BookingParticipant.FromMember).ToList()
+                    AdditionalParticipants = participants.ToList()
                 };
 
                 var evaluation = await EvaluateBookingAsync(proposedBooking, booking.Id);
@@ -179,7 +179,7 @@ public class BookingService(IEnumerable<IBookingRule> rules, IAppDbContext2 db, 
                 }
 
                 booking.AdditionalParticipants.Clear();
-                booking.AdditionalParticipants.AddRange(participants.Select(BookingParticipant.FromMember));
+                booking.AdditionalParticipants.AddRange(participants);
 
                 await db.SaveChangesAsync();
                 await transaction.CommitAsync();
@@ -195,10 +195,26 @@ public class BookingService(IEnumerable<IBookingRule> rules, IAppDbContext2 db, 
         });
     }
 
-    private Task<TeeTimeEvaluation> EvaluateBookingAsync(TeeTimeBooking request, int? excludeBookingId = null) =>
-        db.TeeTimeSlots
+    private async Task<TeeTimeEvaluation> EvaluateBookingAsync(TeeTimeBooking request, int? excludeBookingId = null)
+    {
+        var slot = await db.TeeTimeSlots
             .AsNoTracking()
-            .Evaluate(rules, request, excludeBookingId)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(item => item.Start == request.TeeTimeSlotStart);
+
+        if (slot is null)
+        {
+            return new TeeTimeEvaluation(null, -1, "Tee time slot not found");
+        }
+
+        IQueryable<TeeTimeEvaluation> evaluation =
+            new[] { new TeeTimeEvaluation(slot, int.MaxValue, null) }.AsQueryable();
+
+        foreach (var rule in rules)
+        {
+            evaluation = rule.Evaluate(evaluation, request, excludeBookingId);
+        }
+
+        return evaluation.FirstOrDefault();
+    }
 }
 

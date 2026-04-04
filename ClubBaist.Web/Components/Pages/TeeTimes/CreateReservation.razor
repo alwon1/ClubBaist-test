@@ -289,7 +289,7 @@ else
                 TeeTimeSlot = slot,
                 BookingMemberId = bookingMember.Id,
                 BookingMember = bookingMember,
-                AdditionalParticipants = additionalParticipants.Select(BookingParticipant.FromMember).ToList()
+                AdditionalParticipants = additionalParticipants.ToList()
             };
 
             var result = await BookingService.CreateBookingAsync(booking);

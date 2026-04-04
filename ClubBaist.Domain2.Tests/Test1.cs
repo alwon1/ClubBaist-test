@@ -193,7 +193,7 @@ public class DuplicateBookingRuleTests
         slot.Bookings.Add(Builders.MakeBooking(slot, existing));
 
         var newBooking = Builders.MakeBooking(slot, Builders.MakeMember(Builders.Id2));
-        newBooking.AdditionalParticipants.Add(BookingParticipant.FromMember(existing)); // Id1 is a duplicate
+        newBooking.AdditionalParticipants.Add(existing); // Id1 is a duplicate
 
         var result = new DuplicateBookingRule(slot.Bookings.AsQueryable())
             .Evaluate(Builders.Seed(slot), newBooking).Single();
@@ -207,7 +207,7 @@ public class DuplicateBookingRuleTests
         var slot      = Builders.SlotAt(8);
         var duplicate = Builders.MakeMember(Builders.Id2);
         var existing  = Builders.MakeBooking(slot, Builders.MakeMember(Builders.Id1));
-        existing.AdditionalParticipants.Add(BookingParticipant.FromMember(duplicate));
+        existing.AdditionalParticipants.Add(duplicate);
         slot.Bookings.Add(existing);
 
         var booking = Builders.MakeBooking(slot, duplicate);
@@ -224,11 +224,11 @@ public class DuplicateBookingRuleTests
         var slot      = Builders.SlotAt(8);
         var duplicate = Builders.MakeMember(Builders.Id3);
         var existing  = Builders.MakeBooking(slot, Builders.MakeMember(Builders.Id1));
-        existing.AdditionalParticipants.Add(BookingParticipant.FromMember(duplicate));
+        existing.AdditionalParticipants.Add(duplicate);
         slot.Bookings.Add(existing);
 
         var newBooking = Builders.MakeBooking(slot, Builders.MakeMember(Builders.Id2));
-        newBooking.AdditionalParticipants.Add(BookingParticipant.FromMember(duplicate));
+        newBooking.AdditionalParticipants.Add(duplicate);
 
         var result = new DuplicateBookingRule(slot.Bookings.AsQueryable())
             .Evaluate(Builders.Seed(slot), newBooking).Single();
@@ -697,7 +697,7 @@ public class PastSlotRuleTests
     [TestMethod]
     public void FutureSlot_AllowsBooking()
     {
-        var slot    = new TeeTimeSlot { Start = DateTime.UtcNow.AddHours(1) };
+        var slot    = new TeeTimeSlot { Start = DateTime.Now.AddHours(1) };
         var booking = Builders.MakeBooking(slot, Builders.MakeMember(Builders.Id1));
 
         var result = new PastSlotRule()
@@ -709,7 +709,7 @@ public class PastSlotRuleTests
     [TestMethod]
     public void PastSlot_RejectsWithNegativeFive()
     {
-        var slot    = new TeeTimeSlot { Start = DateTime.UtcNow.AddHours(-1) };
+        var slot    = new TeeTimeSlot { Start = DateTime.Now.AddHours(-1) };
         var booking = Builders.MakeBooking(slot, Builders.MakeMember(Builders.Id1));
 
         var result = new PastSlotRule()
@@ -722,7 +722,7 @@ public class PastSlotRuleTests
     [TestMethod]
     public void AlreadyRejected_PassesThrough_WithoutOverwrite()
     {
-        var slot    = new TeeTimeSlot { Start = DateTime.UtcNow.AddHours(-1) };
+        var slot    = new TeeTimeSlot { Start = DateTime.Now.AddHours(-1) };
         var booking = Builders.MakeBooking(slot, Builders.MakeMember(Builders.Id1));
 
         var result = new PastSlotRule()
@@ -735,7 +735,7 @@ public class PastSlotRuleTests
     [TestMethod]
     public void AvailabilityQuery_ByMembershipLevel_NotFiltered()
     {
-        var slot  = new TeeTimeSlot { Start = DateTime.UtcNow.AddHours(-1) };
+        var slot  = new TeeTimeSlot { Start = DateTime.Now.AddHours(-1) };
         var level = Builders.Level();
 
         // The MembershipLevel overload has the default no-op — past slots still show for availability queries
