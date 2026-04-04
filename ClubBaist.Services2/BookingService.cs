@@ -111,93 +111,94 @@ public class BookingService(IEnumerable<IBookingRule> rules, IAppDbContext2 db, 
             return false;
         }
 
-        try
+        var strategy = db.CreateExecutionStrategy();
+        return await strategy.ExecuteAsync(async () =>
         {
-            var booking = await db.TeeTimeBookings
-                .Include(b => b.TeeTimeSlot)
-                .Include(b => b.BookingMember)
-                    .ThenInclude(m => m.MembershipLevel)
-                .Include(b => b.AdditionalParticipants)
-                .FirstOrDefaultAsync(b => b.Id == bookingId);
-
-            if (booking is null)
+            await using var transaction = await db.BeginTransactionAsync(System.Data.IsolationLevel.Snapshot);
+            try
             {
-                logger.LogWarning("Update requested for non-existent booking {BookingId}", bookingId);
+                var booking = await db.TeeTimeBookings
+                    .Include(b => b.TeeTimeSlot)
+                    .Include(b => b.BookingMember)
+                        .ThenInclude(m => m.MembershipLevel)
+                    .Include(b => b.AdditionalParticipants)
+                    .FirstOrDefaultAsync(b => b.Id == bookingId);
+
+                if (booking is null)
+                {
+                    logger.LogWarning("Update requested for non-existent booking {BookingId}", bookingId);
+                    await transaction.RollbackAsync();
+                    return false;
+                }
+
+                if (requestedParticipantIds.Contains(booking.BookingMemberId))
+                {
+                    logger.LogWarning("UpdateBooking rejected for booking {BookingId}: booking member cannot also be an additional participant", bookingId);
+                    await transaction.RollbackAsync();
+                    return false;
+                }
+
+                var participants = requestedParticipantIds.Count == 0
+                    ? []
+                    : await db.MemberShips
+                        .Include(m => m.MembershipLevel)
+                        .Where(m => requestedParticipantIds.Contains(m.Id))
+                        .ToListAsync();
+
+                if (participants.Count != requestedParticipantIds.Count)
+                {
+                    logger.LogWarning("UpdateBooking rejected for booking {BookingId}: one or more participants were not found", bookingId);
+                    await transaction.RollbackAsync();
+                    return false;
+                }
+
+                var proposedBooking = new TeeTimeBooking
+                {
+                    Id = booking.Id,
+                    TeeTimeSlotStart = booking.TeeTimeSlotStart,
+                    TeeTimeSlot = booking.TeeTimeSlot,
+                    BookingMemberId = booking.BookingMemberId,
+                    BookingMember = booking.BookingMember,
+                    AdditionalParticipants = participants.Select(BookingParticipant.FromMember).ToList()
+                };
+
+                var evaluation = await EvaluateBookingAsync(proposedBooking, booking.Id);
+
+                if (evaluation.Slot is null)
+                {
+                    logger.LogWarning("UpdateBooking rejected for booking {BookingId}: slot was not found", bookingId);
+                    await transaction.RollbackAsync();
+                    return false;
+                }
+
+                if (evaluation.SpotsRemaining < 0)
+                {
+                    logger.LogWarning("UpdateBooking rejected for booking {BookingId}: {Reason}", bookingId, evaluation.RejectionReason);
+                    await transaction.RollbackAsync();
+                    return false;
+                }
+
+                booking.AdditionalParticipants.Clear();
+                booking.AdditionalParticipants.AddRange(participants.Select(BookingParticipant.FromMember));
+
+                await db.SaveChangesAsync();
+                await transaction.CommitAsync();
+                logger.LogInformation("Booking {BookingId} updated with {ParticipantCount} additional participants", bookingId, participants.Count);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error updating booking {BookingId}", bookingId);
+                await transaction.RollbackAsync();
                 return false;
             }
-
-            if (requestedParticipantIds.Contains(booking.BookingMemberId))
-            {
-                logger.LogWarning("UpdateBooking rejected for booking {BookingId}: booking member cannot also be an additional participant", bookingId);
-                return false;
-            }
-
-            var participants = requestedParticipantIds.Count == 0
-                ? []
-                : await db.MemberShips
-                    .Include(m => m.MembershipLevel)
-                    .Where(m => requestedParticipantIds.Contains(m.Id))
-                    .ToListAsync();
-
-            if (participants.Count != requestedParticipantIds.Count)
-            {
-                logger.LogWarning("UpdateBooking rejected for booking {BookingId}: one or more participants were not found", bookingId);
-                return false;
-            }
-
-            var proposedBooking = new TeeTimeBooking
-            {
-                Id = booking.Id,
-                TeeTimeSlotStart = booking.TeeTimeSlotStart,
-                TeeTimeSlot = booking.TeeTimeSlot,
-                BookingMemberId = booking.BookingMemberId,
-                BookingMember = booking.BookingMember,
-                AdditionalParticipants = participants.Select(BookingParticipant.FromMember).ToList()
-            };
-
-            var evaluation = await EvaluateBookingAsync(proposedBooking, booking.Id);
-
-            if (evaluation.Slot is null)
-            {
-                logger.LogWarning("UpdateBooking rejected for booking {BookingId}: slot was not found", bookingId);
-                return false;
-            }
-
-            if (evaluation.SpotsRemaining < 0)
-            {
-                logger.LogWarning("UpdateBooking rejected for booking {BookingId}: {Reason}", bookingId, evaluation.RejectionReason);
-                return false;
-            }
-
-            booking.AdditionalParticipants.Clear();
-            booking.AdditionalParticipants.AddRange(participants.Select(BookingParticipant.FromMember));
-
-            await db.SaveChangesAsync();
-            logger.LogInformation("Booking {BookingId} updated with {ParticipantCount} additional participants", bookingId, participants.Count);
-            return true;
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error updating booking {BookingId}", bookingId);
-            return false;
-        }
+        });
     }
 
-    private async Task<TeeTimeEvaluation> EvaluateBookingAsync(TeeTimeBooking request, int? excludeBookingId = null)
-    {
-        var slot = await db.TeeTimeSlots
+    private Task<TeeTimeEvaluation> EvaluateBookingAsync(TeeTimeBooking request, int? excludeBookingId = null) =>
+        db.TeeTimeSlots
             .AsNoTracking()
-            .FirstOrDefaultAsync(item => item.Start == request.TeeTimeSlotStart);
-
-        if (slot is null)
-        {
-            return default;
-        }
-
-        return new[] { slot }
-            .AsQueryable()
             .Evaluate(rules, request, excludeBookingId)
-            .FirstOrDefault();
-    }
+            .FirstOrDefaultAsync();
 }
 

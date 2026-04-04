@@ -180,18 +180,18 @@ else
 
             if (result)
             {
-                successMessage = "Reservation cancelled successfully.";
+                successMessage = "Booking cancelled successfully.";
                 await LoadData();
             }
             else
             {
-                errorMessage = "Unable to cancel reservation.";
+                errorMessage = "Unable to cancel booking.";
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to cancel booking {BookingId}", bookingId);
-            errorMessage = "An unexpected error occurred while cancelling the reservation. Please try again later.";
+            errorMessage = "An unexpected error occurred while cancelling the booking. Please try again later.";
         }
     }
 }

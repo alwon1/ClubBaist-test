@@ -197,7 +197,7 @@ else
             _memberAccount = await DbContext.MemberShips
                 .Include(m => m.User)
                 .Include(m => m.MembershipLevel)
-                .FirstOrDefaultAsync(m => m.User.Id == UserId);
+                .FirstOrDefaultAsync(m => m.UserId == UserId);
         }
         catch (Exception ex)
         {

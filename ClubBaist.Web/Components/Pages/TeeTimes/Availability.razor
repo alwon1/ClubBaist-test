@@ -45,7 +45,7 @@ else
         if (!isAdmin)
         {
             var member = await DbContext.MemberShips
-                .FirstOrDefaultAsync(m => m.User.Id == userId);
+                .FirstOrDefaultAsync(m => m.UserId == userId);
             currentMemberId = member?.Id ?? 0;
         }
 
