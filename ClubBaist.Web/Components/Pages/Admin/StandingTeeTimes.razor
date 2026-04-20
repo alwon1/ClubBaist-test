@@ -124,7 +124,7 @@ else
                                             <span class="input-group-text">Priority #</span>
                                             <input type="number" class="form-control form-control-sm" min="1"
                                                    value="@_approvePriority"
-                                                   @onchange="e => _approvePriority = int.TryParse(e.Value?.ToString(), out var p) ? p : null" />
+                                                   @onchange="OnPriorityChanged" />
                                         </div>
                                         <div class="d-flex gap-1">
                                             <button class="btn btn-sm btn-success flex-grow-1"
@@ -261,6 +261,11 @@ else
         _approveId = null;
     }
 
+    private void OnPriorityChanged(ChangeEventArgs e)
+    {
+        _approvePriority = int.TryParse(e.Value?.ToString(), out var p) ? p : null;
+    }
+
     private async Task ConfirmApproveAsync(int id)
     {
         _processing = true;
@@ -275,7 +280,11 @@ else
                 return;
             }
 
-            TimeOnly? approvedTime = TimeOnly.TryParse(_approveTime, out var t) ? t : null;
+            if (!TimeOnly.TryParse(_approveTime, out var approvedTime))
+            {
+                _errorMessage = "Please enter a valid approved time.";
+                return;
+            }
 
             entry.Status = StandingTeeTimeStatus.Approved;
             entry.ApprovedTime = approvedTime;
