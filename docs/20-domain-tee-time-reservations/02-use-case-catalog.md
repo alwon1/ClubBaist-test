@@ -1,7 +1,7 @@
 # Tee Time Reservations – Use Case Catalog
 
 ## Scope Decision
-To start backend planning with practical delivery value, Tee Time Reservations prioritize **2 core use cases** now, while tracking additional use cases for later phases. UC-TT-04 (Standing Tee Times) has since been implemented and promoted to in-scope.
+To start backend planning with practical delivery value, Tee Time Reservations initially prioritized **2 core use cases**, while tracking additional use cases for later phases. UC-TT-04 (Standing Tee Times) has since been implemented and promoted to in-scope, bringing the total to **3 core use cases**.
 
 ## Core Use Cases (Current Focus)
 1. **UC-TT-01 Create Tee Time Reservation**

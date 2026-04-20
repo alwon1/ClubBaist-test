@@ -47,12 +47,12 @@ Task<(bool Success, string? ErrorMessage)> SubmitRequestAsync(StandingTeeTime re
 
 **Output:** `(Success: true, ErrorMessage: null)` on success. `(Success: false, ErrorMessage: <reason>)` on any validation failure or save failure.
 
-**Validation order:**
-1. Member already has an active (non-cancelled, non-denied) request → reject.
+**Validation order (local checks first, DB check last):**
+1. `AdditionalParticipants.Count != 3` → reject.
 2. `EndDate <= StartDate` → reject.
-3. `AdditionalParticipants.Count != 3` → reject.
-4. Booking member appears in participant list → reject.
-5. Duplicate members in participant list → reject.
+3. Booking member appears in participant list → reject.
+4. Duplicate members in participant list → reject.
+5. Member already has an active (non-cancelled, non-denied) request → reject (DB query).
 
 ---
 

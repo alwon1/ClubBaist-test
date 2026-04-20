@@ -65,7 +65,7 @@ else
             }
         </TemplateColumn>
         <TemplateColumn Title="Status" SortBy="@(GridSort<StandingTeeTime>.ByAscending(r => r.Status))">
-            <span class="badge @GetStatusBadgeClass(context.Status)">@context.Status</span>
+            <span class="badge @UiHelpers.GetStandingTeeTimeStatusBadgeClass(context.Status)">@context.Status</span>
         </TemplateColumn>
         <TemplateColumn Title="Approved Time / Priority">
             @if (context.ApprovedTime.HasValue)
@@ -171,14 +171,4 @@ else
         }
     }
 
-    private static string GetStatusBadgeClass(StandingTeeTimeStatus status) => status switch
-    {
-        StandingTeeTimeStatus.Draft => "bg-secondary",
-        StandingTeeTimeStatus.Approved => "bg-success",
-        StandingTeeTimeStatus.Allocated => "bg-primary",
-        StandingTeeTimeStatus.Unallocated => "bg-warning text-dark",
-        StandingTeeTimeStatus.Cancelled => "bg-danger",
-        StandingTeeTimeStatus.Denied => "bg-danger",
-        _ => "bg-secondary"
-    };
 }
