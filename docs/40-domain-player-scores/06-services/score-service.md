@@ -47,7 +47,7 @@ public record EligibleBooking(
 /// <summary>Request payload for score submission.</summary>
 public record SubmitRoundRequest(
     int BookingId,
-    int MemberId,
+    int MembershipId,
     GolfRound.TeeColor TeeColor,
     IReadOnlyList<uint?> Scores);   // exactly 18 elements, all non-null, all 1–20
 
@@ -92,7 +92,7 @@ public record ScoreSubmissionResult(
 | Step | Check | Error |
 |------|-------|-------|
 | 1 | Member is active (`MemberShipInfo` exists with matching `Id`) | Member not active |
-| 2 | Booking exists and `BookingMemberId` matches `request.MemberId` | Booking not found or not owned by member |
+| 2 | Booking exists and `BookingMemberId` matches `request.MembershipId` | Booking not found or not owned by member |
 | 3 | Time-lock has elapsed for the booking | Round not yet eligible |
 | 4 | No existing `GolfRound` for this booking (fail-fast pre-check) | Score already submitted |
 | 5 | `request.Scores` has exactly 18 elements, all non-null | Incomplete scorecard |
@@ -104,7 +104,7 @@ public record ScoreSubmissionResult(
 BeginTransaction(Snapshot isolation)
   Re-check: no GolfRound for booking (concurrency guard)
   If already scored → rollback → return failure
-  Construct GolfRound { TeeTimeBookingId, BookingMemberId, TeeColor, Scores, SubmittedAt = UtcNow, ActingUserId }
+  Construct GolfRound { TeeTimeBookingId, MembershipId, TeeColor, Scores, SubmittedAt = DateTime.UtcNow, ActingUserId }
   db.GolfRounds.Add(round)
   SaveChangesAsync()
   CommitTransaction

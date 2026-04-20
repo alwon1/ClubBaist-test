@@ -40,8 +40,8 @@ Each test expects `ScoreSubmissionResult.Success = false` and no `GolfRound` sto
 
 | ID | Scenario | Expected error |
 |----|----------|---------------|
-| T-15 | `BookingMemberId` does not match any `MemberShipInfo` record | Member not found / not active |
-| T-16 | Booking exists but `BookingMemberId` on the request does not match `TeeTimeBooking.BookingMemberId` | Booking not owned by member |
+| T-15 | `MembershipId` does not match any `MemberShipInfo` record | Member not found / not active |
+| T-16 | Booking exists but `MembershipId` on the request does not match `TeeTimeBooking.BookingMemberId` | Booking not owned by member |
 | T-17 | Booking tee time is 1 hour ago (1-player, lock = 2 h) — inside window | Round not yet eligible |
 | T-18 | `GolfRound` already exists for the booking (sequential duplicate) | Score already submitted |
 | T-19 | `Scores` list has 17 elements | Incomplete scorecard |

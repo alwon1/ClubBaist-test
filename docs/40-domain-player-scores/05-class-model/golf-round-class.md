@@ -23,7 +23,7 @@ public enum TeeColor { Red = 0, White = 1, Blue = 2 }
 | `Id` | `int` | `[Key]` `[DatabaseGenerated(Identity)]` | Auto-generated surrogate key |
 | `TeeTimeBookingId` | `int` | `[Required]` `[ForeignKey(nameof(TeeTimeBooking))]` | FK to `TeeTimeBooking` — one-way navigation only |
 | `TeeTimeBooking` | `TeeTimeBooking` | `[Required]` | Navigation property (no back-navigation added to `TeeTimeBooking`) |
-| `MemberId` | `int` | `[Required]` `[ForeignKey(nameof(Member))]` | FK to `MemberShipInfo` |
+| `MembershipId` | `int` | `[Required]` `[ForeignKey(nameof(Member))]` | FK to `MemberShipInfo` |
 | `Member` | `MemberShipInfo` | `[Required]` | Navigation property — required for EF Core to map the FK correctly |
 | `TeeColor` | `TeeColor` | `[Required]` | Tee colour chosen for this round; future lookup key for course/slope ratings |
 | `Scores` | `List<uint?>` | *(none)* | 18 nullable unsigned ints, initialized to length 18. Null = hole not yet entered. All 18 scores must be non-null and in range (1–20) before persisting, enforced by the service; UI validation may also exist for UX. |
@@ -34,13 +34,13 @@ public enum TeeColor { Red = 0, White = 1, Blue = 2 }
 
 | Columns | Unique | Purpose |
 |---------|--------|---------|
-| `TeeTimeBookingId`, `MemberId` | **Yes** | Enforces one score per booking per member at the database level — not a composite PK because future external-course rounds (UC-PS-02) may share a booking reference across members |
+| `TeeTimeBookingId`, `MembershipId` | **Yes** | Enforces one score per booking per member at the database level — not a composite PK because future external-course rounds (UC-PS-02) may share a booking reference across members |
 
 ## Invariants
 
 - `Scores` list is always initialized to exactly 18 elements on construction; elements are `null` until entered.
 - A `GolfRound` may only be stored once all 18 scores are non-null and in range (1–20) — enforced by the service before persisting.
-- `MemberId` must match `TeeTimeBooking.BookingMemberId` — validated by the service; not a DB constraint.
+- `MembershipId` must match `TeeTimeBooking.BookingMemberId` — validated by the service; not a DB constraint.
 - `SubmittedAt` is set by the service at submission time (server-side); never supplied by the client.
 - `ActingUserId` is set from the authenticated session; never supplied by the client form.
 
@@ -63,7 +63,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ClubBaist.Domain2.Entities.Scoring;
 
-[Index(nameof(TeeTimeBookingId), nameof(MemberId), IsUnique = true)]
+[Index(nameof(TeeTimeBookingId), nameof(MembershipId), IsUnique = true)]
 public class GolfRound
 {
     /// <summary>
@@ -84,7 +84,7 @@ public class GolfRound
 
     [Required]
     [ForeignKey(nameof(Member))]
-    public int MemberId { get; init; }
+    public int MembershipId { get; init; }
 
     [Required]
     public required MemberShipInfo Member { get; init; }
@@ -118,7 +118,7 @@ classDiagram
         +int Id
         +int TeeTimeBookingId
         +TeeTimeBooking TeeTimeBooking
-        +int MemberId
+        +int MembershipId
         +MemberShipInfo Member
         +TeeColor TeeColor
         +List~uint?~ Scores
@@ -147,7 +147,7 @@ classDiagram
     }
 
     GolfRound "1" --> "1" TeeTimeBooking : TeeTimeBookingId (one-way FK)
-    GolfRound "1" --> "1" MemberShipInfo : MemberId (FK + nav property)
+    GolfRound "1" --> "1" MemberShipInfo : MembershipId (FK + nav property)
     GolfRound +-- TeeColor : nested enum
 ```
 
@@ -155,14 +155,14 @@ classDiagram
 - `GolfRound → TeeTimeBooking`: navigation property on `GolfRound` only; `TeeTimeBooking` is not modified.
 - `GolfRound → MemberShipInfo`: FK + navigation property — required for EF Core to map the relationship correctly.
 - `TeeColor` is nested inside `GolfRound`; referenced externally as `GolfRound.TeeColor`.
-- Composite unique index on `(TeeTimeBookingId, MemberId)` — not a composite PK because UC-PS-02 (external courses) may eventually require multiple member scores per booking reference.
+- Composite unique index on `(TeeTimeBookingId, MembershipId)` — not a composite PK because UC-PS-02 (external courses) may eventually require multiple member scores per booking reference.
 
 ---
 
 ## Relationship to Other Types
 
 - `TeeTimeBooking` — one-way navigation (FK on `GolfRound`; no change to `TeeTimeBooking`)
-- `MemberShipInfo` — FK + navigation property (`MemberId` / `Member`)
+- `MemberShipInfo` — FK + navigation property (`MembershipId` / `Member`)
 - `TeeColor` — nested enum, stored as int column
 
-The composite unique index on `(TeeTimeBookingId, MemberId)` is the primary guard against duplicate submissions. The service also checks for an existing `GolfRound` before entering its transaction (fail-fast), with the unique index as the final concurrency safety net.
+The composite unique index on `(TeeTimeBookingId, MembershipId)` is the primary guard against duplicate submissions. The service also checks for an existing `GolfRound` before entering its transaction (fail-fast), with the unique index as the final concurrency safety net.

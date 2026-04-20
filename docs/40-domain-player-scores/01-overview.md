@@ -39,7 +39,9 @@ TeeColor (enum)
 GolfRound (entity)
   Id                    int, PK, auto-generated
   TeeTimeBookingId      int, FK → TeeTimeBooking (one-way, no back-navigation)
-  BookingMemberId       int, FK → MemberShipInfo (one-way, no back-navigation)
+  TeeTimeBooking        TeeTimeBooking (navigation property — one-way)
+  MembershipId          int, FK → MemberShipInfo
+  Member                MemberShipInfo (navigation property — required for EF Core mapping)
   TeeColor              TeeColor (required)
   Scores                List<uint?>, length 18, initialized on construction
   SubmittedAt           DateTime (UTC)
@@ -48,7 +50,7 @@ GolfRound (entity)
 
 No changes to any existing entities (`TeeTimeBooking`, `MemberShipInfo`, identity tables).
 
-A unique index on `GolfRound.TeeTimeBookingId` enforces one score per booking at the database level.
+A composite unique index on `GolfRound(TeeTimeBookingId, MembershipId)` enforces one score per booking per member at the database level.
 
 ---
 
