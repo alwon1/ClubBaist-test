@@ -67,9 +67,9 @@ public class ScoreService(IAppDbContext2 db, ILogger<ScoreService> logger)
             return (false, "Round not yet eligible — minimum completion time has not elapsed");
         }
 
-        if (await db.GolfRounds.AnyAsync(r => r.TeeTimeBookingId == bookingId, cancellationToken))
+        if (await db.GolfRounds.AnyAsync(r => r.TeeTimeBookingId == bookingId && r.MembershipId == membershipId, cancellationToken))
         {
-            logger.LogWarning("SubmitRound rejected: score already exists for booking {BookingId}", bookingId);
+            logger.LogWarning("SubmitRound rejected: score already exists for booking {BookingId} member {MemberId}", bookingId, membershipId);
             return (false, "Score already submitted for this booking");
         }
 
@@ -95,10 +95,10 @@ public class ScoreService(IAppDbContext2 db, ILogger<ScoreService> logger)
             await using var transaction = await db.BeginTransactionAsync(IsolationLevel.Snapshot, cancellationToken);
             try
             {
-                if (await db.GolfRounds.AnyAsync(r => r.TeeTimeBookingId == bookingId, cancellationToken))
+                if (await db.GolfRounds.AnyAsync(r => r.TeeTimeBookingId == bookingId && r.MembershipId == membershipId, cancellationToken))
                 {
                     await transaction.RollbackAsync(cancellationToken);
-                    logger.LogWarning("SubmitRound concurrency guard: duplicate for booking {BookingId}", bookingId);
+                    logger.LogWarning("SubmitRound concurrency guard: duplicate for booking {BookingId} member {MemberId}", bookingId, membershipId);
                     return (false, "Score already submitted for this booking and member");
                 }
 

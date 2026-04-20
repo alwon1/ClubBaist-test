@@ -105,6 +105,18 @@ else
 
             isAdmin = user.IsInRole(AppRoles.Admin);
 
+            if (!isAdmin)
+            {
+                var userId = Guid.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
+                var currentMember = await DbContext.MemberShips.FirstOrDefaultAsync(m => m.UserId == userId);
+                if (currentMember is null || currentMember.Id != MemberId)
+                {
+                    errorMessage = "Not authorized to view this submission.";
+                    isLoading = false;
+                    return;
+                }
+            }
+
             round = await DbContext.GolfRounds
                 .Include(r => r.TeeTimeBooking)
                 .Include(r => r.Member).ThenInclude(m => m.User)

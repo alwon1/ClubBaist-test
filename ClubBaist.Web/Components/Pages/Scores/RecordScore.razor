@@ -236,10 +236,10 @@ else if (booking is not null)
             if (isAdmin)
             {
                 memberName = $"{booking.BookingMember.User.FirstName} {booking.BookingMember.User.LastName}".Trim();
+                MemberId = booking.BookingMemberId;
             }
             else
             {
-                // Validate that the logged-in member owns this booking
                 var userId = Guid.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
                 var member = await DbContext.MemberShips
                     .FirstOrDefaultAsync(m => m.UserId == userId);
@@ -250,6 +250,8 @@ else if (booking is not null)
                     isLoading = false;
                     return;
                 }
+
+                MemberId = member.Id;
             }
         }
         catch (Exception ex)

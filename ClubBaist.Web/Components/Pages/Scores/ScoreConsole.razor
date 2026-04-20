@@ -128,7 +128,7 @@ else
                     .ToListAsync()
                 : [];
 
-            var now = DateTime.Now;
+            var now = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Unspecified);
 
             rows = bookings.Select(b =>
             {
