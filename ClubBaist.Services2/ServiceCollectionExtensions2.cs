@@ -43,6 +43,7 @@ public static class ServiceCollectionExtensions2
 
         services.AddScoped<BookingService>();
         services.AddScoped<SeasonService2>();
+        services.AddScoped<StandingTeeTimeService>();
 
         services.AddScoped<ScoreService>();
 
