@@ -107,6 +107,54 @@ public class GolfRound
 }
 ```
 
+## Class Relationship Diagram
+
+```mermaid
+classDiagram
+    class GolfRound {
+        +int Id
+        +int TeeTimeBookingId
+        +TeeTimeBooking TeeTimeBooking
+        +int BookingMemberId
+        +TeeColor TeeColor
+        +List~uint?~ Scores
+        +DateTime SubmittedAt
+        +string ActingUserId
+    }
+
+    class TeeColor {
+        <<enumeration>>
+        Red
+        White
+        Blue
+    }
+
+    class TeeTimeBooking {
+        +int Id
+        +DateTime TeeTimeSlotStart
+        +int BookingMemberId
+        +int ParticipantCount
+    }
+
+    class MemberShipInfo {
+        +int Id
+        +Guid UserId
+        +int MembershipLevelId
+    }
+
+    GolfRound "1" --> "1" TeeTimeBooking : TeeTimeBookingId (one-way FK)
+    GolfRound ..> MemberShipInfo : BookingMemberId (int ref, no nav)
+    GolfRound +-- TeeColor : nested enum
+```
+
+**Notes:**
+- `GolfRound → TeeTimeBooking`: navigation property on `GolfRound` only; `TeeTimeBooking` is not modified.
+- `GolfRound ..> MemberShipInfo`: plain `int` FK, no navigation property — avoids coupling to the member domain.
+- `TeeColor` is nested inside `GolfRound`; referenced externally as `GolfRound.TeeColor`.
+- Unique index on `TeeTimeBookingId` (not shown in diagram) enforces one `GolfRound` per booking.
+
+---
+
 ## Relationship to Other Types
 
 - `TeeTimeBooking` — one-way navigation (FK on `GolfRound`; no change to `TeeTimeBooking`)
