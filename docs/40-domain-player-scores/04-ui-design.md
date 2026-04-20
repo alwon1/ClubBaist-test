@@ -77,25 +77,24 @@ flowchart LR
 +--------------------------------------------------------------------------------+
 | Today's completed tee times:                                                   |
 +--------------------------------------------------------------------------------+
-|  07:30  ·  4 Players                                                           |
-|     [Smith, Jordan]   [Das, Priya ✓]   [Rivers, Alex]   [Patel, Kim]          |
+|  07:30  ·  4 Players  ·  Booking member: [Smith, Jordan]                       |
+|     + Das, Priya  + Rivers, Alex  + Patel, Kim   (additional — not clickable)  |
 |                                                                                 |
-|  07:50  ·  2 Players                                                           |
-|     [Chen, Wei ✓]   [Nguyen, Tran ✓]                                          |
+|  07:50  ·  2 Players  ·  Booking member: [Chen, Wei ✓]                         |
+|     + Nguyen, Tran   (additional — not clickable)                              |
 |                                                                                 |
-|  08:10  ·  3 Players                                                           |
-|     [Okafor, Emeka]   [Singh, Ravi]   [Li, Mei]                               |
+|  08:10  ·  3 Players  ·  Booking member: [Okafor, Emeka]                       |
+|     + Singh, Ravi  + Li, Mei   (additional — not clickable)                   |
 |                                                                                 |
-|  09:00  ·  1 Player          (time-lock not yet elapsed — greyed out)          |
-|     [Torres, Marco ░░░░]                                                       |
+|  09:00  ·  1 Player   ·  Booking member: [Torres, Marco ░░░░] (time-lock)      |
 +--------------------------------------------------------------------------------+
 ```
 
 **Notes:**
 - Groups shown in tee-time order for the current day.
-- Each player's name is a clickable link → opens Score Entry Form for that player.
-- Players with a score already entered show as `Name ✓` (not clickable).
-- Players whose booking has not yet passed the time-lock are greyed out and not clickable.
+- Only the **booking member** (primary booker) for each tee time is shown as a clickable link. UC-PS-01 (rule 11) scopes score submission to primary bookers only; additional participants are not eligible and are not shown as clickable to avoid a dead-end UI path.
+- Booking members with a score already entered show as `Name ✓` (not clickable).
+- Booking members whose tee time has not yet passed the time-lock are greyed out and not clickable.
 - The member lookup search bar at the top is the **secondary** path — searching and selecting a member navigates directly to their Score Entry Form.
 - Tee times from other days are not shown in this view; a date picker (future enhancement) could allow viewing other days.
 

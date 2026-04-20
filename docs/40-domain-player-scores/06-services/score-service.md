@@ -17,16 +17,16 @@ Coordinate the end-to-end score submission workflow for UC-PS-01. Retrieves elig
 ```csharp
 public class ScoreService
 {
-    Task<IReadOnlyList<EligibleBooking>> GetEligibleBookingsAsync(
+    public Task<IReadOnlyList<EligibleBooking>> GetEligibleBookingsAsync(
         int memberId,
         CancellationToken cancellationToken = default);
 
-    Task<ScoreSubmissionResult> SubmitRoundAsync(
+    public Task<ScoreSubmissionResult> SubmitRoundAsync(
         SubmitRoundRequest request,
         string actingUserId,
         CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyList<GolfRound>> GetRoundsByMemberAsync(
+    public Task<IReadOnlyList<GolfRound>> GetRoundsByMemberAsync(
         int memberId,
         CancellationToken cancellationToken = default);
 }
@@ -47,7 +47,7 @@ public record EligibleBooking(
 /// <summary>Request payload for score submission.</summary>
 public record SubmitRoundRequest(
     int BookingId,
-    int BookingMemberId,
+    int MemberId,
     GolfRound.TeeColor TeeColor,
     IReadOnlyList<uint?> Scores);   // exactly 18 elements, all non-null, all 1–20
 
@@ -65,7 +65,7 @@ public record ScoreSubmissionResult(
 
 **Logic:**
 
-1. Load all `TeeTimeBooking` records where `BookingMemberId == memberId` and `TeeTimeSlotStart < DateTime.UtcNow`.
+1. Load all `TeeTimeBooking` records where `BookingMemberId == memberId` and `TeeTimeSlotStart < DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Unspecified)`.
 2. Compute `minimumDuration` for each booking using `ParticipantCount`:
 
    | Players | Minimum elapsed time |
@@ -75,7 +75,7 @@ public record ScoreSubmissionResult(
    | 3 | 3 h 00 m |
    | 4 | 3 h 30 m |
 
-3. Keep only bookings where `DateTime.UtcNow >= TeeTimeSlotStart + minimumDuration`.
+3. Keep only bookings where `DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Unspecified) >= TeeTimeSlotStart + minimumDuration`.
 4. Exclude bookings that already have a `GolfRound` record (`GolfRounds.Any(r => r.TeeTimeBookingId == booking.Id)`).
 5. Return as `EligibleBooking` records, ordered by `TeeTimeSlotStart` descending (most recent first).
 
@@ -92,7 +92,7 @@ public record ScoreSubmissionResult(
 | Step | Check | Error |
 |------|-------|-------|
 | 1 | Member is active (`MemberShipInfo` exists with matching `Id`) | Member not active |
-| 2 | Booking exists and `BookingMemberId` matches `request.BookingMemberId` | Booking not found or not owned by member |
+| 2 | Booking exists and `BookingMemberId` matches `request.MemberId` | Booking not found or not owned by member |
 | 3 | Time-lock has elapsed for the booking | Round not yet eligible |
 | 4 | No existing `GolfRound` for this booking (fail-fast pre-check) | Score already submitted |
 | 5 | `request.Scores` has exactly 18 elements, all non-null | Incomplete scorecard |

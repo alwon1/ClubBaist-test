@@ -75,7 +75,7 @@ Each test expects `ScoreSubmissionResult.Success = false` and no `GolfRound` sto
 
 ## Infrastructure Notes
 
-- Use the EF Core in-memory database provider (already configured in `TestInfrastructure.cs`).
+- Tests use a **real SQL Server database** via .NET Aspire — the test host is `Domain2TestHost` in `TestInfrastructure.cs`, which calls `UseSqlServer(...)` and `EnsureSqlServerSnapshotIsolationAsync()`. Do **not** use EF Core InMemory; it does not enforce unique indexes or transactions and would not exercise the concurrency behavior that the score submission path depends on.
 - Seed `TeeTimeBooking`, `MemberShipInfo`, and `TeeTimeSlot` records as needed per test — follow the existing patterns in `ServiceBehaviorTests.cs`.
-- Time-lock boundary tests (T-03, T-06–T-08) require injecting a controllable `DateTime` source into `ScoreService` rather than calling `DateTime.UtcNow` directly. This is the only infrastructure requirement beyond the existing test setup.
-- Concurrency test (T-26) can be simulated by inserting a `GolfRound` directly via `db` between the service's pre-check and its `SaveChangesAsync` call, or by running two tasks against the same in-memory context.
+- Time-lock boundary tests (T-03, T-06–T-08) require injecting a controllable `DateTime` source into `ScoreService` rather than calling `DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Unspecified)` directly. This is the only new infrastructure requirement beyond the existing test setup.
+- Concurrency test (T-26) must use **two separate `DbContext` instances** (two separate service scopes via `Domain2TestHost.CreateScope()`). `DbContext` is not thread-safe; sharing one context across concurrent operations would produce context-level failures rather than testing the unique-index race condition. The recommended approach: scope 1 completes a submission normally, then scope 2 attempts the same booking and must receive the duplicate-submission error.
