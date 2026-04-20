@@ -10,6 +10,8 @@ env:
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
   DOTNET_CLI_TELEMETRY_OPTOUT: true
   NUGET_PACKAGES: ${{ github.workspace }}/.nuget/packages
+  # Default image tag from Aspire.Hosting.SqlServer — kept in sync by check-aspire-image.yml
+  SQLSERVER_IMAGE_TAG: 2022-latest
 
 jobs:
   build-and-test:
@@ -32,14 +34,17 @@ jobs:
         id: date
         run: echo "week=$(date +%Y-%U)" >> $GITHUB_OUTPUT
 
+      # Aspire pulls this ~1.5 GB image at test time; caching it here avoids a cold pull on
+      # every run. Weekly key keeps the image reasonably fresh; restore-keys fallback reuses
+      # the previous week's image on the first run of a new week rather than pulling cold.
       - name: Cache SQL Server Docker image
         id: cache-sqlserver
         uses: actions/cache@v4
         with:
           path: /tmp/sqlserver-image.tar
-          key: ${{ runner.os }}-docker-sqlserver-2022-latest-${{ steps.date.outputs.week }}
+          key: ${{ runner.os }}-docker-sqlserver-${{ env.SQLSERVER_IMAGE_TAG }}-${{ steps.date.outputs.week }}
           restore-keys: |
-            ${{ runner.os }}-docker-sqlserver-2022-latest-
+            ${{ runner.os }}-docker-sqlserver-${{ env.SQLSERVER_IMAGE_TAG }}-
 
       - name: Load SQL Server Docker image from cache
         if: steps.cache-sqlserver.outputs.cache-hit == 'true'
@@ -48,8 +53,8 @@ jobs:
       - name: Pull and cache SQL Server Docker image
         if: steps.cache-sqlserver.outputs.cache-hit != 'true'
         run: |
-          docker pull mcr.microsoft.com/mssql/server:2022-latest
-          docker save mcr.microsoft.com/mssql/server:2022-latest -o /tmp/sqlserver-image.tar
+          docker pull mcr.microsoft.com/mssql/server:${{ env.SQLSERVER_IMAGE_TAG }}
+          docker save mcr.microsoft.com/mssql/server:${{ env.SQLSERVER_IMAGE_TAG }} -o /tmp/sqlserver-image.tar
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -62,5 +67,7 @@ jobs:
       - name: Build
         run: dotnet build ClubBaist.slnx --no-restore
 
+      # Microsoft.Testing.Platform (set in global.json) requires --solution rather than
+      # a positional path; a positional path exits with code 1 before any tests run.
       - name: Test
         run: dotnet test --solution ClubBaist.slnx --no-restore

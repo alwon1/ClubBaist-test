@@ -1,0 +1,73 @@
+name: Check Aspire SQL Server image tag
+
+# Runs weekly to detect if Aspire.Hosting.SqlServer has changed its default SQL Server
+# image tag. If the tag in ci.yml no longer matches the Aspire source, an issue is opened.
+# To update: change SQLSERVER_IMAGE_TAG in ci.yml and close the issue.
+
+on:
+  schedule:
+    - cron: '0 9 * * 1'  # Mondays at 09:00 UTC
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read expected tag from CI workflow
+        id: expected
+        run: |
+          TAG=$(grep 'SQLSERVER_IMAGE_TAG:' .github/workflows/ci.yml | head -1 | sed 's/.*SQLSERVER_IMAGE_TAG: *//' | tr -d '[:space:]')
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Fetch Aspire default SQL Server image tag
+        id: aspire
+        run: |
+          TAG=$(curl -sf https://raw.githubusercontent.com/dotnet/aspire/main/src/Aspire.Hosting.SqlServer/SqlServerContainerImageTags.cs \
+            | grep -oP '(?<=Tag = ")[^"]+')
+          if [ -z "$TAG" ]; then
+            echo "Could not read tag from Aspire source — skipping check"
+            exit 0
+          fi
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Open issue if tags differ
+        if: steps.aspire.outputs.tag != '' && steps.aspire.outputs.tag != steps.expected.outputs.tag
+        uses: actions/github-script@v7
+        env:
+          ASPIRE_TAG: ${{ steps.aspire.outputs.tag }}
+          EXPECTED_TAG: ${{ steps.expected.outputs.tag }}
+        with:
+          script: |
+            const aspireTag = process.env.ASPIRE_TAG;
+            const expectedTag = process.env.EXPECTED_TAG;
+            const title = 'CI: Aspire SQL Server image tag has changed';
+
+            // Avoid duplicate issues
+            const { data: open } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+            });
+            if (open.some(i => i.title === title)) return;
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title,
+              body: [
+                '## Aspire SQL Server image tag mismatch',
+                '',
+                `\`Aspire.Hosting.SqlServer\` (main branch) now defaults to \`mcr.microsoft.com/mssql/server:${aspireTag}\`,`,
+                `but \`.github/workflows/ci.yml\` is caching \`mcr.microsoft.com/mssql/server:${expectedTag}\`.`,
+                '',
+                '### To fix',
+                `Update \`SQLSERVER_IMAGE_TAG\` in \`.github/workflows/ci.yml\` to \`${aspireTag}\`. `,
+                'The old Docker image cache entries will be automatically superseded.',
+              ].join('\n'),
+            });
