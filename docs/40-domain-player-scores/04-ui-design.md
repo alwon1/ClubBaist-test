@@ -9,9 +9,12 @@ These diagrams are intentionally low-fidelity. They exist to support planning co
 ```mermaid
 flowchart LR
     M[Member] --> S1[My Score Submissions\nEligible Bookings List]
-    CL[Admin / Clerk] --> CS[Today's Score Entry Console\nAll eligible rounds for today]
 
-    CS -->|Select round| S2[Score Entry Form\n18-Hole Scorecard]
+    CL[Admin / Clerk] --> CS[Score Entry Schedule Console\nToday's completed tee times]
+    CL --> ML[Member Lookup\nSearch by name / member ID]
+    ML -->|Member found| S2
+
+    CS -->|Click player in group| S2[Score Entry Form\n18-Hole Scorecard]
     S1 -->|No eligible bookings| NA[Informative message:\nNo eligible rounds]
     S1 -->|Select booking| S2
 
@@ -19,16 +22,17 @@ flowchart LR
     SC -->|Validation failure| S2
     SC -->|Success| S3[Submission Confirmation]
 
-    S3 --> S1
-    S3 --> CS
+    S3 -->|Member| S1
+    S3 -->|Clerk via schedule| CS
+    S3 -->|Clerk via lookup| ML
 ```
 
 **Notes:**
-- Clerk path enters via a day-level view of all eligible rounds — no member-search step.
-- Member path enters via their own eligible bookings list.
+- Clerk primary path: schedule view of today's completed tee time groups — click an individual player to open score entry for that player.
+- Clerk secondary path: member lookup (search by name or member ID) navigates directly to score entry for that member.
+- Member path: their own eligible bookings list, same as before.
 - All eligibility and policy checks evaluate against the **member being scored**, not the acting clerk.
 - Validation failure returns to the form with fields highlighted — no page navigation.
-- After confirmation, clerk returns to Today's Score Entry Console; member returns to their list.
 
 ---
 
@@ -63,30 +67,37 @@ flowchart LR
 
 ---
 
-## B3b — Wireframe: Today's Score Entry Console (Clerk View)
+## B3b — Wireframe: Score Entry Schedule Console (Clerk Primary View)
 
 ```text
 +--------------------------------------------------------------------------------+
-| Today's Score Entry — May 18, 2026                                            |
+| Score Entry Console — May 18, 2026                                            |
++-------------------------------------------+------------------------------------+
+| [Search Member: ________________] [Go]    |   (secondary path — member lookup) |
 +--------------------------------------------------------------------------------+
-| Rounds eligible for score entry (time-lock elapsed, not yet scored):           |
+| Today's completed tee times:                                                   |
 +--------------------------------------------------------------------------------+
-|  Member            Tee Time   Players   Status                                 |
-|  Smith, Jordan     07:30      4         Awaiting score                         |
-|  Das, Priya        07:50      2         Awaiting score                         |
-|  Rivers, Alex      08:10      3         Awaiting score                         |
-|  Patel, Kim        09:00      1         Score entered ✓                        |
-+--------------------------------------------------------------------------------+
-|  [Enter Scores for Selected Member →]                                          |
+|  07:30  ·  4 Players                                                           |
+|     [Smith, Jordan]   [Das, Priya ✓]   [Rivers, Alex]   [Patel, Kim]          |
+|                                                                                 |
+|  07:50  ·  2 Players                                                           |
+|     [Chen, Wei ✓]   [Nguyen, Tran ✓]                                          |
+|                                                                                 |
+|  08:10  ·  3 Players                                                           |
+|     [Okafor, Emeka]   [Singh, Ravi]   [Li, Mei]                               |
+|                                                                                 |
+|  09:00  ·  1 Player          (time-lock not yet elapsed — greyed out)          |
+|     [Torres, Marco ░░░░]                                                       |
 +--------------------------------------------------------------------------------+
 ```
 
 **Notes:**
-- Shows all tee time bookings from today where the time-lock has elapsed.
-- Already-scored bookings appear in the list as "Score entered ✓" (read-only, not selectable).
-- Bookings not yet past the time-lock do not appear.
-- Clerk selects a row and proceeds directly to the Score Entry Form — no separate member search step.
-- Score Entry Form header shows the member's name prominently when accessed via this console.
+- Groups shown in tee-time order for the current day.
+- Each player's name is a clickable link → opens Score Entry Form for that player.
+- Players with a score already entered show as `Name ✓` (not clickable).
+- Players whose booking has not yet passed the time-lock are greyed out and not clickable.
+- The member lookup search bar at the top is the **secondary** path — searching and selecting a member navigates directly to their Score Entry Form.
+- Tee times from other days are not shown in this view; a date picker (future enhancement) could allow viewing other days.
 
 ---
 
@@ -94,8 +105,8 @@ flowchart LR
 
 ```text
 +--------------------------------------------------------------------------------+
-| Record Score — May 18, 2026, 07:50                                             |
-| Member: Das, Priya  ·  2 Players                                               |
+| Record Score — May 18, 2026, 07:30                                             |
+| Member: Smith, Jordan  ·  Group of 4                                           |
 +--------------------------------------------------------------------------------+
 | Tee Colour:  ( ) Red   (•) White   ( ) Blue                                   |
 +--------------------------------------------------------------------------------+
@@ -117,7 +128,7 @@ flowchart LR
 - Score cells: numeric input, min 1, max 20. Validated on blur and on submit.
 - TOTAL = sum of all 18 hole scores, calculated by the system. Updates live as holes are filled.
 - Submit is disabled until all 18 holes have a value.
-- Member name shown in the header when accessed via the Clerk console.
+- Member name and group size shown in the header when accessed via the Clerk console.
 
 ---
 
@@ -130,19 +141,20 @@ flowchart LR
 |                                                                                 |
 |   Round recorded successfully.                                                  |
 |                                                                                 |
-|   Member:        Das, Priya             (shown for clerk; hidden for member)   |
+|   Member:        Smith, Jordan          (shown for clerk; hidden for member)   |
 |   Date:          May 18, 2026                                                  |
 |   Tee Colour:    White                                                          |
 |   Total Score:   87                                                             |
 |                                                                                 |
-|   [Return to My Score Submissions]          (member)                           |
-|   [Return to Today's Score Entry Console]   (clerk)                            |
+|   [Return to My Score Submissions]            (member)                         |
+|   [Return to Score Entry Console]             (clerk via schedule)             |
+|   [Search Another Member]                     (clerk via member lookup)        |
 |                                                                                 |
 +--------------------------------------------------------------------------------+
 ```
 
 **Notes:**
 - No edit capability from this page — score is final once submitted.
-- Member sees their own confirmation without the "Member:" label.
-- Clerk sees the member name and returns to the day-level console.
-- Submitted booking moves to the "Score entered ✓" row in the clerk console and to Past Submitted Rounds in the member view.
+- Member sees their own confirmation without the "Member:" label or clerk return links.
+- Clerk return action depends on entry path: schedule console or member lookup.
+- After returning to the schedule console, the submitted player now shows as `Name ✓`.

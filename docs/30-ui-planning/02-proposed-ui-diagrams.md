@@ -27,8 +27,10 @@ flowchart TD
     D --> D1[My Score Submissions\nEligible Bookings List]
     D1 --> D2[Score Entry Form\n18-Hole Scorecard]
     D2 --> D3[Submission Confirmation]
-    D --> D4[Today's Score Entry Console\nAll Eligible Rounds for Today]
-    D4 --> D2
+    D --> D4[Score Entry Schedule Console\nToday's Completed Tee Times]
+    D --> D5[Member Lookup\nSearch by Name / ID]
+    D4 -->|Click player| D2
+    D5 -->|Member found| D2
 
     classDef member fill:#E8F3FF,stroke:#3B82F6,color:#0F172A;
     classDef admin fill:#FEF3C7,stroke:#D97706,color:#0F172A;
@@ -36,7 +38,7 @@ flowchart TD
 
     class A shared;
     class B1,B2,B3,C1,C2,C3,C4,C5,D1,D2,D3 member;
-    class B4,B5,B6,C6,D4 admin;
+    class B4,B5,B6,C6,D4,D5 admin;
 ```
 
 ## 2) Membership Application Flow (Applicant + Committee)
