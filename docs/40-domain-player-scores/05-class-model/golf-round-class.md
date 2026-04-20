@@ -40,7 +40,7 @@ public enum TeeColor { Red = 0, White = 1, Blue = 2 }
 
 - `Scores` list is always initialized to exactly 18 elements on construction; elements are `null` until entered.
 - A `GolfRound` may only be stored once all 18 scores are non-null and in range (1–20) — enforced by the service before persisting.
-- `MembershipId` must match `TeeTimeBooking.BookingMemberId` — validated by the service; not a DB constraint.
+- `MembershipId` must match `TeeTimeBooking.BookingMemberId` (the existing property on the unmodified `TeeTimeBooking` entity) — validated by the service; not a DB constraint.
 - `SubmittedAt` is set by the service at submission time (server-side); never supplied by the client.
 - `ActingUserId` is set from the authenticated session; never supplied by the client form.
 
