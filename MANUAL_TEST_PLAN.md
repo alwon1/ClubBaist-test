@@ -59,8 +59,15 @@
 |---|---|---|---|
 | Gold/Shareholder | SH | $3,000 | Anytime (7 AM – 7 PM). Can request standing tee times. |
 | Associate | AS | $4,500 | Anytime (7 AM – 7 PM) |
-| Silver | SV | $2,500 | Before 3:00 PM **or** after 5:30 PM only |
-| Bronze | BR | $1,000 | Before 3:00 PM **or** after 6:00 PM only |
+| Silver | SV | $2,500 | Anytime (7 AM – 7 PM) — see note below |
+| Bronze | BR | $1,000 | Anytime (7 AM – 7 PM) — see note below |
+
+> **Note on time restrictions (TC-TEE-002, TC-TEE-007, TC-TEE-011):** The default seed gives every
+> membership level full 7 AM – 7 PM access on all days. To validate the time-restriction scenarios
+> you must first update the Silver and Bronze `MembershipLevelTeeTimeAvailability` rows in the
+> database so that their allowed windows match the business rules (e.g. Silver before 3 PM / after
+> 5:30 PM; Bronze before 3 PM / after 6 PM), or use the Admin UI when that feature is available.
+> Skip TC-TEE-002, TC-TEE-007, and TC-TEE-011 if the availability rows have not been configured.
 
 ---
 
@@ -113,7 +120,7 @@
 ### TC-AUTH-005 – Role-based access: Committee cannot access Admin pages
 **Preconditions:** Logged in as `committee@clubbaist.com` / `Pass@word1`.  
 **Steps:**
-1. Navigate directly to `/admin/user-management`
+1. Navigate directly to `/admin/users`
 
 **Expected Result:** Access denied page or redirect to home. Admin page content is not displayed.
 
@@ -122,7 +129,7 @@
 ### TC-AUTH-006 – Role-based access: Member cannot access Committee inbox
 **Preconditions:** Logged in as `shareholder1@clubbaist.com` / `Pass@word1`.  
 **Steps:**
-1. Navigate directly to `/membership/application-inbox`
+1. Navigate directly to `/membership/applications`
 
 **Expected Result:** Access denied or redirect. Application inbox is not shown.
 
@@ -133,7 +140,7 @@
 ### TC-MEM-001 – View pre-existing applications (Committee)
 **Preconditions:** Logged in as `committee@clubbaist.com`.  
 **Steps:**
-1. Navigate to `/membership/application-inbox`
+1. Navigate to `/membership/applications`
 
 **Expected Result:** Inbox shows at minimum Frank Pending and Iris Submitted with status **Submitted**. Grace OnHold, Henry Waitlist, and Jack Waitlist appear when filtering by their respective statuses.
 
@@ -142,7 +149,7 @@
 ### TC-MEM-002 – Review and approve an existing application
 **Preconditions:** Logged in as `committee@clubbaist.com`. Frank Pending's application is in **Submitted** status.  
 **Steps:**
-1. Navigate to `/membership/application-inbox`
+1. Navigate to `/membership/applications`
 2. Click on **Frank Pending**'s application
 3. Review all displayed fields: name, email, DOB, occupation, company, sponsors, requested level
 4. Confirm the requested level is **Associate**
@@ -165,7 +172,7 @@
 4. Enter Bob Shareholder's Member ID in **Sponsor 2**
 5. Click **Submit**
 
-**Expected Result:** Success message shown. Application appears in the committee inbox at `/membership/application-inbox` with status **Submitted** and applicant name "Sam Tester".
+**Expected Result:** Success message shown. Application appears in the committee inbox at `/membership/applications` with status **Submitted** and applicant name "Sam Tester".
 
 ---
 
@@ -217,7 +224,7 @@
 ### TC-MEM-008 – Deny an application
 **Preconditions:** Logged in as `committee@clubbaist.com`. Iris Submitted's application is in **Submitted** status.  
 **Steps:**
-1. Navigate to `/membership/application-inbox`
+1. Navigate to `/membership/applications`
 2. Open **Iris Submitted**'s application
 3. Click **Deny**
 
@@ -254,7 +261,7 @@
 ### TC-TEE-001 – View tee time availability (Shareholder – unrestricted)
 **Preconditions:** Logged in as `shareholder1@clubbaist.com`. A season with generated slots exists.  
 **Steps:**
-1. Navigate to `/teetimes/availability`
+1. Navigate to `/teetimes`
 2. Select any date within the active season
 
 **Expected Result:** Full range of slots (7 AM – 7 PM) displayed as available. No time restrictions applied.
@@ -264,7 +271,7 @@
 ### TC-TEE-002 – View tee time availability (Silver member – restricted hours)
 **Preconditions:** Logged in as `silver@clubbaist.com`.  
 **Steps:**
-1. Navigate to `/teetimes/availability`
+1. Navigate to `/teetimes`
 2. Select any date within the active season
 3. Observe slots between **3:00 PM** and **5:30 PM**
 
@@ -275,19 +282,19 @@
 ### TC-TEE-003 – Book a tee time (solo, Shareholder)
 **Preconditions:** Logged in as `shareholder1@clubbaist.com`. An available future slot exists.  
 **Steps:**
-1. Navigate to `/teetimes/create-reservation`
+1. Navigate to `/teetimes/book`
 2. Select an available future date and time slot
 3. Leave additional participants empty (solo booking)
 4. Click **Book / Confirm**
 
-**Expected Result:** Booking confirmed. Reservation appears in `/teetimes/my-reservations` with the correct date and time.
+**Expected Result:** Booking confirmed. Reservation appears in `/teetimes/my` with the correct date and time.
 
 ---
 
 ### TC-TEE-004 – Book a tee time with additional participants (foursome)
 **Preconditions:** Logged in as `shareholder1@clubbaist.com`. An available slot exists.  
 **Steps:**
-1. Navigate to `/teetimes/create-reservation`
+1. Navigate to `/teetimes/book`
 2. Select an available future slot
 3. Add 3 additional participants using the member IDs of Bob Shareholder, Carol Shareholder, and Diana Silver
 4. Click **Book**
@@ -299,7 +306,7 @@
 ### TC-TEE-005 – Attempt to add a 5th participant (over limit)
 **Preconditions:** Logged in as `shareholder1@clubbaist.com`.  
 **Steps:**
-1. Navigate to `/teetimes/create-reservation`
+1. Navigate to `/teetimes/book`
 2. Select a slot
 3. Attempt to add 4 additional participants (which would make 5 total)
 
@@ -310,7 +317,7 @@
 ### TC-TEE-006 – Attempt to double-book the same slot
 **Preconditions:** Logged in as `shareholder1@clubbaist.com`. Has an existing booking from TC-TEE-003.  
 **Steps:**
-1. Navigate to `/teetimes/create-reservation`
+1. Navigate to `/teetimes/book`
 2. Select the **same** slot that is already booked
 3. Click **Book**
 
@@ -321,7 +328,7 @@
 ### TC-TEE-007 – Silver member cannot book a restricted time slot
 **Preconditions:** Logged in as `silver@clubbaist.com`.  
 **Steps:**
-1. Navigate to `/teetimes/create-reservation`
+1. Navigate to `/teetimes/book`
 2. Select a slot between **3:00 PM** and **5:30 PM**
 3. Click **Book**
 
@@ -332,7 +339,7 @@
 ### TC-TEE-008 – Cancel a reservation
 **Preconditions:** Logged in as `shareholder1@clubbaist.com`. Has an upcoming reservation (from TC-TEE-003).  
 **Steps:**
-1. Navigate to `/teetimes/my-reservations`
+1. Navigate to `/teetimes/my`
 2. Find the upcoming booking and click **Cancel**
 3. Confirm the cancellation
 
@@ -343,18 +350,25 @@
 ### TC-TEE-009 – Staff Console: Admin creates a reservation for a member
 **Preconditions:** Logged in as `admin@clubbaist.com`. A season with available slots exists.  
 **Steps:**
-1. Navigate to `/teetimes/staff-console`
+1. Navigate to `/teetimes/staff`
 2. Select a date and an available time slot
 3. Assign the booking to `silver@clubbaist.com` (Diana Silver)
 4. Save
 
-**Expected Result:** Booking appears in the staff console for that slot. Logging in as `silver@clubbaist.com` and checking `/teetimes/my-reservations` shows the new booking.
+**Expected Result:** Booking appears in the staff console for that slot. Logging in as `silver@clubbaist.com` and checking `/teetimes/my` shows the new booking.
 
 ---
 
 ### TC-TEE-010 – Standing tee time request (Shareholder only)
+> ⚠️ **Status: Not yet executable — UI not yet implemented.**  
+> The domain model (`StandingTeeTime`) and database schema are in place, but no Razor page or
+> route for requesting or managing standing tee times has been built yet. See
+> `TODO-standing-tee-times.md` for the pending work items (member request page, admin
+> approve/deny page, and auto-generation of individual bookings).  
+> This test case should be executed once those pages are delivered.
+
 **Preconditions:** Logged in as `shareholder1@clubbaist.com`. A season exists.  
-**Steps:**
+**Steps (when UI is available):**
 1. Navigate to the Standing Tee Time request page
 2. Select Day: **Saturday**, Time: **8:00 AM**
 3. Add 3 additional participants: Bob Shareholder, Carol Shareholder, Diana Silver (foursome required)
@@ -368,7 +382,7 @@
 ### TC-TEE-011 – Bronze member cannot book outside restricted hours
 **Preconditions:** Logged in as `bronze@clubbaist.com` (Evan Bronze).  
 **Steps:**
-1. Navigate to `/teetimes/create-reservation`
+1. Navigate to `/teetimes/book`
 2. Select a slot between **3:00 PM** and **6:00 PM**
 3. Click **Book**
 
@@ -381,7 +395,7 @@
 ### TC-ADMIN-001 – Admin views user list
 **Preconditions:** Logged in as `admin@clubbaist.com`.  
 **Steps:**
-1. Navigate to `/admin/user-management`
+1. Navigate to `/admin/users`
 
 **Expected Result:** All seeded users listed. Each entry shows name, email, role, and membership level.
 
@@ -390,9 +404,9 @@
 ### TC-ADMIN-002 – Admin changes a member's membership level
 **Preconditions:** Logged in as `admin@clubbaist.com`.  
 **Steps:**
-1. Navigate to `/admin/user-management`
+1. Navigate to `/admin/users`
 2. Select **Diana Silver** (`silver@clubbaist.com`)
-3. Navigate to the edit member page (`/admin/edit-member`)
+3. Navigate to the edit member page (accessible from `/admin/users/{UserId}` → Edit Member link, which opens `/admin/members/{MemberId}`)
 4. Change membership level from **Silver** to **Bronze**
 5. Save
 
@@ -403,7 +417,7 @@
 ### TC-ADMIN-003 – Create a new golf season
 **Preconditions:** Logged in as `admin@clubbaist.com`.  
 **Steps:**
-1. Navigate to `/admin/season-management`
+1. Navigate to `/admin/seasons`
 2. Click **Create Season**
 3. Enter:
    - Name: `2026 Season`
@@ -418,9 +432,9 @@
 ### TC-ADMIN-004 – Admin has access to all admin pages
 **Preconditions:** Logged in as `admin@clubbaist.com`.  
 **Steps:**
-1. Navigate to `/admin/user-management`
-2. Navigate to `/admin/season-management`
-3. Navigate to `/teetimes/staff-console`
+1. Navigate to `/admin/users`
+2. Navigate to `/admin/seasons`
+3. Navigate to `/teetimes/staff`
 
 **Expected Result:** All three pages load successfully without access-denied errors or redirects.
 
@@ -434,7 +448,7 @@
 | TC-NEG-002 | Application with blank required field | Leave Occupation empty, submit | Field validation error; form not submitted |
 | TC-NEG-003 | Application using email of an existing member | Email: `shareholder1@clubbaist.com` | Error "Email already registered as a member" |
 | TC-NEG-004 | Book a tee time slot in the past | Select yesterday's date | Error "Cannot book a slot in the past" |
-| TC-NEG-005 | Non-admin navigates to season management | Log in as `silver@clubbaist.com`, go to `/admin/season-management` | Access denied / redirect |
+| TC-NEG-005 | Non-admin navigates to season management | Log in as `silver@clubbaist.com`, go to `/admin/seasons` | Access denied / redirect |
 | TC-NEG-006 | Re-approve an already Accepted application | Frank Pending after TC-MEM-002 | Approve action not available (terminal state) |
 | TC-NEG-007 | Re-deny an already Denied application | Iris Submitted after TC-MEM-008 | Deny action not available (terminal state) |
 
