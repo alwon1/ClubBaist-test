@@ -1,6 +1,8 @@
 using System.Data;
+using System.Text.Json;
 using ClubBaist.Domain2.Entities;
 using ClubBaist.Domain2.Entities.Membership;
+using ClubBaist.Domain2.Entities.Scoring;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.Data.SqlClient;
@@ -23,6 +25,7 @@ public class AppDbContext : IdentityDbContext<ClubBaistUser, IdentityRole<Guid>,
     public DbSet<SpecialEvent> SpecialEvents { get; set; }
     public DbSet<Season> Seasons { get; set; }
     public DbSet<StandingTeeTime> StandingTeeTimes { get; set; }
+    public DbSet<GolfRound> GolfRounds { get; set; }
 
     public Task<IDbContextTransaction> BeginTransactionAsync(IsolationLevel isolationLevel, CancellationToken cancellationToken = default) =>
         Database.BeginTransactionAsync(isolationLevel, cancellationToken);
@@ -118,5 +121,29 @@ public class AppDbContext : IdentityDbContext<ClubBaistUser, IdentityRole<Guid>,
             .WithMany()
             .HasForeignKey(a => a.RequestedMembershipLevelId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<GolfRound>(entity =>
+        {
+            entity.HasOne(r => r.TeeTimeBooking)
+                .WithMany()
+                .HasForeignKey(r => r.TeeTimeBookingId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(r => r.Member)
+                .WithMany()
+                .HasForeignKey(r => r.MembershipId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.Property(r => r.Scores)
+                .HasConversion(
+                    v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                    v => JsonSerializer.Deserialize<List<uint?>>(v, (JsonSerializerOptions?)null)
+                         ?? Enumerable.Repeat<uint?>(null, 18).ToList(),
+                    new Microsoft.EntityFrameworkCore.ChangeTracking.ValueComparer<List<uint?>>(
+                        (a, b) => a != null && b != null && a.SequenceEqual(b),
+                        v => v.Aggregate(0, (hash, item) => HashCode.Combine(hash, item.GetHashCode())),
+                        v => v.ToList()))
+                .HasColumnType("nvarchar(max)");
+        });
     }
 }

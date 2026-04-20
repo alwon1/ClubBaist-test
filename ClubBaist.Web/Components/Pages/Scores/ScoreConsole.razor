@@ -1,0 +1,177 @@
+@page "/scores/staff"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = AppRoles.Admin)]
+
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.EntityFrameworkCore
+@using ClubBaist.Domain2
+@using ClubBaist.Domain2.Entities.Scoring
+@using ClubBaist.Services2.Scoring
+
+@inject IAppDbContext2 DbContext
+@inject ILogger<ScoreConsole> Logger
+
+<PageTitle>Score Console - Club Baist</PageTitle>
+
+<h3 class="mb-4">Score Console</h3>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger alert-dismissible fade show">
+        @errorMessage
+        <button type="button" class="btn-close" @onclick="() => errorMessage = null"></button>
+    </div>
+}
+
+@if (isLoading)
+{
+    <div class="text-center my-4">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+}
+else
+{
+    <p class="text-muted mb-3">Today's tee times — @DateTime.Today.ToString("dddd, MMMM d, yyyy")</p>
+
+    @if (rows is { Count: > 0 })
+    {
+        <QuickGrid Items="@rows.AsQueryable()" Class="table table-striped table-hover">
+            <TemplateColumn Title="Time" SortBy="@(GridSort<ConsoleRow>.ByAscending(r => r.SlotStart))">
+                @context.SlotStart.ToString("h:mm tt")
+            </TemplateColumn>
+            <TemplateColumn Title="Booking Member" SortBy="@(GridSort<ConsoleRow>.ByAscending(r => r.MemberName))">
+                @context.MemberName
+            </TemplateColumn>
+            <TemplateColumn Title="Players">
+                @context.Players
+            </TemplateColumn>
+            <TemplateColumn Title="Status">
+                @if (context.Status == "Scored ✓")
+                {
+                    <span class="badge bg-success">@context.Status</span>
+                }
+                else if (context.Status == "Eligible")
+                {
+                    <span class="badge bg-primary">@context.Status</span>
+                }
+                else
+                {
+                    <span class="badge bg-secondary">@context.Status</span>
+                }
+            </TemplateColumn>
+            <TemplateColumn Title="Action">
+                @if (context.Status == "Eligible")
+                {
+                    <a href="/scores/record?bookingId=@context.BookingId&amp;memberId=@context.BookingMemberId"
+                       class="btn btn-sm btn-outline-primary">
+                        Record Score
+                    </a>
+                }
+                else
+                {
+                    <span class="text-muted">—</span>
+                }
+            </TemplateColumn>
+        </QuickGrid>
+    }
+    else
+    {
+        <div class="alert alert-info">No tee times found for today.</div>
+    }
+}
+
+@code {
+    private record ConsoleRow(
+        int BookingId,
+        int BookingMemberId,
+        DateTime SlotStart,
+        string MemberName,
+        int Players,
+        string Status);
+
+    private bool isLoading = true;
+    private string? errorMessage;
+
+    private List<ConsoleRow>? rows;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        try
+        {
+            var today = DateTime.SpecifyKind(DateTime.Today, DateTimeKind.Unspecified);
+            var tomorrow = today.AddDays(1);
+
+            var bookings = await DbContext.TeeTimeBookings
+                .Include(b => b.BookingMember).ThenInclude(m => m.User)
+                .Include(b => b.AdditionalParticipants)
+                .Where(b => b.TeeTimeSlotStart >= today && b.TeeTimeSlotStart < tomorrow)
+                .OrderBy(b => b.TeeTimeSlotStart)
+                .AsNoTracking()
+                .ToListAsync();
+
+            var bookingIds = bookings.Select(b => b.Id).ToList();
+
+            var scoredBookingIds = bookingIds.Count > 0
+                ? await DbContext.GolfRounds
+                    .Where(r => bookingIds.Contains(r.TeeTimeBookingId))
+                    .Select(r => r.TeeTimeBookingId)
+                    .ToListAsync()
+                : [];
+
+            var now = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Unspecified);
+
+            rows = bookings.Select(b =>
+            {
+                string status;
+                if (scoredBookingIds.Contains(b.Id))
+                {
+                    status = "Scored ✓";
+                }
+                else if (now >= b.TeeTimeSlotStart + MinDuration(b.ParticipantCount))
+                {
+                    status = "Eligible";
+                }
+                else
+                {
+                    status = "Time-lock";
+                }
+
+                return new ConsoleRow(
+                    BookingId: b.Id,
+                    BookingMemberId: b.BookingMemberId,
+                    SlotStart: b.TeeTimeSlotStart,
+                    MemberName: $"{b.BookingMember.User.FirstName} {b.BookingMember.User.LastName}".Trim(),
+                    Players: b.ParticipantCount,
+                    Status: status
+                );
+            }).ToList();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load today's tee times for score console");
+            errorMessage = "An unexpected error occurred while loading today's tee times. Please try again later.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private static TimeSpan MinDuration(int playerCount) => playerCount switch
+    {
+        1 => TimeSpan.FromHours(2),
+        2 => TimeSpan.FromHours(2.5),
+        3 => TimeSpan.FromHours(3),
+        _ => TimeSpan.FromHours(3.5)
+    };
+}

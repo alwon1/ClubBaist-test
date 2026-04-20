@@ -218,4 +218,51 @@ internal static class Domain2TestData
 
         return (season, slot);
     }
+
+    /// <summary>
+    /// Creates a single tee-time slot at the exact <paramref name="slotStart"/> time,
+    /// bypassing operating-hours constraints. Use this when a test needs a slot at a
+    /// specific wall-clock time that may fall outside the standard 07:00–19:00 window.
+    /// </summary>
+    public static async Task<TeeTimeSlot> CreateSlotAtAsync(AppDbContext db, DateTime slotStart)
+    {
+        var date = DateOnly.FromDateTime(slotStart);
+        var season = new Season
+        {
+            Name = $"Spot-Season-{slotStart:HHmmss-fffff}",
+            StartDate = date,
+            EndDate = date
+        };
+        db.Seasons.Add(season);
+        await db.SaveChangesAsync();
+
+        var slot = new TeeTimeSlot
+        {
+            Start = DateTime.SpecifyKind(slotStart, DateTimeKind.Unspecified),
+            Duration = TimeSpan.FromMinutes(7),
+            SeasonId = season.Id
+        };
+        db.TeeTimeSlots.Add(slot);
+        await db.SaveChangesAsync();
+        return slot;
+    }
+
+    public static async Task<TeeTimeBooking> CreateBookingAsync(
+        AppDbContext db,
+        MemberShipInfo bookingMember,
+        TeeTimeSlot slot,
+        List<MemberShipInfo>? additionalParticipants = null)
+    {
+        var booking = new TeeTimeBooking
+        {
+            TeeTimeSlotStart = slot.Start,
+            TeeTimeSlot = slot,
+            BookingMemberId = bookingMember.Id,
+            BookingMember = bookingMember,
+            AdditionalParticipants = additionalParticipants ?? []
+        };
+        db.TeeTimeBookings.Add(booking);
+        await db.SaveChangesAsync();
+        return booking;
+    }
 }

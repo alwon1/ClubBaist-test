@@ -1,0 +1,311 @@
+@page "/scores/record"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = AppRoles.AdminOrMember)]
+
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.EntityFrameworkCore
+@using ClubBaist.Domain2
+@using ClubBaist.Domain2.Entities.Scoring
+@using ClubBaist.Services2.Scoring
+
+@inject IAppDbContext2 DbContext
+@inject ScoreService ScoreService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager NavigationManager
+@inject ILogger<RecordScore> Logger
+
+<PageTitle>Record Score - Club Baist</PageTitle>
+
+<h3 class="mb-4">Record Score</h3>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
+@if (isLoading)
+{
+    <div class="text-center my-4">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+}
+else if (booking is not null)
+{
+    <div class="card mb-4">
+        <div class="card-header">
+            <strong>Round Details</strong>
+        </div>
+        <div class="card-body">
+            <dl class="row mb-0">
+                <dt class="col-sm-3">Date &amp; Time</dt>
+                <dd class="col-sm-9">@booking.TeeTimeSlotStart.ToString("dddd, MMMM d, yyyy h:mm tt")</dd>
+
+                <dt class="col-sm-3">Players</dt>
+                <dd class="col-sm-9">@booking.ParticipantCount</dd>
+
+                @if (isAdmin && memberName is not null)
+                {
+                    <dt class="col-sm-3">Member</dt>
+                    <dd class="col-sm-9">@memberName</dd>
+                }
+
+                <dt class="col-sm-3">Tee Colour</dt>
+                <dd class="col-sm-9">
+                    <div class="d-flex gap-3">
+                        @foreach (var tee in Enum.GetValues<GolfRound.TeeColor>())
+                        {
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio"
+                                       name="teeColor"
+                                       id="tee-@tee"
+                                       value="@tee"
+                                       checked="@(selectedTeeColor == tee)"
+                                       @onchange="() => selectedTeeColor = tee" />
+                                <label class="form-check-label" for="tee-@tee">@tee</label>
+                            </div>
+                        }
+                    </div>
+                </dd>
+            </dl>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <strong>Scorecard</strong>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-bordered table-sm mb-0 text-center">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="min-width:70px">Hole</th>
+                            @for (int i = 0; i < 9; i++)
+                            {
+                                <th style="min-width:50px">@(i + 1)</th>
+                            }
+                            <th class="table-secondary" style="min-width:60px">Out</th>
+                            @for (int i = 9; i < 18; i++)
+                            {
+                                <th style="min-width:50px">@(i + 1)</th>
+                            }
+                            <th class="table-secondary" style="min-width:60px">In</th>
+                            <th class="table-dark" style="min-width:60px">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th class="table-light">Par</th>
+                            @for (int i = 0; i < 9; i++)
+                            {
+                                <td>@par[i]</td>
+                            }
+                            <td class="table-secondary fw-semibold">@par.Take(9).Sum()</td>
+                            @for (int i = 9; i < 18; i++)
+                            {
+                                <td>@par[i]</td>
+                            }
+                            <td class="table-secondary fw-semibold">@par.Skip(9).Sum()</td>
+                            <td class="table-dark text-white fw-bold">@par.Sum()</td>
+                        </tr>
+                        <tr>
+                            <th class="table-light">Score</th>
+                            @for (int i = 0; i < 9; i++)
+                            {
+                                var holeIndex = i;
+                                <td>
+                                    <input type="number"
+                                           class="form-control form-control-sm p-1 text-center"
+                                           style="min-width:48px"
+                                           min="1" max="20"
+                                           value="@scores[holeIndex]"
+                                           @onchange="e => OnScoreChanged(holeIndex, e)" />
+                                </td>
+                            }
+                            <td class="table-secondary fw-semibold">
+                                @if (scores.Take(9).All(s => s.HasValue))
+                                {
+                                    @scores.Take(9).Sum(s => (long?)s)
+                                }
+                                else
+                                {
+                                    <span class="text-muted">—</span>
+                                }
+                            </td>
+                            @for (int i = 9; i < 18; i++)
+                            {
+                                var holeIndex = i;
+                                <td>
+                                    <input type="number"
+                                           class="form-control form-control-sm p-1 text-center"
+                                           style="min-width:48px"
+                                           min="1" max="20"
+                                           value="@scores[holeIndex]"
+                                           @onchange="e => OnScoreChanged(holeIndex, e)" />
+                                </td>
+                            }
+                            <td class="table-secondary fw-semibold">
+                                @if (scores.Skip(9).All(s => s.HasValue))
+                                {
+                                    @scores.Skip(9).Sum(s => (long?)s)
+                                }
+                                else
+                                {
+                                    <span class="text-muted">—</span>
+                                }
+                            </td>
+                            <td class="table-dark text-white fw-bold">
+                                @if (scores.All(s => s.HasValue))
+                                {
+                                    @scores.Sum(s => (long?)s)
+                                }
+                                else
+                                {
+                                    <span class="text-muted">—</span>
+                                }
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex gap-2 align-items-center">
+        <button class="btn btn-success"
+                disabled="@(!AllScoresEntered)"
+                @onclick="HandleSubmit">
+            Submit Round
+        </button>
+        @if (!AllScoresEntered)
+        {
+            <span class="text-muted small">All 18 hole scores are required before submitting.</span>
+        }
+    </div>
+}
+
+@code {
+    [SupplyParameterFromQuery]
+    public int BookingId { get; set; }
+
+    [SupplyParameterFromQuery]
+    public int MemberId { get; set; }
+
+    private bool isLoading = true;
+    private string? errorMessage;
+
+    private TeeTimeBooking? booking;
+    private bool isAdmin;
+    private string? memberName;
+
+    private uint?[] scores = new uint?[18];
+    private GolfRound.TeeColor selectedTeeColor = GolfRound.TeeColor.White;
+
+    private static readonly int[] par = [4, 5, 3, 4, 4, 4, 4, 5, 4, 4, 4, 3, 5, 4, 4, 3, 5, 4];
+
+    private bool AllScoresEntered => scores.All(s => s.HasValue);
+
+    protected override async Task OnInitializedAsync()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            isAdmin = user.IsInRole(AppRoles.Admin);
+
+            booking = await DbContext.TeeTimeBookings
+                .Include(b => b.BookingMember).ThenInclude(m => m.User)
+                .Include(b => b.AdditionalParticipants)
+                .FirstOrDefaultAsync(b => b.Id == BookingId);
+
+            if (booking is null)
+            {
+                errorMessage = "Booking not found.";
+                isLoading = false;
+                return;
+            }
+
+            if (isAdmin)
+            {
+                memberName = $"{booking.BookingMember.User.FirstName} {booking.BookingMember.User.LastName}".Trim();
+                MemberId = booking.BookingMemberId;
+            }
+            else
+            {
+                var userId = Guid.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
+                var member = await DbContext.MemberShips
+                    .FirstOrDefaultAsync(m => m.UserId == userId);
+
+                if (member is null || member.Id != booking.BookingMemberId)
+                {
+                    errorMessage = "Not authorized to record a score for this booking.";
+                    isLoading = false;
+                    return;
+                }
+
+                MemberId = member.Id;
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load booking {BookingId} for score entry", BookingId);
+            errorMessage = "An unexpected error occurred while loading the booking. Please try again later.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void OnScoreChanged(int holeIndex, ChangeEventArgs e)
+    {
+        if (uint.TryParse(e.Value?.ToString(), out var value) && value >= 1 && value <= 20)
+        {
+            scores[holeIndex] = value;
+        }
+        else
+        {
+            scores[holeIndex] = null;
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (!AllScoresEntered)
+            return;
+
+        errorMessage = null;
+
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            var actingUserId = user.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
+            var result = await ScoreService.SubmitRoundAsync(
+                BookingId, MemberId, selectedTeeColor, scores.ToList(), actingUserId);
+
+            if (result.Success)
+            {
+                NavigationManager.NavigateTo($"/scores/confirmation?bookingId={BookingId}&memberId={MemberId}");
+            }
+            else
+            {
+                errorMessage = result.Error ?? "Score submission failed. Please try again.";
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to submit round for booking {BookingId}", BookingId);
+            errorMessage = "An unexpected error occurred while submitting the score. Please try again later.";
+        }
+    }
+}

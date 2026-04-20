@@ -10,6 +10,7 @@ namespace ClubBaist.Domain2.Tests;
 
 [TestClass]
 [DoNotParallelize]
+[Ignore("Performance tests require a running SQL Server and are excluded from CI")]
 public sealed class BookingPerformanceTests
 {
     private static readonly MethodInfo EvaluateBookingAsyncMethod =

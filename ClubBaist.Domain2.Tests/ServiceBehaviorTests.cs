@@ -1,6 +1,7 @@
 using System.Data;
 using ClubBaist.Domain2.Entities;
 using ClubBaist.Domain2.Entities.Membership;
+using ClubBaist.Domain2.Entities.Scoring;
 using ClubBaist.Services2;
 using ClubBaist.Services2.Membership;
 using ClubBaist.Services2.Membership.Applications;
@@ -273,6 +274,7 @@ public class MembershipLevelServiceTests
         public DbSet<SpecialEvent> SpecialEvents => inner.SpecialEvents;
         public DbSet<Season> Seasons => inner.Seasons;
         public DbSet<StandingTeeTime> StandingTeeTimes => inner.StandingTeeTimes;
+        public DbSet<GolfRound> GolfRounds => inner.GolfRounds;
 
         public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) =>
             throwOnSave

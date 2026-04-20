@@ -1,4 +1,5 @@
 using ClubBaist.Domain2;
+using ClubBaist.Services2.Scoring;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ClubBaist.Services2;
@@ -43,6 +44,8 @@ public static class ServiceCollectionExtensions2
         services.AddScoped<BookingService>();
         services.AddScoped<SeasonService2>();
         services.AddScoped<StandingTeeTimeService>();
+
+        services.AddScoped<ScoreService>();
 
         return services;
     }
