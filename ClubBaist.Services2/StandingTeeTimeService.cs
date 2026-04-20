@@ -42,6 +42,14 @@ public class StandingTeeTimeService(IAppDbContext2 db, ILogger<StandingTeeTimeSe
         if (request.AdditionalParticipants.Count != 3)
             return (false, "A standing tee time request requires exactly 3 additional players (foursome).");
 
+        var participantIds = request.AdditionalParticipants.Select(p => p.Id).ToList();
+
+        if (participantIds.Contains(request.BookingMemberId))
+            return (false, "The booking member cannot also be listed as an additional player.");
+
+        if (participantIds.Count != participantIds.Distinct().Count())
+            return (false, "Duplicate players are not allowed.");
+
         db.StandingTeeTimes.Add(request);
         var saved = await db.SaveChangesAsync() > 0;
         if (!saved)

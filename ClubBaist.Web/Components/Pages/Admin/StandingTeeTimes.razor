@@ -48,7 +48,7 @@ else
 {
     <div class="mb-3">
         <div class="d-flex gap-2 flex-wrap">
-            @foreach (var status in new[] { (StandingTeeTimeStatus?)null, StandingTeeTimeStatus.Draft, StandingTeeTimeStatus.Approved, StandingTeeTimeStatus.Denied, StandingTeeTimeStatus.Cancelled })
+            @foreach (var status in new[] { (StandingTeeTimeStatus?)null, StandingTeeTimeStatus.Draft, StandingTeeTimeStatus.Approved, StandingTeeTimeStatus.Allocated, StandingTeeTimeStatus.Unallocated, StandingTeeTimeStatus.Denied, StandingTeeTimeStatus.Cancelled })
             {
                 <button class="btn btn-sm @(statusFilter == status ? "btn-primary" : "btn-outline-secondary")"
                         @onclick="() => SetFilter(status)">
@@ -66,17 +66,13 @@ else
         </div>
     </div>
 
-    var filtered = statusFilter is null
-        ? allRequests
-        : allRequests.Where(r => r.Status == statusFilter.Value).ToList();
-
-    @if (filtered.Count == 0)
+    @if (FilteredRequests.Count == 0)
     {
         <div class="alert alert-info">No requests match the current filter.</div>
     }
     else
     {
-        @foreach (var req in filtered)
+        @foreach (var req in FilteredRequests)
         {
             <div class="card mb-3">
                 <div class="card-header d-flex justify-content-between align-items-center">
@@ -188,6 +184,11 @@ else
     private StandingTeeTimeStatus? statusFilter;
 
     private IReadOnlyList<StandingTeeTime>? allRequests;
+
+    private IReadOnlyList<StandingTeeTime> FilteredRequests =>
+        allRequests is null ? [] :
+        statusFilter is null ? allRequests :
+        allRequests.Where(r => r.Status == statusFilter.Value).ToList();
 
     private int? approvePanel;
     private string approvedTimeStr = "08:00";

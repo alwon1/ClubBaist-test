@@ -190,10 +190,13 @@ else
                 return;
             }
 
-            allMembers = await DbContext.MemberShips
-                .OrderBy(m => m.User.LastName)
-                .ThenBy(m => m.User.FirstName)
-                .ToListAsync();
+            allMembers = hasPermission
+                ? await DbContext.MemberShips
+                    .AsNoTracking()
+                    .OrderBy(m => m.User.LastName)
+                    .ThenBy(m => m.User.FirstName)
+                    .ToListAsync()
+                : [];
         }
         catch (Exception ex)
         {
