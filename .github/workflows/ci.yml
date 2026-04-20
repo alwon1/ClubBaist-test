@@ -24,7 +24,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ env.NUGET_PACKAGES }}
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'NuGet.config') }}
           restore-keys: |
             ${{ runner.os }}-nuget-
 
@@ -37,7 +37,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: /tmp/sqlserver-image.tar
-          key: docker-sqlserver-2022-latest-${{ steps.date.outputs.week }}
+          key: ${{ runner.os }}-docker-sqlserver-2022-latest-${{ steps.date.outputs.week }}
+          restore-keys: |
+            ${{ runner.os }}-docker-sqlserver-2022-latest-
 
       - name: Load SQL Server Docker image from cache
         if: steps.cache-sqlserver.outputs.cache-hit == 'true'
@@ -61,4 +63,4 @@ jobs:
         run: dotnet build ClubBaist.slnx --no-restore
 
       - name: Test
-        run: dotnet test ClubBaist.slnx --no-build --no-restore
+        run: dotnet test ClubBaist.slnx --no-restore
