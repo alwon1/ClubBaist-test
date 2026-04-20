@@ -1,0 +1,384 @@
+{
+  /*
+   * ClubBaist Seed Data
+   * ═══════════════════════════════════════════════════════════════════════
+   *
+   * INSERTION ORDER  (database FK constraint dependencies)
+   * ───────────────────────────────────────────────────────────────────────
+   *  1. roles             — no dependencies
+   *  2. membershipLevels  — no dependencies
+   *  3. users             — depends on: roles  (AspNetUserRoles FK)
+   *  4. members           — depends on: users  (MemberShipInfo.UserId FK)
+   *                                     levels (MemberShipInfo.MembershipLevelId FK)
+   *  5. applications      — depends on: levels  (MembershipApplication.RequestedMembershipLevelId FK)
+   *                                     members (MembershipApplication.Sponsor1MemberId /
+   *                                              MembershipApplication.Sponsor2MemberId FKs)
+   *
+   * NOTE: Sponsor FKs are plain int columns with no navigation property — they
+   * cannot use $ref and are filled in by the seeder after members are saved
+   * (see AppDbContextSeed.SeedApplicationsAsync).
+   *
+   * ── HOW CROSS-OBJECT REFERENCES WORK ───────────────────────────────────
+   * Objects use $id / $ref (System.Text.Json ReferenceHandler.Preserve).
+   *   • $id  — must be the FIRST property of the object being labelled.
+   *   • $ref — the ONLY property on the referencing object: { "$ref": "some-id" }
+   *   • References may only point to $id values that appear EARLIER in the document;
+   *     forward references are not supported.
+   *
+   * ── ADDING A NEW TABLE TO SEEDING ──────────────────────────────────────
+   *  1. Add a top-level array here named after the entity (camelCase plural).
+   *  2. Add a corresponding List<YourEntity> property to the SeedData record
+   *     in AppDbContextSeed.cs.
+   *  3. Add a seeding step in SeedAsync() at the correct position in the
+   *     insertion order above.
+   *       • Set any scalar FK properties from nav property IDs after the
+   *         dependency is saved (e.g. member.UserId = member.User.Id).
+   *       • Call db.YourDbSet.AddRange(seed.YourEntities) then SaveChangesAsync().
+   *  4. If YourEntity has a nav property back to a parent, use a $ref in JSON
+   *     (the parent $id must appear before the child in this document).
+   */
+
+  // ── 1. Roles ─────────────────────────────────────────────────────────────
+  // IdentityRole<Guid>: inserted directly via db.Roles — no RoleManager needed.
+  // Id, NormalizedName, and ConcurrencyStamp must be supplied explicitly.
+  "roles": [
+    {
+      "$id": "role-Admin",
+      "id": "00000000-0000-0000-0000-000000000001",
+      "name": "Admin",
+      "normalizedName": "ADMIN",
+      "concurrencyStamp": "00000000-0000-0001-0000-000000000001"
+    },
+    {
+      "$id": "role-MembershipCommittee",
+      "id": "00000000-0000-0000-0000-000000000002",
+      "name": "MembershipCommittee",
+      "normalizedName": "MEMBERSHIPCOMMITTEE",
+      "concurrencyStamp": "00000000-0000-0001-0000-000000000002"
+    },
+    {
+      "$id": "role-Member",
+      "id": "00000000-0000-0000-0000-000000000003",
+      "name": "Member",
+      "normalizedName": "MEMBER",
+      "concurrencyStamp": "00000000-0000-0001-0000-000000000003"
+    }
+  ],
+
+  // ── 2. Membership Levels ─────────────────────────────────────────────────
+  // Each level's availabilities reference their parent level via $ref.
+  // DayOfWeek string values: Sunday, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday
+  "membershipLevels": [
+    {
+      "$id": "level-SH",
+      "shortCode": "SH",
+      "name": "Shareholder",
+      // Full access: 7 AM – 7 PM every day of the week
+      "availabilities": [
+        { "membershipLevel": { "$ref": "level-SH" }, "dayOfWeek": "Sunday",    "startTime": "07:00:00", "endTime": "19:00:00" },
+        { "membershipLevel": { "$ref": "level-SH" }, "dayOfWeek": "Monday",    "startTime": "07:00:00", "endTime": "19:00:00" },
+        { "membershipLevel": { "$ref": "level-SH" }, "dayOfWeek": "Tuesday",   "startTime": "07:00:00", "endTime": "19:00:00" },
+        { "membershipLevel": { "$ref": "level-SH" }, "dayOfWeek": "Wednesday", "startTime": "07:00:00", "endTime": "19:00:00" },
+        { "membershipLevel": { "$ref": "level-SH" }, "dayOfWeek": "Thursday",  "startTime": "07:00:00", "endTime": "19:00:00" },
+        { "membershipLevel": { "$ref": "level-SH" }, "dayOfWeek": "Friday",    "startTime": "07:00:00", "endTime": "19:00:00" },
+        { "membershipLevel": { "$ref": "level-SH" }, "dayOfWeek": "Saturday",  "startTime": "07:00:00", "endTime": "19:00:00" }
+      ]
+    },
+    {
+      "$id": "level-SV",
+      "shortCode": "SV",
+      "name": "Silver",
+      // Weekdays: 7–3 AM window and 5:30–7 PM window; weekends: 11 AM–7 PM
+      "availabilities": [
+        { "membershipLevel": { "$ref": "level-SV" }, "dayOfWeek": "Monday",    "startTime": "07:00:00", "endTime": "15:00:00" },
+        { "membershipLevel": { "$ref": "level-SV" }, "dayOfWeek": "Monday",    "startTime": "17:30:00", "endTime": "19:00:00" },
+        { "membershipLevel": { "$ref": "level-SV" }, "dayOfWeek": "Tuesday",   "startTime": "07:00:00", "endTime": "15:00:00" },
+        { "membershipLevel": { "$ref": "level-SV" }, "dayOfWeek": "Tuesday",   "startTime": "17:30:00", "endTime": "19:00:00" },
+        { "membershipLevel": { "$ref": "level-SV" }, "dayOfWeek": "Wednesday", "startTime": "07:00:00", "endTime": "15:00:00" },
+        { "membershipLevel": { "$ref": "level-SV" }, "dayOfWeek": "Wednesday", "startTime": "17:30:00", "endTime": "19:00:00" },
+        { "membershipLevel": { "$ref": "level-SV" }, "dayOfWeek": "Thursday",  "startTime": "07:00:00", "endTime": "15:00:00" },
+        { "membershipLevel": { "$ref": "level-SV" }, "dayOfWeek": "Thursday",  "startTime": "17:30:00", "endTime": "19:00:00" },
+        { "membershipLevel": { "$ref": "level-SV" }, "dayOfWeek": "Friday",    "startTime": "07:00:00", "endTime": "15:00:00" },
+        { "membershipLevel": { "$ref": "level-SV" }, "dayOfWeek": "Friday",    "startTime": "17:30:00", "endTime": "19:00:00" },
+        { "membershipLevel": { "$ref": "level-SV" }, "dayOfWeek": "Saturday",  "startTime": "11:00:00", "endTime": "19:00:00" },
+        { "membershipLevel": { "$ref": "level-SV" }, "dayOfWeek": "Sunday",    "startTime": "11:00:00", "endTime": "19:00:00" }
+      ]
+    },
+    {
+      "$id": "level-BR",
+      "shortCode": "BR",
+      "name": "Bronze",
+      // Weekdays: 7–3 AM window and 6–7 PM window; weekends: 1 PM–7 PM
+      "availabilities": [
+        { "membershipLevel": { "$ref": "level-BR" }, "dayOfWeek": "Monday",    "startTime": "07:00:00", "endTime": "15:00:00" },
+        { "membershipLevel": { "$ref": "level-BR" }, "dayOfWeek": "Monday",    "startTime": "18:00:00", "endTime": "19:00:00" },
+        { "membershipLevel": { "$ref": "level-BR" }, "dayOfWeek": "Tuesday",   "startTime": "07:00:00", "endTime": "15:00:00" },
+        { "membershipLevel": { "$ref": "level-BR" }, "dayOfWeek": "Tuesday",   "startTime": "18:00:00", "endTime": "19:00:00" },
+        { "membershipLevel": { "$ref": "level-BR" }, "dayOfWeek": "Wednesday", "startTime": "07:00:00", "endTime": "15:00:00" },
+        { "membershipLevel": { "$ref": "level-BR" }, "dayOfWeek": "Wednesday", "startTime": "18:00:00", "endTime": "19:00:00" },
+        { "membershipLevel": { "$ref": "level-BR" }, "dayOfWeek": "Thursday",  "startTime": "07:00:00", "endTime": "15:00:00" },
+        { "membershipLevel": { "$ref": "level-BR" }, "dayOfWeek": "Thursday",  "startTime": "18:00:00", "endTime": "19:00:00" },
+        { "membershipLevel": { "$ref": "level-BR" }, "dayOfWeek": "Friday",    "startTime": "07:00:00", "endTime": "15:00:00" },
+        { "membershipLevel": { "$ref": "level-BR" }, "dayOfWeek": "Friday",    "startTime": "18:00:00", "endTime": "19:00:00" },
+        { "membershipLevel": { "$ref": "level-BR" }, "dayOfWeek": "Saturday",  "startTime": "13:00:00", "endTime": "19:00:00" },
+        { "membershipLevel": { "$ref": "level-BR" }, "dayOfWeek": "Sunday",    "startTime": "13:00:00", "endTime": "19:00:00" }
+      ]
+    },
+    {
+      "$id": "level-AS",
+      "shortCode": "AS",
+      "name": "Associate",
+      // Full access: 7 AM – 7 PM every day (same windows as Shareholder)
+      "availabilities": [
+        { "membershipLevel": { "$ref": "level-AS" }, "dayOfWeek": "Sunday",    "startTime": "07:00:00", "endTime": "19:00:00" },
+        { "membershipLevel": { "$ref": "level-AS" }, "dayOfWeek": "Monday",    "startTime": "07:00:00", "endTime": "19:00:00" },
+        { "membershipLevel": { "$ref": "level-AS" }, "dayOfWeek": "Tuesday",   "startTime": "07:00:00", "endTime": "19:00:00" },
+        { "membershipLevel": { "$ref": "level-AS" }, "dayOfWeek": "Wednesday", "startTime": "07:00:00", "endTime": "19:00:00" },
+        { "membershipLevel": { "$ref": "level-AS" }, "dayOfWeek": "Thursday",  "startTime": "07:00:00", "endTime": "19:00:00" },
+        { "membershipLevel": { "$ref": "level-AS" }, "dayOfWeek": "Friday",    "startTime": "07:00:00", "endTime": "19:00:00" },
+        { "membershipLevel": { "$ref": "level-AS" }, "dayOfWeek": "Saturday",  "startTime": "07:00:00", "endTime": "19:00:00" }
+      ]
+    }
+  ],
+
+  // ── 3. Users ─────────────────────────────────────────────────────────────
+  // ClubBaistUser (extends IdentityUser<Guid>).
+  // Passwords are NOT stored here — the seeder calls UserManager.CreateAsync(user, DefaultPassword).
+  // "role" is read by the seeder for UserManager.AddToRoleAsync; it is not an entity property.
+  // User IDs are assigned by UserManager; $ref-linked member objects will see the set Id.
+  "users": [
+    {
+      "user": {
+        "$id": "user-admin",
+        "userName": "admin@clubbaist.com",
+        "email": "admin@clubbaist.com",
+        "emailConfirmed": true,
+        "firstName": "Seed",
+        "lastName": "Admin",
+        "dateOfBirth": "1985-01-15T00:00:00",
+        "phoneNumber": "(403) 555-0000",
+        "alternatePhoneNumber": "(403) 555-0001",
+        "addressLine1": "123 Golf Drive",
+        "city": "Calgary",
+        "province": "AB",
+        "postalCode": "T2P 1A1"
+      },
+      "role": "Admin"
+    },
+    {
+      "user": {
+        "$id": "user-committee",
+        "userName": "committee@clubbaist.com",
+        "email": "committee@clubbaist.com",
+        "emailConfirmed": true,
+        "firstName": "Seed",
+        "lastName": "Committee",
+        "dateOfBirth": "1985-01-15T00:00:00",
+        "phoneNumber": "(403) 555-0000",
+        "alternatePhoneNumber": "(403) 555-0001",
+        "addressLine1": "123 Golf Drive",
+        "city": "Calgary",
+        "province": "AB",
+        "postalCode": "T2P 1A1"
+      },
+      "role": "MembershipCommittee"
+    },
+    {
+      "user": {
+        "$id": "user-sh1",
+        "userName": "shareholder1@clubbaist.com",
+        "email": "shareholder1@clubbaist.com",
+        "emailConfirmed": true,
+        "firstName": "Alice",
+        "lastName": "Shareholder",
+        "dateOfBirth": "1985-01-15T00:00:00",
+        "phoneNumber": "(403) 555-0000",
+        "alternatePhoneNumber": "(403) 555-0001",
+        "addressLine1": "123 Golf Drive",
+        "city": "Calgary",
+        "province": "AB",
+        "postalCode": "T2P 1A1"
+      },
+      "role": "Member"
+    },
+    {
+      "user": {
+        "$id": "user-sh2",
+        "userName": "shareholder2@clubbaist.com",
+        "email": "shareholder2@clubbaist.com",
+        "emailConfirmed": true,
+        "firstName": "Bob",
+        "lastName": "Shareholder",
+        "dateOfBirth": "1985-01-15T00:00:00",
+        "phoneNumber": "(403) 555-0000",
+        "alternatePhoneNumber": "(403) 555-0001",
+        "addressLine1": "123 Golf Drive",
+        "city": "Calgary",
+        "province": "AB",
+        "postalCode": "T2P 1A1"
+      },
+      "role": "Member"
+    },
+    {
+      "user": {
+        "$id": "user-sh3",
+        "userName": "shareholder3@clubbaist.com",
+        "email": "shareholder3@clubbaist.com",
+        "emailConfirmed": true,
+        "firstName": "Carol",
+        "lastName": "Shareholder",
+        "dateOfBirth": "1985-01-15T00:00:00",
+        "phoneNumber": "(403) 555-0000",
+        "alternatePhoneNumber": "(403) 555-0001",
+        "addressLine1": "123 Golf Drive",
+        "city": "Calgary",
+        "province": "AB",
+        "postalCode": "T2P 1A1"
+      },
+      "role": "Member"
+    },
+    {
+      "user": {
+        "$id": "user-sv1",
+        "userName": "silver@clubbaist.com",
+        "email": "silver@clubbaist.com",
+        "emailConfirmed": true,
+        "firstName": "Diana",
+        "lastName": "Silver",
+        "dateOfBirth": "1985-01-15T00:00:00",
+        "phoneNumber": "(403) 555-0000",
+        "alternatePhoneNumber": "(403) 555-0001",
+        "addressLine1": "123 Golf Drive",
+        "city": "Calgary",
+        "province": "AB",
+        "postalCode": "T2P 1A1"
+      },
+      "role": "Member"
+    },
+    {
+      "user": {
+        "$id": "user-br1",
+        "userName": "bronze@clubbaist.com",
+        "email": "bronze@clubbaist.com",
+        "emailConfirmed": true,
+        "firstName": "Evan",
+        "lastName": "Bronze",
+        "dateOfBirth": "1985-01-15T00:00:00",
+        "phoneNumber": "(403) 555-0000",
+        "alternatePhoneNumber": "(403) 555-0001",
+        "addressLine1": "123 Golf Drive",
+        "city": "Calgary",
+        "province": "AB",
+        "postalCode": "T2P 1A1"
+      },
+      "role": "Member"
+    }
+  ],
+
+  // ── 4. Members (MemberShipInfo) ──────────────────────────────────────────
+  // Only users with a membership level get a MemberShipInfo record.
+  // UserId and MembershipLevelId (scalar FKs) are set by the seeder in code after
+  // users and levels are saved — their $ref-linked objects already carry the DB IDs.
+  // MemberShipInfo.Id is DB-assigned (identity column); the seeder reads it back
+  // from these objects after SaveChangesAsync to populate application sponsor FKs.
+  "members": [
+    {
+      "$id": "member-sh1",
+      "user": { "$ref": "user-sh1" },
+      "membershipLevel": { "$ref": "level-SH" }
+    },
+    {
+      "$id": "member-sh2",
+      "user": { "$ref": "user-sh2" },
+      "membershipLevel": { "$ref": "level-SH" }
+    },
+    {
+      "$id": "member-sh3",
+      "user": { "$ref": "user-sh3" },
+      "membershipLevel": { "$ref": "level-SH" }
+    },
+    {
+      "$id": "member-sv1",
+      "user": { "$ref": "user-sv1" },
+      "membershipLevel": { "$ref": "level-SV" }
+    },
+    {
+      "$id": "member-br1",
+      "user": { "$ref": "user-br1" },
+      "membershipLevel": { "$ref": "level-BR" }
+    }
+  ],
+
+  // ── 5. Membership Applications ───────────────────────────────────────────
+  // RequestedMembershipLevel is resolved via $ref; RequestedMembershipLevelId is
+  // set by the seeder after levels are saved.
+  // Sponsor1MemberId / Sponsor2MemberId are plain int FKs with no nav property —
+  // they cannot use $ref and are set by the seeder from members[0].Id / members[1].Id.
+  "applications": [
+    {
+      "firstName": "Frank",
+      "lastName": "Pending",
+      "occupation": "Software Developer",
+      "companyName": "Acme Corp",
+      "address": "456 Fairway Lane",
+      "postalCode": "T2P 2B2",
+      "phone": "403-555-0200",
+      "email": "frank.pending@example.com",
+      "dateOfBirth": "1990-03-22T00:00:00",
+      "requestedMembershipLevel": { "$ref": "level-AS" },
+      "status": "Submitted"
+    },
+    {
+      "firstName": "Grace",
+      "lastName": "OnHold",
+      "occupation": "Project Manager",
+      "companyName": "Northwind Ltd",
+      "address": "789 Eagle Crest",
+      "postalCode": "T2P 3C3",
+      "phone": "403-555-0201",
+      "email": "grace.onhold@example.com",
+      "dateOfBirth": "1988-07-14T00:00:00",
+      "requestedMembershipLevel": { "$ref": "level-SV" },
+      "status": "OnHold"
+    },
+    {
+      "firstName": "Henry",
+      "lastName": "Waitlist",
+      "occupation": "Civil Engineer",
+      "companyName": "Prairie Systems",
+      "address": "321 Bunker Road",
+      "postalCode": "T2P 4D4",
+      "phone": "403-555-0202",
+      "email": "henry.waitlist@example.com",
+      "dateOfBirth": "1995-11-05T00:00:00",
+      "requestedMembershipLevel": { "$ref": "level-AS" },
+      "status": "Waitlisted"
+    },
+    {
+      "firstName": "Iris",
+      "lastName": "Submitted",
+      "occupation": "Designer",
+      "companyName": "ClubBaist Studio",
+      "address": "654 Green View",
+      "postalCode": "T2P 5E5",
+      "phone": "403-555-0203",
+      "email": "iris.submitted@example.com",
+      "dateOfBirth": "1992-06-30T00:00:00",
+      "requestedMembershipLevel": { "$ref": "level-BR" },
+      "status": "Submitted"
+    },
+    {
+      "firstName": "Jack",
+      "lastName": "Waitlist",
+      "occupation": "Accountant",
+      "companyName": "Fairway Finance",
+      "address": "987 Sunset Terrace",
+      "postalCode": "T2P 6F6",
+      "phone": "403-555-0204",
+      "email": "jack.waitlist@example.com",
+      "dateOfBirth": "1985-09-18T00:00:00",
+      "requestedMembershipLevel": { "$ref": "level-SV" },
+      "status": "Waitlisted"
+    }
+  ]
+}

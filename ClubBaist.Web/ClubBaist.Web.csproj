@@ -23,4 +23,8 @@
     <ProjectReference Include="..\ClubBaist.Services2\ClubBaist.Services2.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="Data\SeedData\seed.jsonc" />
+  </ItemGroup>
+
 </Project>

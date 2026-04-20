@@ -1,9 +1,10 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using ClubBaist.Domain2;
 using ClubBaist.Domain2.Entities;
 using ClubBaist.Domain2.Entities.Membership;
 using ClubBaist.Services2;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 
 namespace ClubBaist.Web.Data;
@@ -12,244 +13,124 @@ internal static class AppDbContextSeed
 {
     private const string DefaultPassword = "Pass@word1";
 
-    private static readonly SeedMembershipLevel[] MembershipLevels =
-    [
-        new("SH", "Shareholder"),
-        new("SV", "Silver"),
-        new("BR", "Bronze"),
-        new("AS", "Associate")
-    ];
+    // ReferenceHandler.Preserve resolves $id/$ref within the document so nav properties
+    // on later objects point to the same C# instances as earlier objects — no manual
+    // key-lookup dictionaries needed. JsonStringEnumConverter lets us use enum member
+    // names ("Submitted", "Monday", etc.) instead of numeric values.
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        ReferenceHandler = ReferenceHandler.Preserve,
+        ReadCommentHandling = JsonCommentHandling.Skip,
+        AllowTrailingCommas = true,
+        PropertyNameCaseInsensitive = true,
+        Converters = { new JsonStringEnumConverter() },
+    };
 
-    private static readonly SeedUser[] Users =
-    [
-        new("admin@clubbaist.com", AppRoles.Admin, "Seed", "Admin", null),
-        new("committee@clubbaist.com", AppRoles.MembershipCommittee, "Seed", "Committee", null),
-        new("shareholder1@clubbaist.com", AppRoles.Member, "Alice", "Shareholder", "SH"),
-        new("shareholder2@clubbaist.com", AppRoles.Member, "Bob", "Shareholder", "SH"),
-        new("shareholder3@clubbaist.com", AppRoles.Member, "Carol", "Shareholder", "SH"),
-        new("silver@clubbaist.com", AppRoles.Member, "Diana", "Silver", "SV"),
-        new("bronze@clubbaist.com", AppRoles.Member, "Evan", "Bronze", "BR")
-    ];
+    private static SeedData LoadSeedData()
+    {
+        using var stream = typeof(AppDbContextSeed).Assembly
+            .GetManifestResourceStream("ClubBaist.Web.Data.SeedData.seed.jsonc")
+            ?? throw new InvalidOperationException(
+                "Embedded resource 'ClubBaist.Web.Data.SeedData.seed.jsonc' not found. " +
+                "Ensure the file is marked as EmbeddedResource in ClubBaist.Web.csproj.");
 
-    private static readonly SeedApplication[] Applications =
-    [
-        new("frank.pending@example.com", "Frank", "Pending", "Software Developer", "Acme Corp", "456 Fairway Lane", "T2P 2B2", "403-555-0200", new DateTime(1990, 3, 22), "AS", ApplicationStatus.Submitted),
-        new("grace.onhold@example.com", "Grace", "OnHold", "Project Manager", "Northwind Ltd", "789 Eagle Crest", "T2P 3C3", "403-555-0201", new DateTime(1988, 7, 14), "SV", ApplicationStatus.OnHold),
-        new("henry.waitlist@example.com", "Henry", "Waitlist", "Civil Engineer", "Prairie Systems", "321 Bunker Road", "T2P 4D4", "403-555-0202", new DateTime(1995, 11, 5), "AS", ApplicationStatus.Waitlisted),
-        new("iris.submitted@example.com", "Iris", "Submitted", "Designer", "ClubBaist Studio", "654 Green View", "T2P 5E5", "403-555-0203", new DateTime(1992, 6, 30), "BR", ApplicationStatus.Submitted),
-        new("jack.waitlist@example.com", "Jack", "Waitlist", "Accountant", "Fairway Finance", "987 Sunset Terrace", "T2P 6F6", "403-555-0204", new DateTime(1985, 9, 18), "SV", ApplicationStatus.Waitlisted)
-    ];
+        return JsonSerializer.Deserialize<SeedData>(stream, JsonOptions)
+            ?? throw new InvalidOperationException("seed.jsonc deserialised to null.");
+    }
 
     public static void Seed(AppDbContext db, bool storeCreated)
     {
-        if (!storeCreated)
-        {
-            return;
-        }
-
+        if (!storeCreated) return;
         SeedAsync(db, storeCreated, CancellationToken.None).GetAwaiter().GetResult();
     }
 
     public static async Task SeedAsync(AppDbContext db, bool storeCreated, CancellationToken cancellationToken)
     {
-        if (!storeCreated)
-        {
-            return;
-        }
+        if (!storeCreated) return;
 
-        var roleManager = db.GetService<RoleManager<IdentityRole<Guid>>>();
         var userManager = db.GetService<UserManager<ClubBaistUser>>();
+        var seed = LoadSeedData();
 
-        await SeedRolesAsync(roleManager);
-        var levelsByCode = await SeedMembershipLevelsAsync(db, cancellationToken);
-        var usersByEmail = await SeedUsersAsync(userManager, cancellationToken);
-        var sponsors = await SeedMembershipsAsync(db, usersByEmail, levelsByCode, cancellationToken);
+        // Insertion order mirrors FK dependency order documented in seed.jsonc.
+        // Each step saves immediately so the next step can read DB-assigned IDs.
 
-        await SeedApplicationsAsync(db, levelsByCode, sponsors, cancellationToken);
+        // Step 1: Roles — no FK dependencies
+        await SeedRolesAsync(db, seed, cancellationToken);
+
+        // Step 2: Membership levels (with tee-time availability windows) — no FK dependencies
+        await SeedMembershipLevelsAsync(db, seed, cancellationToken);
+
+        // Step 3: Users — depends on roles (AspNetUserRoles)
+        await SeedUsersAsync(userManager, seed, cancellationToken);
+
+        // Step 4: Memberships — depends on users (UserId FK) and levels (MembershipLevelId FK)
+        await SeedMembershipsAsync(db, seed, cancellationToken);
+
+        // Step 5: Applications — depends on levels (RequestedMembershipLevelId FK)
+        //                        and members (Sponsor1MemberId / Sponsor2MemberId FKs)
+        await SeedApplicationsAsync(db, seed, cancellationToken);
+
+        // Step 6: Season and tee time slots — generated algorithmically; not in seed.jsonc
         await SeedCurrentSeasonAsync(db, cancellationToken);
     }
 
-    private static async Task SeedRolesAsync(RoleManager<IdentityRole<Guid>> roleManager)
+    private static async Task SeedRolesAsync(AppDbContext db, SeedData seed, CancellationToken cancellationToken)
     {
-        foreach (var roleName in new[] { AppRoles.Admin, AppRoles.MembershipCommittee, AppRoles.Member })
-        {
-            ThrowIfFailed(
-                await roleManager.CreateAsync(new IdentityRole<Guid> { Name = roleName }),
-                $"create role '{roleName}'");
-        }
-    }
-
-    private static async Task<Dictionary<string, MembershipLevel>> SeedMembershipLevelsAsync(
-        AppDbContext db,
-        CancellationToken cancellationToken)
-    {
-        var levels = MembershipLevels.Select(seedLevel =>
-        {
-            var level = new MembershipLevel
-            {
-                ShortCode = seedLevel.ShortCode,
-                Name = seedLevel.Name
-            };
-
-            AddAvailabilities(level);
-
-            return level;
-        }).ToList();
-
-        db.MembershipLevels.AddRange(levels);
+        db.Roles.AddRange(seed.Roles);
         await db.SaveChangesAsync(cancellationToken);
-
-        return levels.ToDictionary(level => level.ShortCode, StringComparer.OrdinalIgnoreCase);
     }
 
-    private static void AddAvailabilities(MembershipLevel level)
+    private static async Task SeedMembershipLevelsAsync(AppDbContext db, SeedData seed, CancellationToken cancellationToken)
     {
-        void AddAvailability(DayOfWeek day, TimeOnly startTime, TimeOnly endTime)
-        {
-            level.Availabilities.Add(new MembershipLevelTeeTimeAvailability
-            {
-                MembershipLevel = level,
-                DayOfWeek = day,
-                StartTime = startTime,
-                EndTime = endTime
-            });
-        }
-
-        switch (level.ShortCode.ToUpperInvariant())
-        {
-            case "SV": // Silver: weekdays two windows, weekends after 11 AM
-                foreach (var day in Weekdays)
-                {
-                    AddAvailability(day, new TimeOnly(7, 0), new TimeOnly(15, 0));
-                    AddAvailability(day, new TimeOnly(17, 30), new TimeOnly(19, 0));
-                }
-                foreach (var day in WeekendDays)
-                {
-                    AddAvailability(day, new TimeOnly(11, 0), new TimeOnly(19, 0));
-                }
-                break;
-
-            case "BR": // Bronze: weekdays two windows, weekends after 1 PM
-                foreach (var day in Weekdays)
-                {
-                    AddAvailability(day, new TimeOnly(7, 0), new TimeOnly(15, 0));
-                    AddAvailability(day, new TimeOnly(18, 0), new TimeOnly(19, 0));
-                }
-                foreach (var day in WeekendDays)
-                {
-                    AddAvailability(day, new TimeOnly(13, 0), new TimeOnly(19, 0));
-                }
-                break;
-
-            default: // Gold (SH, AS) and any other level: 7 AM–7 PM all days
-                foreach (var day in Enum.GetValues<DayOfWeek>())
-                {
-                    AddAvailability(day, new TimeOnly(7, 0), new TimeOnly(19, 0));
-                }
-                break;
-        }
+        db.MembershipLevels.AddRange(seed.MembershipLevels);
+        await db.SaveChangesAsync(cancellationToken);
+        // MembershipLevel.Id values are now DB-assigned.
+        // $ref-linked objects (members, applications) reference the same C# instances,
+        // so they automatically see the updated Id values.
     }
 
-    private static readonly DayOfWeek[] Weekdays =
-        [DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday];
-
-    private static readonly DayOfWeek[] WeekendDays =
-        [DayOfWeek.Saturday, DayOfWeek.Sunday];
-
-    private static async Task<Dictionary<string, ClubBaistUser>> SeedUsersAsync(
-        UserManager<ClubBaistUser> userManager,
-        CancellationToken cancellationToken)
+    private static async Task SeedUsersAsync(UserManager<ClubBaistUser> userManager, SeedData seed, CancellationToken cancellationToken)
     {
-        var usersByEmail = new Dictionary<string, ClubBaistUser>(StringComparer.OrdinalIgnoreCase);
-
-        foreach (var seedUser in Users)
+        foreach (var entry in seed.Users)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            ThrowIfFailed(await userManager.CreateAsync(entry.User, DefaultPassword), $"create user '{entry.User.Email}'");
+            ThrowIfFailed(await userManager.AddToRoleAsync(entry.User, entry.Role), $"assign role '{entry.Role}' to '{entry.User.Email}'");
+            // entry.User.Id is now set by Identity.
+            // $ref-linked MemberShipInfo objects reference the same C# instance,
+            // so they automatically see the updated Id.
+        }
+    }
 
-            var user = new ClubBaistUser
-            {
-                UserName = seedUser.Email,
-                Email = seedUser.Email,
-                EmailConfirmed = true,
-                FirstName = seedUser.FirstName,
-                LastName = seedUser.LastName,
-                DateOfBirth = new DateTime(1985, 1, 15),
-                PhoneNumber = "(403) 555-0000",
-                AlternatePhoneNumber = "(403) 555-0001",
-                AddressLine1 = "123 Golf Drive",
-                City = "Calgary",
-                Province = "AB",
-                PostalCode = "T2P 1A1"
-            };
-
-            ThrowIfFailed(await userManager.CreateAsync(user, DefaultPassword), $"create user '{seedUser.Email}'");
-            ThrowIfFailed(await userManager.AddToRoleAsync(user, seedUser.Role), $"assign role '{seedUser.Role}' to '{seedUser.Email}'");
-
-            usersByEmail.Add(seedUser.Email, user);
+    private static async Task SeedMembershipsAsync(AppDbContext db, SeedData seed, CancellationToken cancellationToken)
+    {
+        // Scalar FK properties must be set explicitly — EF needs them alongside nav properties.
+        // By this point, User.Id and MembershipLevel.Id are set (Steps 3 & 2 saved).
+        foreach (var member in seed.Members)
+        {
+            member.UserId = member.User.Id;
+            member.MembershipLevelId = member.MembershipLevel.Id;
         }
 
-        return usersByEmail;
-    }
-
-    private static async Task<List<MemberShipInfo>> SeedMembershipsAsync(
-        AppDbContext db,
-        IReadOnlyDictionary<string, ClubBaistUser> usersByEmail,
-        IReadOnlyDictionary<string, MembershipLevel> levelsByCode,
-        CancellationToken cancellationToken)
-    {
-        var memberships = Users
-            .Where(user => user.MembershipLevelShortCode is not null)
-            .Select(user =>
-            {
-                var dbUser = usersByEmail[user.Email];
-                var level = levelsByCode[user.MembershipLevelShortCode!];
-
-                return new MemberShipInfo
-                {
-                    User = dbUser,
-                    UserId = dbUser.Id,
-                    MembershipLevel = level,
-                    MembershipLevelId = level.Id
-                };
-            })
-            .ToList();
-
-        db.MemberShips.AddRange(memberships);
+        db.MemberShips.AddRange(seed.Members);
         await db.SaveChangesAsync(cancellationToken);
-
-        return memberships;
+        // MemberShipInfo.Id values are now DB-assigned; used for sponsor FKs in Step 5.
     }
 
-    private static async Task SeedApplicationsAsync(
-        AppDbContext db,
-        IReadOnlyDictionary<string, MembershipLevel> levelsByCode,
-        IReadOnlyList<MemberShipInfo> sponsors,
-        CancellationToken cancellationToken)
+    private static async Task SeedApplicationsAsync(AppDbContext db, SeedData seed, CancellationToken cancellationToken)
     {
-        db.MembershipApplications.AddRange(
-            Applications.Select(seedApplication =>
-            {
-                var requestedLevel = levelsByCode[seedApplication.RequestedMembershipLevelShortCode];
+        foreach (var app in seed.Applications)
+        {
+            // RequestedMembershipLevel is set via $ref; derive the scalar FK from it.
+            app.RequestedMembershipLevelId = app.RequestedMembershipLevel.Id;
 
-                return new MembershipApplication
-                {
-                    FirstName = seedApplication.FirstName,
-                    LastName = seedApplication.LastName,
-                    Occupation = seedApplication.Occupation,
-                    CompanyName = seedApplication.CompanyName,
-                    Address = seedApplication.Address,
-                    PostalCode = seedApplication.PostalCode,
-                    Phone = seedApplication.Phone,
-                    Email = seedApplication.Email,
-                    DateOfBirth = seedApplication.DateOfBirth,
-                    Sponsor1MemberId = sponsors[0].Id,
-                    Sponsor2MemberId = sponsors[1].Id,
-                    RequestedMembershipLevelId = requestedLevel.Id,
-                    RequestedMembershipLevel = requestedLevel,
-                    Status = seedApplication.Status
-                };
-            }));
+            // Sponsor FKs are plain int columns with no nav property, so $ref cannot be used.
+            // Assign to the first two seeded members (matching the original seeding intent).
+            app.Sponsor1MemberId = seed.Members[0].Id;
+            app.Sponsor2MemberId = seed.Members[1].Id;
+        }
 
+        db.MembershipApplications.AddRange(seed.Applications);
         await db.SaveChangesAsync(cancellationToken);
     }
 
@@ -273,34 +154,21 @@ internal static class AppDbContextSeed
 
     private static void ThrowIfFailed(IdentityResult result, string action)
     {
-        if (result.Succeeded)
-        {
-            return;
-        }
-
-        var errors = string.Join(", ", result.Errors.Select(error => $"{error.Code}: {error.Description}"));
+        if (result.Succeeded) return;
+        var errors = string.Join(", ", result.Errors.Select(e => $"{e.Code}: {e.Description}"));
         throw new InvalidOperationException($"Failed to {action}: {errors}");
     }
 
-    private sealed record SeedMembershipLevel(string ShortCode, string Name);
+    // Wrapper for the entire seed.jsonc document.
+    private sealed record SeedData(
+        List<IdentityRole<Guid>> Roles,
+        List<MembershipLevel> MembershipLevels,
+        List<UserSeedEntry> Users,
+        List<MemberShipInfo> Members,
+        List<MembershipApplication> Applications
+    );
 
-    private sealed record SeedUser(
-        string Email,
-        string Role,
-        string FirstName,
-        string LastName,
-        string? MembershipLevelShortCode);
-
-    private sealed record SeedApplication(
-        string Email,
-        string FirstName,
-        string LastName,
-        string Occupation,
-        string CompanyName,
-        string Address,
-        string PostalCode,
-        string Phone,
-        DateTime DateOfBirth,
-        string RequestedMembershipLevelShortCode,
-        ApplicationStatus Status);
+    // ClubBaistUser has no Role property (Identity roles are a separate relationship),
+    // so we pair the user with the role name for UserManager.AddToRoleAsync.
+    private sealed record UserSeedEntry(ClubBaistUser User, string Role);
 }
