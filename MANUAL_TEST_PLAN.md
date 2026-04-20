@@ -7,6 +7,11 @@
   Management if not present)
 - Browser: Chrome or Edge (latest)
 
+> **Note on tee time restrictions:** The default seed configures **all** membership levels with
+> full 7:00 AM – 7:00 PM availability every day. TC-TEE-002, TC-TEE-007, and TC-TEE-011 test
+> time-restriction enforcement and therefore require a one-time setup step (described in each
+> case) to narrow Silver and Bronze availability windows before running those tests.
+
 ---
 
 ## Seed Accounts
@@ -269,7 +274,14 @@
 ---
 
 ### TC-TEE-002 – View tee time availability (Silver member – restricted hours)
-**Preconditions:** Logged in as `silver@clubbaist.com`.  
+**Preconditions:** Logged in as `silver@clubbaist.com`.
+
+> **Setup required:** The default seed gives all levels full 7 AM – 7 PM access. Before running
+> this test, log in as `admin@clubbaist.com`, navigate to the membership level settings, and
+> restrict the **Silver** level to: before 3:00 PM and after 5:30 PM (remove or narrow the
+> availability window for the 3:00 PM – 5:30 PM block). Then log back in as
+> `silver@clubbaist.com`.
+
 **Steps:**
 1. Navigate to `/teetimes`
 2. Select any date within the active season
@@ -326,7 +338,10 @@
 ---
 
 ### TC-TEE-007 – Silver member cannot book a restricted time slot
-**Preconditions:** Logged in as `silver@clubbaist.com`.  
+**Preconditions:** Logged in as `silver@clubbaist.com`. Silver level restricted to before 3 PM / after 5:30 PM (see TC-TEE-002 setup).
+
+> **Setup required:** Same availability configuration from TC-TEE-002 must be in place.
+
 **Steps:**
 1. Navigate to `/teetimes/book`
 2. Select a slot between **3:00 PM** and **5:30 PM**
@@ -372,15 +387,19 @@
 1. Navigate to the Standing Tee Time request page
 2. Select Day: **Saturday**, Time: **8:00 AM**
 3. Add 3 additional participants: Bob Shareholder, Carol Shareholder, Diana Silver (foursome required)
-4. Set a date range within the active season
-5. Submit the request
+4. Set a date range within the active season and submit
 
-**Expected Result:** Request created with status **Draft** (or submitted for approval). It appears in Alice's standing tee time list.
+**Future Expected Result:** Request created with status **Draft**. Appears in Alice's standing tee time list.
 
 ---
 
 ### TC-TEE-011 – Bronze member cannot book outside restricted hours
-**Preconditions:** Logged in as `bronze@clubbaist.com` (Evan Bronze).  
+**Preconditions:** Logged in as `bronze@clubbaist.com` (Evan Bronze).
+
+> **Setup required:** Log in as `admin@clubbaist.com` and restrict the **Bronze** level to:
+> before 3:00 PM and after 6:00 PM (remove the 3:00 PM – 6:00 PM window). Then log back in
+> as `bronze@clubbaist.com`.
+
 **Steps:**
 1. Navigate to `/teetimes/book`
 2. Select a slot between **3:00 PM** and **6:00 PM**
