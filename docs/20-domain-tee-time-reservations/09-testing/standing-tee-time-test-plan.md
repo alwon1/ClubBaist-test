@@ -13,7 +13,7 @@ Source of truth maps to tests in `ClubBaist.Domain2.Tests`:
 ## Scope
 
 **In scope:**
-- `StandingTeeTimeService` integration tests (via `Domain2TestHost` with in-memory SQLite).
+- `StandingTeeTimeService` integration tests (via `Domain2TestHost` using SQL Server through Aspire with a per-test database).
 - `StandingTeeTime` domain model unit tests (pure construction + property assertions).
 - EF Core persistence smoke tests (DbContext round-trip + relationship mapping).
 

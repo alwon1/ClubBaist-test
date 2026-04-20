@@ -17,7 +17,7 @@ Manage the full lifecycle of standing tee time requests: member submission, admi
 - Validate date range (`EndDate > StartDate`).
 - Enforce status transition rules (only `Draft` requests can be approved or denied).
 - Enforce ownership on cancellation (a member may only cancel their own requests).
-- Log warnings for all rejected or not-found operations.
+- Log warnings for not-found and invalid-status rejections in `ApproveAsync`, `DenyAsync`, `CancelAsync`, and the duplicate-active-request guard in `SubmitRequestAsync`; local validation failures (participant count, date range, duplicates) return error messages without logging.
 
 ## Core Operations
 
@@ -107,6 +107,7 @@ Task<bool> CancelAsync(int id, int requestingMemberId)
 - **Conflict detection** — when two approved requests target the same day/time (within tolerance), use `PriorityNumber` to determine which request is accommodated.
 - **Tee sheet integration** — the clerk workflow of processing standing requests one week in advance before phone requests is not yet automated.
 - **ApprovedBy / ApprovedDate** — the business problem specifies that staff approval records the approving clerk and the approval date; these fields are not yet stored.
+- **One-active-request race condition** — the duplicate-request guard in `SubmitRequestAsync` is an `AnyAsync` read followed by an insert; two concurrent submissions from the same member could both pass the check. A filtered unique index on `(BookingMemberId)` where `Status NOT IN (Cancelled, Denied)` would enforce the invariant at the database level.
 
 ## Explicit Non-Rules
 

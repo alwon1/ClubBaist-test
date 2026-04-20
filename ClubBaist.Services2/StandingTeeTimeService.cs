@@ -9,16 +9,12 @@ public class StandingTeeTimeService(IAppDbContext2 db, ILogger<StandingTeeTimeSe
     public async Task<IReadOnlyList<StandingTeeTime>> GetAllAsync() =>
         await db.StandingTeeTimes
             .AsNoTracking()
-            .Include(s => s.BookingMember).ThenInclude(m => m.User)
-            .Include(s => s.AdditionalParticipants).ThenInclude(p => p.User)
             .OrderByDescending(s => s.Id)
             .ToListAsync();
 
     public async Task<IReadOnlyList<StandingTeeTime>> GetForMemberAsync(int memberId) =>
         await db.StandingTeeTimes
             .AsNoTracking()
-            .Include(s => s.BookingMember).ThenInclude(m => m.User)
-            .Include(s => s.AdditionalParticipants).ThenInclude(p => p.User)
             .Where(s => s.BookingMemberId == memberId)
             .OrderByDescending(s => s.Id)
             .ToListAsync();
