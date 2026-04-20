@@ -36,9 +36,11 @@
         <div class="row align-items-end">
             <div class="col-md-4">
                 <div class="form-floating mb-3">
-                    <select id="statusFilter" class="form-select" @onchange="OnStatusFilterChanged">
+                    <select id="statusFilter" class="form-select"
+                            value="@(_selectedStatus.HasValue ? ((int)_selectedStatus.Value).ToString() : "")"
+                            @onchange="OnStatusFilterChanged">
                         <option value="">Pending (Draft)</option>
-                        @foreach (var status in _allStatuses)
+                        @foreach (var status in _nonDraftStatuses)
                         {
                             <option value="@((int)status)">@status</option>
                         }
@@ -71,119 +73,116 @@ else if (_requests is null || _requests.Count == 0)
 }
 else
 {
-    <div class="table-responsive">
-        <table class="table table-striped table-hover align-middle">
-            <thead class="table-dark">
-                <tr>
-                    <th>Member #</th>
-                    <th>Member Name</th>
-                    <th>Day</th>
-                    <th>Requested Time</th>
-                    <th>Tolerance</th>
-                    <th>Start Date</th>
-                    <th>End Date</th>
-                    <th>Players</th>
-                    <th>Priority</th>
-                    <th>Approved Time</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var req in _requests)
+    <QuickGrid Items="@_requests.AsQueryable()" Class="table table-striped table-hover align-middle">
+        <TemplateColumn Title="Member #">
+            <span class="badge bg-secondary">@context.BookingMember.MembershipNumber</span>
+        </TemplateColumn>
+        <TemplateColumn Title="Member Name" SortBy="@(GridSort<StandingTeeTime>.ByAscending(s => s.BookingMember.User.LastName))">
+            @context.BookingMember.User.FullName
+        </TemplateColumn>
+        <TemplateColumn Title="Day" SortBy="@(GridSort<StandingTeeTime>.ByAscending(s => s.RequestedDayOfWeek))">
+            @context.RequestedDayOfWeek
+        </TemplateColumn>
+        <TemplateColumn Title="Requested Time" SortBy="@(GridSort<StandingTeeTime>.ByAscending(s => s.RequestedTime))">
+            @context.RequestedTime.ToString("h:mm tt")
+        </TemplateColumn>
+        <TemplateColumn Title="Tolerance">
+            ±@context.ToleranceMinutes min
+        </TemplateColumn>
+        <TemplateColumn Title="Start Date" SortBy="@(GridSort<StandingTeeTime>.ByAscending(s => s.StartDate))">
+            @context.StartDate.ToString("yyyy-MM-dd")
+        </TemplateColumn>
+        <TemplateColumn Title="End Date" SortBy="@(GridSort<StandingTeeTime>.ByAscending(s => s.EndDate))">
+            @context.EndDate.ToString("yyyy-MM-dd")
+        </TemplateColumn>
+        <TemplateColumn Title="Players">
+            @context.ParticipantCount
+        </TemplateColumn>
+        <TemplateColumn Title="Priority" SortBy="@(GridSort<StandingTeeTime>.ByAscending(s => s.PriorityNumber))">
+            @(context.PriorityNumber?.ToString() ?? "—")
+        </TemplateColumn>
+        <TemplateColumn Title="Approved Time">
+            @(context.ApprovedTime?.ToString("h:mm tt") ?? "—")
+        </TemplateColumn>
+        <TemplateColumn Title="Status" SortBy="@(GridSort<StandingTeeTime>.ByAscending(s => s.Status))">
+            <span class="badge @UiHelpers.GetStandingTeeTimeStatusBadgeClass(context.Status)">
+                @context.Status
+            </span>
+        </TemplateColumn>
+        <TemplateColumn Title="Actions">
+            @if (context.Status == StandingTeeTimeStatus.Draft)
+            {
+                @if (_approveId == context.Id)
                 {
-                    <tr>
-                        <td><span class="badge bg-secondary">@req.BookingMember.MembershipNumber</span></td>
-                        <td>@req.BookingMember.User.FullName</td>
-                        <td>@req.RequestedDayOfWeek</td>
-                        <td>@req.RequestedTime.ToString("h:mm tt")</td>
-                        <td>±@req.ToleranceMinutes min</td>
-                        <td>@req.StartDate.ToString("yyyy-MM-dd")</td>
-                        <td>@req.EndDate.ToString("yyyy-MM-dd")</td>
-                        <td>@req.ParticipantCount</td>
-                        <td>@(req.PriorityNumber?.ToString() ?? "—")</td>
-                        <td>@(req.ApprovedTime?.ToString("h:mm tt") ?? "—")</td>
-                        <td>
-                            <span class="badge @UiHelpers.GetStandingTeeTimeStatusBadgeClass(req.Status)">
-                                @req.Status
-                            </span>
-                        </td>
-                        <td>
-                            @if (req.Status == StandingTeeTimeStatus.Draft)
-                            {
-                                @if (_approveId == req.Id)
+                    <div class="d-flex flex-column gap-2" style="min-width: 220px;">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text">Approved Time</span>
+                            <input type="time" class="form-control form-control-sm"
+                                   value="@_approveTime"
+                                   @onchange="e => _approveTime = e.Value?.ToString() ?? string.Empty" />
+                        </div>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text">Priority #</span>
+                            <input type="number" class="form-control form-control-sm" min="1"
+                                   value="@_approvePriority"
+                                   @onchange="OnPriorityChanged" />
+                        </div>
+                        <div class="d-flex gap-1">
+                            <button class="btn btn-sm btn-success flex-grow-1"
+                                    disabled="@_processing"
+                                    @onclick="() => ConfirmApproveAsync(context.Id)">
+                                @if (_processing)
                                 {
-                                    <div class="d-flex flex-column gap-2" style="min-width: 220px;">
-                                        <div class="input-group input-group-sm">
-                                            <span class="input-group-text">Approved Time</span>
-                                            <input type="time" class="form-control form-control-sm"
-                                                   value="@_approveTime"
-                                                   @onchange="e => _approveTime = e.Value?.ToString() ?? string.Empty" />
-                                        </div>
-                                        <div class="input-group input-group-sm">
-                                            <span class="input-group-text">Priority #</span>
-                                            <input type="number" class="form-control form-control-sm" min="1"
-                                                   value="@_approvePriority"
-                                                   @onchange="OnPriorityChanged" />
-                                        </div>
-                                        <div class="d-flex gap-1">
-                                            <button class="btn btn-sm btn-success flex-grow-1"
-                                                    disabled="@_processing"
-                                                    @onclick="() => ConfirmApproveAsync(req.Id)">
-                                                @if (_processing)
-                                                {
-                                                    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-                                                }
-                                                Confirm
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-secondary"
-                                                    disabled="@_processing"
-                                                    @onclick="CancelApprove">
-                                                Cancel
-                                            </button>
-                                        </div>
-                                    </div>
+                                    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
                                 }
-                                else if (_denyConfirmId == req.Id)
-                                {
-                                    <div class="d-flex flex-column gap-2" style="min-width: 180px;">
-                                        <span class="text-danger small fw-semibold">Deny this request?</span>
-                                        <div class="d-flex gap-1">
-                                            <button class="btn btn-sm btn-danger flex-grow-1"
-                                                    disabled="@_processing"
-                                                    @onclick="() => ConfirmDenyAsync(req.Id)">
-                                                @if (_processing)
-                                                {
-                                                    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-                                                }
-                                                Confirm
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-secondary"
-                                                    disabled="@_processing"
-                                                    @onclick="CancelDeny">
-                                                Cancel
-                                            </button>
-                                        </div>
-                                    </div>
-                                }
-                                else
-                                {
-                                    <button class="btn btn-sm btn-success me-1"
-                                            @onclick="() => BeginApprove(req)">
-                                        Approve
-                                    </button>
-                                    <button class="btn btn-sm btn-danger"
-                                            @onclick="() => BeginDeny(req.Id)">
-                                        Deny
-                                    </button>
-                                }
-                            }
-                        </td>
-                    </tr>
+                                Confirm
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary"
+                                    disabled="@_processing"
+                                    @onclick="CancelApprove">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
                 }
-            </tbody>
-        </table>
-    </div>
+                else if (_denyConfirmId == context.Id)
+                {
+                    <div class="d-flex flex-column gap-2" style="min-width: 180px;">
+                        <span class="text-danger small fw-semibold">Deny this request?</span>
+                        <div class="d-flex gap-1">
+                            <button class="btn btn-sm btn-danger flex-grow-1"
+                                    disabled="@_processing"
+                                    @onclick="() => ConfirmDenyAsync(context.Id)">
+                                @if (_processing)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                                }
+                                Confirm
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary"
+                                    disabled="@_processing"
+                                    @onclick="CancelDeny">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <button class="btn btn-sm btn-success me-1"
+                            disabled="@_processing"
+                            @onclick="() => BeginApprove(context)">
+                        Approve
+                    </button>
+                    <button class="btn btn-sm btn-danger"
+                            disabled="@_processing"
+                            @onclick="() => BeginDeny(context.Id)">
+                        Deny
+                    </button>
+                }
+            }
+        </TemplateColumn>
+    </QuickGrid>
 }
 
 @code {
@@ -200,8 +199,10 @@ else
 
     private int? _denyConfirmId;
 
-    private static readonly StandingTeeTimeStatus[] _allStatuses =
-        Enum.GetValues<StandingTeeTimeStatus>();
+    private static readonly StandingTeeTimeStatus[] _nonDraftStatuses =
+        Enum.GetValues<StandingTeeTimeStatus>()
+            .Where(s => s != StandingTeeTimeStatus.Draft)
+            .ToArray();
 
     protected override async Task OnInitializedAsync()
     {
@@ -211,9 +212,14 @@ else
     private void OnStatusFilterChanged(ChangeEventArgs e)
     {
         var value = e.Value?.ToString();
-        _selectedStatus = string.IsNullOrEmpty(value)
-            ? null
-            : (StandingTeeTimeStatus)int.Parse(value);
+        if (string.IsNullOrEmpty(value))
+        {
+            _selectedStatus = null;
+        }
+        else if (int.TryParse(value, out var intValue) && Enum.IsDefined(typeof(StandingTeeTimeStatus), intValue))
+        {
+            _selectedStatus = (StandingTeeTimeStatus)intValue;
+        }
     }
 
     private async Task LoadRequestsAsync()
@@ -268,6 +274,7 @@ else
 
     private async Task ConfirmApproveAsync(int id)
     {
+        if (_processing) return;
         _processing = true;
         _successMessage = null;
         _errorMessage = null;
@@ -280,9 +287,23 @@ else
                 return;
             }
 
+            if (entry.Status != StandingTeeTimeStatus.Draft)
+            {
+                _errorMessage = "Only draft requests can be approved.";
+                _approveId = null;
+                await LoadRequestsAsync();
+                return;
+            }
+
             if (!TimeOnly.TryParse(_approveTime, out var approvedTime))
             {
                 _errorMessage = "Please enter a valid approved time.";
+                return;
+            }
+
+            if (_approvePriority.HasValue && _approvePriority.Value < 1)
+            {
+                _errorMessage = "Priority number must be 1 or greater.";
                 return;
             }
 
@@ -322,6 +343,7 @@ else
 
     private async Task ConfirmDenyAsync(int id)
     {
+        if (_processing) return;
         _processing = true;
         _successMessage = null;
         _errorMessage = null;
@@ -331,6 +353,14 @@ else
             if (entry is null)
             {
                 _errorMessage = "Request not found.";
+                return;
+            }
+
+            if (entry.Status != StandingTeeTimeStatus.Draft)
+            {
+                _errorMessage = "Only draft requests can be denied.";
+                _denyConfirmId = null;
+                await LoadRequestsAsync();
                 return;
             }
 
