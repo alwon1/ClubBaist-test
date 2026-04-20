@@ -1,6 +1,6 @@
 @page "/scores/confirmation"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
-@attribute [Authorize]
+@attribute [Authorize(Roles = AppRoles.AdminOrMember)]
 
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Authorization
