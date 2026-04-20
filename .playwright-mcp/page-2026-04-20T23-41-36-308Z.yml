@@ -1,0 +1,865 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - link "Club BAIST" [ref=e6] [cursor=pointer]:
+      - /url: ""
+    - navigation [ref=e8]:
+      - link "Home" [ref=e10] [cursor=pointer]:
+        - /url: ""
+        - text: Home
+      - link "Tee Times" [ref=e13] [cursor=pointer]:
+        - /url: teetimes
+        - text: Tee Times
+      - link "Staff Console" [ref=e16] [cursor=pointer]:
+        - /url: teetimes/staff
+        - text: Staff Console
+      - link "User Management" [ref=e19] [cursor=pointer]:
+        - /url: admin/users
+        - text: User Management
+      - link "Seasons" [ref=e22] [cursor=pointer]:
+        - /url: admin/seasons
+        - text: Seasons
+      - link "Applications" [ref=e25] [cursor=pointer]:
+        - /url: membership/applications
+        - text: Applications
+      - link "admin@clubbaist.com" [ref=e28] [cursor=pointer]:
+        - /url: Account/Manage
+        - text: admin@clubbaist.com
+      - button "Logout" [ref=e32] [cursor=pointer]: Logout
+  - main [ref=e34]:
+    - link "About" [ref=e36] [cursor=pointer]:
+      - /url: https://learn.microsoft.com/aspnet/core/
+    - article [ref=e37]:
+      - heading "Staff Console" [level=3] [ref=e38]
+      - list [ref=e39]:
+        - listitem [ref=e40]:
+          - button "Members" [ref=e41] [cursor=pointer]
+        - listitem [ref=e42]:
+          - button "Reservations" [ref=e43] [cursor=pointer]
+      - generic [ref=e44]:
+        - strong [ref=e46]: Members
+        - generic [ref=e49]:
+          - generic [ref=e52]:
+            - textbox "Filter by name or member number" [ref=e53]
+            - generic: Filter by name or member number
+          - table [ref=e54]:
+            - rowgroup [ref=e55]:
+              - 'row "Member # Name Email Level Action" [ref=e56]':
+                - 'columnheader "Member #" [ref=e57]':
+                  - 'button "Member #" [ref=e59] [cursor=pointer]':
+                    - generic [ref=e60]: "Member #"
+                - columnheader "Name" [ref=e62]:
+                  - button "Name" [ref=e64] [cursor=pointer]:
+                    - generic [ref=e65]: Name
+                - columnheader "Email" [ref=e67]:
+                  - generic [ref=e70]: Email
+                - columnheader "Level" [ref=e71]:
+                  - generic [ref=e74]: Level
+                - columnheader "Action" [ref=e75]:
+                  - generic [ref=e78]: Action
+            - rowgroup [ref=e79]:
+              - row "BR-0005 Evan Bronze bronze@clubbaist.com Bronze Select" [ref=e80]:
+                - cell "BR-0005" [ref=e81]
+                - cell "Evan Bronze" [ref=e82]
+                - cell "bronze@clubbaist.com" [ref=e83]
+                - cell "Bronze" [ref=e84]
+                - cell "Select" [ref=e85]:
+                  - button "Select" [ref=e86] [cursor=pointer]
+              - row "AS-0006 Frank Pending frank.pending@example.com Associate Select" [ref=e87]:
+                - cell "AS-0006" [ref=e88]
+                - cell "Frank Pending" [ref=e89]
+                - cell "frank.pending@example.com" [ref=e90]
+                - cell "Associate" [ref=e91]
+                - cell "Select" [ref=e92]:
+                  - button "Select" [ref=e93] [cursor=pointer]
+              - row "SH-0001 Alice Shareholder shareholder1@clubbaist.com Shareholder Select" [ref=e94]:
+                - cell "SH-0001" [ref=e95]
+                - cell "Alice Shareholder" [ref=e96]
+                - cell "shareholder1@clubbaist.com" [ref=e97]
+                - cell "Shareholder" [ref=e98]
+                - cell "Select" [ref=e99]:
+                  - button "Select" [ref=e100] [cursor=pointer]
+              - row "SH-0002 Bob Shareholder shareholder2@clubbaist.com Shareholder Select" [ref=e101]:
+                - cell "SH-0002" [ref=e102]
+                - cell "Bob Shareholder" [ref=e103]
+                - cell "shareholder2@clubbaist.com" [ref=e104]
+                - cell "Shareholder" [ref=e105]
+                - cell "Select" [ref=e106]:
+                  - button "Select" [ref=e107] [cursor=pointer]
+              - row "SH-0003 Carol Shareholder shareholder3@clubbaist.com Shareholder Select" [ref=e108]:
+                - cell "SH-0003" [ref=e109]
+                - cell "Carol Shareholder" [ref=e110]
+                - cell "shareholder3@clubbaist.com" [ref=e111]
+                - cell "Shareholder" [ref=e112]
+                - cell "Select" [ref=e113]:
+                  - button "Select" [ref=e114] [cursor=pointer]
+              - row "SV-0004 Diana Silver silver@clubbaist.com Silver Select" [ref=e115]:
+                - cell "SV-0004" [ref=e116]
+                - cell "Diana Silver" [ref=e117]
+                - cell "silver@clubbaist.com" [ref=e118]
+                - cell "Silver" [ref=e119]
+                - cell "Select" [ref=e120]:
+                  - button "Select" [ref=e121] [cursor=pointer]
+      - generic [ref=e122]:
+        - generic [ref=e123]:
+          - strong [ref=e124]: Reservations for Diana Silver (SV-0004)
+          - button "Hide Availability" [active] [ref=e161] [cursor=pointer]
+        - table [ref=e127]:
+          - rowgroup [ref=e128]:
+            - row "Date Time Players Status Actions" [ref=e129]:
+              - columnheader "Date" [ref=e130]:
+                - button "Date" [ref=e132] [cursor=pointer]:
+                  - generic [ref=e133]: Date
+              - columnheader "Time" [ref=e135]:
+                - generic [ref=e138]: Time
+              - columnheader "Players" [ref=e139]:
+                - generic [ref=e142]: Players
+              - columnheader "Status" [ref=e143]:
+                - generic [ref=e146]: Status
+              - columnheader "Actions" [ref=e147]:
+                - generic [ref=e150]: Actions
+          - rowgroup [ref=e151]:
+            - row "Apr 21, 2026 9:30 AM 4 Upcoming View/Edit Cancel" [ref=e152]:
+              - cell "Apr 21, 2026" [ref=e153]
+              - cell "9:30 AM" [ref=e154]
+              - cell "4" [ref=e155]
+              - cell "Upcoming" [ref=e156]:
+                - generic [ref=e157]: Upcoming
+              - cell "View/Edit Cancel" [ref=e158]:
+                - link "View/Edit" [ref=e159] [cursor=pointer]:
+                  - /url: /teetimes/reservation/2
+                - button "Cancel" [ref=e160] [cursor=pointer]
+      - generic [ref=e162]:
+        - strong [ref=e164]: Availability — booking for Diana Silver (Silver)
+        - generic [ref=e165]:
+          - generic [ref=e168]:
+            - generic [ref=e170]:
+              - textbox "Select Date" [ref=e171]: 2026-04-20
+              - generic: Select Date
+            - button "Refresh" [ref=e173] [cursor=pointer]
+            - group "View mode" [ref=e175]:
+              - button "Day" [ref=e176] [cursor=pointer]
+              - button "Week" [ref=e177] [cursor=pointer]
+          - generic [ref=e178]:
+            - generic [ref=e179]: Booking member
+            - generic [ref=e181]: Additional player
+            - generic [ref=e183] [cursor=pointer]: +
+            - text: Click to book
+            - generic [ref=e184]: ■
+            - text: Available
+            - generic [ref=e185]: ■
+            - text: Not available at this time
+            - generic [ref=e186]: ■
+            - text: Full
+          - generic [ref=e187]:
+            - generic [ref=e188]:
+              - generic [ref=e189]: 7:00 AM
+              - generic [ref=e191]:
+                - generic "Not available at this time for your membership" [ref=e193]: —
+                - generic "Not available at this time for your membership" [ref=e195]: —
+                - generic "Not available at this time for your membership" [ref=e197]: —
+                - generic "Not available at this time for your membership" [ref=e199]: —
+            - generic [ref=e200]:
+              - generic [ref=e201]: 7:07 AM
+              - generic [ref=e203]:
+                - generic "Not available at this time for your membership" [ref=e205]: —
+                - generic "Not available at this time for your membership" [ref=e207]: —
+                - generic "Not available at this time for your membership" [ref=e209]: —
+                - generic "Not available at this time for your membership" [ref=e211]: —
+            - generic [ref=e212]:
+              - generic [ref=e213]: 7:15 AM
+              - generic [ref=e215]:
+                - generic "Not available at this time for your membership" [ref=e217]: —
+                - generic "Not available at this time for your membership" [ref=e219]: —
+                - generic "Not available at this time for your membership" [ref=e221]: —
+                - generic "Not available at this time for your membership" [ref=e223]: —
+            - generic [ref=e224]:
+              - generic [ref=e225]: 7:22 AM
+              - generic [ref=e227]:
+                - generic "Not available at this time for your membership" [ref=e229]: —
+                - generic "Not available at this time for your membership" [ref=e231]: —
+                - generic "Not available at this time for your membership" [ref=e233]: —
+                - generic "Not available at this time for your membership" [ref=e235]: —
+            - generic [ref=e236]:
+              - generic [ref=e237]: 7:30 AM
+              - generic [ref=e239]:
+                - generic "Not available at this time for your membership" [ref=e241]: —
+                - generic "Not available at this time for your membership" [ref=e243]: —
+                - generic "Not available at this time for your membership" [ref=e245]: —
+                - generic "Not available at this time for your membership" [ref=e247]: —
+            - generic [ref=e248]:
+              - generic [ref=e249]: 7:37 AM
+              - generic [ref=e251]:
+                - generic "Not available at this time for your membership" [ref=e253]: —
+                - generic "Not available at this time for your membership" [ref=e255]: —
+                - generic "Not available at this time for your membership" [ref=e257]: —
+                - generic "Not available at this time for your membership" [ref=e259]: —
+            - generic [ref=e260]:
+              - generic [ref=e261]: 7:45 AM
+              - generic [ref=e263]:
+                - generic "Not available at this time for your membership" [ref=e265]: —
+                - generic "Not available at this time for your membership" [ref=e267]: —
+                - generic "Not available at this time for your membership" [ref=e269]: —
+                - generic "Not available at this time for your membership" [ref=e271]: —
+            - generic [ref=e272]:
+              - generic [ref=e273]: 7:52 AM
+              - generic [ref=e275]:
+                - generic "Not available at this time for your membership" [ref=e277]: —
+                - generic "Not available at this time for your membership" [ref=e279]: —
+                - generic "Not available at this time for your membership" [ref=e281]: —
+                - generic "Not available at this time for your membership" [ref=e283]: —
+            - generic [ref=e284]:
+              - generic [ref=e285]: 8:00 AM
+              - generic [ref=e287]:
+                - generic "Not available at this time for your membership" [ref=e289]: —
+                - generic "Not available at this time for your membership" [ref=e291]: —
+                - generic "Not available at this time for your membership" [ref=e293]: —
+                - generic "Not available at this time for your membership" [ref=e295]: —
+            - generic [ref=e296]:
+              - generic [ref=e297]: 8:07 AM
+              - generic [ref=e299]:
+                - generic "Not available at this time for your membership" [ref=e301]: —
+                - generic "Not available at this time for your membership" [ref=e303]: —
+                - generic "Not available at this time for your membership" [ref=e305]: —
+                - generic "Not available at this time for your membership" [ref=e307]: —
+            - generic [ref=e308]:
+              - generic [ref=e309]: 8:15 AM
+              - generic [ref=e311]:
+                - generic "Not available at this time for your membership" [ref=e313]: —
+                - generic "Not available at this time for your membership" [ref=e315]: —
+                - generic "Not available at this time for your membership" [ref=e317]: —
+                - generic "Not available at this time for your membership" [ref=e319]: —
+            - generic [ref=e320]:
+              - generic [ref=e321]: 8:22 AM
+              - generic [ref=e323]:
+                - generic "Not available at this time for your membership" [ref=e325]: —
+                - generic "Not available at this time for your membership" [ref=e327]: —
+                - generic "Not available at this time for your membership" [ref=e329]: —
+                - generic "Not available at this time for your membership" [ref=e331]: —
+            - generic [ref=e332]:
+              - generic [ref=e333]: 8:30 AM
+              - generic [ref=e335]:
+                - generic "Not available at this time for your membership" [ref=e337]: —
+                - generic "Not available at this time for your membership" [ref=e339]: —
+                - generic "Not available at this time for your membership" [ref=e341]: —
+                - generic "Not available at this time for your membership" [ref=e343]: —
+            - generic [ref=e344]:
+              - generic [ref=e345]: 8:37 AM
+              - generic [ref=e347]:
+                - generic "Not available at this time for your membership" [ref=e349]: —
+                - generic "Not available at this time for your membership" [ref=e351]: —
+                - generic "Not available at this time for your membership" [ref=e353]: —
+                - generic "Not available at this time for your membership" [ref=e355]: —
+            - generic [ref=e356]:
+              - generic [ref=e357]: 8:45 AM
+              - generic [ref=e359]:
+                - generic "Not available at this time for your membership" [ref=e361]: —
+                - generic "Not available at this time for your membership" [ref=e363]: —
+                - generic "Not available at this time for your membership" [ref=e365]: —
+                - generic "Not available at this time for your membership" [ref=e367]: —
+            - generic [ref=e368]:
+              - generic [ref=e369]: 8:52 AM
+              - generic [ref=e371]:
+                - generic "Not available at this time for your membership" [ref=e373]: —
+                - generic "Not available at this time for your membership" [ref=e375]: —
+                - generic "Not available at this time for your membership" [ref=e377]: —
+                - generic "Not available at this time for your membership" [ref=e379]: —
+            - generic [ref=e380]:
+              - generic [ref=e381]: 9:00 AM
+              - generic [ref=e383]:
+                - generic "Not available at this time for your membership" [ref=e385]: —
+                - generic "Not available at this time for your membership" [ref=e387]: —
+                - generic "Not available at this time for your membership" [ref=e389]: —
+                - generic "Not available at this time for your membership" [ref=e391]: —
+            - generic [ref=e392]:
+              - generic [ref=e393]: 9:07 AM
+              - generic [ref=e395]:
+                - generic "Not available at this time for your membership" [ref=e397]: —
+                - generic "Not available at this time for your membership" [ref=e399]: —
+                - generic "Not available at this time for your membership" [ref=e401]: —
+                - generic "Not available at this time for your membership" [ref=e403]: —
+            - generic [ref=e404]:
+              - generic [ref=e405]: 9:15 AM
+              - generic [ref=e407]:
+                - generic "Not available at this time for your membership" [ref=e409]: —
+                - generic "Not available at this time for your membership" [ref=e411]: —
+                - generic "Not available at this time for your membership" [ref=e413]: —
+                - generic "Not available at this time for your membership" [ref=e415]: —
+            - generic [ref=e416]:
+              - generic [ref=e417]: 9:22 AM
+              - generic [ref=e419]:
+                - generic "Not available at this time for your membership" [ref=e421]: —
+                - generic "Not available at this time for your membership" [ref=e423]: —
+                - generic "Not available at this time for your membership" [ref=e425]: —
+                - generic "Not available at this time for your membership" [ref=e427]: —
+            - generic [ref=e428]:
+              - generic [ref=e429]: 9:30 AM
+              - generic [ref=e431]:
+                - generic "Not available at this time for your membership" [ref=e433]: —
+                - generic "Not available at this time for your membership" [ref=e435]: —
+                - generic "Not available at this time for your membership" [ref=e437]: —
+                - generic "Not available at this time for your membership" [ref=e439]: —
+            - generic [ref=e440]:
+              - generic [ref=e441]: 9:37 AM
+              - generic [ref=e443]:
+                - generic "Not available at this time for your membership" [ref=e445]: —
+                - generic "Not available at this time for your membership" [ref=e447]: —
+                - generic "Not available at this time for your membership" [ref=e449]: —
+                - generic "Not available at this time for your membership" [ref=e451]: —
+            - generic [ref=e452]:
+              - generic [ref=e453]: 9:45 AM
+              - generic [ref=e455]:
+                - generic "Not available at this time for your membership" [ref=e457]: —
+                - generic "Not available at this time for your membership" [ref=e459]: —
+                - generic "Not available at this time for your membership" [ref=e461]: —
+                - generic "Not available at this time for your membership" [ref=e463]: —
+            - generic [ref=e464]:
+              - generic [ref=e465]: 9:52 AM
+              - generic [ref=e467]:
+                - generic "Not available at this time for your membership" [ref=e469]: —
+                - generic "Not available at this time for your membership" [ref=e471]: —
+                - generic "Not available at this time for your membership" [ref=e473]: —
+                - generic "Not available at this time for your membership" [ref=e475]: —
+            - generic [ref=e476]:
+              - generic [ref=e477]: 10:00 AM
+              - generic [ref=e479]:
+                - generic "Not available at this time for your membership" [ref=e481]: —
+                - generic "Not available at this time for your membership" [ref=e483]: —
+                - generic "Not available at this time for your membership" [ref=e485]: —
+                - generic "Not available at this time for your membership" [ref=e487]: —
+            - generic [ref=e488]:
+              - generic [ref=e489]: 10:07 AM
+              - generic [ref=e491]:
+                - generic "Not available at this time for your membership" [ref=e493]: —
+                - generic "Not available at this time for your membership" [ref=e495]: —
+                - generic "Not available at this time for your membership" [ref=e497]: —
+                - generic "Not available at this time for your membership" [ref=e499]: —
+            - generic [ref=e500]:
+              - generic [ref=e501]: 10:15 AM
+              - generic [ref=e503]:
+                - generic "Not available at this time for your membership" [ref=e505]: —
+                - generic "Not available at this time for your membership" [ref=e507]: —
+                - generic "Not available at this time for your membership" [ref=e509]: —
+                - generic "Not available at this time for your membership" [ref=e511]: —
+            - generic [ref=e512]:
+              - generic [ref=e513]: 10:22 AM
+              - generic [ref=e515]:
+                - generic "Not available at this time for your membership" [ref=e517]: —
+                - generic "Not available at this time for your membership" [ref=e519]: —
+                - generic "Not available at this time for your membership" [ref=e521]: —
+                - generic "Not available at this time for your membership" [ref=e523]: —
+            - generic [ref=e524]:
+              - generic [ref=e525]: 10:30 AM
+              - generic [ref=e527]:
+                - generic "Not available at this time for your membership" [ref=e529]: —
+                - generic "Not available at this time for your membership" [ref=e531]: —
+                - generic "Not available at this time for your membership" [ref=e533]: —
+                - generic "Not available at this time for your membership" [ref=e535]: —
+            - generic [ref=e536]:
+              - generic [ref=e537]: 10:37 AM
+              - generic [ref=e539]:
+                - generic "Not available at this time for your membership" [ref=e541]: —
+                - generic "Not available at this time for your membership" [ref=e543]: —
+                - generic "Not available at this time for your membership" [ref=e545]: —
+                - generic "Not available at this time for your membership" [ref=e547]: —
+            - generic [ref=e548]:
+              - generic [ref=e549]: 10:45 AM
+              - generic [ref=e551]:
+                - generic "Not available at this time for your membership" [ref=e553]: —
+                - generic "Not available at this time for your membership" [ref=e555]: —
+                - generic "Not available at this time for your membership" [ref=e557]: —
+                - generic "Not available at this time for your membership" [ref=e559]: —
+            - generic [ref=e560]:
+              - generic [ref=e561]: 10:52 AM
+              - generic [ref=e563]:
+                - generic "Not available at this time for your membership" [ref=e565]: —
+                - generic "Not available at this time for your membership" [ref=e567]: —
+                - generic "Not available at this time for your membership" [ref=e569]: —
+                - generic "Not available at this time for your membership" [ref=e571]: —
+            - generic [ref=e572]:
+              - generic [ref=e573]: 11:00 AM
+              - generic [ref=e575]:
+                - generic "Not available at this time for your membership" [ref=e577]: —
+                - generic "Not available at this time for your membership" [ref=e579]: —
+                - generic "Not available at this time for your membership" [ref=e581]: —
+                - generic "Not available at this time for your membership" [ref=e583]: —
+            - generic [ref=e584]:
+              - generic [ref=e585]: 11:07 AM
+              - generic [ref=e587]:
+                - generic "Not available at this time for your membership" [ref=e589]: —
+                - generic "Not available at this time for your membership" [ref=e591]: —
+                - generic "Not available at this time for your membership" [ref=e593]: —
+                - generic "Not available at this time for your membership" [ref=e595]: —
+            - generic [ref=e596]:
+              - generic [ref=e597]: 11:15 AM
+              - generic [ref=e599]:
+                - generic "Not available at this time for your membership" [ref=e601]: —
+                - generic "Not available at this time for your membership" [ref=e603]: —
+                - generic "Not available at this time for your membership" [ref=e605]: —
+                - generic "Not available at this time for your membership" [ref=e607]: —
+            - generic [ref=e608]:
+              - generic [ref=e609]: 11:22 AM
+              - generic [ref=e611]:
+                - generic "Not available at this time for your membership" [ref=e613]: —
+                - generic "Not available at this time for your membership" [ref=e615]: —
+                - generic "Not available at this time for your membership" [ref=e617]: —
+                - generic "Not available at this time for your membership" [ref=e619]: —
+            - generic [ref=e620]:
+              - generic [ref=e621]: 11:30 AM
+              - generic [ref=e623]:
+                - generic "Not available at this time for your membership" [ref=e625]: —
+                - generic "Not available at this time for your membership" [ref=e627]: —
+                - generic "Not available at this time for your membership" [ref=e629]: —
+                - generic "Not available at this time for your membership" [ref=e631]: —
+            - generic [ref=e632]:
+              - generic [ref=e633]: 11:37 AM
+              - generic [ref=e635]:
+                - generic "Not available at this time for your membership" [ref=e637]: —
+                - generic "Not available at this time for your membership" [ref=e639]: —
+                - generic "Not available at this time for your membership" [ref=e641]: —
+                - generic "Not available at this time for your membership" [ref=e643]: —
+            - generic [ref=e644]:
+              - generic [ref=e645]: 11:45 AM
+              - generic [ref=e647]:
+                - generic "Not available at this time for your membership" [ref=e649]: —
+                - generic "Not available at this time for your membership" [ref=e651]: —
+                - generic "Not available at this time for your membership" [ref=e653]: —
+                - generic "Not available at this time for your membership" [ref=e655]: —
+            - generic [ref=e656]:
+              - generic [ref=e657]: 11:52 AM
+              - generic [ref=e659]:
+                - generic "Not available at this time for your membership" [ref=e661]: —
+                - generic "Not available at this time for your membership" [ref=e663]: —
+                - generic "Not available at this time for your membership" [ref=e665]: —
+                - generic "Not available at this time for your membership" [ref=e667]: —
+            - generic [ref=e668]:
+              - generic [ref=e669]: 12:00 PM
+              - generic [ref=e671]:
+                - generic "Not available at this time for your membership" [ref=e673]: —
+                - generic "Not available at this time for your membership" [ref=e675]: —
+                - generic "Not available at this time for your membership" [ref=e677]: —
+                - generic "Not available at this time for your membership" [ref=e679]: —
+            - generic [ref=e680]:
+              - generic [ref=e681]: 12:07 PM
+              - generic [ref=e683]:
+                - generic "Not available at this time for your membership" [ref=e685]: —
+                - generic "Not available at this time for your membership" [ref=e687]: —
+                - generic "Not available at this time for your membership" [ref=e689]: —
+                - generic "Not available at this time for your membership" [ref=e691]: —
+            - generic [ref=e692]:
+              - generic [ref=e693]: 12:15 PM
+              - generic [ref=e695]:
+                - generic "Not available at this time for your membership" [ref=e697]: —
+                - generic "Not available at this time for your membership" [ref=e699]: —
+                - generic "Not available at this time for your membership" [ref=e701]: —
+                - generic "Not available at this time for your membership" [ref=e703]: —
+            - generic [ref=e704]:
+              - generic [ref=e705]: 12:22 PM
+              - generic [ref=e707]:
+                - generic "Not available at this time for your membership" [ref=e709]: —
+                - generic "Not available at this time for your membership" [ref=e711]: —
+                - generic "Not available at this time for your membership" [ref=e713]: —
+                - generic "Not available at this time for your membership" [ref=e715]: —
+            - generic [ref=e716]:
+              - generic [ref=e717]: 12:30 PM
+              - generic [ref=e719]:
+                - generic "Not available at this time for your membership" [ref=e721]: —
+                - generic "Not available at this time for your membership" [ref=e723]: —
+                - generic "Not available at this time for your membership" [ref=e725]: —
+                - generic "Not available at this time for your membership" [ref=e727]: —
+            - generic [ref=e728]:
+              - generic [ref=e729]: 12:37 PM
+              - generic [ref=e731]:
+                - generic "Not available at this time for your membership" [ref=e733]: —
+                - generic "Not available at this time for your membership" [ref=e735]: —
+                - generic "Not available at this time for your membership" [ref=e737]: —
+                - generic "Not available at this time for your membership" [ref=e739]: —
+            - generic [ref=e740]:
+              - generic [ref=e741]: 12:45 PM
+              - generic [ref=e743]:
+                - generic "Not available at this time for your membership" [ref=e745]: —
+                - generic "Not available at this time for your membership" [ref=e747]: —
+                - generic "Not available at this time for your membership" [ref=e749]: —
+                - generic "Not available at this time for your membership" [ref=e751]: —
+            - generic [ref=e752]:
+              - generic [ref=e753]: 12:52 PM
+              - generic [ref=e755]:
+                - generic "Not available at this time for your membership" [ref=e757]: —
+                - generic "Not available at this time for your membership" [ref=e759]: —
+                - generic "Not available at this time for your membership" [ref=e761]: —
+                - generic "Not available at this time for your membership" [ref=e763]: —
+            - generic [ref=e764]:
+              - generic [ref=e765]: 1:00 PM
+              - generic [ref=e767]:
+                - generic "Not available at this time for your membership" [ref=e769]: —
+                - generic "Not available at this time for your membership" [ref=e771]: —
+                - generic "Not available at this time for your membership" [ref=e773]: —
+                - generic "Not available at this time for your membership" [ref=e775]: —
+            - generic [ref=e776]:
+              - generic [ref=e777]: 1:07 PM
+              - generic [ref=e779]:
+                - generic "Not available at this time for your membership" [ref=e781]: —
+                - generic "Not available at this time for your membership" [ref=e783]: —
+                - generic "Not available at this time for your membership" [ref=e785]: —
+                - generic "Not available at this time for your membership" [ref=e787]: —
+            - generic [ref=e788]:
+              - generic [ref=e789]: 1:15 PM
+              - generic [ref=e791]:
+                - generic "Not available at this time for your membership" [ref=e793]: —
+                - generic "Not available at this time for your membership" [ref=e795]: —
+                - generic "Not available at this time for your membership" [ref=e797]: —
+                - generic "Not available at this time for your membership" [ref=e799]: —
+            - generic [ref=e800]:
+              - generic [ref=e801]: 1:22 PM
+              - generic [ref=e803]:
+                - generic "Not available at this time for your membership" [ref=e805]: —
+                - generic "Not available at this time for your membership" [ref=e807]: —
+                - generic "Not available at this time for your membership" [ref=e809]: —
+                - generic "Not available at this time for your membership" [ref=e811]: —
+            - generic [ref=e812]:
+              - generic [ref=e813]: 1:30 PM
+              - generic [ref=e815]:
+                - generic "Not available at this time for your membership" [ref=e817]: —
+                - generic "Not available at this time for your membership" [ref=e819]: —
+                - generic "Not available at this time for your membership" [ref=e821]: —
+                - generic "Not available at this time for your membership" [ref=e823]: —
+            - generic [ref=e824]:
+              - generic [ref=e825]: 1:37 PM
+              - generic [ref=e827]:
+                - generic "Not available at this time for your membership" [ref=e829]: —
+                - generic "Not available at this time for your membership" [ref=e831]: —
+                - generic "Not available at this time for your membership" [ref=e833]: —
+                - generic "Not available at this time for your membership" [ref=e835]: —
+            - generic [ref=e836]:
+              - generic [ref=e837]: 1:45 PM
+              - generic [ref=e839]:
+                - generic "Not available at this time for your membership" [ref=e841]: —
+                - generic "Not available at this time for your membership" [ref=e843]: —
+                - generic "Not available at this time for your membership" [ref=e845]: —
+                - generic "Not available at this time for your membership" [ref=e847]: —
+            - generic [ref=e848]:
+              - generic [ref=e849]: 1:52 PM
+              - generic [ref=e851]:
+                - generic "Not available at this time for your membership" [ref=e853]: —
+                - generic "Not available at this time for your membership" [ref=e855]: —
+                - generic "Not available at this time for your membership" [ref=e857]: —
+                - generic "Not available at this time for your membership" [ref=e859]: —
+            - generic [ref=e860]:
+              - generic [ref=e861]: 2:00 PM
+              - generic [ref=e863]:
+                - generic "Not available at this time for your membership" [ref=e865]: —
+                - generic "Not available at this time for your membership" [ref=e867]: —
+                - generic "Not available at this time for your membership" [ref=e869]: —
+                - generic "Not available at this time for your membership" [ref=e871]: —
+            - generic [ref=e872]:
+              - generic [ref=e873]: 2:07 PM
+              - generic [ref=e875]:
+                - generic "Not available at this time for your membership" [ref=e877]: —
+                - generic "Not available at this time for your membership" [ref=e879]: —
+                - generic "Not available at this time for your membership" [ref=e881]: —
+                - generic "Not available at this time for your membership" [ref=e883]: —
+            - generic [ref=e884]:
+              - generic [ref=e885]: 2:15 PM
+              - generic [ref=e887]:
+                - generic "Not available at this time for your membership" [ref=e889]: —
+                - generic "Not available at this time for your membership" [ref=e891]: —
+                - generic "Not available at this time for your membership" [ref=e893]: —
+                - generic "Not available at this time for your membership" [ref=e895]: —
+            - generic [ref=e896]:
+              - generic [ref=e897]: 2:22 PM
+              - generic [ref=e899]:
+                - generic "Not available at this time for your membership" [ref=e901]: —
+                - generic "Not available at this time for your membership" [ref=e903]: —
+                - generic "Not available at this time for your membership" [ref=e905]: —
+                - generic "Not available at this time for your membership" [ref=e907]: —
+            - generic [ref=e908]:
+              - generic [ref=e909]: 2:30 PM
+              - generic [ref=e911]:
+                - generic "Not available at this time for your membership" [ref=e913]: —
+                - generic "Not available at this time for your membership" [ref=e915]: —
+                - generic "Not available at this time for your membership" [ref=e917]: —
+                - generic "Not available at this time for your membership" [ref=e919]: —
+            - generic [ref=e920]:
+              - generic [ref=e921]: 2:37 PM
+              - generic [ref=e923]:
+                - generic "Not available at this time for your membership" [ref=e925]: —
+                - generic "Not available at this time for your membership" [ref=e927]: —
+                - generic "Not available at this time for your membership" [ref=e929]: —
+                - generic "Not available at this time for your membership" [ref=e931]: —
+            - generic [ref=e932]:
+              - generic [ref=e933]: 2:45 PM
+              - generic [ref=e935]:
+                - generic "Not available at this time for your membership" [ref=e937]: —
+                - generic "Not available at this time for your membership" [ref=e939]: —
+                - generic "Not available at this time for your membership" [ref=e941]: —
+                - generic "Not available at this time for your membership" [ref=e943]: —
+            - generic [ref=e944]:
+              - generic [ref=e945]: 2:52 PM
+              - generic [ref=e947]:
+                - generic "Not available at this time for your membership" [ref=e949]: —
+                - generic "Not available at this time for your membership" [ref=e951]: —
+                - generic "Not available at this time for your membership" [ref=e953]: —
+                - generic "Not available at this time for your membership" [ref=e955]: —
+            - generic [ref=e956]:
+              - generic [ref=e957]: 3:00 PM
+              - generic [ref=e959]:
+                - generic "Not available at this time for your membership" [ref=e961]: —
+                - generic "Not available at this time for your membership" [ref=e963]: —
+                - generic "Not available at this time for your membership" [ref=e965]: —
+                - generic "Not available at this time for your membership" [ref=e967]: —
+            - generic [ref=e968]:
+              - generic [ref=e969]: 3:07 PM
+              - generic [ref=e971]:
+                - generic "Not available at this time for your membership" [ref=e973]: —
+                - generic "Not available at this time for your membership" [ref=e975]: —
+                - generic "Not available at this time for your membership" [ref=e977]: —
+                - generic "Not available at this time for your membership" [ref=e979]: —
+            - generic [ref=e980]:
+              - generic [ref=e981]: 3:15 PM
+              - generic [ref=e983]:
+                - generic "Not available at this time for your membership" [ref=e985]: —
+                - generic "Not available at this time for your membership" [ref=e987]: —
+                - generic "Not available at this time for your membership" [ref=e989]: —
+                - generic "Not available at this time for your membership" [ref=e991]: —
+            - generic [ref=e992]:
+              - generic [ref=e993]: 3:22 PM
+              - generic [ref=e995]:
+                - generic "Not available at this time for your membership" [ref=e997]: —
+                - generic "Not available at this time for your membership" [ref=e999]: —
+                - generic "Not available at this time for your membership" [ref=e1001]: —
+                - generic "Not available at this time for your membership" [ref=e1003]: —
+            - generic [ref=e1004]:
+              - generic [ref=e1005]: 3:30 PM
+              - generic [ref=e1007]:
+                - generic "Not available at this time for your membership" [ref=e1009]: —
+                - generic "Not available at this time for your membership" [ref=e1011]: —
+                - generic "Not available at this time for your membership" [ref=e1013]: —
+                - generic "Not available at this time for your membership" [ref=e1015]: —
+            - generic [ref=e1016]:
+              - generic [ref=e1017]: 3:37 PM
+              - generic [ref=e1019]:
+                - generic "Not available at this time for your membership" [ref=e1021]: —
+                - generic "Not available at this time for your membership" [ref=e1023]: —
+                - generic "Not available at this time for your membership" [ref=e1025]: —
+                - generic "Not available at this time for your membership" [ref=e1027]: —
+            - generic [ref=e1028]:
+              - generic [ref=e1029]: 3:45 PM
+              - generic [ref=e1031]:
+                - generic "Not available at this time for your membership" [ref=e1033]: —
+                - generic "Not available at this time for your membership" [ref=e1035]: —
+                - generic "Not available at this time for your membership" [ref=e1037]: —
+                - generic "Not available at this time for your membership" [ref=e1039]: —
+            - generic [ref=e1040]:
+              - generic [ref=e1041]: 3:52 PM
+              - generic [ref=e1043]:
+                - generic "Not available at this time for your membership" [ref=e1045]: —
+                - generic "Not available at this time for your membership" [ref=e1047]: —
+                - generic "Not available at this time for your membership" [ref=e1049]: —
+                - generic "Not available at this time for your membership" [ref=e1051]: —
+            - generic [ref=e1052]:
+              - generic [ref=e1053]: 4:00 PM
+              - generic [ref=e1055]:
+                - generic "Not available at this time for your membership" [ref=e1057]: —
+                - generic "Not available at this time for your membership" [ref=e1059]: —
+                - generic "Not available at this time for your membership" [ref=e1061]: —
+                - generic "Not available at this time for your membership" [ref=e1063]: —
+            - generic [ref=e1064]:
+              - generic [ref=e1065]: 4:07 PM
+              - generic [ref=e1067]:
+                - generic "Not available at this time for your membership" [ref=e1069]: —
+                - generic "Not available at this time for your membership" [ref=e1071]: —
+                - generic "Not available at this time for your membership" [ref=e1073]: —
+                - generic "Not available at this time for your membership" [ref=e1075]: —
+            - generic [ref=e1076]:
+              - generic [ref=e1077]: 4:15 PM
+              - generic [ref=e1079]:
+                - generic "Not available at this time for your membership" [ref=e1081]: —
+                - generic "Not available at this time for your membership" [ref=e1083]: —
+                - generic "Not available at this time for your membership" [ref=e1085]: —
+                - generic "Not available at this time for your membership" [ref=e1087]: —
+            - generic [ref=e1088]:
+              - generic [ref=e1089]: 4:22 PM
+              - generic [ref=e1091]:
+                - generic "Not available at this time for your membership" [ref=e1093]: —
+                - generic "Not available at this time for your membership" [ref=e1095]: —
+                - generic "Not available at this time for your membership" [ref=e1097]: —
+                - generic "Not available at this time for your membership" [ref=e1099]: —
+            - generic [ref=e1100]:
+              - generic [ref=e1101]: 4:30 PM
+              - generic [ref=e1103]:
+                - generic "Not available at this time for your membership" [ref=e1105]: —
+                - generic "Not available at this time for your membership" [ref=e1107]: —
+                - generic "Not available at this time for your membership" [ref=e1109]: —
+                - generic "Not available at this time for your membership" [ref=e1111]: —
+            - generic [ref=e1112]:
+              - generic [ref=e1113]: 4:37 PM
+              - generic [ref=e1115]:
+                - generic "Not available at this time for your membership" [ref=e1117]: —
+                - generic "Not available at this time for your membership" [ref=e1119]: —
+                - generic "Not available at this time for your membership" [ref=e1121]: —
+                - generic "Not available at this time for your membership" [ref=e1123]: —
+            - generic [ref=e1124]:
+              - generic [ref=e1125]: 4:45 PM
+              - generic [ref=e1127]:
+                - generic "Not available at this time for your membership" [ref=e1129]: —
+                - generic "Not available at this time for your membership" [ref=e1131]: —
+                - generic "Not available at this time for your membership" [ref=e1133]: —
+                - generic "Not available at this time for your membership" [ref=e1135]: —
+            - generic [ref=e1136]:
+              - generic [ref=e1137]: 4:52 PM
+              - generic [ref=e1139]:
+                - generic "Not available at this time for your membership" [ref=e1141]: —
+                - generic "Not available at this time for your membership" [ref=e1143]: —
+                - generic "Not available at this time for your membership" [ref=e1145]: —
+                - generic "Not available at this time for your membership" [ref=e1147]: —
+            - generic [ref=e1148]:
+              - generic [ref=e1149]: 5:00 PM
+              - generic [ref=e1151]:
+                - generic "Not available at this time for your membership" [ref=e1153]: —
+                - generic "Not available at this time for your membership" [ref=e1155]: —
+                - generic "Not available at this time for your membership" [ref=e1157]: —
+                - generic "Not available at this time for your membership" [ref=e1159]: —
+            - generic [ref=e1160]:
+              - generic [ref=e1161]: 5:07 PM
+              - generic [ref=e1163]:
+                - generic "Not available at this time for your membership" [ref=e1165]: —
+                - generic "Not available at this time for your membership" [ref=e1167]: —
+                - generic "Not available at this time for your membership" [ref=e1169]: —
+                - generic "Not available at this time for your membership" [ref=e1171]: —
+            - generic [ref=e1172]:
+              - generic [ref=e1173]: 5:15 PM
+              - generic [ref=e1175]:
+                - generic "Not available at this time for your membership" [ref=e1177]: —
+                - generic "Not available at this time for your membership" [ref=e1179]: —
+                - generic "Not available at this time for your membership" [ref=e1181]: —
+                - generic "Not available at this time for your membership" [ref=e1183]: —
+            - generic [ref=e1184]:
+              - generic [ref=e1185]: 5:22 PM
+              - generic [ref=e1187]:
+                - generic "Not available at this time for your membership" [ref=e1189]: —
+                - generic "Not available at this time for your membership" [ref=e1191]: —
+                - generic "Not available at this time for your membership" [ref=e1193]: —
+                - generic "Not available at this time for your membership" [ref=e1195]: —
+            - generic [ref=e1196]:
+              - generic [ref=e1197]: 5:30 PM
+              - generic [ref=e1199]:
+                - generic "Not available at this time for your membership" [ref=e1201]: —
+                - generic "Not available at this time for your membership" [ref=e1203]: —
+                - generic "Not available at this time for your membership" [ref=e1205]: —
+                - generic "Not available at this time for your membership" [ref=e1207]: —
+            - generic [ref=e1208]:
+              - generic [ref=e1209]: 5:37 PM
+              - generic [ref=e1211]:
+                - generic "Not available at this time for your membership" [ref=e1213]: —
+                - generic "Not available at this time for your membership" [ref=e1215]: —
+                - generic "Not available at this time for your membership" [ref=e1217]: —
+                - generic "Not available at this time for your membership" [ref=e1219]: —
+            - generic [ref=e1220]:
+              - generic [ref=e1221]: 5:45 PM
+              - generic [ref=e1223]:
+                - link "+" [ref=e1225] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-20&time=17:45&bookFor=4
+                - link "+" [ref=e1227] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-20&time=17:45&bookFor=4
+                - link "+" [ref=e1229] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-20&time=17:45&bookFor=4
+                - link "+" [ref=e1231] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-20&time=17:45&bookFor=4
+            - generic [ref=e1232]:
+              - generic [ref=e1233]: 5:52 PM
+              - generic [ref=e1235]:
+                - link "+" [ref=e1237] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-20&time=17:52&bookFor=4
+                - link "+" [ref=e1239] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-20&time=17:52&bookFor=4
+                - link "+" [ref=e1241] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-20&time=17:52&bookFor=4
+                - link "+" [ref=e1243] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-20&time=17:52&bookFor=4
+            - generic [ref=e1244]:
+              - generic [ref=e1245]: 6:00 PM
+              - generic [ref=e1247]:
+                - link "+" [ref=e1249] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-20&time=18:00&bookFor=4
+                - link "+" [ref=e1251] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-20&time=18:00&bookFor=4
+                - link "+" [ref=e1253] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-20&time=18:00&bookFor=4
+                - link "+" [ref=e1255] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-20&time=18:00&bookFor=4
+            - generic [ref=e1256]:
+              - generic [ref=e1257]: 6:07 PM
+              - generic [ref=e1259]:
+                - link "+" [ref=e1261] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-20&time=18:07&bookFor=4
+                - link "+" [ref=e1263] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-20&time=18:07&bookFor=4
+                - link "+" [ref=e1265] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-20&time=18:07&bookFor=4
+                - link "+" [ref=e1267] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-20&time=18:07&bookFor=4
+            - generic [ref=e1268]:
+              - generic [ref=e1269]: 6:15 PM
+              - generic [ref=e1271]:
+                - link "+" [ref=e1273] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-20&time=18:15&bookFor=4
+                - link "+" [ref=e1275] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-20&time=18:15&bookFor=4
+                - link "+" [ref=e1277] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-20&time=18:15&bookFor=4
+                - link "+" [ref=e1279] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-20&time=18:15&bookFor=4
+            - generic [ref=e1280]:
+              - generic [ref=e1281]: 6:22 PM
+              - generic [ref=e1283]:
+                - link "+" [ref=e1285] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-20&time=18:22&bookFor=4
+                - link "+" [ref=e1287] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-20&time=18:22&bookFor=4
+                - link "+" [ref=e1289] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-20&time=18:22&bookFor=4
+                - link "+" [ref=e1291] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-20&time=18:22&bookFor=4
+            - generic [ref=e1292]:
+              - generic [ref=e1293]: 6:30 PM
+              - generic [ref=e1295]:
+                - link "+" [ref=e1297] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-20&time=18:30&bookFor=4
+                - link "+" [ref=e1299] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-20&time=18:30&bookFor=4
+                - link "+" [ref=e1301] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-20&time=18:30&bookFor=4
+                - link "+" [ref=e1303] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-20&time=18:30&bookFor=4
+            - generic [ref=e1304]:
+              - generic [ref=e1305]: 6:37 PM
+              - generic [ref=e1307]:
+                - link "+" [ref=e1309] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-20&time=18:37&bookFor=4
+                - link "+" [ref=e1311] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-20&time=18:37&bookFor=4
+                - link "+" [ref=e1313] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-20&time=18:37&bookFor=4
+                - link "+" [ref=e1315] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-20&time=18:37&bookFor=4
+            - generic [ref=e1316]:
+              - generic [ref=e1317]: 6:45 PM
+              - generic [ref=e1319]:
+                - link "+" [ref=e1321] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-20&time=18:45&bookFor=4
+                - link "+" [ref=e1323] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-20&time=18:45&bookFor=4
+                - link "+" [ref=e1325] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-20&time=18:45&bookFor=4
+                - link "+" [ref=e1327] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-20&time=18:45&bookFor=4
+            - generic [ref=e1328]:
+              - generic [ref=e1329]: 6:52 PM
+              - generic [ref=e1331]:
+                - link "+" [ref=e1333] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-20&time=18:52&bookFor=4
+                - link "+" [ref=e1335] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-20&time=18:52&bookFor=4
+                - link "+" [ref=e1337] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-20&time=18:52&bookFor=4
+                - link "+" [ref=e1339] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-20&time=18:52&bookFor=4

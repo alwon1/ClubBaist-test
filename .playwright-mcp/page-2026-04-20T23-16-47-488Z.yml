@@ -1,0 +1,87 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - link "Club BAIST" [ref=e6] [cursor=pointer]:
+      - /url: ""
+    - navigation [ref=e8]:
+      - link "Home" [ref=e10] [cursor=pointer]:
+        - /url: ""
+        - text: Home
+      - link "Applications" [ref=e13] [cursor=pointer]:
+        - /url: membership/applications
+        - text: Applications
+      - link "committee@clubbaist.com" [ref=e16] [cursor=pointer]:
+        - /url: Account/Manage
+        - text: committee@clubbaist.com
+      - button "Logout" [ref=e20] [cursor=pointer]: Logout
+  - main [ref=e22]:
+    - link "About" [ref=e24] [cursor=pointer]:
+      - /url: https://learn.microsoft.com/aspnet/core/
+    - article [ref=e25]:
+      - generic [ref=e26]:
+        - generic [ref=e27]:
+          - heading "Review Application" [level=2] [ref=e28]
+          - link "Back to Inbox" [ref=e29] [cursor=pointer]:
+            - /url: /membership/applications
+        - generic [ref=e30]:
+          - generic [ref=e32]:
+            - generic [ref=e33]:
+              - heading "Applicant Details" [level=5] [ref=e34]
+              - generic [ref=e35]: Submitted
+            - generic [ref=e36]:
+              - generic [ref=e37]:
+                - generic [ref=e38]:
+                  - strong [ref=e39]: "First Name:"
+                  - paragraph [ref=e40]: Frank
+                - generic [ref=e41]:
+                  - strong [ref=e42]: "Last Name:"
+                  - paragraph [ref=e43]: Pending
+              - generic [ref=e44]:
+                - generic [ref=e45]:
+                  - strong [ref=e46]: "Date of Birth:"
+                  - paragraph [ref=e47]: 1990-03-22
+                - generic [ref=e48]:
+                  - strong [ref=e49]: "Email:"
+                  - paragraph [ref=e50]: frank.pending@example.com
+              - generic [ref=e51]:
+                - generic [ref=e52]:
+                  - strong [ref=e53]: "Phone:"
+                  - paragraph [ref=e54]: 403-555-0200
+                - generic [ref=e55]:
+                  - strong [ref=e56]: "Alternate Phone:"
+                  - paragraph [ref=e57]: N/A
+              - generic [ref=e58]:
+                - generic [ref=e59]:
+                  - strong [ref=e60]: "Address:"
+                  - paragraph [ref=e61]: 456 Fairway Lane
+                - generic [ref=e62]:
+                  - strong [ref=e63]: "Postal Code:"
+                  - paragraph [ref=e64]: T2P 2B2
+              - generic [ref=e65]:
+                - generic [ref=e66]:
+                  - strong [ref=e67]: "Occupation:"
+                  - paragraph [ref=e68]: Software Developer
+                - generic [ref=e69]:
+                  - strong [ref=e70]: "Company:"
+                  - paragraph [ref=e71]: Acme Corp
+              - generic [ref=e73]:
+                - strong [ref=e74]: "Requested Level:"
+                - paragraph [ref=e75]: Associate
+              - generic [ref=e76]:
+                - generic [ref=e77]:
+                  - strong [ref=e78]: "Sponsor 1:"
+                  - paragraph [ref=e79]: Alice Shareholder (SH-0001)
+                - generic [ref=e80]:
+                  - strong [ref=e81]: "Sponsor 2:"
+                  - paragraph [ref=e82]: Bob Shareholder (SH-0002)
+          - generic [ref=e84]:
+            - heading "Make Decision" [level=5] [ref=e86]
+            - generic [ref=e87]:
+              - generic [ref=e88]:
+                - combobox "New Status" [ref=e89]:
+                  - option "-- Select Status --" [selected]
+                  - option "OnHold"
+                  - option "Waitlisted"
+                  - option "Accepted"
+                  - option "Denied"
+                - generic: New Status
+              - button "Submit Decision" [disabled]

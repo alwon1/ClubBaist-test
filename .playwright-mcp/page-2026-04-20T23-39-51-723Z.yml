@@ -1,0 +1,53 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - link "Club BAIST" [ref=e6] [cursor=pointer]:
+      - /url: ""
+    - navigation [ref=e8]:
+      - link "Home" [ref=e10] [cursor=pointer]:
+        - /url: ""
+        - text: Home
+      - link "Tee Times" [ref=e13] [cursor=pointer]:
+        - /url: teetimes
+        - text: Tee Times
+      - link "My Reservations" [ref=e16] [cursor=pointer]:
+        - /url: teetimes/my
+        - text: My Reservations
+      - link "shareholder1@clubbaist.com" [ref=e19] [cursor=pointer]:
+        - /url: Account/Manage
+        - text: shareholder1@clubbaist.com
+      - button "Logout" [ref=e23] [cursor=pointer]: Logout
+  - main [ref=e25]:
+    - link "About" [ref=e27] [cursor=pointer]:
+      - /url: https://learn.microsoft.com/aspnet/core/
+    - article [ref=e28]:
+      - heading "Book a Tee Time" [level=3] [ref=e29]
+      - generic [ref=e30]:
+        - strong [ref=e32]: Selected Slot
+        - generic [ref=e33]:
+          - paragraph [ref=e34]:
+            - strong [ref=e35]: "Date:"
+            - text: Tuesday, April 21, 2026
+          - paragraph [ref=e36]:
+            - strong [ref=e37]: "Time:"
+            - text: 9:30 AM
+      - generic [ref=e38]:
+        - strong [ref=e40]: Booking Member
+        - paragraph [ref=e42]: SH-0001 - Alice Shareholder
+      - generic [ref=e43]:
+        - generic [ref=e44]:
+          - strong [ref=e45]: Additional Players
+          - button "+ Add Player" [active] [ref=e46] [cursor=pointer]
+        - generic [ref=e51]:
+          - generic [ref=e53]:
+            - combobox "Player 2" [ref=e54]:
+              - option "-- Select Player --" [selected]
+              - option "BR-0005 - Evan Bronze"
+              - option "AS-0006 - Frank Pending"
+              - option "SH-0002 - Bob Shareholder"
+              - option "SH-0003 - Carol Shareholder"
+              - option "SV-0004 - Diana Silver"
+            - generic: Player 2
+          - button "Remove" [ref=e56] [cursor=pointer]
+      - button "Book Tee Time" [ref=e49] [cursor=pointer]
+      - link "Cancel" [ref=e50] [cursor=pointer]:
+        - /url: /teetimes

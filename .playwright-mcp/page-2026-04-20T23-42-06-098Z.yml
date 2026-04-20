@@ -1,0 +1,61 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - link "Club BAIST" [ref=e6] [cursor=pointer]:
+      - /url: ""
+    - navigation [ref=e8]:
+      - link "Home" [ref=e10] [cursor=pointer]:
+        - /url: ""
+        - text: Home
+      - link "Tee Times" [ref=e13] [cursor=pointer]:
+        - /url: teetimes
+        - text: Tee Times
+      - link "Staff Console" [ref=e16] [cursor=pointer]:
+        - /url: teetimes/staff
+        - text: Staff Console
+      - link "User Management" [ref=e19] [cursor=pointer]:
+        - /url: admin/users
+        - text: User Management
+      - link "Seasons" [ref=e22] [cursor=pointer]:
+        - /url: admin/seasons
+        - text: Seasons
+      - link "Applications" [ref=e25] [cursor=pointer]:
+        - /url: membership/applications
+        - text: Applications
+      - link "admin@clubbaist.com" [ref=e28] [cursor=pointer]:
+        - /url: Account/Manage
+        - text: admin@clubbaist.com
+      - button "Logout" [ref=e32] [cursor=pointer]: Logout
+  - main [ref=e34]:
+    - link "About" [ref=e36] [cursor=pointer]:
+      - /url: https://learn.microsoft.com/aspnet/core/
+    - article [ref=e37]:
+      - heading "Book a Tee Time" [level=3] [ref=e2505]
+      - generic [ref=e2506]:
+        - strong [ref=e2508]: Selected Slot
+        - generic [ref=e2509]:
+          - paragraph [ref=e2510]:
+            - strong [ref=e2511]: "Date:"
+            - text: Tuesday, April 21, 2026
+          - paragraph [ref=e2512]:
+            - strong [ref=e2513]: "Time:"
+            - text: 7:00 AM
+      - generic [ref=e2514]:
+        - strong [ref=e2516]: Booking Member
+        - generic [ref=e2518]:
+          - combobox "Booking Member (Admin Override)" [ref=e2519]:
+            - option "-- Select Member --"
+            - option "BR-0005 - Evan Bronze"
+            - option "AS-0006 - Frank Pending"
+            - option "SH-0001 - Alice Shareholder"
+            - option "SH-0002 - Bob Shareholder"
+            - option "SH-0003 - Carol Shareholder"
+            - option "SV-0004 - Diana Silver" [selected]
+          - generic: Booking Member (Admin Override)
+      - generic [ref=e2520]:
+        - generic [ref=e2521]:
+          - strong [ref=e2522]: Additional Players
+          - button "+ Add Player" [ref=e2523] [cursor=pointer]
+        - paragraph [ref=e2525]: No additional players added.
+      - button "Book Tee Time" [ref=e2526] [cursor=pointer]
+      - link "Cancel" [ref=e2527] [cursor=pointer]:
+        - /url: /teetimes/staff

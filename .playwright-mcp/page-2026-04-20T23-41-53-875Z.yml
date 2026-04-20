@@ -1,0 +1,1207 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - link "Club BAIST" [ref=e6] [cursor=pointer]:
+      - /url: ""
+    - navigation [ref=e8]:
+      - link "Home" [ref=e10] [cursor=pointer]:
+        - /url: ""
+        - text: Home
+      - link "Tee Times" [ref=e13] [cursor=pointer]:
+        - /url: teetimes
+        - text: Tee Times
+      - link "Staff Console" [ref=e16] [cursor=pointer]:
+        - /url: teetimes/staff
+        - text: Staff Console
+      - link "User Management" [ref=e19] [cursor=pointer]:
+        - /url: admin/users
+        - text: User Management
+      - link "Seasons" [ref=e22] [cursor=pointer]:
+        - /url: admin/seasons
+        - text: Seasons
+      - link "Applications" [ref=e25] [cursor=pointer]:
+        - /url: membership/applications
+        - text: Applications
+      - link "admin@clubbaist.com" [ref=e28] [cursor=pointer]:
+        - /url: Account/Manage
+        - text: admin@clubbaist.com
+      - button "Logout" [ref=e32] [cursor=pointer]: Logout
+  - main [ref=e34]:
+    - link "About" [ref=e36] [cursor=pointer]:
+      - /url: https://learn.microsoft.com/aspnet/core/
+    - article [ref=e37]:
+      - heading "Staff Console" [level=3] [ref=e38]
+      - list [ref=e39]:
+        - listitem [ref=e40]:
+          - button "Members" [ref=e41] [cursor=pointer]
+        - listitem [ref=e42]:
+          - button "Reservations" [ref=e43] [cursor=pointer]
+      - generic [ref=e44]:
+        - strong [ref=e46]: Members
+        - generic [ref=e49]:
+          - generic [ref=e52]:
+            - textbox "Filter by name or member number" [ref=e53]
+            - generic: Filter by name or member number
+          - table [ref=e54]:
+            - rowgroup [ref=e55]:
+              - 'row "Member # Name Email Level Action" [ref=e56]':
+                - 'columnheader "Member #" [ref=e57]':
+                  - 'button "Member #" [ref=e59] [cursor=pointer]':
+                    - generic [ref=e60]: "Member #"
+                - columnheader "Name" [ref=e62]:
+                  - button "Name" [ref=e64] [cursor=pointer]:
+                    - generic [ref=e65]: Name
+                - columnheader "Email" [ref=e67]:
+                  - generic [ref=e70]: Email
+                - columnheader "Level" [ref=e71]:
+                  - generic [ref=e74]: Level
+                - columnheader "Action" [ref=e75]:
+                  - generic [ref=e78]: Action
+            - rowgroup [ref=e79]:
+              - row "BR-0005 Evan Bronze bronze@clubbaist.com Bronze Select" [ref=e80]:
+                - cell "BR-0005" [ref=e81]
+                - cell "Evan Bronze" [ref=e82]
+                - cell "bronze@clubbaist.com" [ref=e83]
+                - cell "Bronze" [ref=e84]
+                - cell "Select" [ref=e85]:
+                  - button "Select" [ref=e86] [cursor=pointer]
+              - row "AS-0006 Frank Pending frank.pending@example.com Associate Select" [ref=e87]:
+                - cell "AS-0006" [ref=e88]
+                - cell "Frank Pending" [ref=e89]
+                - cell "frank.pending@example.com" [ref=e90]
+                - cell "Associate" [ref=e91]
+                - cell "Select" [ref=e92]:
+                  - button "Select" [ref=e93] [cursor=pointer]
+              - row "SH-0001 Alice Shareholder shareholder1@clubbaist.com Shareholder Select" [ref=e94]:
+                - cell "SH-0001" [ref=e95]
+                - cell "Alice Shareholder" [ref=e96]
+                - cell "shareholder1@clubbaist.com" [ref=e97]
+                - cell "Shareholder" [ref=e98]
+                - cell "Select" [ref=e99]:
+                  - button "Select" [ref=e100] [cursor=pointer]
+              - row "SH-0002 Bob Shareholder shareholder2@clubbaist.com Shareholder Select" [ref=e101]:
+                - cell "SH-0002" [ref=e102]
+                - cell "Bob Shareholder" [ref=e103]
+                - cell "shareholder2@clubbaist.com" [ref=e104]
+                - cell "Shareholder" [ref=e105]
+                - cell "Select" [ref=e106]:
+                  - button "Select" [ref=e107] [cursor=pointer]
+              - row "SH-0003 Carol Shareholder shareholder3@clubbaist.com Shareholder Select" [ref=e108]:
+                - cell "SH-0003" [ref=e109]
+                - cell "Carol Shareholder" [ref=e110]
+                - cell "shareholder3@clubbaist.com" [ref=e111]
+                - cell "Shareholder" [ref=e112]
+                - cell "Select" [ref=e113]:
+                  - button "Select" [ref=e114] [cursor=pointer]
+              - row "SV-0004 Diana Silver silver@clubbaist.com Silver Select" [ref=e115]:
+                - cell "SV-0004" [ref=e116]
+                - cell "Diana Silver" [ref=e117]
+                - cell "silver@clubbaist.com" [ref=e118]
+                - cell "Silver" [ref=e119]
+                - cell "Select" [ref=e120]:
+                  - button "Select" [ref=e121] [cursor=pointer]
+      - generic [ref=e122]:
+        - generic [ref=e123]:
+          - strong [ref=e124]: Reservations for Diana Silver (SV-0004)
+          - button "Hide Availability" [ref=e161] [cursor=pointer]
+        - table [ref=e127]:
+          - rowgroup [ref=e128]:
+            - row "Date Time Players Status Actions" [ref=e129]:
+              - columnheader "Date" [ref=e130]:
+                - button "Date" [ref=e132] [cursor=pointer]:
+                  - generic [ref=e133]: Date
+              - columnheader "Time" [ref=e135]:
+                - generic [ref=e138]: Time
+              - columnheader "Players" [ref=e139]:
+                - generic [ref=e142]: Players
+              - columnheader "Status" [ref=e143]:
+                - generic [ref=e146]: Status
+              - columnheader "Actions" [ref=e147]:
+                - generic [ref=e150]: Actions
+          - rowgroup [ref=e151]:
+            - row "Apr 21, 2026 9:30 AM 4 Upcoming View/Edit Cancel" [ref=e152]:
+              - cell "Apr 21, 2026" [ref=e153]
+              - cell "9:30 AM" [ref=e154]
+              - cell "4" [ref=e155]
+              - cell "Upcoming" [ref=e156]:
+                - generic [ref=e157]: Upcoming
+              - cell "View/Edit Cancel" [ref=e158]:
+                - link "View/Edit" [ref=e159] [cursor=pointer]:
+                  - /url: /teetimes/reservation/2
+                - button "Cancel" [ref=e160] [cursor=pointer]
+      - generic [ref=e162]:
+        - strong [ref=e164]: Availability — booking for Diana Silver (Silver)
+        - generic [ref=e165]:
+          - generic [ref=e168]:
+            - generic [ref=e170]:
+              - textbox "Select Date" [ref=e171]: 2026-04-21
+              - generic: Select Date
+            - button "Refresh" [ref=e173] [cursor=pointer]
+            - group "View mode" [ref=e175]:
+              - button "Day" [ref=e176] [cursor=pointer]
+              - button "Week" [ref=e177] [cursor=pointer]
+          - generic [ref=e1340]:
+            - generic [ref=e1341]: Booking member
+            - generic [ref=e1343]: Additional player
+            - generic [ref=e1345] [cursor=pointer]: +
+            - text: Click to book
+            - generic [ref=e1346]: ■
+            - text: Available
+            - generic [ref=e1347]: ■
+            - text: Not available at this time
+            - generic [ref=e1348]: ■
+            - text: Full
+          - generic [ref=e1349]:
+            - generic [ref=e1350]:
+              - generic [ref=e1351]: 7:00 AM
+              - generic [ref=e1353]:
+                - link "+" [ref=e1355] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=07:00&bookFor=4
+                - link "+" [ref=e1357] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=07:00&bookFor=4
+                - link "+" [ref=e1359] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=07:00&bookFor=4
+                - link "+" [ref=e1361] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=07:00&bookFor=4
+            - generic [ref=e1362]:
+              - generic [ref=e1363]: 7:07 AM
+              - generic [ref=e1365]:
+                - link "+" [ref=e1367] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=07:07&bookFor=4
+                - link "+" [ref=e1369] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=07:07&bookFor=4
+                - link "+" [ref=e1371] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=07:07&bookFor=4
+                - link "+" [ref=e1373] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=07:07&bookFor=4
+            - generic [ref=e1374]:
+              - generic [ref=e1375]: 7:15 AM
+              - generic [ref=e1377]:
+                - link "+" [ref=e1379] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=07:15&bookFor=4
+                - link "+" [ref=e1381] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=07:15&bookFor=4
+                - link "+" [ref=e1383] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=07:15&bookFor=4
+                - link "+" [ref=e1385] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=07:15&bookFor=4
+            - generic [ref=e1386]:
+              - generic [ref=e1387]: 7:22 AM
+              - generic [ref=e1389]:
+                - link "+" [ref=e1391] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=07:22&bookFor=4
+                - link "+" [ref=e1393] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=07:22&bookFor=4
+                - link "+" [ref=e1395] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=07:22&bookFor=4
+                - link "+" [ref=e1397] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=07:22&bookFor=4
+            - generic [ref=e1398]:
+              - generic [ref=e1399]: 7:30 AM
+              - generic [ref=e1401]:
+                - link "+" [ref=e1403] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=07:30&bookFor=4
+                - link "+" [ref=e1405] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=07:30&bookFor=4
+                - link "+" [ref=e1407] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=07:30&bookFor=4
+                - link "+" [ref=e1409] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=07:30&bookFor=4
+            - generic [ref=e1410]:
+              - generic [ref=e1411]: 7:37 AM
+              - generic [ref=e1413]:
+                - link "+" [ref=e1415] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=07:37&bookFor=4
+                - link "+" [ref=e1417] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=07:37&bookFor=4
+                - link "+" [ref=e1419] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=07:37&bookFor=4
+                - link "+" [ref=e1421] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=07:37&bookFor=4
+            - generic [ref=e1422]:
+              - generic [ref=e1423]: 7:45 AM
+              - generic [ref=e1425]:
+                - link "+" [ref=e1427] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=07:45&bookFor=4
+                - link "+" [ref=e1429] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=07:45&bookFor=4
+                - link "+" [ref=e1431] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=07:45&bookFor=4
+                - link "+" [ref=e1433] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=07:45&bookFor=4
+            - generic [ref=e1434]:
+              - generic [ref=e1435]: 7:52 AM
+              - generic [ref=e1437]:
+                - link "+" [ref=e1439] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=07:52&bookFor=4
+                - link "+" [ref=e1441] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=07:52&bookFor=4
+                - link "+" [ref=e1443] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=07:52&bookFor=4
+                - link "+" [ref=e1445] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=07:52&bookFor=4
+            - generic [ref=e1446]:
+              - generic [ref=e1447]: 8:00 AM
+              - generic [ref=e1449]:
+                - link "+" [ref=e1451] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=08:00&bookFor=4
+                - link "+" [ref=e1453] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=08:00&bookFor=4
+                - link "+" [ref=e1455] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=08:00&bookFor=4
+                - link "+" [ref=e1457] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=08:00&bookFor=4
+            - generic [ref=e1458]:
+              - generic [ref=e1459]: 8:07 AM
+              - generic [ref=e1461]:
+                - link "+" [ref=e1463] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=08:07&bookFor=4
+                - link "+" [ref=e1465] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=08:07&bookFor=4
+                - link "+" [ref=e1467] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=08:07&bookFor=4
+                - link "+" [ref=e1469] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=08:07&bookFor=4
+            - generic [ref=e1470]:
+              - generic [ref=e1471]: 8:15 AM
+              - generic [ref=e1473]:
+                - link "+" [ref=e1475] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=08:15&bookFor=4
+                - link "+" [ref=e1477] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=08:15&bookFor=4
+                - link "+" [ref=e1479] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=08:15&bookFor=4
+                - link "+" [ref=e1481] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=08:15&bookFor=4
+            - generic [ref=e1482]:
+              - generic [ref=e1483]: 8:22 AM
+              - generic [ref=e1485]:
+                - link "+" [ref=e1487] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=08:22&bookFor=4
+                - link "+" [ref=e1489] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=08:22&bookFor=4
+                - link "+" [ref=e1491] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=08:22&bookFor=4
+                - link "+" [ref=e1493] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=08:22&bookFor=4
+            - generic [ref=e1494]:
+              - generic [ref=e1495]: 8:30 AM
+              - generic [ref=e1497]:
+                - link "+" [ref=e1499] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=08:30&bookFor=4
+                - link "+" [ref=e1501] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=08:30&bookFor=4
+                - link "+" [ref=e1503] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=08:30&bookFor=4
+                - link "+" [ref=e1505] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=08:30&bookFor=4
+            - generic [ref=e1506]:
+              - generic [ref=e1507]: 8:37 AM
+              - generic [ref=e1509]:
+                - link "+" [ref=e1511] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=08:37&bookFor=4
+                - link "+" [ref=e1513] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=08:37&bookFor=4
+                - link "+" [ref=e1515] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=08:37&bookFor=4
+                - link "+" [ref=e1517] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=08:37&bookFor=4
+            - generic [ref=e1518]:
+              - generic [ref=e1519]: 8:45 AM
+              - generic [ref=e1521]:
+                - link "+" [ref=e1523] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=08:45&bookFor=4
+                - link "+" [ref=e1525] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=08:45&bookFor=4
+                - link "+" [ref=e1527] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=08:45&bookFor=4
+                - link "+" [ref=e1529] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=08:45&bookFor=4
+            - generic [ref=e1530]:
+              - generic [ref=e1531]: 8:52 AM
+              - generic [ref=e1533]:
+                - link "+" [ref=e1535] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=08:52&bookFor=4
+                - link "+" [ref=e1537] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=08:52&bookFor=4
+                - link "+" [ref=e1539] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=08:52&bookFor=4
+                - link "+" [ref=e1541] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=08:52&bookFor=4
+            - generic [ref=e1542]:
+              - generic [ref=e1543]: 9:00 AM
+              - generic [ref=e1545]:
+                - link "+" [ref=e1547] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=09:00&bookFor=4
+                - link "+" [ref=e1549] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=09:00&bookFor=4
+                - link "+" [ref=e1551] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=09:00&bookFor=4
+                - link "+" [ref=e1553] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=09:00&bookFor=4
+            - generic [ref=e1554]:
+              - generic [ref=e1555]: 9:07 AM
+              - generic [ref=e1557]:
+                - link "+" [ref=e1559] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=09:07&bookFor=4
+                - link "+" [ref=e1561] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=09:07&bookFor=4
+                - link "+" [ref=e1563] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=09:07&bookFor=4
+                - link "+" [ref=e1565] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=09:07&bookFor=4
+            - generic [ref=e1566]:
+              - generic [ref=e1567]: 9:15 AM
+              - generic [ref=e1569]:
+                - link "+" [ref=e1571] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=09:15&bookFor=4
+                - link "+" [ref=e1573] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=09:15&bookFor=4
+                - link "+" [ref=e1575] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=09:15&bookFor=4
+                - link "+" [ref=e1577] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=09:15&bookFor=4
+            - generic [ref=e1578]:
+              - generic [ref=e1579]: 9:22 AM
+              - generic [ref=e1581]:
+                - link "+" [ref=e1583] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=09:22&bookFor=4
+                - link "+" [ref=e1585] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=09:22&bookFor=4
+                - link "+" [ref=e1587] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=09:22&bookFor=4
+                - link "+" [ref=e1589] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=09:22&bookFor=4
+            - generic [ref=e1590]:
+              - generic [ref=e1591]: 9:30 AM
+              - link "Alice Shareholder Bob Shareholder Carol Shareholder Diana Silver" [ref=e1595] [cursor=pointer]:
+                - /url: /teetimes/reservation/2
+                - generic [ref=e1596]:
+                  - generic "Alice Shareholder" [ref=e1598]
+                  - generic "Bob Shareholder" [ref=e1600]
+                  - generic "Carol Shareholder" [ref=e1602]
+                  - generic "Diana Silver" [ref=e1604]
+            - generic [ref=e1605]:
+              - generic [ref=e1606]: 9:37 AM
+              - generic [ref=e1608]:
+                - link "+" [ref=e1610] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=09:37&bookFor=4
+                - link "+" [ref=e1612] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=09:37&bookFor=4
+                - link "+" [ref=e1614] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=09:37&bookFor=4
+                - link "+" [ref=e1616] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=09:37&bookFor=4
+            - generic [ref=e1617]:
+              - generic [ref=e1618]: 9:45 AM
+              - generic [ref=e1620]:
+                - link "+" [ref=e1622] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=09:45&bookFor=4
+                - link "+" [ref=e1624] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=09:45&bookFor=4
+                - link "+" [ref=e1626] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=09:45&bookFor=4
+                - link "+" [ref=e1628] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=09:45&bookFor=4
+            - generic [ref=e1629]:
+              - generic [ref=e1630]: 9:52 AM
+              - generic [ref=e1632]:
+                - link "+" [ref=e1634] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=09:52&bookFor=4
+                - link "+" [ref=e1636] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=09:52&bookFor=4
+                - link "+" [ref=e1638] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=09:52&bookFor=4
+                - link "+" [ref=e1640] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=09:52&bookFor=4
+            - generic [ref=e1641]:
+              - generic [ref=e1642]: 10:00 AM
+              - generic [ref=e1644]:
+                - link "+" [ref=e1646] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=10:00&bookFor=4
+                - link "+" [ref=e1648] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=10:00&bookFor=4
+                - link "+" [ref=e1650] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=10:00&bookFor=4
+                - link "+" [ref=e1652] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=10:00&bookFor=4
+            - generic [ref=e1653]:
+              - generic [ref=e1654]: 10:07 AM
+              - generic [ref=e1656]:
+                - link "+" [ref=e1658] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=10:07&bookFor=4
+                - link "+" [ref=e1660] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=10:07&bookFor=4
+                - link "+" [ref=e1662] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=10:07&bookFor=4
+                - link "+" [ref=e1664] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=10:07&bookFor=4
+            - generic [ref=e1665]:
+              - generic [ref=e1666]: 10:15 AM
+              - generic [ref=e1668]:
+                - link "+" [ref=e1670] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=10:15&bookFor=4
+                - link "+" [ref=e1672] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=10:15&bookFor=4
+                - link "+" [ref=e1674] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=10:15&bookFor=4
+                - link "+" [ref=e1676] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=10:15&bookFor=4
+            - generic [ref=e1677]:
+              - generic [ref=e1678]: 10:22 AM
+              - generic [ref=e1680]:
+                - link "+" [ref=e1682] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=10:22&bookFor=4
+                - link "+" [ref=e1684] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=10:22&bookFor=4
+                - link "+" [ref=e1686] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=10:22&bookFor=4
+                - link "+" [ref=e1688] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=10:22&bookFor=4
+            - generic [ref=e1689]:
+              - generic [ref=e1690]: 10:30 AM
+              - generic [ref=e1692]:
+                - link "+" [ref=e1694] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=10:30&bookFor=4
+                - link "+" [ref=e1696] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=10:30&bookFor=4
+                - link "+" [ref=e1698] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=10:30&bookFor=4
+                - link "+" [ref=e1700] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=10:30&bookFor=4
+            - generic [ref=e1701]:
+              - generic [ref=e1702]: 10:37 AM
+              - generic [ref=e1704]:
+                - link "+" [ref=e1706] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=10:37&bookFor=4
+                - link "+" [ref=e1708] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=10:37&bookFor=4
+                - link "+" [ref=e1710] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=10:37&bookFor=4
+                - link "+" [ref=e1712] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=10:37&bookFor=4
+            - generic [ref=e1713]:
+              - generic [ref=e1714]: 10:45 AM
+              - generic [ref=e1716]:
+                - link "+" [ref=e1718] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=10:45&bookFor=4
+                - link "+" [ref=e1720] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=10:45&bookFor=4
+                - link "+" [ref=e1722] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=10:45&bookFor=4
+                - link "+" [ref=e1724] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=10:45&bookFor=4
+            - generic [ref=e1725]:
+              - generic [ref=e1726]: 10:52 AM
+              - generic [ref=e1728]:
+                - link "+" [ref=e1730] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=10:52&bookFor=4
+                - link "+" [ref=e1732] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=10:52&bookFor=4
+                - link "+" [ref=e1734] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=10:52&bookFor=4
+                - link "+" [ref=e1736] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=10:52&bookFor=4
+            - generic [ref=e1737]:
+              - generic [ref=e1738]: 11:00 AM
+              - generic [ref=e1740]:
+                - link "+" [ref=e1742] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=11:00&bookFor=4
+                - link "+" [ref=e1744] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=11:00&bookFor=4
+                - link "+" [ref=e1746] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=11:00&bookFor=4
+                - link "+" [ref=e1748] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=11:00&bookFor=4
+            - generic [ref=e1749]:
+              - generic [ref=e1750]: 11:07 AM
+              - generic [ref=e1752]:
+                - link "+" [ref=e1754] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=11:07&bookFor=4
+                - link "+" [ref=e1756] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=11:07&bookFor=4
+                - link "+" [ref=e1758] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=11:07&bookFor=4
+                - link "+" [ref=e1760] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=11:07&bookFor=4
+            - generic [ref=e1761]:
+              - generic [ref=e1762]: 11:15 AM
+              - generic [ref=e1764]:
+                - link "+" [ref=e1766] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=11:15&bookFor=4
+                - link "+" [ref=e1768] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=11:15&bookFor=4
+                - link "+" [ref=e1770] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=11:15&bookFor=4
+                - link "+" [ref=e1772] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=11:15&bookFor=4
+            - generic [ref=e1773]:
+              - generic [ref=e1774]: 11:22 AM
+              - generic [ref=e1776]:
+                - link "+" [ref=e1778] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=11:22&bookFor=4
+                - link "+" [ref=e1780] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=11:22&bookFor=4
+                - link "+" [ref=e1782] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=11:22&bookFor=4
+                - link "+" [ref=e1784] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=11:22&bookFor=4
+            - generic [ref=e1785]:
+              - generic [ref=e1786]: 11:30 AM
+              - generic [ref=e1788]:
+                - link "+" [ref=e1790] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=11:30&bookFor=4
+                - link "+" [ref=e1792] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=11:30&bookFor=4
+                - link "+" [ref=e1794] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=11:30&bookFor=4
+                - link "+" [ref=e1796] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=11:30&bookFor=4
+            - generic [ref=e1797]:
+              - generic [ref=e1798]: 11:37 AM
+              - generic [ref=e1800]:
+                - link "+" [ref=e1802] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=11:37&bookFor=4
+                - link "+" [ref=e1804] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=11:37&bookFor=4
+                - link "+" [ref=e1806] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=11:37&bookFor=4
+                - link "+" [ref=e1808] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=11:37&bookFor=4
+            - generic [ref=e1809]:
+              - generic [ref=e1810]: 11:45 AM
+              - generic [ref=e1812]:
+                - link "+" [ref=e1814] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=11:45&bookFor=4
+                - link "+" [ref=e1816] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=11:45&bookFor=4
+                - link "+" [ref=e1818] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=11:45&bookFor=4
+                - link "+" [ref=e1820] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=11:45&bookFor=4
+            - generic [ref=e1821]:
+              - generic [ref=e1822]: 11:52 AM
+              - generic [ref=e1824]:
+                - link "+" [ref=e1826] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=11:52&bookFor=4
+                - link "+" [ref=e1828] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=11:52&bookFor=4
+                - link "+" [ref=e1830] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=11:52&bookFor=4
+                - link "+" [ref=e1832] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=11:52&bookFor=4
+            - generic [ref=e1833]:
+              - generic [ref=e1834]: 12:00 PM
+              - generic [ref=e1836]:
+                - link "+" [ref=e1838] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=12:00&bookFor=4
+                - link "+" [ref=e1840] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=12:00&bookFor=4
+                - link "+" [ref=e1842] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=12:00&bookFor=4
+                - link "+" [ref=e1844] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=12:00&bookFor=4
+            - generic [ref=e1845]:
+              - generic [ref=e1846]: 12:07 PM
+              - generic [ref=e1848]:
+                - link "+" [ref=e1850] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=12:07&bookFor=4
+                - link "+" [ref=e1852] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=12:07&bookFor=4
+                - link "+" [ref=e1854] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=12:07&bookFor=4
+                - link "+" [ref=e1856] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=12:07&bookFor=4
+            - generic [ref=e1857]:
+              - generic [ref=e1858]: 12:15 PM
+              - generic [ref=e1860]:
+                - link "+" [ref=e1862] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=12:15&bookFor=4
+                - link "+" [ref=e1864] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=12:15&bookFor=4
+                - link "+" [ref=e1866] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=12:15&bookFor=4
+                - link "+" [ref=e1868] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=12:15&bookFor=4
+            - generic [ref=e1869]:
+              - generic [ref=e1870]: 12:22 PM
+              - generic [ref=e1872]:
+                - link "+" [ref=e1874] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=12:22&bookFor=4
+                - link "+" [ref=e1876] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=12:22&bookFor=4
+                - link "+" [ref=e1878] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=12:22&bookFor=4
+                - link "+" [ref=e1880] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=12:22&bookFor=4
+            - generic [ref=e1881]:
+              - generic [ref=e1882]: 12:30 PM
+              - generic [ref=e1884]:
+                - link "+" [ref=e1886] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=12:30&bookFor=4
+                - link "+" [ref=e1888] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=12:30&bookFor=4
+                - link "+" [ref=e1890] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=12:30&bookFor=4
+                - link "+" [ref=e1892] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=12:30&bookFor=4
+            - generic [ref=e1893]:
+              - generic [ref=e1894]: 12:37 PM
+              - generic [ref=e1896]:
+                - link "+" [ref=e1898] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=12:37&bookFor=4
+                - link "+" [ref=e1900] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=12:37&bookFor=4
+                - link "+" [ref=e1902] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=12:37&bookFor=4
+                - link "+" [ref=e1904] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=12:37&bookFor=4
+            - generic [ref=e1905]:
+              - generic [ref=e1906]: 12:45 PM
+              - generic [ref=e1908]:
+                - link "+" [ref=e1910] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=12:45&bookFor=4
+                - link "+" [ref=e1912] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=12:45&bookFor=4
+                - link "+" [ref=e1914] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=12:45&bookFor=4
+                - link "+" [ref=e1916] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=12:45&bookFor=4
+            - generic [ref=e1917]:
+              - generic [ref=e1918]: 12:52 PM
+              - generic [ref=e1920]:
+                - link "+" [ref=e1922] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=12:52&bookFor=4
+                - link "+" [ref=e1924] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=12:52&bookFor=4
+                - link "+" [ref=e1926] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=12:52&bookFor=4
+                - link "+" [ref=e1928] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=12:52&bookFor=4
+            - generic [ref=e1929]:
+              - generic [ref=e1930]: 1:00 PM
+              - generic [ref=e1932]:
+                - link "+" [ref=e1934] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=13:00&bookFor=4
+                - link "+" [ref=e1936] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=13:00&bookFor=4
+                - link "+" [ref=e1938] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=13:00&bookFor=4
+                - link "+" [ref=e1940] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=13:00&bookFor=4
+            - generic [ref=e1941]:
+              - generic [ref=e1942]: 1:07 PM
+              - generic [ref=e1944]:
+                - link "+" [ref=e1946] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=13:07&bookFor=4
+                - link "+" [ref=e1948] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=13:07&bookFor=4
+                - link "+" [ref=e1950] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=13:07&bookFor=4
+                - link "+" [ref=e1952] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=13:07&bookFor=4
+            - generic [ref=e1953]:
+              - generic [ref=e1954]: 1:15 PM
+              - generic [ref=e1956]:
+                - link "+" [ref=e1958] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=13:15&bookFor=4
+                - link "+" [ref=e1960] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=13:15&bookFor=4
+                - link "+" [ref=e1962] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=13:15&bookFor=4
+                - link "+" [ref=e1964] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=13:15&bookFor=4
+            - generic [ref=e1965]:
+              - generic [ref=e1966]: 1:22 PM
+              - generic [ref=e1968]:
+                - link "+" [ref=e1970] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=13:22&bookFor=4
+                - link "+" [ref=e1972] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=13:22&bookFor=4
+                - link "+" [ref=e1974] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=13:22&bookFor=4
+                - link "+" [ref=e1976] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=13:22&bookFor=4
+            - generic [ref=e1977]:
+              - generic [ref=e1978]: 1:30 PM
+              - generic [ref=e1980]:
+                - link "+" [ref=e1982] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=13:30&bookFor=4
+                - link "+" [ref=e1984] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=13:30&bookFor=4
+                - link "+" [ref=e1986] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=13:30&bookFor=4
+                - link "+" [ref=e1988] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=13:30&bookFor=4
+            - generic [ref=e1989]:
+              - generic [ref=e1990]: 1:37 PM
+              - generic [ref=e1992]:
+                - link "+" [ref=e1994] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=13:37&bookFor=4
+                - link "+" [ref=e1996] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=13:37&bookFor=4
+                - link "+" [ref=e1998] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=13:37&bookFor=4
+                - link "+" [ref=e2000] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=13:37&bookFor=4
+            - generic [ref=e2001]:
+              - generic [ref=e2002]: 1:45 PM
+              - generic [ref=e2004]:
+                - link "+" [ref=e2006] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=13:45&bookFor=4
+                - link "+" [ref=e2008] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=13:45&bookFor=4
+                - link "+" [ref=e2010] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=13:45&bookFor=4
+                - link "+" [ref=e2012] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=13:45&bookFor=4
+            - generic [ref=e2013]:
+              - generic [ref=e2014]: 1:52 PM
+              - generic [ref=e2016]:
+                - link "+" [ref=e2018] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=13:52&bookFor=4
+                - link "+" [ref=e2020] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=13:52&bookFor=4
+                - link "+" [ref=e2022] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=13:52&bookFor=4
+                - link "+" [ref=e2024] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=13:52&bookFor=4
+            - generic [ref=e2025]:
+              - generic [ref=e2026]: 2:00 PM
+              - generic [ref=e2028]:
+                - link "+" [ref=e2030] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=14:00&bookFor=4
+                - link "+" [ref=e2032] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=14:00&bookFor=4
+                - link "+" [ref=e2034] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=14:00&bookFor=4
+                - link "+" [ref=e2036] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=14:00&bookFor=4
+            - generic [ref=e2037]:
+              - generic [ref=e2038]: 2:07 PM
+              - generic [ref=e2040]:
+                - link "+" [ref=e2042] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=14:07&bookFor=4
+                - link "+" [ref=e2044] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=14:07&bookFor=4
+                - link "+" [ref=e2046] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=14:07&bookFor=4
+                - link "+" [ref=e2048] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=14:07&bookFor=4
+            - generic [ref=e2049]:
+              - generic [ref=e2050]: 2:15 PM
+              - generic [ref=e2052]:
+                - link "+" [ref=e2054] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=14:15&bookFor=4
+                - link "+" [ref=e2056] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=14:15&bookFor=4
+                - link "+" [ref=e2058] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=14:15&bookFor=4
+                - link "+" [ref=e2060] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=14:15&bookFor=4
+            - generic [ref=e2061]:
+              - generic [ref=e2062]: 2:22 PM
+              - generic [ref=e2064]:
+                - link "+" [ref=e2066] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=14:22&bookFor=4
+                - link "+" [ref=e2068] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=14:22&bookFor=4
+                - link "+" [ref=e2070] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=14:22&bookFor=4
+                - link "+" [ref=e2072] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=14:22&bookFor=4
+            - generic [ref=e2073]:
+              - generic [ref=e2074]: 2:30 PM
+              - generic [ref=e2076]:
+                - link "+" [ref=e2078] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=14:30&bookFor=4
+                - link "+" [ref=e2080] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=14:30&bookFor=4
+                - link "+" [ref=e2082] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=14:30&bookFor=4
+                - link "+" [ref=e2084] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=14:30&bookFor=4
+            - generic [ref=e2085]:
+              - generic [ref=e2086]: 2:37 PM
+              - generic [ref=e2088]:
+                - link "+" [ref=e2090] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=14:37&bookFor=4
+                - link "+" [ref=e2092] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=14:37&bookFor=4
+                - link "+" [ref=e2094] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=14:37&bookFor=4
+                - link "+" [ref=e2096] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=14:37&bookFor=4
+            - generic [ref=e2097]:
+              - generic [ref=e2098]: 2:45 PM
+              - generic [ref=e2100]:
+                - link "+" [ref=e2102] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=14:45&bookFor=4
+                - link "+" [ref=e2104] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=14:45&bookFor=4
+                - link "+" [ref=e2106] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=14:45&bookFor=4
+                - link "+" [ref=e2108] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=14:45&bookFor=4
+            - generic [ref=e2109]:
+              - generic [ref=e2110]: 2:52 PM
+              - generic [ref=e2112]:
+                - link "+" [ref=e2114] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=14:52&bookFor=4
+                - link "+" [ref=e2116] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=14:52&bookFor=4
+                - link "+" [ref=e2118] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=14:52&bookFor=4
+                - link "+" [ref=e2120] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=14:52&bookFor=4
+            - generic [ref=e2121]:
+              - generic [ref=e2122]: 3:00 PM
+              - generic [ref=e2124]:
+                - link "+" [ref=e2126] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=15:00&bookFor=4
+                - link "+" [ref=e2128] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=15:00&bookFor=4
+                - link "+" [ref=e2130] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=15:00&bookFor=4
+                - link "+" [ref=e2132] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=15:00&bookFor=4
+            - generic [ref=e2133]:
+              - generic [ref=e2134]: 3:07 PM
+              - generic [ref=e2136]:
+                - link "+" [ref=e2138] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=15:07&bookFor=4
+                - link "+" [ref=e2140] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=15:07&bookFor=4
+                - link "+" [ref=e2142] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=15:07&bookFor=4
+                - link "+" [ref=e2144] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=15:07&bookFor=4
+            - generic [ref=e2145]:
+              - generic [ref=e2146]: 3:15 PM
+              - generic [ref=e2148]:
+                - link "+" [ref=e2150] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=15:15&bookFor=4
+                - link "+" [ref=e2152] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=15:15&bookFor=4
+                - link "+" [ref=e2154] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=15:15&bookFor=4
+                - link "+" [ref=e2156] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=15:15&bookFor=4
+            - generic [ref=e2157]:
+              - generic [ref=e2158]: 3:22 PM
+              - generic [ref=e2160]:
+                - link "+" [ref=e2162] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=15:22&bookFor=4
+                - link "+" [ref=e2164] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=15:22&bookFor=4
+                - link "+" [ref=e2166] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=15:22&bookFor=4
+                - link "+" [ref=e2168] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=15:22&bookFor=4
+            - generic [ref=e2169]:
+              - generic [ref=e2170]: 3:30 PM
+              - generic [ref=e2172]:
+                - link "+" [ref=e2174] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=15:30&bookFor=4
+                - link "+" [ref=e2176] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=15:30&bookFor=4
+                - link "+" [ref=e2178] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=15:30&bookFor=4
+                - link "+" [ref=e2180] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=15:30&bookFor=4
+            - generic [ref=e2181]:
+              - generic [ref=e2182]: 3:37 PM
+              - generic [ref=e2184]:
+                - link "+" [ref=e2186] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=15:37&bookFor=4
+                - link "+" [ref=e2188] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=15:37&bookFor=4
+                - link "+" [ref=e2190] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=15:37&bookFor=4
+                - link "+" [ref=e2192] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=15:37&bookFor=4
+            - generic [ref=e2193]:
+              - generic [ref=e2194]: 3:45 PM
+              - generic [ref=e2196]:
+                - link "+" [ref=e2198] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=15:45&bookFor=4
+                - link "+" [ref=e2200] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=15:45&bookFor=4
+                - link "+" [ref=e2202] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=15:45&bookFor=4
+                - link "+" [ref=e2204] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=15:45&bookFor=4
+            - generic [ref=e2205]:
+              - generic [ref=e2206]: 3:52 PM
+              - generic [ref=e2208]:
+                - link "+" [ref=e2210] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=15:52&bookFor=4
+                - link "+" [ref=e2212] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=15:52&bookFor=4
+                - link "+" [ref=e2214] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=15:52&bookFor=4
+                - link "+" [ref=e2216] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=15:52&bookFor=4
+            - generic [ref=e2217]:
+              - generic [ref=e2218]: 4:00 PM
+              - generic [ref=e2220]:
+                - link "+" [ref=e2222] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=16:00&bookFor=4
+                - link "+" [ref=e2224] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=16:00&bookFor=4
+                - link "+" [ref=e2226] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=16:00&bookFor=4
+                - link "+" [ref=e2228] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=16:00&bookFor=4
+            - generic [ref=e2229]:
+              - generic [ref=e2230]: 4:07 PM
+              - generic [ref=e2232]:
+                - link "+" [ref=e2234] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=16:07&bookFor=4
+                - link "+" [ref=e2236] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=16:07&bookFor=4
+                - link "+" [ref=e2238] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=16:07&bookFor=4
+                - link "+" [ref=e2240] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=16:07&bookFor=4
+            - generic [ref=e2241]:
+              - generic [ref=e2242]: 4:15 PM
+              - generic [ref=e2244]:
+                - link "+" [ref=e2246] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=16:15&bookFor=4
+                - link "+" [ref=e2248] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=16:15&bookFor=4
+                - link "+" [ref=e2250] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=16:15&bookFor=4
+                - link "+" [ref=e2252] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=16:15&bookFor=4
+            - generic [ref=e2253]:
+              - generic [ref=e2254]: 4:22 PM
+              - generic [ref=e2256]:
+                - link "+" [ref=e2258] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=16:22&bookFor=4
+                - link "+" [ref=e2260] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=16:22&bookFor=4
+                - link "+" [ref=e2262] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=16:22&bookFor=4
+                - link "+" [ref=e2264] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=16:22&bookFor=4
+            - generic [ref=e2265]:
+              - generic [ref=e2266]: 4:30 PM
+              - generic [ref=e2268]:
+                - link "+" [ref=e2270] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=16:30&bookFor=4
+                - link "+" [ref=e2272] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=16:30&bookFor=4
+                - link "+" [ref=e2274] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=16:30&bookFor=4
+                - link "+" [ref=e2276] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=16:30&bookFor=4
+            - generic [ref=e2277]:
+              - generic [ref=e2278]: 4:37 PM
+              - generic [ref=e2280]:
+                - link "+" [ref=e2282] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=16:37&bookFor=4
+                - link "+" [ref=e2284] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=16:37&bookFor=4
+                - link "+" [ref=e2286] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=16:37&bookFor=4
+                - link "+" [ref=e2288] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=16:37&bookFor=4
+            - generic [ref=e2289]:
+              - generic [ref=e2290]: 4:45 PM
+              - generic [ref=e2292]:
+                - link "+" [ref=e2294] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=16:45&bookFor=4
+                - link "+" [ref=e2296] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=16:45&bookFor=4
+                - link "+" [ref=e2298] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=16:45&bookFor=4
+                - link "+" [ref=e2300] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=16:45&bookFor=4
+            - generic [ref=e2301]:
+              - generic [ref=e2302]: 4:52 PM
+              - generic [ref=e2304]:
+                - link "+" [ref=e2306] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=16:52&bookFor=4
+                - link "+" [ref=e2308] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=16:52&bookFor=4
+                - link "+" [ref=e2310] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=16:52&bookFor=4
+                - link "+" [ref=e2312] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=16:52&bookFor=4
+            - generic [ref=e2313]:
+              - generic [ref=e2314]: 5:00 PM
+              - generic [ref=e2316]:
+                - link "+" [ref=e2318] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=17:00&bookFor=4
+                - link "+" [ref=e2320] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=17:00&bookFor=4
+                - link "+" [ref=e2322] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=17:00&bookFor=4
+                - link "+" [ref=e2324] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=17:00&bookFor=4
+            - generic [ref=e2325]:
+              - generic [ref=e2326]: 5:07 PM
+              - generic [ref=e2328]:
+                - link "+" [ref=e2330] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=17:07&bookFor=4
+                - link "+" [ref=e2332] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=17:07&bookFor=4
+                - link "+" [ref=e2334] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=17:07&bookFor=4
+                - link "+" [ref=e2336] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=17:07&bookFor=4
+            - generic [ref=e2337]:
+              - generic [ref=e2338]: 5:15 PM
+              - generic [ref=e2340]:
+                - link "+" [ref=e2342] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=17:15&bookFor=4
+                - link "+" [ref=e2344] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=17:15&bookFor=4
+                - link "+" [ref=e2346] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=17:15&bookFor=4
+                - link "+" [ref=e2348] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=17:15&bookFor=4
+            - generic [ref=e2349]:
+              - generic [ref=e2350]: 5:22 PM
+              - generic [ref=e2352]:
+                - link "+" [ref=e2354] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=17:22&bookFor=4
+                - link "+" [ref=e2356] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=17:22&bookFor=4
+                - link "+" [ref=e2358] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=17:22&bookFor=4
+                - link "+" [ref=e2360] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=17:22&bookFor=4
+            - generic [ref=e2361]:
+              - generic [ref=e2362]: 5:30 PM
+              - generic [ref=e2364]:
+                - link "+" [ref=e2366] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=17:30&bookFor=4
+                - link "+" [ref=e2368] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=17:30&bookFor=4
+                - link "+" [ref=e2370] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=17:30&bookFor=4
+                - link "+" [ref=e2372] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=17:30&bookFor=4
+            - generic [ref=e2373]:
+              - generic [ref=e2374]: 5:37 PM
+              - generic [ref=e2376]:
+                - link "+" [ref=e2378] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=17:37&bookFor=4
+                - link "+" [ref=e2380] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=17:37&bookFor=4
+                - link "+" [ref=e2382] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=17:37&bookFor=4
+                - link "+" [ref=e2384] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=17:37&bookFor=4
+            - generic [ref=e2385]:
+              - generic [ref=e2386]: 5:45 PM
+              - generic [ref=e2388]:
+                - link "+" [ref=e2390] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=17:45&bookFor=4
+                - link "+" [ref=e2392] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=17:45&bookFor=4
+                - link "+" [ref=e2394] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=17:45&bookFor=4
+                - link "+" [ref=e2396] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=17:45&bookFor=4
+            - generic [ref=e2397]:
+              - generic [ref=e2398]: 5:52 PM
+              - generic [ref=e2400]:
+                - link "+" [ref=e2402] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=17:52&bookFor=4
+                - link "+" [ref=e2404] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=17:52&bookFor=4
+                - link "+" [ref=e2406] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=17:52&bookFor=4
+                - link "+" [ref=e2408] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=17:52&bookFor=4
+            - generic [ref=e2409]:
+              - generic [ref=e2410]: 6:00 PM
+              - generic [ref=e2412]:
+                - link "+" [ref=e2414] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=18:00&bookFor=4
+                - link "+" [ref=e2416] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=18:00&bookFor=4
+                - link "+" [ref=e2418] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=18:00&bookFor=4
+                - link "+" [ref=e2420] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=18:00&bookFor=4
+            - generic [ref=e2421]:
+              - generic [ref=e2422]: 6:07 PM
+              - generic [ref=e2424]:
+                - link "+" [ref=e2426] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=18:07&bookFor=4
+                - link "+" [ref=e2428] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=18:07&bookFor=4
+                - link "+" [ref=e2430] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=18:07&bookFor=4
+                - link "+" [ref=e2432] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=18:07&bookFor=4
+            - generic [ref=e2433]:
+              - generic [ref=e2434]: 6:15 PM
+              - generic [ref=e2436]:
+                - link "+" [ref=e2438] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=18:15&bookFor=4
+                - link "+" [ref=e2440] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=18:15&bookFor=4
+                - link "+" [ref=e2442] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=18:15&bookFor=4
+                - link "+" [ref=e2444] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=18:15&bookFor=4
+            - generic [ref=e2445]:
+              - generic [ref=e2446]: 6:22 PM
+              - generic [ref=e2448]:
+                - link "+" [ref=e2450] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=18:22&bookFor=4
+                - link "+" [ref=e2452] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=18:22&bookFor=4
+                - link "+" [ref=e2454] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=18:22&bookFor=4
+                - link "+" [ref=e2456] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=18:22&bookFor=4
+            - generic [ref=e2457]:
+              - generic [ref=e2458]: 6:30 PM
+              - generic [ref=e2460]:
+                - link "+" [ref=e2462] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=18:30&bookFor=4
+                - link "+" [ref=e2464] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=18:30&bookFor=4
+                - link "+" [ref=e2466] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=18:30&bookFor=4
+                - link "+" [ref=e2468] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=18:30&bookFor=4
+            - generic [ref=e2469]:
+              - generic [ref=e2470]: 6:37 PM
+              - generic [ref=e2472]:
+                - link "+" [ref=e2474] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=18:37&bookFor=4
+                - link "+" [ref=e2476] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=18:37&bookFor=4
+                - link "+" [ref=e2478] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=18:37&bookFor=4
+                - link "+" [ref=e2480] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=18:37&bookFor=4
+            - generic [ref=e2481]:
+              - generic [ref=e2482]: 6:45 PM
+              - generic [ref=e2484]:
+                - link "+" [ref=e2486] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=18:45&bookFor=4
+                - link "+" [ref=e2488] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=18:45&bookFor=4
+                - link "+" [ref=e2490] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=18:45&bookFor=4
+                - link "+" [ref=e2492] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=18:45&bookFor=4
+            - generic [ref=e2493]:
+              - generic [ref=e2494]: 6:52 PM
+              - generic [ref=e2496]:
+                - link "+" [ref=e2498] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=18:52&bookFor=4
+                - link "+" [ref=e2500] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=18:52&bookFor=4
+                - link "+" [ref=e2502] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=18:52&bookFor=4
+                - link "+" [ref=e2504] [cursor=pointer]:
+                  - /url: /teetimes/book?date=2026-04-21&time=18:52&bookFor=4

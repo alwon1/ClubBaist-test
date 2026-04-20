@@ -1,0 +1,79 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - link "Club BAIST" [ref=e6] [cursor=pointer]:
+      - /url: ""
+    - navigation [ref=e8]:
+      - link "Home" [ref=e10] [cursor=pointer]:
+        - /url: ""
+        - text: Home
+      - link "Tee Times" [ref=e13] [cursor=pointer]:
+        - /url: teetimes
+        - text: Tee Times
+      - link "Staff Console" [ref=e16] [cursor=pointer]:
+        - /url: teetimes/staff
+        - text: Staff Console
+      - link "User Management" [ref=e19] [cursor=pointer]:
+        - /url: admin/users
+        - text: User Management
+      - link "Seasons" [ref=e22] [cursor=pointer]:
+        - /url: admin/seasons
+        - text: Seasons
+      - link "Applications" [ref=e25] [cursor=pointer]:
+        - /url: membership/applications
+        - text: Applications
+      - link "admin@clubbaist.com" [ref=e28] [cursor=pointer]:
+        - /url: Account/Manage
+        - text: admin@clubbaist.com
+      - button "Logout" [ref=e32] [cursor=pointer]: Logout
+  - main [ref=e34]:
+    - link "About" [ref=e36] [cursor=pointer]:
+      - /url: https://learn.microsoft.com/aspnet/core/
+    - article [ref=e37]:
+      - generic [ref=e140]:
+        - heading "Edit Member SV-0004" [level=3] [ref=e142]:
+          - text: Edit Member
+          - generic [ref=e143]: SV-0004
+        - link "Back to User" [ref=e144] [cursor=pointer]:
+          - /url: /admin/users/0bc9484f-6c93-42b0-9512-08de9f32aac3
+      - generic [ref=e145]:
+        - generic [ref=e146]:
+          - heading "Personal Information" [level=5] [ref=e148]
+          - generic [ref=e149]:
+            - generic [ref=e150]:
+              - generic [ref=e152]:
+                - textbox "First Name" [ref=e153]: Diana
+                - generic: First Name
+              - generic [ref=e155]:
+                - textbox "Last Name" [ref=e156]: Silver
+                - generic: Last Name
+            - generic [ref=e159]:
+              - textbox "Date of Birth" [ref=e160]: 1985-01-15
+              - generic: Date of Birth
+            - generic [ref=e161]:
+              - generic [ref=e163]:
+                - textbox "Phone (e.g. (403) 555-1234)" [ref=e164]:
+                  - /placeholder: Phone
+                  - text: (403) 555-0000
+                - generic: Phone (e.g. (403) 555-1234)
+              - generic [ref=e166]:
+                - textbox "Alternate Phone (optional)" [ref=e167]: (403) 555-0001
+                - generic: Alternate Phone (optional)
+            - generic [ref=e168]:
+              - generic [ref=e170]:
+                - textbox "Address" [ref=e171]: 123 Golf Drive
+                - generic: Address
+              - generic [ref=e173]:
+                - textbox "Postal Code (e.g. T2A 4K3)" [ref=e174]:
+                  - /placeholder: Postal Code
+                  - text: T2P 1A1
+                - generic: Postal Code (e.g. T2A 4K3)
+        - generic [ref=e175]:
+          - heading "Membership" [level=5] [ref=e177]
+          - generic [ref=e181]:
+            - combobox "Membership Level" [ref=e182]:
+              - option "Shareholder"
+              - option "Silver"
+              - option "Bronze" [selected]
+              - option "Associate"
+            - generic: Membership Level
+        - button "Save Changes" [ref=e183] [cursor=pointer]

@@ -1,0 +1,59 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - link "Club BAIST" [ref=e6] [cursor=pointer]:
+      - /url: ""
+    - navigation [ref=e8]:
+      - link "Home" [ref=e10] [cursor=pointer]:
+        - /url: ""
+        - text: Home
+      - link "Apply for Membership" [ref=e13] [cursor=pointer]:
+        - /url: membership/apply
+        - text: Apply for Membership
+      - link "Login" [ref=e16] [cursor=pointer]:
+        - /url: Account/Login
+        - text: Login
+  - main [ref=e18]:
+    - link "About" [ref=e20] [cursor=pointer]:
+      - /url: https://learn.microsoft.com/aspnet/core/
+    - article [ref=e21]:
+      - heading "Log in" [level=1] [ref=e22]
+      - generic [ref=e23]:
+        - generic [ref=e26]:
+          - heading "Use a local account to log in." [level=2] [ref=e27]
+          - separator [ref=e28]
+          - generic [ref=e29]:
+            - textbox "Email" [ref=e30]:
+              - /placeholder: name@example.com
+              - text: committee@clubbaist.com
+            - generic: Email
+          - generic [ref=e31]:
+            - textbox "Password" [active] [ref=e32]:
+              - /placeholder: password
+            - generic: Password
+          - generic [ref=e34]:
+            - checkbox "Remember me" [ref=e35]
+            - text: Remember me
+          - button "Log in" [ref=e37] [cursor=pointer]
+          - separator [ref=e38]
+          - generic [ref=e39]:
+            - generic [ref=e40]: OR
+            - button "Log in with a passkey" [ref=e41] [cursor=pointer]
+          - separator [ref=e42]
+          - generic [ref=e43]:
+            - paragraph [ref=e44]:
+              - link "Forgot your password?" [ref=e45] [cursor=pointer]:
+                - /url: Account/ForgotPassword
+            - paragraph [ref=e46]:
+              - link "Register as a new user" [ref=e47] [cursor=pointer]:
+                - /url: Account/Register
+            - paragraph [ref=e48]:
+              - link "Resend email confirmation" [ref=e49] [cursor=pointer]:
+                - /url: Account/ResendEmailConfirmation
+        - generic [ref=e51]:
+          - heading "Use another service to log in." [level=3] [ref=e52]
+          - separator [ref=e53]
+          - paragraph [ref=e55]:
+            - text: There are no external authentication services configured. See this
+            - link "article about setting up this ASP.NET application to support logging in via external services" [ref=e56] [cursor=pointer]:
+              - /url: https://go.microsoft.com/fwlink/?LinkID=532715
+            - text: .

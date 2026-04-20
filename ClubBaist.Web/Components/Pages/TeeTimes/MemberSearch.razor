@@ -1,0 +1,115 @@
+@using ClubBaist.Domain2.Entities
+
+<div class="member-search position-relative">
+    <input type="text"
+           class="form-control"
+           placeholder="@Placeholder"
+           value="@searchText"
+           @oninput="OnInput"
+           @onfocus="OnFocus"
+           @onblur="OnBlur"
+           autocomplete="off" />
+    @if (showDropdown && filtered.Count > 0)
+    {
+        <ul class="member-search-dropdown list-unstyled border rounded bg-white shadow-sm position-absolute w-100"
+            style="z-index:1000; max-height:220px; overflow-y:auto; top:100%; left:0;">
+            @foreach (var m in filtered)
+            {
+                var captured = m;
+                <li class="px-3 py-2 member-search-item"
+                    @onmousedown="() => SelectMember(captured)">
+                    @captured.MembershipNumber - @captured.User.FirstName @captured.User.LastName
+                </li>
+            }
+        </ul>
+    }
+    else if (showDropdown && searchText.Length > 0 && filtered.Count == 0)
+    {
+        <div class="border rounded bg-white shadow-sm position-absolute w-100 px-3 py-2 text-muted"
+             style="z-index:1000; top:100%; left:0;">
+            No members found.
+        </div>
+    }
+</div>
+
+<style>
+    .member-search-item:hover {
+        background-color: #f0f0f0;
+        cursor: pointer;
+    }
+</style>
+
+@code {
+    [Parameter] public List<MemberShipInfo> Members { get; set; } = [];
+    [Parameter] public int Value { get; set; }
+    [Parameter] public EventCallback<int> ValueChanged { get; set; }
+    [Parameter] public string Placeholder { get; set; } = "Search members...";
+    [Parameter] public int ExcludeMemberId { get; set; }
+
+    private string searchText = "";
+    private bool showDropdown;
+    private List<MemberShipInfo> filtered = [];
+
+    protected override void OnParametersSet()
+    {
+        if (Value == 0 && searchText.Length > 0) return;
+        if (Value != 0)
+        {
+            var m = Members.FirstOrDefault(x => x.Id == Value);
+            if (m is not null)
+                searchText = $"{m.MembershipNumber} - {m.User.FirstName} {m.User.LastName}";
+        }
+        else
+        {
+            searchText = "";
+        }
+    }
+
+    private void OnInput(ChangeEventArgs e)
+    {
+        searchText = e.Value?.ToString() ?? "";
+        showDropdown = true;
+        var q = searchText.Trim();
+        filtered = string.IsNullOrEmpty(q)
+            ? []
+            : Members
+                .Where(m => m.Id != ExcludeMemberId &&
+                    ($"{m.MembershipNumber} {m.User.FirstName} {m.User.LastName}")
+                        .Contains(q, StringComparison.OrdinalIgnoreCase))
+                .Take(10)
+                .ToList();
+
+        if (string.IsNullOrEmpty(q))
+        {
+            ValueChanged.InvokeAsync(0);
+        }
+    }
+
+    private async Task SelectMember(MemberShipInfo m)
+    {
+        searchText = $"{m.MembershipNumber} - {m.User.FirstName} {m.User.LastName}";
+        showDropdown = false;
+        filtered = [];
+        await ValueChanged.InvokeAsync(m.Id);
+    }
+
+    private void OnFocus()
+    {
+        if (searchText.Length > 0)
+        {
+            showDropdown = true;
+            var q = searchText.Trim();
+            filtered = Members
+                .Where(m => m.Id != ExcludeMemberId &&
+                    ($"{m.MembershipNumber} {m.User.FirstName} {m.User.LastName}")
+                        .Contains(q, StringComparison.OrdinalIgnoreCase))
+                .Take(10)
+                .ToList();
+        }
+    }
+
+    private void OnBlur()
+    {
+        showDropdown = false;
+    }
+}

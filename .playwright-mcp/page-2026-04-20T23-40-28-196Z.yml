@@ -1,0 +1,25 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - link "Club BAIST" [ref=e6] [cursor=pointer]:
+      - /url: ""
+    - navigation [ref=e8]:
+      - link "Home" [ref=e10] [cursor=pointer]:
+        - /url: ""
+        - text: Home
+      - link "Tee Times" [ref=e13] [cursor=pointer]:
+        - /url: teetimes
+        - text: Tee Times
+      - link "My Reservations" [ref=e16] [cursor=pointer]:
+        - /url: teetimes/my
+        - text: My Reservations
+      - link "shareholder1@clubbaist.com" [ref=e19] [cursor=pointer]:
+        - /url: Account/Manage
+        - text: shareholder1@clubbaist.com
+      - button "Logout" [ref=e23] [cursor=pointer]: Logout
+  - main [ref=e25]:
+    - link "About" [ref=e27] [cursor=pointer]:
+      - /url: https://learn.microsoft.com/aspnet/core/
+    - article [ref=e28]:
+      - heading "Book a Tee Time" [level=3] [ref=e29]
+      - status [ref=e31]:
+        - generic [ref=e32]: Loading...

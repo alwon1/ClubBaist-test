@@ -1,0 +1,97 @@
+- generic [ref=e2]:
+  - generic "Aspire" [ref=e4]:
+    - link "Aspire" [ref=e5] [cursor=pointer]:
+      - /url: /
+      - generic:
+        - generic:
+          - generic:
+            - img
+  - banner [ref=e6]:
+    - generic [ref=e7]:
+      - link "ClubBaist" [ref=e9] [cursor=pointer]:
+        - /url: /
+        - generic:
+          - generic: ClubBaist
+      - generic "Aspire repo" [ref=e10]:
+        - link "Aspire repo" [ref=e11] [cursor=pointer]:
+          - /url: https://aka.ms/dotnet/aspire/repo
+          - generic:
+            - generic:
+              - img
+      - generic "Help" [ref=e12] [cursor=pointer]:
+        - button "Help" [ref=e13]:
+          - generic:
+            - generic:
+              - img
+      - generic "MCP Server" [ref=e14] [cursor=pointer]:
+        - button "MCP Server" [ref=e15]:
+          - generic:
+            - generic:
+              - img
+      - generic "Settings" [ref=e16] [cursor=pointer]:
+        - button "Settings" [ref=e17]:
+          - generic:
+            - generic:
+              - img
+  - navigation [ref=e18]:
+    - generic "Resources" [ref=e19]:
+      - link "Resources" [ref=e21] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e22]:
+          - img [ref=e23]
+          - generic [ref=e25]: Resources
+    - generic "Console" [ref=e26]:
+      - link "Console" [ref=e28] [cursor=pointer]:
+        - /url: /consolelogs
+        - generic [ref=e29]:
+          - img [ref=e30]
+          - generic [ref=e32]: Console
+    - generic "Structured" [ref=e33]:
+      - link "Structured" [ref=e35] [cursor=pointer]:
+        - /url: /structuredlogs
+        - generic [ref=e36]:
+          - img [ref=e37]
+          - generic [ref=e39]: Structured
+    - generic "Traces" [ref=e40]:
+      - link "Traces" [ref=e42] [cursor=pointer]:
+        - /url: /traces
+        - generic [ref=e43]:
+          - img [ref=e44]
+          - generic [ref=e46]: Traces
+    - generic "Metrics" [ref=e47]:
+      - link "Metrics" [ref=e49] [cursor=pointer]:
+        - /url: /metrics
+        - generic [ref=e50]:
+          - img [ref=e51]
+          - generic [ref=e53]: Metrics
+  - generic [ref=e58]:
+    - banner "Page toolbar" [ref=e59]:
+      - heading "Console logs" [level=1] [ref=e60]
+      - toolbar [ref=e61]:
+        - generic [ref=e62]:
+          - generic:
+            - generic [ref=e63]: Resource
+            - combobox [disabled] [ref=e64]:
+              - img [ref=e69]
+            - generic "Pause incoming data" [ref=e71] [cursor=pointer]:
+              - button "Pause incoming data" [ref=e72]:
+                - generic:
+                  - generic:
+                    - img
+            - generic "Remove data" [ref=e73] [cursor=pointer]:
+              - button "Remove data" [ref=e74]:
+                - generic:
+                  - generic:
+                    - img
+                - generic:
+                  - generic:
+                    - img
+          - generic [ref=e75]:
+            - generic:
+              - paragraph [ref=e76]: Loading resources ...
+              - generic "Settings" [ref=e77] [cursor=pointer]:
+                - button "Settings" [ref=e78]:
+                  - generic:
+                    - generic:
+                      - img
+    - main [ref=e79]

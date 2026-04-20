@@ -61,17 +61,12 @@ else
         <div class="card-body">
             @if (isAdmin)
             {
-                <div class="form-floating mb-3">
-                    <select class="form-select" id="bookingMember" @bind="BookingMemberId">
-                        <option value="">-- Select Member --</option>
-                        @foreach (var member in allMembers)
-                        {
-                            <option value="@member.Id">
-                                @member.MembershipNumber - @member.User.FirstName @member.User.LastName
-                            </option>
-                        }
-                    </select>
-                    <label for="bookingMember">Booking Member (Admin Override)</label>
+                <div class="mb-3">
+                    <label class="form-label">Booking Member (Admin Override)</label>
+                    <MemberSearch Members="allMembers"
+                                  Value="_bookingMemberId"
+                                  ValueChanged="OnBookingMemberChanged"
+                                  Placeholder="Search by name or membership number..." />
                 </div>
             }
             else if (currentMember is not null)
@@ -103,20 +98,12 @@ else
                     var index = i;
                     <div class="row mb-3 align-items-center">
                         <div class="col">
-                            <div class="form-floating">
-                                <select class="form-select" id="@($"player-{index}")"
-                                        value="@additionalPlayerIds[index]"
-                                        @onchange="(e) => OnPlayerChanged(index, e)">
-                                    <option value="0">-- Select Player --</option>
-                                    @foreach (var member in allMembers.Where(m => m.Id != _bookingMemberId))
-                                    {
-                                        <option value="@member.Id">
-                                            @member.MembershipNumber - @member.User.FirstName @member.User.LastName
-                                        </option>
-                                    }
-                                </select>
-                                <label for="@($"player-{index}")">Player @(index + 2)</label>
-                            </div>
+                            <label class="form-label">Player @(index + 2)</label>
+                            <MemberSearch Members="allMembers"
+                                          Value="additionalPlayerIds[index]"
+                                          ValueChanged="(id) => OnPlayerChanged(index, id)"
+                                          ExcludeMemberId="_bookingMemberId"
+                                          Placeholder="Search by name or membership number..." />
                         </div>
                         <div class="col-auto">
                             <button class="btn btn-sm btn-outline-danger" @onclick="() => RemovePlayerSlot(index)">
@@ -160,14 +147,11 @@ else
 
     private MemberShipInfo? currentMember;
     private int _bookingMemberId;
-    private string BookingMemberId
+
+    private void OnBookingMemberChanged(int id)
     {
-        get => _bookingMemberId == 0 ? "" : _bookingMemberId.ToString();
-        set
-        {
-            _bookingMemberId = int.TryParse(value, out var id) ? id : 0;
-            additionalPlayerIds.RemoveAll(p => p == _bookingMemberId);
-        }
+        _bookingMemberId = id;
+        additionalPlayerIds.RemoveAll(p => p == _bookingMemberId);
     }
     private List<MemberShipInfo> allMembers = [];
     private List<int> additionalPlayerIds = [];
@@ -223,10 +207,9 @@ else
         }
     }
 
-    private void OnPlayerChanged(int index, ChangeEventArgs e)
+    private void OnPlayerChanged(int index, int id)
     {
-        if (int.TryParse(e.Value?.ToString(), out var id))
-            additionalPlayerIds[index] = id;
+        additionalPlayerIds[index] = id;
     }
 
     private void AddPlayerSlot()

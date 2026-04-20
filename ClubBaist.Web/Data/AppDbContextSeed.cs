@@ -5,6 +5,7 @@ using ClubBaist.Services2;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace ClubBaist.Web.Data;
 
@@ -40,25 +41,10 @@ internal static class AppDbContextSeed
         new("jack.waitlist@example.com", "Jack", "Waitlist", "Accountant", "Fairway Finance", "987 Sunset Terrace", "T2P 6F6", "403-555-0204", new DateTime(1985, 9, 18), "SV", ApplicationStatus.Waitlisted)
     ];
 
-    public static void Seed(AppDbContext db, bool storeCreated)
+    public static async Task SeedAsync(AppDbContext db, IServiceProvider serviceProvider, CancellationToken cancellationToken)
     {
-        if (!storeCreated)
-        {
-            return;
-        }
-
-        SeedAsync(db, storeCreated, CancellationToken.None).GetAwaiter().GetResult();
-    }
-
-    public static async Task SeedAsync(AppDbContext db, bool storeCreated, CancellationToken cancellationToken)
-    {
-        if (!storeCreated)
-        {
-            return;
-        }
-
-        var roleManager = db.GetService<RoleManager<IdentityRole<Guid>>>();
-        var userManager = db.GetService<UserManager<ClubBaistUser>>();
+        var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
+        var userManager = serviceProvider.GetRequiredService<UserManager<ClubBaistUser>>();
 
         await SeedRolesAsync(roleManager);
         var levelsByCode = await SeedMembershipLevelsAsync(db, cancellationToken);

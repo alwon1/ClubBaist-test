@@ -1,0 +1,95 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - link "Club BAIST" [ref=e6] [cursor=pointer]:
+      - /url: ""
+    - navigation [ref=e8]:
+      - link "Home" [ref=e10] [cursor=pointer]:
+        - /url: ""
+        - text: Home
+      - link "Applications" [ref=e13] [cursor=pointer]:
+        - /url: membership/applications
+        - text: Applications
+      - link "committee@clubbaist.com" [ref=e16] [cursor=pointer]:
+        - /url: Account/Manage
+        - text: committee@clubbaist.com
+      - button "Logout" [ref=e20] [cursor=pointer]: Logout
+  - main [ref=e22]:
+    - link "About" [ref=e24] [cursor=pointer]:
+      - /url: https://learn.microsoft.com/aspnet/core/
+    - article [ref=e25]:
+      - generic [ref=e90]:
+        - generic [ref=e91]:
+          - heading "Review Application" [level=2] [ref=e92]
+          - link "Back to Inbox" [ref=e93] [cursor=pointer]:
+            - /url: /membership/applications
+        - generic [ref=e94]:
+          - generic [ref=e96]:
+            - generic [ref=e97]:
+              - heading "Applicant Details" [level=5] [ref=e98]
+              - generic [ref=e99]: Submitted
+            - generic [ref=e100]:
+              - generic [ref=e101]:
+                - generic [ref=e102]:
+                  - strong [ref=e103]: "First Name:"
+                  - paragraph [ref=e104]: Frank
+                - generic [ref=e105]:
+                  - strong [ref=e106]: "Last Name:"
+                  - paragraph [ref=e107]: Pending
+              - generic [ref=e108]:
+                - generic [ref=e109]:
+                  - strong [ref=e110]: "Date of Birth:"
+                  - paragraph [ref=e111]: 1990-03-22
+                - generic [ref=e112]:
+                  - strong [ref=e113]: "Email:"
+                  - paragraph [ref=e114]: frank.pending@example.com
+              - generic [ref=e115]:
+                - generic [ref=e116]:
+                  - strong [ref=e117]: "Phone:"
+                  - paragraph [ref=e118]: 403-555-0200
+                - generic [ref=e119]:
+                  - strong [ref=e120]: "Alternate Phone:"
+                  - paragraph [ref=e121]: N/A
+              - generic [ref=e122]:
+                - generic [ref=e123]:
+                  - strong [ref=e124]: "Address:"
+                  - paragraph [ref=e125]: 456 Fairway Lane
+                - generic [ref=e126]:
+                  - strong [ref=e127]: "Postal Code:"
+                  - paragraph [ref=e128]: T2P 2B2
+              - generic [ref=e129]:
+                - generic [ref=e130]:
+                  - strong [ref=e131]: "Occupation:"
+                  - paragraph [ref=e132]: Software Developer
+                - generic [ref=e133]:
+                  - strong [ref=e134]: "Company:"
+                  - paragraph [ref=e135]: Acme Corp
+              - generic [ref=e137]:
+                - strong [ref=e138]: "Requested Level:"
+                - paragraph [ref=e139]: Associate
+              - generic [ref=e140]:
+                - generic [ref=e141]:
+                  - strong [ref=e142]: "Sponsor 1:"
+                  - paragraph [ref=e143]: Alice Shareholder (SH-0001)
+                - generic [ref=e144]:
+                  - strong [ref=e145]: "Sponsor 2:"
+                  - paragraph [ref=e146]: Bob Shareholder (SH-0002)
+          - generic [ref=e148]:
+            - heading "Make Decision" [level=5] [ref=e150]
+            - generic [ref=e151]:
+              - generic [ref=e152]:
+                - combobox "New Status" [ref=e153]:
+                  - option "-- Select Status --"
+                  - option "OnHold"
+                  - option "Waitlisted"
+                  - option "Accepted" [selected]
+                  - option "Denied"
+                - generic: New Status
+              - generic [ref=e154]:
+                - combobox "Membership Level" [ref=e155]:
+                  - option "-- Select Level --"
+                  - option "Shareholder"
+                  - option "Silver"
+                  - option "Bronze"
+                  - option "Associate" [selected]
+                - generic: Membership Level
+              - button "Submit Decision" [ref=e156] [cursor=pointer]
