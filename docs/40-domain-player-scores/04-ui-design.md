@@ -69,34 +69,32 @@ flowchart LR
 
 ## B3b — Wireframe: Score Entry Schedule Console (Clerk Primary View)
 
+Uses a **`QuickGrid`** table — the same component used in `StaffConsole.razor` for the tee time reservations view. One row per eligible booking, no custom grouping.
+
 ```text
 +--------------------------------------------------------------------------------+
 | Score Entry Console — May 18, 2026                                            |
-+-------------------------------------------+------------------------------------+
-| [Search Member: ________________] [Go]    |   (secondary path — member lookup) |
 +--------------------------------------------------------------------------------+
-| Today's completed tee times:                                                   |
+| [Search Member: ________________] [Go]     (secondary path — member lookup)   |
 +--------------------------------------------------------------------------------+
-|  07:30  ·  4 Players  ·  Booking member: [Smith, Jordan]                       |
-|     + Das, Priya  + Rivers, Alex  + Patel, Kim   (additional — not clickable)  |
-|                                                                                 |
-|  07:50  ·  2 Players  ·  Booking member: [Chen, Wei ✓]                         |
-|     + Nguyen, Tran   (additional — not clickable)                              |
-|                                                                                 |
-|  08:10  ·  3 Players  ·  Booking member: [Okafor, Emeka]                       |
-|     + Singh, Ravi  + Li, Mei   (additional — not clickable)                   |
-|                                                                                 |
-|  09:00  ·  1 Player   ·  Booking member: [Torres, Marco ░░░░] (time-lock)      |
-+--------------------------------------------------------------------------------+
+| QuickGrid — sortable columns                                                   |
++----------+------------------+--------+-----------+----------------------------+
+| Time     | Booking Member   | Players| Status    | Action                     |
++----------+------------------+--------+-----------+----------------------------+
+| 07:30 AM | Smith, Jordan    | 4      | Eligible  | [Record Score]             |
+| 07:50 AM | Chen, Wei        | 2      | Scored ✓  | —                          |
+| 08:10 AM | Okafor, Emeka    | 3      | Eligible  | [Record Score]             |
+| 09:00 AM | Torres, Marco    | 1      | Time-lock | — (greyed out)             |
++----------+------------------+--------+-----------+----------------------------+
 ```
 
 **Notes:**
-- Groups shown in tee-time order for the current day.
-- Only the **booking member** (primary booker) for each tee time is shown as a clickable link. UC-PS-01 (rule 11) scopes score submission to primary bookers only; additional participants are not eligible and are not shown as clickable to avoid a dead-end UI path.
-- Booking members with a score already entered show as `Name ✓` (not clickable).
-- Booking members whose tee time has not yet passed the time-lock are greyed out and not clickable.
-- The member lookup search bar at the top is the **secondary** path — searching and selecting a member navigates directly to their Score Entry Form.
-- Tee times from other days are not shown in this view; a date picker (future enhancement) could allow viewing other days.
+- `QuickGrid` with `TemplateColumn` entries — matches the pattern in `StaffConsole.razor` (`<QuickGrid Items="..." Class="table table-striped table-hover">`).
+- Only the booking member (primary booker) is shown per row. UC-PS-01 rule 11 scopes submission to primary bookers only; additional participants are not shown to avoid a dead-end path.
+- **Status** values: `Eligible` (time-lock elapsed, no score yet) / `Scored ✓` (score already recorded — action disabled) / `Time-lock` (minimum elapsed time not yet reached — action disabled and row greyed out).
+- **[Record Score]** button navigates to the Score Entry Form (B4) for that booking.
+- The member search bar at the top is the **secondary** path — searching and selecting a member navigates directly to their Score Entry Form regardless of today's schedule.
+- Default sort: `Time` ascending (earliest first). Clerk can click column headers to re-sort.
 
 ---
 
