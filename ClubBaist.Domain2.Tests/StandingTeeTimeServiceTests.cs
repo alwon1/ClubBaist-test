@@ -39,7 +39,7 @@ public class StandingTeeTimeServiceTests
         var error = await service.SubmitRequestAsync(request);
 
         Assert.IsNull(error);
-        Assert.IsGreaterThan(0, request.Id);
+        Assert.AreNotEqual(0, request.Id);
         Assert.AreEqual(StandingTeeTimeStatus.Draft, request.Status);
     }
 
