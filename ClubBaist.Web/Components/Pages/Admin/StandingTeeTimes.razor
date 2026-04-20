@@ -1,0 +1,384 @@
+@page "/admin/standing-teetimes"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = AppRoles.Admin)]
+
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.EntityFrameworkCore
+@using ClubBaist.Domain2
+
+@inject IAppDbContext2 DbContext
+@inject ILogger<StandingTeeTimes> Logger
+
+<PageTitle>Standing Tee Time Requests - Club Baist</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3>Standing Tee Time Requests</h3>
+</div>
+
+@if (!string.IsNullOrEmpty(_errorMessage))
+{
+    <div class="alert alert-danger alert-dismissible fade show">
+        @_errorMessage
+        <button type="button" class="btn-close" @onclick="() => _errorMessage = null"></button>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(_successMessage))
+{
+    <div class="alert alert-success alert-dismissible fade show">
+        @_successMessage
+        <button type="button" class="btn-close" @onclick="() => _successMessage = null"></button>
+    </div>
+}
+
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row align-items-end">
+            <div class="col-md-4">
+                <div class="form-floating mb-3">
+                    <select id="statusFilter" class="form-select"
+                            value="@(_selectedStatus.HasValue ? ((int)_selectedStatus.Value).ToString() : "")"
+                            @onchange="OnStatusFilterChanged">
+                        <option value="">Pending (Draft)</option>
+                        @foreach (var status in _nonDraftStatuses)
+                        {
+                            <option value="@((int)status)">@status</option>
+                        }
+                    </select>
+                    <label for="statusFilter">Filter by Status</label>
+                </div>
+            </div>
+            <div class="col-md-2 mb-3">
+                <button class="btn btn-primary" @onclick="LoadRequestsAsync">
+                    Search
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (_loading)
+{
+    <div class="d-flex justify-content-center my-4">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+}
+else if (_requests is null || _requests.Count == 0)
+{
+    <div class="alert alert-info" role="alert">
+        No standing tee time requests found matching the selected criteria.
+    </div>
+}
+else
+{
+    <QuickGrid Items="@_requests.AsQueryable()" Class="table table-striped table-hover align-middle">
+        <TemplateColumn Title="Member #">
+            <span class="badge bg-secondary">@context.BookingMember.MembershipNumber</span>
+        </TemplateColumn>
+        <TemplateColumn Title="Member Name" SortBy="@(GridSort<StandingTeeTime>.ByAscending(s => s.BookingMember.User.LastName))">
+            @context.BookingMember.User.FullName
+        </TemplateColumn>
+        <TemplateColumn Title="Day" SortBy="@(GridSort<StandingTeeTime>.ByAscending(s => s.RequestedDayOfWeek))">
+            @context.RequestedDayOfWeek
+        </TemplateColumn>
+        <TemplateColumn Title="Requested Time" SortBy="@(GridSort<StandingTeeTime>.ByAscending(s => s.RequestedTime))">
+            @context.RequestedTime.ToString("h:mm tt")
+        </TemplateColumn>
+        <TemplateColumn Title="Tolerance">
+            ±@context.ToleranceMinutes min
+        </TemplateColumn>
+        <TemplateColumn Title="Start Date" SortBy="@(GridSort<StandingTeeTime>.ByAscending(s => s.StartDate))">
+            @context.StartDate.ToString("yyyy-MM-dd")
+        </TemplateColumn>
+        <TemplateColumn Title="End Date" SortBy="@(GridSort<StandingTeeTime>.ByAscending(s => s.EndDate))">
+            @context.EndDate.ToString("yyyy-MM-dd")
+        </TemplateColumn>
+        <TemplateColumn Title="Players">
+            @context.ParticipantCount
+        </TemplateColumn>
+        <TemplateColumn Title="Priority" SortBy="@(GridSort<StandingTeeTime>.ByAscending(s => s.PriorityNumber))">
+            @(context.PriorityNumber?.ToString() ?? "—")
+        </TemplateColumn>
+        <TemplateColumn Title="Approved Time">
+            @(context.ApprovedTime?.ToString("h:mm tt") ?? "—")
+        </TemplateColumn>
+        <TemplateColumn Title="Status" SortBy="@(GridSort<StandingTeeTime>.ByAscending(s => s.Status))">
+            <span class="badge @UiHelpers.GetStandingTeeTimeStatusBadgeClass(context.Status)">
+                @context.Status
+            </span>
+        </TemplateColumn>
+        <TemplateColumn Title="Actions">
+            @if (context.Status == StandingTeeTimeStatus.Draft)
+            {
+                @if (_approveId == context.Id)
+                {
+                    <div class="d-flex flex-column gap-2" style="min-width: 220px;">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text">Approved Time</span>
+                            <input type="time" class="form-control form-control-sm"
+                                   value="@_approveTime"
+                                   @onchange="e => _approveTime = e.Value?.ToString() ?? string.Empty" />
+                        </div>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text">Priority #</span>
+                            <input type="number" class="form-control form-control-sm" min="1"
+                                   value="@_approvePriority"
+                                   @onchange="OnPriorityChanged" />
+                        </div>
+                        <div class="d-flex gap-1">
+                            <button class="btn btn-sm btn-success flex-grow-1"
+                                    disabled="@_processing"
+                                    @onclick="() => ConfirmApproveAsync(context.Id)">
+                                @if (_processing)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                                }
+                                Confirm
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary"
+                                    disabled="@_processing"
+                                    @onclick="CancelApprove">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                }
+                else if (_denyConfirmId == context.Id)
+                {
+                    <div class="d-flex flex-column gap-2" style="min-width: 180px;">
+                        <span class="text-danger small fw-semibold">Deny this request?</span>
+                        <div class="d-flex gap-1">
+                            <button class="btn btn-sm btn-danger flex-grow-1"
+                                    disabled="@_processing"
+                                    @onclick="() => ConfirmDenyAsync(context.Id)">
+                                @if (_processing)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                                }
+                                Confirm
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary"
+                                    disabled="@_processing"
+                                    @onclick="CancelDeny">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <button class="btn btn-sm btn-success me-1"
+                            disabled="@_processing"
+                            @onclick="() => BeginApprove(context)">
+                        Approve
+                    </button>
+                    <button class="btn btn-sm btn-danger"
+                            disabled="@_processing"
+                            @onclick="() => BeginDeny(context.Id)">
+                        Deny
+                    </button>
+                }
+            }
+        </TemplateColumn>
+    </QuickGrid>
+}
+
+@code {
+    private List<StandingTeeTime>? _requests;
+    private StandingTeeTimeStatus? _selectedStatus;
+    private bool _loading = true;
+    private bool _processing;
+    private string? _errorMessage;
+    private string? _successMessage;
+
+    private int? _approveId;
+    private string _approveTime = string.Empty;
+    private int? _approvePriority;
+
+    private int? _denyConfirmId;
+
+    private static readonly StandingTeeTimeStatus[] _nonDraftStatuses =
+        Enum.GetValues<StandingTeeTimeStatus>()
+            .Where(s => s != StandingTeeTimeStatus.Draft)
+            .ToArray();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadRequestsAsync();
+    }
+
+    private void OnStatusFilterChanged(ChangeEventArgs e)
+    {
+        var value = e.Value?.ToString();
+        if (string.IsNullOrEmpty(value))
+        {
+            _selectedStatus = null;
+        }
+        else if (int.TryParse(value, out var intValue) && Enum.IsDefined(typeof(StandingTeeTimeStatus), intValue))
+        {
+            _selectedStatus = (StandingTeeTimeStatus)intValue;
+        }
+    }
+
+    private async Task LoadRequestsAsync()
+    {
+        _loading = true;
+        _approveId = null;
+        _denyConfirmId = null;
+        try
+        {
+            IQueryable<StandingTeeTime> query = DbContext.StandingTeeTimes;
+
+            if (_selectedStatus.HasValue)
+                query = query.Where(s => s.Status == _selectedStatus.Value);
+            else
+                query = query.Where(s => s.Status == StandingTeeTimeStatus.Draft);
+
+            _requests = await query
+                .OrderBy(s => s.RequestedDayOfWeek)
+                .ThenBy(s => s.RequestedTime)
+                .ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load standing tee time requests");
+            _errorMessage = "Failed to load requests. Please try again.";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void BeginApprove(StandingTeeTime req)
+    {
+        _approveId = req.Id;
+        _approveTime = req.RequestedTime.ToString("HH:mm");
+        _approvePriority = req.PriorityNumber;
+        _denyConfirmId = null;
+        _successMessage = null;
+        _errorMessage = null;
+    }
+
+    private void CancelApprove()
+    {
+        _approveId = null;
+    }
+
+    private void OnPriorityChanged(ChangeEventArgs e)
+    {
+        _approvePriority = int.TryParse(e.Value?.ToString(), out var p) ? p : null;
+    }
+
+    private async Task ConfirmApproveAsync(int id)
+    {
+        if (_processing) return;
+        _processing = true;
+        _successMessage = null;
+        _errorMessage = null;
+        try
+        {
+            var entry = await DbContext.StandingTeeTimes.FindAsync(id);
+            if (entry is null)
+            {
+                _errorMessage = "Request not found.";
+                return;
+            }
+
+            if (entry.Status != StandingTeeTimeStatus.Draft)
+            {
+                _errorMessage = "Only draft requests can be approved.";
+                _approveId = null;
+                await LoadRequestsAsync();
+                return;
+            }
+
+            if (!TimeOnly.TryParse(_approveTime, out var approvedTime))
+            {
+                _errorMessage = "Please enter a valid approved time.";
+                return;
+            }
+
+            if (_approvePriority.HasValue && _approvePriority.Value < 1)
+            {
+                _errorMessage = "Priority number must be 1 or greater.";
+                return;
+            }
+
+            entry.Status = StandingTeeTimeStatus.Approved;
+            entry.ApprovedTime = approvedTime;
+            entry.PriorityNumber = _approvePriority;
+
+            await DbContext.SaveChangesAsync();
+
+            _successMessage = $"Request #{id} has been approved.";
+            _approveId = null;
+            await LoadRequestsAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to approve standing tee time {Id}", id);
+            _errorMessage = "Failed to approve request. Please try again.";
+        }
+        finally
+        {
+            _processing = false;
+        }
+    }
+
+    private void BeginDeny(int id)
+    {
+        _denyConfirmId = id;
+        _approveId = null;
+        _successMessage = null;
+        _errorMessage = null;
+    }
+
+    private void CancelDeny()
+    {
+        _denyConfirmId = null;
+    }
+
+    private async Task ConfirmDenyAsync(int id)
+    {
+        if (_processing) return;
+        _processing = true;
+        _successMessage = null;
+        _errorMessage = null;
+        try
+        {
+            var entry = await DbContext.StandingTeeTimes.FindAsync(id);
+            if (entry is null)
+            {
+                _errorMessage = "Request not found.";
+                return;
+            }
+
+            if (entry.Status != StandingTeeTimeStatus.Draft)
+            {
+                _errorMessage = "Only draft requests can be denied.";
+                _denyConfirmId = null;
+                await LoadRequestsAsync();
+                return;
+            }
+
+            entry.Status = StandingTeeTimeStatus.Denied;
+            await DbContext.SaveChangesAsync();
+
+            _successMessage = $"Request #{id} has been denied.";
+            _denyConfirmId = null;
+            await LoadRequestsAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to deny standing tee time {Id}", id);
+            _errorMessage = "Failed to deny request. Please try again.";
+        }
+        finally
+        {
+            _processing = false;
+        }
+    }
+}
