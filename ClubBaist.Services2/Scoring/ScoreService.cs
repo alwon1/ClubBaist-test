@@ -102,19 +102,12 @@ public class ScoreService(IAppDbContext2 db, ILogger<ScoreService> logger)
                     return (false, "Score already submitted for this booking and member");
                 }
 
-                var bookingForRound = await db.TeeTimeBookings
-                    .AsNoTracking()
-                    .FirstAsync(b => b.Id == bookingId, cancellationToken);
-                var member = await db.MemberShips
-                    .AsNoTracking()
-                    .FirstAsync(m => m.Id == membershipId, cancellationToken);
-
                 var round = new GolfRound
                 {
                     TeeTimeBookingId = bookingId,
-                    TeeTimeBooking = bookingForRound,
+                    TeeTimeBooking = null!,
                     MembershipId = membershipId,
-                    Member = member,
+                    Member = null!,
                     SelectedTeeColor = teeColor,
                     Scores = scores.ToList(),
                     SubmittedAt = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Unspecified),

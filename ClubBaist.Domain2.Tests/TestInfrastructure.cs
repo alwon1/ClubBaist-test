@@ -26,16 +26,7 @@ internal sealed class Domain2TestHost : IAsyncDisposable
 
     public static async Task<Domain2TestHost> CreateAsync()
     {
-        string baseConnectionString;
-        try
-        {
-            baseConnectionString = await GetConnectionStringAsync();
-        }
-        catch (Exception ex)
-        {
-            Assert.Inconclusive($"Aspire host unavailable (requires Docker/SQL Server): {ex.Message}");
-            return default!;
-        }
+        var baseConnectionString = await GetConnectionStringAsync();
         var sqlBuilder = new SqlConnectionStringBuilder(baseConnectionString)
         {
             InitialCatalog = $"clubbaist-domain2-tests-{Guid.NewGuid():N}",
@@ -226,6 +217,34 @@ internal static class Domain2TestData
             .FirstAsync();
 
         return (season, slot);
+    }
+
+    /// <summary>
+    /// Creates a single tee-time slot at the exact <paramref name="slotStart"/> time,
+    /// bypassing operating-hours constraints. Use this when a test needs a slot at a
+    /// specific wall-clock time that may fall outside the standard 07:00–19:00 window.
+    /// </summary>
+    public static async Task<TeeTimeSlot> CreateSlotAtAsync(AppDbContext db, DateTime slotStart)
+    {
+        var date = DateOnly.FromDateTime(slotStart);
+        var season = new Season
+        {
+            Name = $"Spot-Season-{slotStart:HHmmss-fffff}",
+            StartDate = date,
+            EndDate = date
+        };
+        db.Seasons.Add(season);
+        await db.SaveChangesAsync();
+
+        var slot = new TeeTimeSlot
+        {
+            Start = DateTime.SpecifyKind(slotStart, DateTimeKind.Unspecified),
+            Duration = TimeSpan.FromMinutes(7),
+            SeasonId = season.Id
+        };
+        db.TeeTimeSlots.Add(slot);
+        await db.SaveChangesAsync();
+        return slot;
     }
 
     public static async Task<TeeTimeBooking> CreateBookingAsync(

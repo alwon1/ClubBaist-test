@@ -97,16 +97,15 @@ public class ScoreServiceTests
 
         var db = provider.GetRequiredService<AppDbContext>();
         var userManager = provider.GetRequiredService<UserManager<ClubBaistUser>>();
-        var seasonService = provider.GetRequiredService<SeasonService2>();
         var svc = provider.GetRequiredService<ScoreService>();
 
         var level = await Domain2TestData.CreateMembershipLevelAsync(db, "SH", "Shareholder");
         var member = await Domain2TestData.CreateMemberAsync(userManager, db, level, "m1@t.com", "A", "B");
 
         // Slot that started ~1 hour ago — inside the 2h single-player lock
+        // CreateSlotAtAsync bypasses operating-hours constraints so this works at any time of day.
         var slotTime = DateTime.Now.AddHours(-1);
-        var (_, slot) = await Domain2TestData.CreateSeasonAndSlotAsync(seasonService, db,
-            DateOnly.FromDateTime(slotTime), TimeOnly.FromDateTime(slotTime));
+        var slot = await Domain2TestData.CreateSlotAtAsync(db, slotTime);
         await Domain2TestData.CreateBookingAsync(db, member, slot);
 
         var result = await svc.GetEligibleBookingsAsync(member.Id);
@@ -183,9 +182,9 @@ public class ScoreServiceTests
             DateOnly.FromDateTime(DateTime.Today.AddDays(-3)), new TimeOnly(10, 0));
 
         // Third slot ~1 hour ago — inside the 2h single-player lock
+        // CreateSlotAtAsync bypasses operating-hours constraints so this works at any time of day.
         var slotTime = DateTime.Now.AddHours(-1);
-        var (_, slot3) = await Domain2TestData.CreateSeasonAndSlotAsync(seasonService, db,
-            DateOnly.FromDateTime(slotTime), TimeOnly.FromDateTime(slotTime));
+        var slot3 = await Domain2TestData.CreateSlotAtAsync(db, slotTime);
 
         await Domain2TestData.CreateBookingAsync(db, member, slot1);
         await Domain2TestData.CreateBookingAsync(db, member, slot2);
@@ -490,16 +489,15 @@ public class ScoreServiceTests
 
         var db = provider.GetRequiredService<AppDbContext>();
         var userManager = provider.GetRequiredService<UserManager<ClubBaistUser>>();
-        var seasonService = provider.GetRequiredService<SeasonService2>();
         var svc = provider.GetRequiredService<ScoreService>();
 
         var level = await Domain2TestData.CreateMembershipLevelAsync(db, "SH", "Shareholder");
         var member = await Domain2TestData.CreateMemberAsync(userManager, db, level, "m1@t.com", "A", "B");
 
         // Slot that started ~1 hour ago — inside the 2h single-player lock
+        // CreateSlotAtAsync bypasses operating-hours constraints so this works at any time of day.
         var slotTime = DateTime.Now.AddHours(-1);
-        var (_, slot) = await Domain2TestData.CreateSeasonAndSlotAsync(seasonService, db,
-            DateOnly.FromDateTime(slotTime), TimeOnly.FromDateTime(slotTime));
+        var slot = await Domain2TestData.CreateSlotAtAsync(db, slotTime);
         var booking = await Domain2TestData.CreateBookingAsync(db, member, slot);
 
         var result = await svc.SubmitRoundAsync(booking.Id, member.Id, GolfRound.TeeColor.White, ValidScores(), "user");
