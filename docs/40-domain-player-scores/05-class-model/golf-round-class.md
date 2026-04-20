@@ -136,7 +136,7 @@ classDiagram
     class TeeTimeBooking {
         +int Id
         +DateTime TeeTimeSlotStart
-        +int BookingMemberId
+        +int BookingMembershipId
         +int ParticipantCount
     }
 

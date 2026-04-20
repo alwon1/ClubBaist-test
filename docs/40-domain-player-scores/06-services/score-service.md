@@ -65,7 +65,7 @@ public record ScoreSubmissionResult(
 
 **Logic:**
 
-1. Load all `TeeTimeBooking` records where `BookingMemberId == memberId` and `TeeTimeSlotStart < DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Unspecified)`.
+1. Load all `TeeTimeBooking` records where `BookingMembershipId == memberId` and `TeeTimeSlotStart < DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Unspecified)`.
 2. Compute `minimumDuration` for each booking using `ParticipantCount`:
 
    | Players | Minimum elapsed time |
@@ -104,7 +104,7 @@ public record ScoreSubmissionResult(
 BeginTransaction(Snapshot isolation)
   Re-check: no GolfRound for booking (concurrency guard)
   If already scored → rollback → return failure
-  Construct GolfRound { TeeTimeBookingId, MembershipId, TeeColor, Scores, SubmittedAt = DateTime.UtcNow, ActingUserId }
+  Construct GolfRound { TeeTimeBookingId, MembershipId, TeeColor, Scores, SubmittedAt = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Unspecified), ActingUserId }
   db.GolfRounds.Add(round)
   SaveChangesAsync()
   CommitTransaction
