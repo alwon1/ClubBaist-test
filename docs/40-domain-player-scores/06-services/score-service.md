@@ -113,7 +113,7 @@ Return ScoreSubmissionResult(Success: true)
 
 **On unique-index violation** (concurrent duplicate on composite index): catch `DbUpdateException`, rollback, return `ScoreSubmissionResult(false, "Score already submitted for this booking and member")`.
 
-**SubmittedAt and ActingUserId** are set by the service from server-side context — never accepted from the client request. `SubmittedAt` uses `DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Unspecified)` (club wall-clock), consistent with the existing tee time domain convention.
+**SubmittedAt and ActingUserId** are set by the service from server-side context — never accepted from the client request. `SubmittedAt` uses `DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Unspecified)` (local server time). The club operates in a single timezone; local time is the only time that will ever be used or displayed. This is consistent with the existing tee time domain convention (`PastSlotRule`, `SeasonService2`).
 
 ---
 

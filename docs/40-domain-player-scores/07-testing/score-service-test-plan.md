@@ -28,7 +28,7 @@ Tests the time-lock filter and the "already scored" exclusion.
 | ID | Scenario | Expected outcome |
 |----|----------|-----------------|
 | T-11 | Valid request: active member, eligible booking, 18 scores all 1–20 | `GolfRound` stored; `ScoreSubmissionResult.Success = true` |
-| T-12 | Submitted `GolfRound.SubmittedAt` | Set server-side using club wall-clock (`DateTimeKind.Unspecified`) — not the value from any client field |
+| T-12 | Submitted `GolfRound.SubmittedAt` | Set server-side using local server time (`DateTimeKind.Unspecified`) — not the value from any client field |
 | T-13 | Submitted `GolfRound.ActingUserId` | Matches `actingUserId` parameter; not a client-supplied value |
 | T-14 | After successful submission, booking no longer appears in `GetEligibleBookingsAsync` | Confirmed — `GolfRound` exists for booking |
 
