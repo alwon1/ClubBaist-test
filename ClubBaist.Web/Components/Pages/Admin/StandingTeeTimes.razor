@@ -1,0 +1,317 @@
+@page "/admin/standing-teetimes"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = AppRoles.Admin)]
+
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.EntityFrameworkCore
+@using ClubBaist.Domain2
+@using ClubBaist.Services2
+
+@inject IAppDbContext2 DbContext
+@inject StandingTeeTimeService StandingTeeTimeService
+@inject ILogger<StandingTeeTimes> Logger
+
+<PageTitle>Standing Tee Times - Club Baist</PageTitle>
+
+<h3 class="mb-4">Standing Tee Time Requests</h3>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger alert-dismissible">
+        @errorMessage
+        <button type="button" class="btn-close" @onclick="() => errorMessage = null"></button>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(successMessage))
+{
+    <div class="alert alert-success alert-dismissible">
+        @successMessage
+        <button type="button" class="btn-close" @onclick="() => successMessage = null"></button>
+    </div>
+}
+
+@if (isLoading)
+{
+    <div class="text-center my-4">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+}
+else if (allRequests is null || allRequests.Count == 0)
+{
+    <div class="alert alert-info">No standing tee time requests found.</div>
+}
+else
+{
+    <div class="mb-3">
+        <div class="d-flex gap-2 flex-wrap">
+            @foreach (var status in new[] { (string?)null, "Draft", "Approved", "Denied", "Cancelled" })
+            {
+                <button class="btn btn-sm @(statusFilter == status ? "btn-primary" : "btn-outline-secondary")"
+                        @onclick="() => SetFilter(status)">
+                    @(status ?? "All") @if (status is null)
+                    {
+                        <span class="badge bg-secondary ms-1">@allRequests.Count</span>
+                    }
+                    else
+                    {
+                        var count = allRequests.Count(r => r.Status.ToString() == status);
+                        if (count > 0) { <span class="badge bg-secondary ms-1">@count</span> }
+                    }
+                </button>
+            }
+        </div>
+    </div>
+
+    var filtered = statusFilter is null
+        ? allRequests
+        : allRequests.Where(r => r.Status.ToString() == statusFilter).ToList();
+
+    @if (filtered.Count == 0)
+    {
+        <div class="alert alert-info">No requests match the current filter.</div>
+    }
+    else
+    {
+        @foreach (var req in filtered)
+        {
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>@req.BookingMember.User.FirstName @req.BookingMember.User.LastName</strong>
+                        <span class="text-muted ms-2">(#@req.BookingMember.MembershipNumber)</span>
+                        <span class="ms-3">@req.RequestedDayOfWeek, @req.RequestedTime.ToString("h:mm tt")</span>
+                    </div>
+                    <span class="badge @GetStatusBadgeClass(req.Status)">@req.Status</span>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p class="mb-1"><strong>Requested Time:</strong> @req.RequestedTime.ToString("h:mm tt") (±@req.ToleranceMinutes min)</p>
+                            <p class="mb-1"><strong>Season:</strong> @req.StartDate.ToString("MMM d, yyyy") – @req.EndDate.ToString("MMM d, yyyy")</p>
+                            <p class="mb-1"><strong>Players:</strong>
+                                @req.BookingMember.User.FirstName @req.BookingMember.User.LastName
+                                @foreach (var p in req.AdditionalParticipants)
+                                {
+                                    <text>, @p.User.FirstName @p.User.LastName</text>
+                                }
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            @if (req.ApprovedTime.HasValue)
+                            {
+                                <p class="mb-1"><strong>Approved Time:</strong> @req.ApprovedTime.Value.ToString("h:mm tt")</p>
+                            }
+                            @if (req.PriorityNumber.HasValue)
+                            {
+                                <p class="mb-1"><strong>Priority:</strong> @req.PriorityNumber</p>
+                            }
+                        </div>
+                    </div>
+
+                    @if (req.Status == StandingTeeTimeStatus.Draft)
+                    {
+                        @if (approvePanel == req.Id)
+                        {
+                            <div class="mt-3 p-3 border rounded bg-light">
+                                <h6>Approve Request</h6>
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label" for="@($"approvedTime-{req.Id}")">Approved Time <span class="text-danger">*</span></label>
+                                        <input id="@($"approvedTime-{req.Id}")" type="time" class="form-control"
+                                               value="@approvedTimeStr"
+                                               @onchange="OnApprovedTimeChanged" />
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label" for="@($"priority-{req.Id}")">Priority Number</label>
+                                        <input id="@($"priority-{req.Id}")" type="number" class="form-control" min="1"
+                                               @bind="approvedPriority" placeholder="Optional" />
+                                    </div>
+                                </div>
+                                <div class="mt-3">
+                                    <button class="btn btn-success me-2" @onclick="() => ApproveAsync(req.Id)"
+                                            disabled="@isProcessing">
+                                        @if (isProcessing)
+                                        {
+                                            <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                                        }
+                                        Confirm Approve
+                                    </button>
+                                    <button class="btn btn-outline-secondary" @onclick="() => approvePanel = null"
+                                            disabled="@isProcessing">
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                        else if (denyConfirmId == req.Id)
+                        {
+                            <div class="mt-3">
+                                <span class="me-2">Deny this request?</span>
+                                <button class="btn btn-sm btn-danger me-1" @onclick="() => DenyAsync(req.Id)"
+                                        disabled="@isProcessing">
+                                    @if (isProcessing)
+                                    {
+                                        <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                                    }
+                                    Yes, Deny
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary" @onclick="() => denyConfirmId = null">No</button>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="mt-3">
+                                <button class="btn btn-sm btn-success me-2" @onclick="() => OpenApprovePanel(req.Id)">
+                                    Approve
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" @onclick="() => denyConfirmId = req.Id">
+                                    Deny
+                                </button>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        }
+    }
+}
+
+@code {
+    private bool isLoading = true;
+    private bool isProcessing;
+    private string? errorMessage;
+    private string? successMessage;
+    private string? statusFilter;
+
+    private IReadOnlyList<StandingTeeTime>? allRequests;
+
+    private int? approvePanel;
+    private string approvedTimeStr = "08:00";
+    private int? approvedPriority;
+
+    private int? denyConfirmId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        try
+        {
+            allRequests = await StandingTeeTimeService.GetAllAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load standing tee time requests");
+            errorMessage = "An unexpected error occurred while loading requests. Please try again later.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void SetFilter(string? status)
+    {
+        statusFilter = status;
+    }
+
+    private void OpenApprovePanel(int id)
+    {
+        approvePanel = id;
+        approvedTimeStr = "08:00";
+        approvedPriority = null;
+        denyConfirmId = null;
+    }
+
+    private void OnApprovedTimeChanged(ChangeEventArgs e) =>
+        approvedTimeStr = e.Value?.ToString() ?? "08:00";
+
+    private async Task ApproveAsync(int id)
+    {
+        if (!TimeOnly.TryParse(approvedTimeStr, out var approvedTime))
+        {
+            errorMessage = "Please enter a valid approved time.";
+            return;
+        }
+
+        isProcessing = true;
+        errorMessage = null;
+        successMessage = null;
+
+        try
+        {
+            var result = await StandingTeeTimeService.ApproveAsync(id, approvedTime, approvedPriority);
+            if (result)
+            {
+                successMessage = $"Request #{id} approved with time {approvedTime:h:mm tt}.";
+                approvePanel = null;
+                await LoadDataAsync();
+            }
+            else
+            {
+                errorMessage = "Unable to approve the request. It may have already been processed.";
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to approve standing tee time request {Id}", id);
+            errorMessage = "An unexpected error occurred. Please try again later.";
+        }
+        finally
+        {
+            isProcessing = false;
+        }
+    }
+
+    private async Task DenyAsync(int id)
+    {
+        isProcessing = true;
+        errorMessage = null;
+        successMessage = null;
+
+        try
+        {
+            var result = await StandingTeeTimeService.DenyAsync(id);
+            if (result)
+            {
+                successMessage = $"Request #{id} denied.";
+                denyConfirmId = null;
+                await LoadDataAsync();
+            }
+            else
+            {
+                errorMessage = "Unable to deny the request. It may have already been processed.";
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to deny standing tee time request {Id}", id);
+            errorMessage = "An unexpected error occurred. Please try again later.";
+        }
+        finally
+        {
+            isProcessing = false;
+        }
+    }
+
+    private static string GetStatusBadgeClass(StandingTeeTimeStatus status) => status switch
+    {
+        StandingTeeTimeStatus.Draft => "bg-secondary",
+        StandingTeeTimeStatus.Approved => "bg-success",
+        StandingTeeTimeStatus.Allocated => "bg-primary",
+        StandingTeeTimeStatus.Unallocated => "bg-warning text-dark",
+        StandingTeeTimeStatus.Cancelled => "bg-danger",
+        StandingTeeTimeStatus.Denied => "bg-danger",
+        _ => "bg-secondary"
+    };
+}

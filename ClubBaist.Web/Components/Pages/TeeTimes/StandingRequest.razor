@@ -1,0 +1,313 @@
+@page "/teetimes/standing/request"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = AppRoles.Member)]
+
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.EntityFrameworkCore
+@using ClubBaist.Domain2
+@using ClubBaist.Services2
+
+@inject IAppDbContext2 DbContext
+@inject StandingTeeTimeService StandingTeeTimeService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Navigation
+@inject ILogger<StandingRequest> Logger
+
+<PageTitle>Request Standing Tee Time - Club Baist</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3>Request a Standing Tee Time</h3>
+    <a href="/teetimes/standing/my" class="btn btn-outline-secondary">My Standing Requests</a>
+</div>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
+@if (successMessage is not null)
+{
+    <div class="alert alert-success">
+        <p>@successMessage</p>
+        <a href="/teetimes/standing/my" class="btn btn-outline-success mt-2">View My Standing Requests</a>
+    </div>
+}
+else if (isLoading)
+{
+    <div class="text-center my-4">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+}
+else if (!hasPermission)
+{
+    <div class="alert alert-warning">
+        <p>You do not have permission to request a standing tee time. This feature is available to Shareholder members only.</p>
+        <a href="/" class="btn btn-outline-secondary mt-2">Back to Home</a>
+    </div>
+}
+else
+{
+    <div class="card mb-4">
+        <div class="card-header">
+            <strong>Booking Member</strong>
+        </div>
+        <div class="card-body">
+            @if (currentMember is not null)
+            {
+                <p class="mb-0">
+                    <strong>@currentMember.User.FirstName @currentMember.User.LastName</strong>
+                    — Member #@currentMember.MembershipNumber
+                    (@currentMember.MembershipLevel.Name)
+                </p>
+            }
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <strong>Request Details</strong>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label" for="dayOfWeek">Day of Week <span class="text-danger">*</span></label>
+                    <select id="dayOfWeek" class="form-select" @bind="requestedDayOfWeek">
+                        @foreach (var day in Enum.GetValues<DayOfWeek>())
+                        {
+                            <option value="@day">@day</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label" for="requestedTime">Requested Time <span class="text-danger">*</span></label>
+                    <input id="requestedTime" type="time" class="form-control" value="@requestedTimeStr"
+                           @onchange="OnTimeChanged" />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label" for="tolerance">Tolerance (minutes)</label>
+                    <select id="tolerance" class="form-select" @bind="toleranceMinutes">
+                        <option value="0">0 min (exact)</option>
+                        <option value="15">±15 min</option>
+                        <option value="30">±30 min</option>
+                        <option value="60">±60 min</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label" for="startDate">Start Date <span class="text-danger">*</span></label>
+                    <input id="startDate" type="date" class="form-control" value="@startDateStr"
+                           @onchange="OnStartDateChanged" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label" for="endDate">End Date <span class="text-danger">*</span></label>
+                    <input id="endDate" type="date" class="form-control" value="@endDateStr"
+                           @onchange="OnEndDateChanged" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <strong>Additional Players</strong>
+            <small class="text-muted ms-2">(3 required — foursome)</small>
+        </div>
+        <div class="card-body">
+            @for (var i = 0; i < 3; i++)
+            {
+                var index = i;
+                <div class="row mb-3 align-items-center">
+                    <div class="col">
+                        <div class="form-floating">
+                            <select class="form-select" id="@($"player-{index}")"
+                                    value="@additionalPlayerIds[index]"
+                                    @onchange="(e) => OnPlayerChanged(index, e)">
+                                <option value="0">-- Select Player --</option>
+                                @foreach (var member in allMembers.Where(m => m.Id != currentMember?.Id))
+                                {
+                                    <option value="@member.Id">
+                                        @member.MembershipNumber - @member.User.FirstName @member.User.LastName
+                                    </option>
+                                }
+                            </select>
+                            <label for="@($"player-{index}")">Player @(index + 2)</label>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <button class="btn btn-primary" @onclick="SubmitRequest" disabled="@isSubmitting">
+        @if (isSubmitting)
+        {
+            <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+        }
+        Submit Request
+    </button>
+    <a href="/" class="btn btn-outline-secondary ms-2">Cancel</a>
+}
+
+@code {
+    private bool isLoading = true;
+    private bool isSubmitting;
+    private bool hasPermission;
+    private string? errorMessage;
+    private string? successMessage;
+
+    private MemberShipInfo? currentMember;
+    private List<MemberShipInfo> allMembers = [];
+    private List<int> additionalPlayerIds = [0, 0, 0];
+
+    private DayOfWeek requestedDayOfWeek = DayOfWeek.Saturday;
+    private string requestedTimeStr = "08:00";
+    private int toleranceMinutes = 30;
+    private string startDateStr = DateOnly.FromDateTime(DateTime.Today).ToString("yyyy-MM-dd");
+    private string endDateStr = DateOnly.FromDateTime(DateTime.Today.AddMonths(6)).ToString("yyyy-MM-dd");
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            var userId = Guid.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+            hasPermission = user.HasClaim(
+                AppRoles.ClaimTypes.Permission,
+                AppRoles.Permissions.BookStandingTeeTime);
+
+            currentMember = await DbContext.MemberShips
+                .FirstOrDefaultAsync(m => m.UserId == userId);
+
+            if (currentMember is null)
+            {
+                errorMessage = "Member account not found. Please contact an administrator.";
+                isLoading = false;
+                return;
+            }
+
+            allMembers = await DbContext.MemberShips
+                .OrderBy(m => m.User.LastName)
+                .ThenBy(m => m.User.FirstName)
+                .ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to initialize standing tee time request page");
+            errorMessage = "An unexpected error occurred. Please try again later.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void OnTimeChanged(ChangeEventArgs e) =>
+        requestedTimeStr = e.Value?.ToString() ?? "08:00";
+
+    private void OnStartDateChanged(ChangeEventArgs e) =>
+        startDateStr = e.Value?.ToString() ?? string.Empty;
+
+    private void OnEndDateChanged(ChangeEventArgs e) =>
+        endDateStr = e.Value?.ToString() ?? string.Empty;
+
+    private void OnPlayerChanged(int index, ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var id))
+            additionalPlayerIds[index] = id;
+    }
+
+    private async Task SubmitRequest()
+    {
+        errorMessage = null;
+
+        if (currentMember is null)
+        {
+            errorMessage = "Member account not found.";
+            return;
+        }
+
+        if (!TimeOnly.TryParse(requestedTimeStr, out var requestedTime))
+        {
+            errorMessage = "Please enter a valid time.";
+            return;
+        }
+
+        if (!DateOnly.TryParse(startDateStr, out var startDate))
+        {
+            errorMessage = "Please enter a valid start date.";
+            return;
+        }
+
+        if (!DateOnly.TryParse(endDateStr, out var endDate))
+        {
+            errorMessage = "Please enter a valid end date.";
+            return;
+        }
+
+        var validPlayerIds = additionalPlayerIds.Where(id => id != 0).Distinct().ToList();
+
+        if (validPlayerIds.Count != 3)
+        {
+            errorMessage = "Please select exactly 3 additional players (a foursome is required).";
+            return;
+        }
+
+        if (validPlayerIds.Contains(currentMember.Id))
+        {
+            errorMessage = "You cannot list yourself as an additional player.";
+            return;
+        }
+
+        isSubmitting = true;
+
+        try
+        {
+            var players = await DbContext.MemberShips
+                .Where(m => validPlayerIds.Contains(m.Id))
+                .ToListAsync();
+
+            if (players.Count != validPlayerIds.Count)
+            {
+                errorMessage = "One or more selected players could not be found. Please refresh and try again.";
+                return;
+            }
+
+            var request = new StandingTeeTime
+            {
+                BookingMemberId = currentMember.Id,
+                BookingMember = currentMember,
+                RequestedDayOfWeek = requestedDayOfWeek,
+                RequestedTime = requestedTime,
+                ToleranceMinutes = toleranceMinutes,
+                StartDate = startDate,
+                EndDate = endDate,
+            };
+            request.AdditionalParticipants.AddRange(players);
+
+            var (success, serviceError) = await StandingTeeTimeService.SubmitRequestAsync(request);
+
+            if (success)
+            {
+                successMessage = "Your standing tee time request has been submitted and is pending review.";
+            }
+            else
+            {
+                errorMessage = serviceError ?? "Unable to submit your request. Please try again.";
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to submit standing tee time request");
+            errorMessage = "An unexpected error occurred while submitting your request. Please try again later.";
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+}

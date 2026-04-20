@@ -1,0 +1,203 @@
+@page "/teetimes/standing/my"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = AppRoles.Member)]
+
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.EntityFrameworkCore
+@using ClubBaist.Domain2
+@using ClubBaist.Services2
+
+@inject IAppDbContext2 DbContext
+@inject StandingTeeTimeService StandingTeeTimeService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ILogger<MyStandingRequests> Logger
+
+<PageTitle>My Standing Tee Times - Club Baist</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3>My Standing Tee Time Requests</h3>
+    @if (hasPermission)
+    {
+        <a href="/teetimes/standing/request" class="btn btn-primary">New Request</a>
+    }
+</div>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
+@if (!string.IsNullOrEmpty(successMessage))
+{
+    <div class="alert alert-success">@successMessage</div>
+}
+
+@if (isLoading)
+{
+    <div class="text-center my-4">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+}
+else if (requests is null || requests.Count == 0)
+{
+    <div class="alert alert-info">
+        You have no standing tee time requests.
+        @if (hasPermission)
+        {
+            <a href="/teetimes/standing/request" class="alert-link ms-1">Submit a new request.</a>
+        }
+    </div>
+}
+else
+{
+    @foreach (var req in requests)
+    {
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <strong>@req.RequestedDayOfWeek — @req.RequestedTime.ToString("h:mm tt")</strong>
+                <span class="badge @GetStatusBadgeClass(req.Status)">@req.Status</span>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p class="mb-1"><strong>Requested Time:</strong> @req.RequestedTime.ToString("h:mm tt") (±@req.ToleranceMinutes min)</p>
+                        <p class="mb-1"><strong>Season:</strong> @req.StartDate.ToString("MMM d, yyyy") – @req.EndDate.ToString("MMM d, yyyy")</p>
+                        <p class="mb-1"><strong>Players:</strong> @req.ParticipantCount</p>
+                    </div>
+                    <div class="col-md-6">
+                        @if (req.ApprovedTime.HasValue)
+                        {
+                            <p class="mb-1"><strong>Approved Time:</strong> @req.ApprovedTime.Value.ToString("h:mm tt")</p>
+                        }
+                        @if (req.PriorityNumber.HasValue)
+                        {
+                            <p class="mb-1"><strong>Priority:</strong> @req.PriorityNumber</p>
+                        }
+                    </div>
+                </div>
+                @if (req.AdditionalParticipants.Count > 0)
+                {
+                    <div class="mt-2">
+                        <strong>Players:</strong>
+                        <ul class="mb-0 mt-1">
+                            <li>@req.BookingMember.User.FirstName @req.BookingMember.User.LastName (Booking Member)</li>
+                            @foreach (var p in req.AdditionalParticipants)
+                            {
+                                <li>@p.User.FirstName @p.User.LastName</li>
+                            }
+                        </ul>
+                    </div>
+                }
+
+                @if (req.Status is not (StandingTeeTimeStatus.Cancelled or StandingTeeTimeStatus.Denied))
+                {
+                    <div class="mt-3">
+                        @if (cancelConfirmId == req.Id)
+                        {
+                            <span class="me-2">Are you sure?</span>
+                            <button class="btn btn-sm btn-danger me-1" @onclick="() => ConfirmCancelAsync(req.Id)">Yes, Cancel</button>
+                            <button class="btn btn-sm btn-outline-secondary" @onclick="() => cancelConfirmId = null">No</button>
+                        }
+                        else
+                        {
+                            <button class="btn btn-sm btn-outline-danger" @onclick="() => cancelConfirmId = req.Id">Cancel Request</button>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    }
+}
+
+@code {
+    private bool isLoading = true;
+    private bool hasPermission;
+    private string? errorMessage;
+    private string? successMessage;
+    private int? cancelConfirmId;
+
+    private int currentMemberId;
+    private IReadOnlyList<StandingTeeTime>? requests;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            var userId = Guid.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+            hasPermission = user.HasClaim(
+                AppRoles.ClaimTypes.Permission,
+                AppRoles.Permissions.BookStandingTeeTime);
+
+            var member = await DbContext.MemberShips.FirstOrDefaultAsync(m => m.UserId == userId);
+            if (member is null)
+            {
+                errorMessage = "Member account not found.";
+                return;
+            }
+
+            currentMemberId = member.Id;
+            requests = await StandingTeeTimeService.GetForMemberAsync(currentMemberId);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load standing tee time requests");
+            errorMessage = "An unexpected error occurred while loading your requests. Please try again later.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task ConfirmCancelAsync(int id)
+    {
+        cancelConfirmId = null;
+        errorMessage = null;
+        successMessage = null;
+
+        try
+        {
+            var result = await StandingTeeTimeService.CancelAsync(id, currentMemberId);
+            if (result)
+            {
+                successMessage = "Standing tee time request cancelled.";
+                await LoadDataAsync();
+            }
+            else
+            {
+                errorMessage = "Unable to cancel the request. Please try again.";
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to cancel standing tee time request {Id}", id);
+            errorMessage = "An unexpected error occurred. Please try again later.";
+        }
+    }
+
+    private static string GetStatusBadgeClass(StandingTeeTimeStatus status) => status switch
+    {
+        StandingTeeTimeStatus.Draft => "bg-secondary",
+        StandingTeeTimeStatus.Approved => "bg-success",
+        StandingTeeTimeStatus.Allocated => "bg-primary",
+        StandingTeeTimeStatus.Unallocated => "bg-warning text-dark",
+        StandingTeeTimeStatus.Cancelled => "bg-danger",
+        StandingTeeTimeStatus.Denied => "bg-danger",
+        _ => "bg-secondary"
+    };
+}
