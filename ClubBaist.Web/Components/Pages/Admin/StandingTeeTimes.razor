@@ -1,0 +1,345 @@
+@page "/admin/standing-teetimes"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = AppRoles.Admin)]
+
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.EntityFrameworkCore
+@using ClubBaist.Domain2
+
+@inject IAppDbContext2 DbContext
+@inject ILogger<StandingTeeTimes> Logger
+
+<PageTitle>Standing Tee Time Requests - Club Baist</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3>Standing Tee Time Requests</h3>
+</div>
+
+@if (!string.IsNullOrEmpty(_errorMessage))
+{
+    <div class="alert alert-danger alert-dismissible fade show">
+        @_errorMessage
+        <button type="button" class="btn-close" @onclick="() => _errorMessage = null"></button>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(_successMessage))
+{
+    <div class="alert alert-success alert-dismissible fade show">
+        @_successMessage
+        <button type="button" class="btn-close" @onclick="() => _successMessage = null"></button>
+    </div>
+}
+
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row align-items-end">
+            <div class="col-md-4">
+                <div class="form-floating mb-3">
+                    <select id="statusFilter" class="form-select" @onchange="OnStatusFilterChanged">
+                        <option value="">Pending (Draft)</option>
+                        @foreach (var status in _allStatuses)
+                        {
+                            <option value="@((int)status)">@status</option>
+                        }
+                    </select>
+                    <label for="statusFilter">Filter by Status</label>
+                </div>
+            </div>
+            <div class="col-md-2 mb-3">
+                <button class="btn btn-primary" @onclick="LoadRequestsAsync">
+                    Search
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (_loading)
+{
+    <div class="d-flex justify-content-center my-4">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+}
+else if (_requests is null || _requests.Count == 0)
+{
+    <div class="alert alert-info" role="alert">
+        No standing tee time requests found matching the selected criteria.
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped table-hover align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th>Member #</th>
+                    <th>Member Name</th>
+                    <th>Day</th>
+                    <th>Requested Time</th>
+                    <th>Tolerance</th>
+                    <th>Start Date</th>
+                    <th>End Date</th>
+                    <th>Players</th>
+                    <th>Priority</th>
+                    <th>Approved Time</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var req in _requests)
+                {
+                    <tr>
+                        <td><span class="badge bg-secondary">@req.BookingMember.MembershipNumber</span></td>
+                        <td>@req.BookingMember.User.FullName</td>
+                        <td>@req.RequestedDayOfWeek</td>
+                        <td>@req.RequestedTime.ToString("h:mm tt")</td>
+                        <td>±@req.ToleranceMinutes min</td>
+                        <td>@req.StartDate.ToString("yyyy-MM-dd")</td>
+                        <td>@req.EndDate.ToString("yyyy-MM-dd")</td>
+                        <td>@req.ParticipantCount</td>
+                        <td>@(req.PriorityNumber?.ToString() ?? "—")</td>
+                        <td>@(req.ApprovedTime?.ToString("h:mm tt") ?? "—")</td>
+                        <td>
+                            <span class="badge @UiHelpers.GetStandingTeeTimeStatusBadgeClass(req.Status)">
+                                @req.Status
+                            </span>
+                        </td>
+                        <td>
+                            @if (req.Status == StandingTeeTimeStatus.Draft)
+                            {
+                                @if (_approveId == req.Id)
+                                {
+                                    <div class="d-flex flex-column gap-2" style="min-width: 220px;">
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text">Approved Time</span>
+                                            <input type="time" class="form-control form-control-sm"
+                                                   value="@_approveTime"
+                                                   @onchange="e => _approveTime = e.Value?.ToString() ?? string.Empty" />
+                                        </div>
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text">Priority #</span>
+                                            <input type="number" class="form-control form-control-sm" min="1"
+                                                   value="@_approvePriority"
+                                                   @onchange="e => _approvePriority = int.TryParse(e.Value?.ToString(), out var p) ? p : null" />
+                                        </div>
+                                        <div class="d-flex gap-1">
+                                            <button class="btn btn-sm btn-success flex-grow-1"
+                                                    disabled="@_processing"
+                                                    @onclick="() => ConfirmApproveAsync(req.Id)">
+                                                @if (_processing)
+                                                {
+                                                    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                                                }
+                                                Confirm
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-secondary"
+                                                    disabled="@_processing"
+                                                    @onclick="CancelApprove">
+                                                Cancel
+                                            </button>
+                                        </div>
+                                    </div>
+                                }
+                                else if (_denyConfirmId == req.Id)
+                                {
+                                    <div class="d-flex flex-column gap-2" style="min-width: 180px;">
+                                        <span class="text-danger small fw-semibold">Deny this request?</span>
+                                        <div class="d-flex gap-1">
+                                            <button class="btn btn-sm btn-danger flex-grow-1"
+                                                    disabled="@_processing"
+                                                    @onclick="() => ConfirmDenyAsync(req.Id)">
+                                                @if (_processing)
+                                                {
+                                                    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                                                }
+                                                Confirm
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-secondary"
+                                                    disabled="@_processing"
+                                                    @onclick="CancelDeny">
+                                                Cancel
+                                            </button>
+                                        </div>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-sm btn-success me-1"
+                                            @onclick="() => BeginApprove(req)">
+                                        Approve
+                                    </button>
+                                    <button class="btn btn-sm btn-danger"
+                                            @onclick="() => BeginDeny(req.Id)">
+                                        Deny
+                                    </button>
+                                }
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private List<StandingTeeTime>? _requests;
+    private StandingTeeTimeStatus? _selectedStatus;
+    private bool _loading = true;
+    private bool _processing;
+    private string? _errorMessage;
+    private string? _successMessage;
+
+    private int? _approveId;
+    private string _approveTime = string.Empty;
+    private int? _approvePriority;
+
+    private int? _denyConfirmId;
+
+    private static readonly StandingTeeTimeStatus[] _allStatuses =
+        Enum.GetValues<StandingTeeTimeStatus>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadRequestsAsync();
+    }
+
+    private void OnStatusFilterChanged(ChangeEventArgs e)
+    {
+        var value = e.Value?.ToString();
+        _selectedStatus = string.IsNullOrEmpty(value)
+            ? null
+            : (StandingTeeTimeStatus)int.Parse(value);
+    }
+
+    private async Task LoadRequestsAsync()
+    {
+        _loading = true;
+        _approveId = null;
+        _denyConfirmId = null;
+        try
+        {
+            IQueryable<StandingTeeTime> query = DbContext.StandingTeeTimes;
+
+            if (_selectedStatus.HasValue)
+                query = query.Where(s => s.Status == _selectedStatus.Value);
+            else
+                query = query.Where(s => s.Status == StandingTeeTimeStatus.Draft);
+
+            _requests = await query
+                .OrderBy(s => s.RequestedDayOfWeek)
+                .ThenBy(s => s.RequestedTime)
+                .ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load standing tee time requests");
+            _errorMessage = "Failed to load requests. Please try again.";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void BeginApprove(StandingTeeTime req)
+    {
+        _approveId = req.Id;
+        _approveTime = req.RequestedTime.ToString("HH:mm");
+        _approvePriority = req.PriorityNumber;
+        _denyConfirmId = null;
+        _successMessage = null;
+        _errorMessage = null;
+    }
+
+    private void CancelApprove()
+    {
+        _approveId = null;
+    }
+
+    private async Task ConfirmApproveAsync(int id)
+    {
+        _processing = true;
+        _successMessage = null;
+        _errorMessage = null;
+        try
+        {
+            var entry = await DbContext.StandingTeeTimes.FindAsync(id);
+            if (entry is null)
+            {
+                _errorMessage = "Request not found.";
+                return;
+            }
+
+            TimeOnly? approvedTime = TimeOnly.TryParse(_approveTime, out var t) ? t : null;
+
+            entry.Status = StandingTeeTimeStatus.Approved;
+            entry.ApprovedTime = approvedTime;
+            entry.PriorityNumber = _approvePriority;
+
+            await DbContext.SaveChangesAsync();
+
+            _successMessage = $"Request #{id} has been approved.";
+            _approveId = null;
+            await LoadRequestsAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to approve standing tee time {Id}", id);
+            _errorMessage = "Failed to approve request. Please try again.";
+        }
+        finally
+        {
+            _processing = false;
+        }
+    }
+
+    private void BeginDeny(int id)
+    {
+        _denyConfirmId = id;
+        _approveId = null;
+        _successMessage = null;
+        _errorMessage = null;
+    }
+
+    private void CancelDeny()
+    {
+        _denyConfirmId = null;
+    }
+
+    private async Task ConfirmDenyAsync(int id)
+    {
+        _processing = true;
+        _successMessage = null;
+        _errorMessage = null;
+        try
+        {
+            var entry = await DbContext.StandingTeeTimes.FindAsync(id);
+            if (entry is null)
+            {
+                _errorMessage = "Request not found.";
+                return;
+            }
+
+            entry.Status = StandingTeeTimeStatus.Denied;
+            await DbContext.SaveChangesAsync();
+
+            _successMessage = $"Request #{id} has been denied.";
+            _denyConfirmId = null;
+            await LoadRequestsAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to deny standing tee time {Id}", id);
+            _errorMessage = "Failed to deny request. Please try again.";
+        }
+        finally
+        {
+            _processing = false;
+        }
+    }
+}
