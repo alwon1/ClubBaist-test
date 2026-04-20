@@ -32,7 +32,7 @@ There are **multiple explicit feedback points** built into this process — not 
 - UC-PS-01 use case approved; scope narrowed to raw score entry only
 - Key decisions: `List<uint?>` for hole scores, tee color as only round metadata, one-way navigation (no existing entity changes)
 
-### Stage 4 — Design Documentation (IN PROGRESS)
+### Stage 4 — Design Documentation (DONE)
 
 **Scope:** MVP = entering and recording a player's raw golf score only. Nothing outside that is in scope. Stored per round: booking FK, member FK, tee color, 18 hole scores, submission timestamp, acting user.
 
