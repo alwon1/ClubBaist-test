@@ -4,14 +4,14 @@
         <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)">
             <NotAuthorized>
                 <AuthorizeView>
-                    <Authorized>
+                    <Authorized Context="authState">
                         <div class="container mt-4">
                             <h3>Access Denied</h3>
                             <p>You do not have permission to access this page.</p>
                             <a href="/" class="btn btn-outline-secondary">Back to Home</a>
                         </div>
                     </Authorized>
-                    <NotAuthorized>
+                    <NotAuthorized Context="authState">
                         <RedirectToLogin />
                     </NotAuthorized>
                 </AuthorizeView>
