@@ -39,17 +39,17 @@ else
     @if (eligibleBookings is { Count: > 0 })
     {
         <QuickGrid Items="@eligibleBookings.AsQueryable()" Class="table table-striped">
-            <TemplateColumn Title="Date" SortBy="@(GridSort<EligibleBooking>.ByDescending(b => b.TeeTimeSlotStart))">
+            <TemplateColumn Title="Date" SortBy="@(GridSort<TeeTimeBooking>.ByDescending(b => b.TeeTimeSlotStart))">
                 @context.TeeTimeSlotStart.ToString("MMM d, yyyy")
             </TemplateColumn>
-            <TemplateColumn Title="Time" SortBy="@(GridSort<EligibleBooking>.ByDescending(b => b.TeeTimeSlotStart))">
+            <TemplateColumn Title="Time" SortBy="@(GridSort<TeeTimeBooking>.ByDescending(b => b.TeeTimeSlotStart))">
                 @context.TeeTimeSlotStart.ToString("h:mm tt")
             </TemplateColumn>
             <TemplateColumn Title="Players">
                 @context.ParticipantCount
             </TemplateColumn>
             <TemplateColumn Title="Action">
-                <a href="@($"/scores/record?bookingId={context.BookingId}&amp;memberId={currentMemberId}")"
+                <a href="@($"/scores/record?bookingId={context.Id}&amp;memberId={currentMemberId}")"
                    class="btn btn-sm btn-primary">
                     Record Score
                 </a>
@@ -91,7 +91,7 @@ else
     private string? errorMessage;
 
     private int currentMemberId;
-    private IReadOnlyList<EligibleBooking> eligibleBookings = [];
+    private IReadOnlyList<TeeTimeBooking> eligibleBookings = [];
     private IReadOnlyList<GolfRound> pastRounds = [];
 
     protected override async Task OnInitializedAsync()

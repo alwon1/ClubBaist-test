@@ -41,13 +41,6 @@ public class ScoreServiceTests
         return await Domain2TestData.CreateSeasonAndSlotAsync(seasonService, db, date, new TimeOnly(8, 0));
     }
 
-    // --- injectable clock ---
-
-    private sealed class FixedClock(DateTime fixedNow) : IScoreClock
-    {
-        public DateTime Now => fixedNow;
-    }
-
     // --- throwing DbContext for T-27 ---
 
     private sealed class ThrowingOnSaveDbContext(AppDbContext inner) : IAppDbContext2
@@ -105,17 +98,16 @@ public class ScoreServiceTests
         var db = provider.GetRequiredService<AppDbContext>();
         var userManager = provider.GetRequiredService<UserManager<ClubBaistUser>>();
         var seasonService = provider.GetRequiredService<SeasonService2>();
+        var svc = provider.GetRequiredService<ScoreService>();
 
         var level = await Domain2TestData.CreateMembershipLevelAsync(db, "SH", "Shareholder");
         var member = await Domain2TestData.CreateMemberAsync(userManager, db, level, "m1@t.com", "A", "B");
-        var (_, slot) = await Domain2TestData.CreateSeasonAndSlotAsync(seasonService, db,
-            DateOnly.FromDateTime(DateTime.Today.AddDays(-1)), new TimeOnly(8, 0));
-        await Domain2TestData.CreateBookingAsync(db, member, slot);
 
-        // Fixed clock: only 1 hour after slot start — inside the 2h lock
-        var fakeClock = new FixedClock(DateTime.SpecifyKind(slot.Start.AddHours(1), DateTimeKind.Unspecified));
-        var svc = new ScoreService(provider.GetRequiredService<IAppDbContext2>(),
-            provider.GetRequiredService<ILogger<ScoreService>>(), fakeClock);
+        // Slot that started ~1 hour ago — inside the 2h single-player lock
+        var slotTime = DateTime.Now.AddHours(-1);
+        var (_, slot) = await Domain2TestData.CreateSeasonAndSlotAsync(seasonService, db,
+            DateOnly.FromDateTime(slotTime), TimeOnly.FromDateTime(slotTime));
+        await Domain2TestData.CreateBookingAsync(db, member, slot);
 
         var result = await svc.GetEligibleBookingsAsync(member.Id);
 
@@ -123,7 +115,7 @@ public class ScoreServiceTests
     }
 
     [TestMethod]
-    public async Task T03_GetEligible_OnePlayerBookingExactly2HoursAgo_Included()
+    public async Task T03_GetEligible_OnePlayerBookingPast2HourLock_Included()
     {
         await using var host = await Domain2TestHost.CreateAsync();
         await using var scope = host.CreateScope();
@@ -132,17 +124,12 @@ public class ScoreServiceTests
         var db = provider.GetRequiredService<AppDbContext>();
         var userManager = provider.GetRequiredService<UserManager<ClubBaistUser>>();
         var seasonService = provider.GetRequiredService<SeasonService2>();
+        var svc = provider.GetRequiredService<ScoreService>();
 
         var level = await Domain2TestData.CreateMembershipLevelAsync(db, "SH", "Shareholder");
         var member = await Domain2TestData.CreateMemberAsync(userManager, db, level, "m1@t.com", "A", "B");
-        var (_, slot) = await Domain2TestData.CreateSeasonAndSlotAsync(seasonService, db,
-            DateOnly.FromDateTime(DateTime.Today.AddDays(-1)), new TimeOnly(8, 0));
+        var (_, slot) = await PastSlotAsync(seasonService, db);
         await Domain2TestData.CreateBookingAsync(db, member, slot);
-
-        // Fixed clock: exactly 2h after slot start — lock just elapsed
-        var fakeClock = new FixedClock(DateTime.SpecifyKind(slot.Start.AddHours(2), DateTimeKind.Unspecified));
-        var svc = new ScoreService(provider.GetRequiredService<IAppDbContext2>(),
-            provider.GetRequiredService<ILogger<ScoreService>>(), fakeClock);
 
         var result = await svc.GetEligibleBookingsAsync(member.Id);
 
@@ -168,9 +155,7 @@ public class ScoreServiceTests
         var booking = await Domain2TestData.CreateBookingAsync(db, member, slot);
 
         // Submit a round to mark it as scored
-        await svc.SubmitRoundAsync(
-            new SubmitRoundRequest(booking.Id, member.Id, GolfRound.TeeColor.White, ValidScores()),
-            "acting-user");
+        await svc.SubmitRoundAsync(booking.Id, member.Id, GolfRound.TeeColor.White, ValidScores(), "acting-user");
 
         var result = await svc.GetEligibleBookingsAsync(member.Id);
 
@@ -197,17 +182,16 @@ public class ScoreServiceTests
         var (_, slot2) = await Domain2TestData.CreateSeasonAndSlotAsync(seasonService, db,
             DateOnly.FromDateTime(DateTime.Today.AddDays(-3)), new TimeOnly(10, 0));
 
-        // Third slot from yesterday — use fixed clock to put it inside the lock
+        // Third slot ~1 hour ago — inside the 2h single-player lock
+        var slotTime = DateTime.Now.AddHours(-1);
         var (_, slot3) = await Domain2TestData.CreateSeasonAndSlotAsync(seasonService, db,
-            DateOnly.FromDateTime(DateTime.Today.AddDays(-1)), new TimeOnly(8, 0));
+            DateOnly.FromDateTime(slotTime), TimeOnly.FromDateTime(slotTime));
 
         await Domain2TestData.CreateBookingAsync(db, member, slot1);
         await Domain2TestData.CreateBookingAsync(db, member, slot2);
         await Domain2TestData.CreateBookingAsync(db, member, slot3);
 
-        var fakeClock = new FixedClock(DateTime.SpecifyKind(slot3.Start.AddHours(1), DateTimeKind.Unspecified));
-        var svc = new ScoreService(provider.GetRequiredService<IAppDbContext2>(),
-            provider.GetRequiredService<ILogger<ScoreService>>(), fakeClock);
+        var svc = provider.GetRequiredService<ScoreService>();
 
         var result = await svc.GetEligibleBookingsAsync(member.Id);
 
@@ -216,7 +200,7 @@ public class ScoreServiceTests
     }
 
     [TestMethod]
-    public async Task T06_GetEligible_TwoPlayerExactly2h30mElapsed_Included()
+    public async Task T06_GetEligible_TwoPlayerBookingPast2h30mLock_Included()
     {
         await using var host = await Domain2TestHost.CreateAsync();
         await using var scope = host.CreateScope();
@@ -225,17 +209,13 @@ public class ScoreServiceTests
         var db = provider.GetRequiredService<AppDbContext>();
         var userManager = provider.GetRequiredService<UserManager<ClubBaistUser>>();
         var seasonService = provider.GetRequiredService<SeasonService2>();
+        var svc = provider.GetRequiredService<ScoreService>();
 
         var level = await Domain2TestData.CreateMembershipLevelAsync(db, "SH", "Shareholder");
         var member = await Domain2TestData.CreateMemberAsync(userManager, db, level, "m1@t.com", "A", "B");
         var extra = await Domain2TestData.CreateMemberAsync(userManager, db, level, "m2@t.com", "C", "D");
-        var (_, slot) = await Domain2TestData.CreateSeasonAndSlotAsync(seasonService, db,
-            DateOnly.FromDateTime(DateTime.Today.AddDays(-1)), new TimeOnly(8, 0));
+        var (_, slot) = await PastSlotAsync(seasonService, db);
         await Domain2TestData.CreateBookingAsync(db, member, slot, [extra]);
-
-        var fakeClock = new FixedClock(DateTime.SpecifyKind(slot.Start.AddHours(2.5), DateTimeKind.Unspecified));
-        var svc = new ScoreService(provider.GetRequiredService<IAppDbContext2>(),
-            provider.GetRequiredService<ILogger<ScoreService>>(), fakeClock);
 
         var result = await svc.GetEligibleBookingsAsync(member.Id);
 
@@ -244,7 +224,7 @@ public class ScoreServiceTests
     }
 
     [TestMethod]
-    public async Task T07_GetEligible_ThreePlayerExactly3hElapsed_Included()
+    public async Task T07_GetEligible_ThreePlayerBookingPast3hLock_Included()
     {
         await using var host = await Domain2TestHost.CreateAsync();
         await using var scope = host.CreateScope();
@@ -253,18 +233,14 @@ public class ScoreServiceTests
         var db = provider.GetRequiredService<AppDbContext>();
         var userManager = provider.GetRequiredService<UserManager<ClubBaistUser>>();
         var seasonService = provider.GetRequiredService<SeasonService2>();
+        var svc = provider.GetRequiredService<ScoreService>();
 
         var level = await Domain2TestData.CreateMembershipLevelAsync(db, "SH", "Shareholder");
         var member = await Domain2TestData.CreateMemberAsync(userManager, db, level, "m1@t.com", "A", "B");
         var extra1 = await Domain2TestData.CreateMemberAsync(userManager, db, level, "m2@t.com", "C", "D");
         var extra2 = await Domain2TestData.CreateMemberAsync(userManager, db, level, "m3@t.com", "E", "F");
-        var (_, slot) = await Domain2TestData.CreateSeasonAndSlotAsync(seasonService, db,
-            DateOnly.FromDateTime(DateTime.Today.AddDays(-1)), new TimeOnly(8, 0));
+        var (_, slot) = await PastSlotAsync(seasonService, db);
         await Domain2TestData.CreateBookingAsync(db, member, slot, [extra1, extra2]);
-
-        var fakeClock = new FixedClock(DateTime.SpecifyKind(slot.Start.AddHours(3), DateTimeKind.Unspecified));
-        var svc = new ScoreService(provider.GetRequiredService<IAppDbContext2>(),
-            provider.GetRequiredService<ILogger<ScoreService>>(), fakeClock);
 
         var result = await svc.GetEligibleBookingsAsync(member.Id);
 
@@ -273,7 +249,7 @@ public class ScoreServiceTests
     }
 
     [TestMethod]
-    public async Task T08_GetEligible_FourPlayerExactly3h30mElapsed_Included()
+    public async Task T08_GetEligible_FourPlayerBookingPast3h30mLock_Included()
     {
         await using var host = await Domain2TestHost.CreateAsync();
         await using var scope = host.CreateScope();
@@ -282,19 +258,15 @@ public class ScoreServiceTests
         var db = provider.GetRequiredService<AppDbContext>();
         var userManager = provider.GetRequiredService<UserManager<ClubBaistUser>>();
         var seasonService = provider.GetRequiredService<SeasonService2>();
+        var svc = provider.GetRequiredService<ScoreService>();
 
         var level = await Domain2TestData.CreateMembershipLevelAsync(db, "SH", "Shareholder");
         var member = await Domain2TestData.CreateMemberAsync(userManager, db, level, "m1@t.com", "A", "B");
         var extra1 = await Domain2TestData.CreateMemberAsync(userManager, db, level, "m2@t.com", "C", "D");
         var extra2 = await Domain2TestData.CreateMemberAsync(userManager, db, level, "m3@t.com", "E", "F");
         var extra3 = await Domain2TestData.CreateMemberAsync(userManager, db, level, "m4@t.com", "G", "H");
-        var (_, slot) = await Domain2TestData.CreateSeasonAndSlotAsync(seasonService, db,
-            DateOnly.FromDateTime(DateTime.Today.AddDays(-1)), new TimeOnly(8, 0));
+        var (_, slot) = await PastSlotAsync(seasonService, db);
         await Domain2TestData.CreateBookingAsync(db, member, slot, [extra1, extra2, extra3]);
-
-        var fakeClock = new FixedClock(DateTime.SpecifyKind(slot.Start.AddHours(3.5), DateTimeKind.Unspecified));
-        var svc = new ScoreService(provider.GetRequiredService<IAppDbContext2>(),
-            provider.GetRequiredService<ILogger<ScoreService>>(), fakeClock);
 
         var result = await svc.GetEligibleBookingsAsync(member.Id);
 
@@ -380,12 +352,10 @@ public class ScoreServiceTests
         var (_, slot) = await PastSlotAsync(seasonService, db);
         var booking = await Domain2TestData.CreateBookingAsync(db, member, slot);
 
-        var result = await svc.SubmitRoundAsync(
-            new SubmitRoundRequest(booking.Id, member.Id, GolfRound.TeeColor.White, ValidScores()),
-            "acting-user-id");
+        var result = await svc.SubmitRoundAsync(booking.Id, member.Id, GolfRound.TeeColor.White, ValidScores(), "acting-user-id");
 
         Assert.IsTrue(result.Success);
-        Assert.IsNull(result.ErrorMessage);
+        Assert.IsNull(result.Error);
         Assert.AreEqual(1, await db.GolfRounds.CountAsync(r => r.TeeTimeBookingId == booking.Id));
     }
 
@@ -406,9 +376,7 @@ public class ScoreServiceTests
         var (_, slot) = await PastSlotAsync(seasonService, db);
         var booking = await Domain2TestData.CreateBookingAsync(db, member, slot);
 
-        await svc.SubmitRoundAsync(
-            new SubmitRoundRequest(booking.Id, member.Id, GolfRound.TeeColor.White, ValidScores()),
-            "acting-user-id");
+        await svc.SubmitRoundAsync(booking.Id, member.Id, GolfRound.TeeColor.White, ValidScores(), "acting-user-id");
 
         var round = await db.GolfRounds.AsNoTracking().SingleAsync(r => r.TeeTimeBookingId == booking.Id);
         Assert.AreNotEqual(default(DateTime), round.SubmittedAt);
@@ -433,9 +401,7 @@ public class ScoreServiceTests
         var booking = await Domain2TestData.CreateBookingAsync(db, member, slot);
 
         const string actingUserId = "clerk-abc-123";
-        await svc.SubmitRoundAsync(
-            new SubmitRoundRequest(booking.Id, member.Id, GolfRound.TeeColor.Blue, ValidScores()),
-            actingUserId);
+        await svc.SubmitRoundAsync(booking.Id, member.Id, GolfRound.TeeColor.Blue, ValidScores(), actingUserId);
 
         var round = await db.GolfRounds.AsNoTracking().SingleAsync(r => r.TeeTimeBookingId == booking.Id);
         Assert.AreEqual(actingUserId, round.ActingUserId);
@@ -458,12 +424,10 @@ public class ScoreServiceTests
         var (_, slot) = await PastSlotAsync(seasonService, db);
         var booking = await Domain2TestData.CreateBookingAsync(db, member, slot);
 
-        await svc.SubmitRoundAsync(
-            new SubmitRoundRequest(booking.Id, member.Id, GolfRound.TeeColor.Red, ValidScores()),
-            "user");
+        await svc.SubmitRoundAsync(booking.Id, member.Id, GolfRound.TeeColor.Red, ValidScores(), "user");
 
         var eligible = await svc.GetEligibleBookingsAsync(member.Id);
-        Assert.IsFalse(eligible.Any(b => b.BookingId == booking.Id));
+        Assert.IsFalse(eligible.Any(b => b.Id == booking.Id));
     }
 
     // =========================================================================
@@ -487,9 +451,7 @@ public class ScoreServiceTests
         var (_, slot) = await PastSlotAsync(seasonService, db);
         var booking = await Domain2TestData.CreateBookingAsync(db, member, slot);
 
-        var result = await svc.SubmitRoundAsync(
-            new SubmitRoundRequest(booking.Id, 99999, GolfRound.TeeColor.White, ValidScores()),
-            "user");
+        var result = await svc.SubmitRoundAsync(booking.Id, 99999, GolfRound.TeeColor.White, ValidScores(), "user");
 
         Assert.IsFalse(result.Success);
         Assert.AreEqual(0, await db.GolfRounds.CountAsync());
@@ -513,9 +475,7 @@ public class ScoreServiceTests
         var (_, slot) = await PastSlotAsync(seasonService, db);
         var booking = await Domain2TestData.CreateBookingAsync(db, booker, slot);
 
-        var result = await svc.SubmitRoundAsync(
-            new SubmitRoundRequest(booking.Id, otherMember.Id, GolfRound.TeeColor.White, ValidScores()),
-            "user");
+        var result = await svc.SubmitRoundAsync(booking.Id, otherMember.Id, GolfRound.TeeColor.White, ValidScores(), "user");
 
         Assert.IsFalse(result.Success);
         Assert.AreEqual(0, await db.GolfRounds.CountAsync());
@@ -531,24 +491,21 @@ public class ScoreServiceTests
         var db = provider.GetRequiredService<AppDbContext>();
         var userManager = provider.GetRequiredService<UserManager<ClubBaistUser>>();
         var seasonService = provider.GetRequiredService<SeasonService2>();
+        var svc = provider.GetRequiredService<ScoreService>();
 
         var level = await Domain2TestData.CreateMembershipLevelAsync(db, "SH", "Shareholder");
         var member = await Domain2TestData.CreateMemberAsync(userManager, db, level, "m1@t.com", "A", "B");
+
+        // Slot that started ~1 hour ago — inside the 2h single-player lock
+        var slotTime = DateTime.Now.AddHours(-1);
         var (_, slot) = await Domain2TestData.CreateSeasonAndSlotAsync(seasonService, db,
-            DateOnly.FromDateTime(DateTime.Today.AddDays(-1)), new TimeOnly(8, 0));
+            DateOnly.FromDateTime(slotTime), TimeOnly.FromDateTime(slotTime));
         var booking = await Domain2TestData.CreateBookingAsync(db, member, slot);
 
-        // 1h after slot start — inside the 2h lock
-        var fakeClock = new FixedClock(DateTime.SpecifyKind(slot.Start.AddHours(1), DateTimeKind.Unspecified));
-        var svc = new ScoreService(provider.GetRequiredService<IAppDbContext2>(),
-            provider.GetRequiredService<ILogger<ScoreService>>(), fakeClock);
-
-        var result = await svc.SubmitRoundAsync(
-            new SubmitRoundRequest(booking.Id, member.Id, GolfRound.TeeColor.White, ValidScores()),
-            "user");
+        var result = await svc.SubmitRoundAsync(booking.Id, member.Id, GolfRound.TeeColor.White, ValidScores(), "user");
 
         Assert.IsFalse(result.Success);
-        Assert.IsNotNull(result.ErrorMessage);
+        Assert.IsNotNull(result.Error);
         Assert.AreEqual(0, await db.GolfRounds.CountAsync());
     }
 
@@ -568,12 +525,10 @@ public class ScoreServiceTests
         var member = await Domain2TestData.CreateMemberAsync(userManager, db, level, "m1@t.com", "A", "B");
         var (_, slot) = await PastSlotAsync(seasonService, db);
         var booking = await Domain2TestData.CreateBookingAsync(db, member, slot);
-        var request = new SubmitRoundRequest(booking.Id, member.Id, GolfRound.TeeColor.White, ValidScores());
-
-        var first = await svc.SubmitRoundAsync(request, "user");
+        var first = await svc.SubmitRoundAsync(booking.Id, member.Id, GolfRound.TeeColor.White, ValidScores(), "user");
         Assert.IsTrue(first.Success);
 
-        var second = await svc.SubmitRoundAsync(request, "user");
+        var second = await svc.SubmitRoundAsync(booking.Id, member.Id, GolfRound.TeeColor.White, ValidScores(), "user");
 
         Assert.IsFalse(second.Success);
         Assert.AreEqual(1, await db.GolfRounds.CountAsync());
@@ -597,9 +552,7 @@ public class ScoreServiceTests
         var booking = await Domain2TestData.CreateBookingAsync(db, member, slot);
 
         var scores = Enumerable.Repeat<uint?>(5, 17).ToList().AsReadOnly();
-        var result = await svc.SubmitRoundAsync(
-            new SubmitRoundRequest(booking.Id, member.Id, GolfRound.TeeColor.White, scores),
-            "user");
+        var result = await svc.SubmitRoundAsync(booking.Id, member.Id, GolfRound.TeeColor.White, scores, "user");
 
         Assert.IsFalse(result.Success);
         Assert.AreEqual(0, await db.GolfRounds.CountAsync());
@@ -623,9 +576,7 @@ public class ScoreServiceTests
         var booking = await Domain2TestData.CreateBookingAsync(db, member, slot);
 
         var scores = Enumerable.Repeat<uint?>(5, 19).ToList().AsReadOnly();
-        var result = await svc.SubmitRoundAsync(
-            new SubmitRoundRequest(booking.Id, member.Id, GolfRound.TeeColor.White, scores),
-            "user");
+        var result = await svc.SubmitRoundAsync(booking.Id, member.Id, GolfRound.TeeColor.White, scores, "user");
 
         Assert.IsFalse(result.Success);
         Assert.AreEqual(0, await db.GolfRounds.CountAsync());
@@ -650,9 +601,7 @@ public class ScoreServiceTests
 
         var scores = Enumerable.Repeat<uint?>(5, 18).ToList();
         scores[9] = null;
-        var result = await svc.SubmitRoundAsync(
-            new SubmitRoundRequest(booking.Id, member.Id, GolfRound.TeeColor.White, scores.AsReadOnly()),
-            "user");
+        var result = await svc.SubmitRoundAsync(booking.Id, member.Id, GolfRound.TeeColor.White, scores.AsReadOnly(), "user");
 
         Assert.IsFalse(result.Success);
         Assert.AreEqual(0, await db.GolfRounds.CountAsync());
@@ -677,9 +626,7 @@ public class ScoreServiceTests
 
         var scores = Enumerable.Repeat<uint?>(5, 18).ToList();
         scores[0] = 0;
-        var result = await svc.SubmitRoundAsync(
-            new SubmitRoundRequest(booking.Id, member.Id, GolfRound.TeeColor.White, scores.AsReadOnly()),
-            "user");
+        var result = await svc.SubmitRoundAsync(booking.Id, member.Id, GolfRound.TeeColor.White, scores.AsReadOnly(), "user");
 
         Assert.IsFalse(result.Success);
         Assert.AreEqual(0, await db.GolfRounds.CountAsync());
@@ -704,9 +651,7 @@ public class ScoreServiceTests
 
         var scores = Enumerable.Repeat<uint?>(5, 18).ToList();
         scores[17] = 21;
-        var result = await svc.SubmitRoundAsync(
-            new SubmitRoundRequest(booking.Id, member.Id, GolfRound.TeeColor.White, scores.AsReadOnly()),
-            "user");
+        var result = await svc.SubmitRoundAsync(booking.Id, member.Id, GolfRound.TeeColor.White, scores.AsReadOnly(), "user");
 
         Assert.IsFalse(result.Success);
         Assert.AreEqual(0, await db.GolfRounds.CountAsync());
@@ -729,9 +674,7 @@ public class ScoreServiceTests
         var (_, slot) = await PastSlotAsync(seasonService, db);
         var booking = await Domain2TestData.CreateBookingAsync(db, member, slot);
 
-        var result = await svc.SubmitRoundAsync(
-            new SubmitRoundRequest(booking.Id, member.Id, GolfRound.TeeColor.White, ValidScores(20)),
-            "user");
+        var result = await svc.SubmitRoundAsync(booking.Id, member.Id, GolfRound.TeeColor.White, ValidScores(20), "user");
 
         Assert.IsTrue(result.Success);
         Assert.AreEqual(1, await db.GolfRounds.CountAsync());
@@ -754,9 +697,7 @@ public class ScoreServiceTests
         var (_, slot) = await PastSlotAsync(seasonService, db);
         var booking = await Domain2TestData.CreateBookingAsync(db, member, slot);
 
-        var result = await svc.SubmitRoundAsync(
-            new SubmitRoundRequest(booking.Id, member.Id, GolfRound.TeeColor.White, ValidScores(1)),
-            "user");
+        var result = await svc.SubmitRoundAsync(booking.Id, member.Id, GolfRound.TeeColor.White, ValidScores(1), "user");
 
         Assert.IsTrue(result.Success);
         Assert.AreEqual(1, await db.GolfRounds.CountAsync());
@@ -787,28 +728,24 @@ public class ScoreServiceTests
             memberId = member.Id;
         }
 
-        var request = new SubmitRoundRequest(bookingId, memberId, GolfRound.TeeColor.White, ValidScores());
-
         // Scope 1: commits successfully
         await using var scope1 = host.CreateScope();
         var svc1 = new ScoreService(
             scope1.ServiceProvider.GetRequiredService<IAppDbContext2>(),
-            scope1.ServiceProvider.GetRequiredService<ILogger<ScoreService>>(),
-            scope1.ServiceProvider.GetRequiredService<IScoreClock>());
-        var result1 = await svc1.SubmitRoundAsync(request, "user-1");
+            scope1.ServiceProvider.GetRequiredService<ILogger<ScoreService>>());
+        var result1 = await svc1.SubmitRoundAsync(bookingId, memberId, GolfRound.TeeColor.White, ValidScores(), "user-1");
         Assert.IsTrue(result1.Success);
 
         // Scope 2: hits the unique index constraint
         await using var scope2 = host.CreateScope();
         var svc2 = new ScoreService(
             scope2.ServiceProvider.GetRequiredService<IAppDbContext2>(),
-            scope2.ServiceProvider.GetRequiredService<ILogger<ScoreService>>(),
-            scope2.ServiceProvider.GetRequiredService<IScoreClock>());
-        var result2 = await svc2.SubmitRoundAsync(request, "user-2");
+            scope2.ServiceProvider.GetRequiredService<ILogger<ScoreService>>());
+        var result2 = await svc2.SubmitRoundAsync(bookingId, memberId, GolfRound.TeeColor.White, ValidScores(), "user-2");
 
         Assert.IsFalse(result2.Success);
-        Assert.IsNotNull(result2.ErrorMessage);
-        Assert.IsTrue(result2.ErrorMessage!.Contains("already submitted", StringComparison.OrdinalIgnoreCase));
+        Assert.IsNotNull(result2.Error);
+        Assert.IsTrue(result2.Error!.Contains("already submitted", StringComparison.OrdinalIgnoreCase));
 
         // Only one round stored
         await using var verifyScope = host.CreateScope();
@@ -832,15 +769,10 @@ public class ScoreServiceTests
         var (_, slot) = await PastSlotAsync(seasonService, db);
         var booking = await Domain2TestData.CreateBookingAsync(db, member, slot);
 
-        // Use a throwing DbContext wrapper; real strategy still handles the transaction
         var throwingDb = new ThrowingOnSaveDbContext(db);
-        var svc = new ScoreService(throwingDb,
-            provider.GetRequiredService<ILogger<ScoreService>>(),
-            provider.GetRequiredService<IScoreClock>());
+        var svc = new ScoreService(throwingDb, provider.GetRequiredService<ILogger<ScoreService>>());
 
-        var result = await svc.SubmitRoundAsync(
-            new SubmitRoundRequest(booking.Id, member.Id, GolfRound.TeeColor.White, ValidScores()),
-            "user");
+        var result = await svc.SubmitRoundAsync(booking.Id, member.Id, GolfRound.TeeColor.White, ValidScores(), "user");
 
         Assert.IsFalse(result.Success);
         Assert.AreEqual(0, await db.GolfRounds.CountAsync());
@@ -892,13 +824,9 @@ public class ScoreServiceTests
         var booking1 = await Domain2TestData.CreateBookingAsync(db, member, slot1);
         var booking2 = await Domain2TestData.CreateBookingAsync(db, member, slot2);
 
-        await svc.SubmitRoundAsync(
-            new SubmitRoundRequest(booking1.Id, member.Id, GolfRound.TeeColor.Red, ValidScores(4)),
-            "user");
+        await svc.SubmitRoundAsync(booking1.Id, member.Id, GolfRound.TeeColor.Red, ValidScores(4), "user");
         await Task.Delay(10); // ensure distinct SubmittedAt
-        await svc.SubmitRoundAsync(
-            new SubmitRoundRequest(booking2.Id, member.Id, GolfRound.TeeColor.White, ValidScores(5)),
-            "user");
+        await svc.SubmitRoundAsync(booking2.Id, member.Id, GolfRound.TeeColor.White, ValidScores(5), "user");
 
         var rounds = await svc.GetRoundsByMemberAsync(member.Id);
 
@@ -932,12 +860,8 @@ public class ScoreServiceTests
         var booking1 = await Domain2TestData.CreateBookingAsync(db, member1, slot1);
         var booking2 = await Domain2TestData.CreateBookingAsync(db, member2, slot2);
 
-        await svc.SubmitRoundAsync(
-            new SubmitRoundRequest(booking1.Id, member1.Id, GolfRound.TeeColor.White, ValidScores(4)),
-            "user");
-        await svc.SubmitRoundAsync(
-            new SubmitRoundRequest(booking2.Id, member2.Id, GolfRound.TeeColor.Blue, ValidScores(6)),
-            "user");
+        await svc.SubmitRoundAsync(booking1.Id, member1.Id, GolfRound.TeeColor.White, ValidScores(4), "user");
+        await svc.SubmitRoundAsync(booking2.Id, member2.Id, GolfRound.TeeColor.Blue, ValidScores(6), "user");
 
         var rounds1 = await svc.GetRoundsByMemberAsync(member1.Id);
         var rounds2 = await svc.GetRoundsByMemberAsync(member2.Id);

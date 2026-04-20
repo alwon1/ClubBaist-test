@@ -44,7 +44,6 @@ public static class ServiceCollectionExtensions2
         services.AddScoped<BookingService>();
         services.AddScoped<SeasonService2>();
 
-        services.AddScoped<IScoreClock, SystemScoreClock>();
         services.AddScoped<ScoreService>();
 
         return services;

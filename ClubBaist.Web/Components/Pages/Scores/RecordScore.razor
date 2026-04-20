@@ -288,14 +288,8 @@ else if (booking is not null)
             var user = authState.User;
             var actingUserId = user.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
-            var request = new SubmitRoundRequest(
-                BookingId: BookingId,
-                MembershipId: MemberId,
-                TeeColor: selectedTeeColor,
-                Scores: scores.ToList()
-            );
-
-            var result = await ScoreService.SubmitRoundAsync(request, actingUserId);
+            var result = await ScoreService.SubmitRoundAsync(
+                BookingId, MemberId, selectedTeeColor, scores.ToList(), actingUserId);
 
             if (result.Success)
             {
@@ -303,7 +297,7 @@ else if (booking is not null)
             }
             else
             {
-                errorMessage = result.ErrorMessage ?? "Score submission failed. Please try again.";
+                errorMessage = result.Error ?? "Score submission failed. Please try again.";
             }
         }
         catch (Exception ex)
