@@ -218,4 +218,23 @@ internal static class Domain2TestData
 
         return (season, slot);
     }
+
+    public static async Task<TeeTimeBooking> CreateBookingAsync(
+        AppDbContext db,
+        MemberShipInfo bookingMember,
+        TeeTimeSlot slot,
+        List<MemberShipInfo>? additionalParticipants = null)
+    {
+        var booking = new TeeTimeBooking
+        {
+            TeeTimeSlotStart = slot.Start,
+            TeeTimeSlot = slot,
+            BookingMemberId = bookingMember.Id,
+            BookingMember = bookingMember,
+            AdditionalParticipants = additionalParticipants ?? []
+        };
+        db.TeeTimeBookings.Add(booking);
+        await db.SaveChangesAsync();
+        return booking;
+    }
 }

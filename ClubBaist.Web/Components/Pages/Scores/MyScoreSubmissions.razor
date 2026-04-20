@@ -1,0 +1,138 @@
+@page "/scores/my"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = AppRoles.Member)]
+
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.EntityFrameworkCore
+@using ClubBaist.Domain2
+@using ClubBaist.Domain2.Entities.Scoring
+@using ClubBaist.Services2.Scoring
+
+@inject IAppDbContext2 DbContext
+@inject ScoreService ScoreService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ILogger<MyScoreSubmissions> Logger
+
+<PageTitle>My Score Submissions - Club Baist</PageTitle>
+
+<h3 class="mb-4">My Score Submissions</h3>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
+@if (isLoading)
+{
+    <div class="text-center my-4">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+}
+else
+{
+    <h5 class="mt-3 mb-2">Eligible rounds available to score</h5>
+
+    @if (eligibleBookings is { Count: > 0 })
+    {
+        <QuickGrid Items="@eligibleBookings.AsQueryable()" Class="table table-striped">
+            <TemplateColumn Title="Date" SortBy="@(GridSort<EligibleBooking>.ByDescending(b => b.TeeTimeSlotStart))">
+                @context.TeeTimeSlotStart.ToString("MMM d, yyyy")
+            </TemplateColumn>
+            <TemplateColumn Title="Time" SortBy="@(GridSort<EligibleBooking>.ByDescending(b => b.TeeTimeSlotStart))">
+                @context.TeeTimeSlotStart.ToString("h:mm tt")
+            </TemplateColumn>
+            <TemplateColumn Title="Players">
+                @context.ParticipantCount
+            </TemplateColumn>
+            <TemplateColumn Title="Action">
+                <a href="@($"/scores/record?bookingId={context.BookingId}&amp;memberId={currentMemberId}")"
+                   class="btn btn-sm btn-primary">
+                    Record Score
+                </a>
+            </TemplateColumn>
+        </QuickGrid>
+    }
+    else
+    {
+        <div class="alert alert-info">No eligible rounds available to score at this time.</div>
+    }
+
+    <h5 class="mt-4 mb-2">Past Submitted Rounds</h5>
+
+    @if (pastRounds is { Count: > 0 })
+    {
+        <QuickGrid Items="@pastRounds.AsQueryable()" Class="table table-striped">
+            <TemplateColumn Title="Date" SortBy="@(GridSort<GolfRound>.ByDescending(r => r.TeeTimeBooking.TeeTimeSlotStart))">
+                @context.TeeTimeBooking.TeeTimeSlotStart.ToString("MMM d, yyyy")
+            </TemplateColumn>
+            <TemplateColumn Title="Tee" SortBy="@(GridSort<GolfRound>.ByAscending(r => r.SelectedTeeColor))">
+                @context.SelectedTeeColor
+            </TemplateColumn>
+            <TemplateColumn Title="Total Score">
+                @(context.Scores.Sum(s => (long?)s) ?? 0)
+            </TemplateColumn>
+            <TemplateColumn Title="Submitted On" SortBy="@(GridSort<GolfRound>.ByDescending(r => r.SubmittedAt))">
+                @context.SubmittedAt.ToString("MMM d, yyyy h:mm tt")
+            </TemplateColumn>
+        </QuickGrid>
+    }
+    else
+    {
+        <div class="alert alert-info">No submitted rounds on record.</div>
+    }
+}
+
+@code {
+    private bool isLoading = true;
+    private string? errorMessage;
+
+    private int currentMemberId;
+    private IReadOnlyList<EligibleBooking> eligibleBookings = [];
+    private IReadOnlyList<GolfRound> pastRounds = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            var userId = Guid.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+            var member = await DbContext.MemberShips
+                .FirstOrDefaultAsync(m => m.UserId == userId);
+
+            if (member is null)
+            {
+                errorMessage = "Member account not found.";
+                isLoading = false;
+                return;
+            }
+
+            currentMemberId = member.Id;
+
+            eligibleBookings = await ScoreService.GetEligibleBookingsAsync(currentMemberId);
+            pastRounds = await ScoreService.GetRoundsByMemberAsync(currentMemberId);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load score submissions");
+            errorMessage = "An unexpected error occurred while loading your score submissions. Please try again later.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

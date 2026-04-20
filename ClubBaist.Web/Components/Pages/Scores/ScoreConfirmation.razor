@@ -1,0 +1,125 @@
+@page "/scores/confirmation"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize]
+
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.EntityFrameworkCore
+@using ClubBaist.Domain2
+@using ClubBaist.Domain2.Entities.Scoring
+@using ClubBaist.Services2.Scoring
+
+@inject IAppDbContext2 DbContext
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ILogger<ScoreConfirmation> Logger
+
+<PageTitle>Score Submitted - Club Baist</PageTitle>
+
+<h3 class="mb-4">Score Submitted</h3>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
+@if (isLoading)
+{
+    <div class="text-center my-4">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+}
+else if (round is not null)
+{
+    <div class="card mb-4" style="max-width: 480px;">
+        <div class="card-header bg-success text-white">
+            <strong>Round Confirmed</strong>
+        </div>
+        <div class="card-body">
+            <dl class="row mb-0">
+                <dt class="col-sm-5">Date</dt>
+                <dd class="col-sm-7">@round.TeeTimeBooking.TeeTimeSlotStart.ToString("dddd, MMMM d, yyyy")</dd>
+
+                <dt class="col-sm-5">Time</dt>
+                <dd class="col-sm-7">@round.TeeTimeBooking.TeeTimeSlotStart.ToString("h:mm tt")</dd>
+
+                <dt class="col-sm-5">Tee Colour</dt>
+                <dd class="col-sm-7">@round.SelectedTeeColor</dd>
+
+                <dt class="col-sm-5">Total Score</dt>
+                <dd class="col-sm-7">@(round.Scores.Sum(s => (long?)s) ?? 0)</dd>
+
+                @if (isAdmin)
+                {
+                    <dt class="col-sm-5">Member</dt>
+                    <dd class="col-sm-7">@($"{round.Member.User.FirstName} {round.Member.User.LastName}".Trim())</dd>
+                }
+
+                <dt class="col-sm-5">Submitted On</dt>
+                <dd class="col-sm-7">@round.SubmittedAt.ToString("MMM d, yyyy h:mm tt")</dd>
+            </dl>
+        </div>
+    </div>
+
+    <div class="d-flex gap-2">
+        @if (isAdmin)
+        {
+            <a href="/scores/staff" class="btn btn-primary">Return to Score Console</a>
+        }
+        else
+        {
+            <a href="/scores/my" class="btn btn-primary">Return to My Score Submissions</a>
+        }
+    </div>
+}
+else
+{
+    <div class="alert alert-warning">No submitted round found for this booking.</div>
+    <a href="/scores/my" class="btn btn-outline-secondary">Return to My Score Submissions</a>
+}
+
+@code {
+    [SupplyParameterFromQuery]
+    public int BookingId { get; set; }
+
+    [SupplyParameterFromQuery]
+    public int MemberId { get; set; }
+
+    private bool isLoading = true;
+    private string? errorMessage;
+
+    private GolfRound? round;
+    private bool isAdmin;
+
+    protected override async Task OnInitializedAsync()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            isAdmin = user.IsInRole(AppRoles.Admin);
+
+            round = await DbContext.GolfRounds
+                .Include(r => r.TeeTimeBooking)
+                .Include(r => r.Member).ThenInclude(m => m.User)
+                .Where(r => r.TeeTimeBookingId == BookingId && r.MembershipId == MemberId)
+                .OrderByDescending(r => r.SubmittedAt)
+                .FirstOrDefaultAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load confirmation for booking {BookingId}, member {MemberId}", BookingId, MemberId);
+            errorMessage = "An unexpected error occurred while loading the confirmation. Please try again later.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

@@ -1,5 +1,6 @@
 using System.Data;
 using ClubBaist.Domain2.Entities.Membership;
+using ClubBaist.Domain2.Entities.Scoring;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -23,6 +24,9 @@ public interface IAppDbContext2
     DbSet<SpecialEvent> SpecialEvents { get; }
     DbSet<Season> Seasons { get; }
     DbSet<StandingTeeTime> StandingTeeTimes { get; }
+
+    /// <summary>Submitted golf rounds, one per tee time booking per member.</summary>
+    DbSet<GolfRound> GolfRounds { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     Task<IDbContextTransaction> BeginTransactionAsync(IsolationLevel isolationLevel, CancellationToken cancellationToken = default);
