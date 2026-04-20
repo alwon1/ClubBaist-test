@@ -70,4 +70,4 @@ jobs:
       # Microsoft.Testing.Platform (set in global.json) requires --solution rather than
       # a positional path; a positional path exits with code 1 before any tests run.
       - name: Test
-        run: dotnet test --solution ClubBaist.slnx --no-restore
+        run: dotnet test --solution ClubBaist.slnx --no-build --no-restore

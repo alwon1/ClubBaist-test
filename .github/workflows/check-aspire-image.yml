@@ -23,13 +23,17 @@ jobs:
         id: expected
         run: |
           TAG=$(grep 'SQLSERVER_IMAGE_TAG:' .github/workflows/ci.yml | head -1 | sed 's/.*SQLSERVER_IMAGE_TAG: *//' | tr -d '[:space:]')
+          if [ -z "$TAG" ]; then
+            echo "Could not read SQLSERVER_IMAGE_TAG from ci.yml — skipping check"
+            exit 0
+          fi
           echo "tag=$TAG" >> $GITHUB_OUTPUT
 
       - name: Fetch Aspire default SQL Server image tag
         id: aspire
         run: |
           TAG=$(curl -sf https://raw.githubusercontent.com/dotnet/aspire/main/src/Aspire.Hosting.SqlServer/SqlServerContainerImageTags.cs \
-            | grep -oP '(?<=Tag = ")[^"]+')
+            | grep -oP '(?<=Tag = ")[^"]+' || true)
           if [ -z "$TAG" ]; then
             echo "Could not read tag from Aspire source — skipping check"
             exit 0
@@ -37,7 +41,7 @@ jobs:
           echo "tag=$TAG" >> $GITHUB_OUTPUT
 
       - name: Open issue if tags differ
-        if: steps.aspire.outputs.tag != '' && steps.aspire.outputs.tag != steps.expected.outputs.tag
+        if: steps.aspire.outputs.tag != '' && steps.expected.outputs.tag != '' && steps.aspire.outputs.tag != steps.expected.outputs.tag
         uses: actions/github-script@v7
         env:
           ASPIRE_TAG: ${{ steps.aspire.outputs.tag }}
@@ -48,11 +52,12 @@ jobs:
             const expectedTag = process.env.EXPECTED_TAG;
             const title = 'CI: Aspire SQL Server image tag has changed';
 
-            // Avoid duplicate issues
-            const { data: open } = await github.rest.issues.listForRepo({
+            // Avoid duplicate issues — paginate in case there are more than 30 open issues
+            const open = await github.paginate(github.rest.issues.listForRepo, {
               owner: context.repo.owner,
               repo: context.repo.repo,
               state: 'open',
+              per_page: 100,
             });
             if (open.some(i => i.title === title)) return;
 
