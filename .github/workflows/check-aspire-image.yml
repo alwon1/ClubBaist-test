@@ -32,8 +32,20 @@ jobs:
       - name: Fetch Aspire default SQL Server image tag
         id: aspire
         run: |
-          TAG=$(curl -sf https://raw.githubusercontent.com/dotnet/aspire/main/src/Aspire.Hosting.SqlServer/SqlServerContainerImageTags.cs \
-            | grep -oP '(?<=Tag = ")[^"]+' || true)
+          # Resolve the pinned Aspire.Hosting.SqlServer version so we compare against
+          # the exact release this repo uses, not whatever main happens to be.
+          VERSION=$(grep -rh 'Aspire.Hosting.SqlServer' --include='*.csproj' | grep -oP '(?<=Version=")[^"]+' | head -1)
+          FILE="src/Aspire.Hosting.SqlServer/SqlServerContainerImageTags.cs"
+          TAG=""
+          if [ -n "$VERSION" ]; then
+            TAG=$(curl -sf "https://raw.githubusercontent.com/dotnet/aspire/v${VERSION}/${FILE}" \
+              | grep -oP '(?<=Tag = ")[^"]+' || true)
+          fi
+          # Fall back to main if the version tag doesn't exist or resolve failed
+          if [ -z "$TAG" ]; then
+            TAG=$(curl -sf "https://raw.githubusercontent.com/dotnet/aspire/main/${FILE}" \
+              | grep -oP '(?<=Tag = ")[^"]+' || true)
+          fi
           if [ -z "$TAG" ]; then
             echo "Could not read tag from Aspire source — skipping check"
             exit 0
@@ -68,7 +80,7 @@ jobs:
               body: [
                 '## Aspire SQL Server image tag mismatch',
                 '',
-                `\`Aspire.Hosting.SqlServer\` (main branch) now defaults to \`mcr.microsoft.com/mssql/server:${aspireTag}\`,`,
+                `\`Aspire.Hosting.SqlServer\` now defaults to \`mcr.microsoft.com/mssql/server:${aspireTag}\`,`,
                 `but \`.github/workflows/ci.yml\` is caching \`mcr.microsoft.com/mssql/server:${expectedTag}\`.`,
                 '',
                 '### To fix',
