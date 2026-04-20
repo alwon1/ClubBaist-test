@@ -8,6 +8,7 @@ These diagrams are intentionally low-fidelity and are meant to support planning 
 flowchart TD
     A[Home / Dashboard] --> B[Membership Applications]
     A --> C[Tee Time Reservations]
+    A --> D[Player Scores]
 
     B --> B1[New Membership Application]
     B --> B2[Application Submission Confirmation]
@@ -23,13 +24,19 @@ flowchart TD
     C4 --> C5[Reservation Detail / Maintenance]
     C --> C6[Staff Reservation Console]
 
+    D --> D1[My Score Submissions\nEligible Bookings List]
+    D1 --> D2[Score Entry Form\n18-Hole Scorecard]
+    D2 --> D3[Submission Confirmation]
+    D --> D4[Staff Score Entry Console\nMember Search]
+    D4 --> D2
+
     classDef member fill:#E8F3FF,stroke:#3B82F6,color:#0F172A;
     classDef admin fill:#FEF3C7,stroke:#D97706,color:#0F172A;
     classDef shared fill:#ECFDF5,stroke:#059669,color:#0F172A;
 
     class A shared;
-    class B1,B2,B3,C1,C2,C3,C4,C5 member;
-    class B4,B5,B6,C6 admin;
+    class B1,B2,B3,C1,C2,C3,C4,C5,D1,D2,D3 member;
+    class B4,B5,B6,C6,D4 admin;
 ```
 
 ## 2) Membership Application Flow (Applicant + Committee)
