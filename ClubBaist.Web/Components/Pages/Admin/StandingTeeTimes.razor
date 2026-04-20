@@ -48,17 +48,17 @@ else
 {
     <div class="mb-3">
         <div class="d-flex gap-2 flex-wrap">
-            @foreach (var status in new[] { (string?)null, "Draft", "Approved", "Denied", "Cancelled" })
+            @foreach (var status in new[] { (StandingTeeTimeStatus?)null, StandingTeeTimeStatus.Draft, StandingTeeTimeStatus.Approved, StandingTeeTimeStatus.Denied, StandingTeeTimeStatus.Cancelled })
             {
                 <button class="btn btn-sm @(statusFilter == status ? "btn-primary" : "btn-outline-secondary")"
                         @onclick="() => SetFilter(status)">
-                    @(status ?? "All") @if (status is null)
+                    @(status.HasValue ? status.Value.ToString() : "All") @if (!status.HasValue)
                     {
                         <span class="badge bg-secondary ms-1">@allRequests.Count</span>
                     }
                     else
                     {
-                        var count = allRequests.Count(r => r.Status.ToString() == status);
+                        var count = allRequests.Count(r => r.Status == status.Value);
                         if (count > 0) { <span class="badge bg-secondary ms-1">@count</span> }
                     }
                 </button>
@@ -68,7 +68,7 @@ else
 
     var filtered = statusFilter is null
         ? allRequests
-        : allRequests.Where(r => r.Status.ToString() == statusFilter).ToList();
+        : allRequests.Where(r => r.Status == statusFilter.Value).ToList();
 
     @if (filtered.Count == 0)
     {
@@ -185,7 +185,7 @@ else
     private bool isProcessing;
     private string? errorMessage;
     private string? successMessage;
-    private string? statusFilter;
+    private StandingTeeTimeStatus? statusFilter;
 
     private IReadOnlyList<StandingTeeTime>? allRequests;
 
@@ -220,7 +220,7 @@ else
         }
     }
 
-    private void SetFilter(string? status)
+    private void SetFilter(StandingTeeTimeStatus? status)
     {
         statusFilter = status;
     }

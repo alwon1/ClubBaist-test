@@ -286,8 +286,8 @@ else
                 ToleranceMinutes = toleranceMinutes,
                 StartDate = startDate,
                 EndDate = endDate,
+                AdditionalParticipants = players,
             };
-            request.AdditionalParticipants.AddRange(players);
 
             var (success, serviceError) = await StandingTeeTimeService.SubmitRequestAsync(request);
 
