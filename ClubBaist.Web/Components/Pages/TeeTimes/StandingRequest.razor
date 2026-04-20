@@ -1,6 +1,6 @@
 @page "/teetimes/standing/request"
 @rendermode InteractiveServer
-@attribute [Authorize(Roles = AppRoles.Member)]
+@attribute [Authorize(Policy = AppRoles.Permissions.BookStandingTeeTime)]
 
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Authorization
@@ -40,13 +40,6 @@ else if (isLoading)
         <div class="spinner-border" role="status">
             <span class="visually-hidden">Loading...</span>
         </div>
-    </div>
-}
-else if (!hasPermission)
-{
-    <div class="alert alert-warning">
-        <p>You do not have permission to request a standing tee time. This feature is available to Shareholder members only.</p>
-        <a href="/" class="btn btn-outline-secondary mt-2">Back to Home</a>
     </div>
 }
 else
@@ -154,7 +147,6 @@ else
 @code {
     private bool isLoading = true;
     private bool isSubmitting;
-    private bool hasPermission;
     private string? errorMessage;
     private string? successMessage;
 
@@ -176,10 +168,6 @@ else
             var user = authState.User;
             var userId = Guid.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-            hasPermission = user.HasClaim(
-                AppRoles.ClaimTypes.Permission,
-                AppRoles.Permissions.BookStandingTeeTime);
-
             currentMember = await DbContext.MemberShips
                 .FirstOrDefaultAsync(m => m.UserId == userId);
 
@@ -190,13 +178,11 @@ else
                 return;
             }
 
-            allMembers = hasPermission
-                ? await DbContext.MemberShips
-                    .AsNoTracking()
-                    .OrderBy(m => m.User.LastName)
-                    .ThenBy(m => m.User.FirstName)
-                    .ToListAsync()
-                : [];
+            allMembers = await DbContext.MemberShips
+                .AsNoTracking()
+                .OrderBy(m => m.User.LastName)
+                .ThenBy(m => m.User.FirstName)
+                .ToListAsync();
         }
         catch (Exception ex)
         {
