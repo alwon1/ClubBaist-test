@@ -1,6 +1,6 @@
 @page "/teetimes/standing/my"
 @rendermode InteractiveServer
-@attribute [Authorize(Roles = AppRoles.Member)]
+@attribute [Authorize(Policy = AppRoles.Permissions.BookStandingTeeTime)]
 
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Authorization
@@ -18,10 +18,7 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h3>My Standing Tee Time Requests</h3>
-    @if (hasPermission)
-    {
-        <a href="/teetimes/standing/request" class="btn btn-primary">New Request</a>
-    }
+    <a href="/teetimes/standing/request" class="btn btn-primary">New Request</a>
 </div>
 
 @if (!string.IsNullOrEmpty(errorMessage))
@@ -46,10 +43,7 @@ else if (requests is null || requests.Count == 0)
 {
     <div class="alert alert-info">
         You have no standing tee time requests.
-        @if (hasPermission)
-        {
-            <a href="/teetimes/standing/request" class="alert-link ms-1">Submit a new request.</a>
-        }
+        <a href="/teetimes/standing/request" class="alert-link ms-1">Submit a new request.</a>
     </div>
 }
 else
@@ -107,7 +101,6 @@ else
 
 @code {
     private bool isLoading = true;
-    private bool hasPermission;
     private string? errorMessage;
     private string? successMessage;
     private int? cancelConfirmId;
@@ -130,10 +123,6 @@ else
             var authState = await AuthStateProvider.GetAuthenticationStateAsync();
             var user = authState.User;
             var userId = Guid.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
-
-            hasPermission = user.HasClaim(
-                AppRoles.ClaimTypes.Permission,
-                AppRoles.Permissions.BookStandingTeeTime);
 
             var member = await DbContext.MemberShips.FirstOrDefaultAsync(m => m.UserId == userId);
             if (member is null)

@@ -9,12 +9,16 @@ public class StandingTeeTimeService(IAppDbContext2 db, ILogger<StandingTeeTimeSe
     public async Task<IReadOnlyList<StandingTeeTime>> GetAllAsync() =>
         await db.StandingTeeTimes
             .AsNoTracking()
+            .Include(s => s.BookingMember).ThenInclude(m => m.User)
+            .Include(s => s.AdditionalParticipants).ThenInclude(p => p.User)
             .OrderByDescending(s => s.Id)
             .ToListAsync();
 
     public async Task<IReadOnlyList<StandingTeeTime>> GetForMemberAsync(int memberId) =>
         await db.StandingTeeTimes
             .AsNoTracking()
+            .Include(s => s.BookingMember).ThenInclude(m => m.User)
+            .Include(s => s.AdditionalParticipants).ThenInclude(p => p.User)
             .Where(s => s.BookingMemberId == memberId)
             .OrderByDescending(s => s.Id)
             .ToListAsync();
@@ -25,6 +29,20 @@ public class StandingTeeTimeService(IAppDbContext2 db, ILogger<StandingTeeTimeSe
     /// </summary>
     public async Task<(bool Success, string? ErrorMessage)> SubmitRequestAsync(StandingTeeTime request)
     {
+        if (request.AdditionalParticipants.Count != 3)
+            return (false, "A standing tee time request requires exactly 3 additional players (foursome).");
+
+        if (request.EndDate <= request.StartDate)
+            return (false, "End date must be after start date.");
+
+        var participantIds = request.AdditionalParticipants.Select(p => p.Id).ToList();
+
+        if (participantIds.Contains(request.BookingMemberId))
+            return (false, "The booking member cannot also be listed as an additional player.");
+
+        if (participantIds.Count != participantIds.Distinct().Count())
+            return (false, "Duplicate players are not allowed.");
+
         var hasActive = await db.StandingTeeTimes.AnyAsync(s =>
             s.BookingMemberId == request.BookingMemberId &&
             s.Status != StandingTeeTimeStatus.Cancelled &&
@@ -35,20 +53,6 @@ public class StandingTeeTimeService(IAppDbContext2 db, ILogger<StandingTeeTimeSe
             logger.LogWarning("Member {MemberId} already has an active standing tee time request.", request.BookingMemberId);
             return (false, "You already have an active standing tee time request.");
         }
-
-        if (request.EndDate <= request.StartDate)
-            return (false, "End date must be after start date.");
-
-        if (request.AdditionalParticipants.Count != 3)
-            return (false, "A standing tee time request requires exactly 3 additional players (foursome).");
-
-        var participantIds = request.AdditionalParticipants.Select(p => p.Id).ToList();
-
-        if (participantIds.Contains(request.BookingMemberId))
-            return (false, "The booking member cannot also be listed as an additional player.");
-
-        if (participantIds.Count != participantIds.Distinct().Count())
-            return (false, "Duplicate players are not allowed.");
 
         db.StandingTeeTimes.Add(request);
         var saved = await db.SaveChangesAsync() > 0;
@@ -67,6 +71,12 @@ public class StandingTeeTimeService(IAppDbContext2 db, ILogger<StandingTeeTimeSe
     /// </summary>
     public async Task<bool> ApproveAsync(int id, TimeOnly approvedTime, int? priorityNumber)
     {
+        if (priorityNumber.HasValue && priorityNumber.Value < 1)
+        {
+            logger.LogWarning("Approve rejected for standing tee time {Id}: priority number {Priority} is less than 1.", id, priorityNumber.Value);
+            return false;
+        }
+
         var request = await db.StandingTeeTimes.FindAsync(id);
         if (request is null)
         {

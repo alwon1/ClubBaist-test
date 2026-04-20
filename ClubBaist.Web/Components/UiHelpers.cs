@@ -27,4 +27,15 @@ public static class UiHelpers
         AppRoles.Member => "bg-success",
         _ => "bg-secondary"
     };
+
+    public static string GetStandingTeeTimeStatusBadgeClass(StandingTeeTimeStatus status) => status switch
+    {
+        StandingTeeTimeStatus.Draft => "bg-secondary",
+        StandingTeeTimeStatus.Approved => "bg-success",
+        StandingTeeTimeStatus.Allocated => "bg-primary",
+        StandingTeeTimeStatus.Unallocated => "bg-warning text-dark",
+        StandingTeeTimeStatus.Cancelled => "bg-danger",
+        StandingTeeTimeStatus.Denied => "bg-danger",
+        _ => "bg-secondary"
+    };
 }
