@@ -91,16 +91,7 @@ internal static class AppDbContextSeed
                 Name = seedLevel.Name
             };
 
-            foreach (var dayOfWeek in Enum.GetValues<DayOfWeek>())
-            {
-                level.Availabilities.Add(new MembershipLevelTeeTimeAvailability
-                {
-                    MembershipLevel = level,
-                    DayOfWeek = dayOfWeek,
-                    StartTime = new TimeOnly(7, 0),
-                    EndTime = new TimeOnly(19, 0)
-                });
-            }
+            AddAvailabilities(level);
 
             return level;
         }).ToList();
@@ -110,6 +101,91 @@ internal static class AppDbContextSeed
 
         return levels.ToDictionary(level => level.ShortCode, StringComparer.OrdinalIgnoreCase);
     }
+
+    private static void AddAvailabilities(MembershipLevel level)
+    {
+        switch (level.ShortCode.ToUpperInvariant())
+        {
+            case "SV": // Silver: weekdays two windows, weekends after 11 AM
+                foreach (var day in Weekdays)
+                {
+                    level.Availabilities.Add(new MembershipLevelTeeTimeAvailability
+                    {
+                        MembershipLevel = level,
+                        DayOfWeek = day,
+                        StartTime = new TimeOnly(7, 0),
+                        EndTime = new TimeOnly(15, 0)
+                    });
+                    level.Availabilities.Add(new MembershipLevelTeeTimeAvailability
+                    {
+                        MembershipLevel = level,
+                        DayOfWeek = day,
+                        StartTime = new TimeOnly(17, 30),
+                        EndTime = new TimeOnly(19, 0)
+                    });
+                }
+                foreach (var day in WeekendDays)
+                {
+                    level.Availabilities.Add(new MembershipLevelTeeTimeAvailability
+                    {
+                        MembershipLevel = level,
+                        DayOfWeek = day,
+                        StartTime = new TimeOnly(11, 0),
+                        EndTime = new TimeOnly(19, 0)
+                    });
+                }
+                break;
+
+            case "BR": // Bronze: weekdays two windows, weekends after 1 PM
+                foreach (var day in Weekdays)
+                {
+                    level.Availabilities.Add(new MembershipLevelTeeTimeAvailability
+                    {
+                        MembershipLevel = level,
+                        DayOfWeek = day,
+                        StartTime = new TimeOnly(7, 0),
+                        EndTime = new TimeOnly(15, 0)
+                    });
+                    level.Availabilities.Add(new MembershipLevelTeeTimeAvailability
+                    {
+                        MembershipLevel = level,
+                        DayOfWeek = day,
+                        StartTime = new TimeOnly(18, 0),
+                        EndTime = new TimeOnly(19, 0)
+                    });
+                }
+                foreach (var day in WeekendDays)
+                {
+                    level.Availabilities.Add(new MembershipLevelTeeTimeAvailability
+                    {
+                        MembershipLevel = level,
+                        DayOfWeek = day,
+                        StartTime = new TimeOnly(13, 0),
+                        EndTime = new TimeOnly(19, 0)
+                    });
+                }
+                break;
+
+            default: // Gold (SH, AS) and any other level: anytime all days
+                foreach (var day in Enum.GetValues<DayOfWeek>())
+                {
+                    level.Availabilities.Add(new MembershipLevelTeeTimeAvailability
+                    {
+                        MembershipLevel = level,
+                        DayOfWeek = day,
+                        StartTime = new TimeOnly(7, 0),
+                        EndTime = new TimeOnly(19, 0)
+                    });
+                }
+                break;
+        }
+    }
+
+    private static readonly DayOfWeek[] Weekdays =
+        [DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday];
+
+    private static readonly DayOfWeek[] WeekendDays =
+        [DayOfWeek.Saturday, DayOfWeek.Sunday];
 
     private static async Task<Dictionary<string, ClubBaistUser>> SeedUsersAsync(
         UserManager<ClubBaistUser> userManager,
