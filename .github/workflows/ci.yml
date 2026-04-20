@@ -28,12 +28,16 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nuget-
 
+      - name: Get week for Docker cache key
+        id: date
+        run: echo "week=$(date +%Y-%U)" >> $GITHUB_OUTPUT
+
       - name: Cache SQL Server Docker image
         id: cache-sqlserver
         uses: actions/cache@v4
         with:
           path: /tmp/sqlserver-image.tar
-          key: docker-sqlserver-2022-latest
+          key: docker-sqlserver-2022-latest-${{ steps.date.outputs.week }}
 
       - name: Load SQL Server Docker image from cache
         if: steps.cache-sqlserver.outputs.cache-hit == 'true'
