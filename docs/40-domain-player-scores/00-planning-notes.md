@@ -28,8 +28,39 @@ There are **multiple explicit feedback points** built into this process — not 
 - `docs/40-domain-player-scores/03-use-cases/UC-PS-01-record-player-score.md`
 - **Feedback Point #2**: Under review
 
-### Stage 3 — Incorporate Feedback & Finalize (PENDING)
-- **Feedback Point #3**: Final sign-off before implementation planning
+### Stage 3 — Incorporate Feedback & Finalize (DONE)
+- UC-PS-01 use case approved; scope narrowed to raw score entry only
+- Key decisions: `List<uint?>` for hole scores, tee color as only round metadata, one-way navigation (no existing entity changes)
+
+### Stage 4 — Design Documentation (IN PROGRESS)
+
+**Scope:** MVP = entering and recording a player's raw golf score only. Nothing outside that is in scope. Stored per round: booking FK, member FK, tee color, 18 hole scores, submission timestamp, acting user.
+
+**Execution order:** 19 steps with 8 review checkpoints. One commit per step; separate commits for corrections. See plan file for full table.
+
+**Design decisions confirmed:**
+
+| # | Decision |
+|---|----------|
+| D1 | Hole scores: `List<uint?>` on `GolfRound`, length 18. UI-side range validation (1–20) on blur and submit. |
+| D2 | No changes to existing entities (`TeeTimeBooking`, `MemberShipInfo`, user tables). One-way navigation only. |
+| D3 | Weather / course conditions deferred as UC-PS-06. `GolfRound` joinable via slot date — no future changes needed to `GolfRound`. |
+| D4 | Course rating, slope rating, par not stored in MVP. Tee color stored as the future lookup key for UC-PS-03. |
+| D5 | XML doc comments required on all new scoring domain classes and public members. Content sourced from design docs. |
+| D6 | UC-PS-05 (9-hole rounds) removed entirely. UC-PS-06 (weather) added as deferred. |
+
+**Feedback points added (Stage 4):**
+
+| Point | Step | What |
+|-------|------|------|
+| #4 | Step 3 | Overall design overview |
+| #5 | Step 4 | Site map diagram |
+| #6 | Step 8 | All UI wireframes |
+| #7 | Step 11 | Data class design + ER diagram |
+| #8 | Step 12 | Class relationship diagram |
+| #9 | Step 14 | ScoreService eligibility design |
+| #10 | Step 17 | Full service design |
+| #11 | Step 18 | Test plan |
 
 ---
 
@@ -68,11 +99,18 @@ There are **multiple explicit feedback points** built into this process — not 
 
 ---
 
-## Files Created
+## Files Created / Updated
 
 | File | Purpose |
 |------|---------|
 | `docs/40-domain-player-scores/00-scorekeeping-business-context.md` | Canonical scorekeeping business context |
-| `docs/40-domain-player-scores/02-use-case-catalog.md` | UC-PS catalog with deferred items |
+| `docs/40-domain-player-scores/02-use-case-catalog.md` | UC-PS catalog (UC-PS-05 removed; UC-PS-06 added) |
 | `docs/40-domain-player-scores/03-use-cases/UC-PS-01-record-player-score.md` | Fully dressed use case (happy path) |
+| `docs/40-domain-player-scores/00-deferred-planning-notes.md` | Design decisions for future use cases |
 | `docs/40-domain-player-scores/00-planning-notes.md` | This file |
+| `docs/40-domain-player-scores/01-overview.md` | Overall design direction overview (Stage 4) |
+| `docs/40-domain-player-scores/04-ui-design.md` | UI wireframes and flow diagrams (Stage 4) |
+| `docs/40-domain-player-scores/05-class-model/tee-color-enum.md` | TeeColor enum design (Stage 4) |
+| `docs/40-domain-player-scores/05-class-model/golf-round-class.md` | GolfRound entity design with ER + class diagrams (Stage 4) |
+| `docs/40-domain-player-scores/06-services/score-service.md` | ScoreService design (Stage 4) |
+| `docs/40-domain-player-scores/07-testing/score-service-test-plan.md` | Test plan (Stage 4) |
