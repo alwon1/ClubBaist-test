@@ -234,6 +234,34 @@ public class StandingTeeTimeServiceTests
     }
 
     [TestMethod]
+    public async Task ApproveAsync_InvalidPriorityNumber_ReturnsFalse()
+    {
+        await using var host = await Domain2TestHost.CreateAsync();
+        await using var scope = host.CreateScope();
+        var provider = scope.ServiceProvider;
+
+        var db = provider.GetRequiredService<AppDbContext>();
+        var userManager = provider.GetRequiredService<UserManager<ClubBaistUser>>();
+        var service = provider.GetRequiredService<StandingTeeTimeService>();
+
+        var level = await Domain2TestData.CreateMembershipLevelAsync(db, "SH", "Shareholder");
+        var bookingMember = await Domain2TestData.CreateMemberAsync(userManager, db, level, "bm@test.com", "Booking", "Member");
+        var p1 = await Domain2TestData.CreateMemberAsync(userManager, db, level, "p1@test.com", "Player", "One");
+        var p2 = await Domain2TestData.CreateMemberAsync(userManager, db, level, "p2@test.com", "Player", "Two");
+        var p3 = await Domain2TestData.CreateMemberAsync(userManager, db, level, "p3@test.com", "Player", "Three");
+
+        var (success, _) = await service.SubmitRequestAsync(BuildRequest(bookingMember, [p1, p2, p3]));
+        Assert.IsTrue(success);
+        var standing = await db.StandingTeeTimes.AsNoTracking().SingleAsync(s => s.BookingMemberId == bookingMember.Id);
+
+        var result = await service.ApproveAsync(standing.Id, new TimeOnly(8, 15), priorityNumber: 0);
+
+        Assert.IsFalse(result);
+        var unchanged = await db.StandingTeeTimes.AsNoTracking().SingleAsync(s => s.Id == standing.Id);
+        Assert.AreEqual(StandingTeeTimeStatus.Draft, unchanged.Status);
+    }
+
+    [TestMethod]
     public async Task DenyAsync_DraftRequest_SetsDeniedStatus()
     {
         await using var host = await Domain2TestHost.CreateAsync();

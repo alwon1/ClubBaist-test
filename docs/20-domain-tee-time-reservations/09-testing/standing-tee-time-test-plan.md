@@ -139,6 +139,20 @@ Source of truth maps to tests in `ClubBaist.Domain2.Tests`:
 
 ---
 
+### B3. Approve with invalid priority number — returns false
+**Test ID:** `UT-STT-APPROVE-003`  
+**Test method:** `ApproveAsync_InvalidPriorityNumber_ReturnsFalse`
+
+**Starting conditions:**
+- A valid standing tee time request exists with `Status = Draft`.
+- `priorityNumber` is `0` (less than the minimum of `1`).
+
+**Postconditions:**
+- Returns `false`.
+- Record status remains `Draft` (unchanged).
+
+---
+
 ## Test Group C — DenyAsync
 
 ### C1. Deny a Draft request — succeeds
@@ -234,19 +248,20 @@ Source of truth maps to tests in `ClubBaist.Domain2.Tests`:
 **Test method:** `AppDbContext_PersistsStandingTeeTime_AndGeneratedBookingLink`
 
 **Starting conditions:**
-- A season and slot exist in the in-memory DB.
+- A season and slot exist in the per-test SQL Server database provisioned by `Domain2TestHost` through Aspire.
 - A booking member (Shareholder) and one additional participant exist.
 - A `StandingTeeTime` with `Status = Approved` and `PriorityNumber = 5` is saved.
 - A `TeeTimeBooking` with `StandingTeeTimeId` referencing the above is saved.
 
 **Postconditions:**
-- Querying with `Include(AdditionalParticipants)` returns the correct participant with correct membership level.
+- Querying with `Include(AdditionalParticipants)` returns exactly 1 participant matching the expected `Id`.
+- Booking member's `MembershipLevel.ShortCode` is `"SH"`.
 - Querying `TeeTimeBookings` filtered by `StandingTeeTimeId` returns exactly 1 booking with the correct `Id`.
 
 ---
 
 ## Minimal Execution Gate
-Must pass at minimum: A1, A2, A4, B1, B2, C1, D1, D2, E1, E2.
+Must pass at minimum: A1, A2, A4, B1, B2, B3, C1, D1, D2, E1, E2.
 
 ## Definition of Done
 A test is complete when it asserts:

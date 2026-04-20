@@ -60,9 +60,9 @@ Task<(bool Success, string? ErrorMessage)> SubmitRequestAsync(StandingTeeTime re
 ```csharp
 Task<bool> ApproveAsync(int id, TimeOnly approvedTime, int? priorityNumber)
 ```
-**Inputs:** `id` of the standing request, `approvedTime` (the confirmed slot time), optional `priorityNumber`.
+**Inputs:** `id` of the standing request, `approvedTime` (the confirmed slot time), optional `priorityNumber` where, if provided, the value must be `>= 1`.
 
-**Output:** `true` on success; `false` if not found or not in `Draft` status.
+**Output:** `true` on success; `false` if not found, not in `Draft` status, or `priorityNumber` is provided with a value less than `1`.
 
 **Side effects:** Sets `Status = Approved`, `ApprovedTime`, and `PriorityNumber` on the persisted record.
 
