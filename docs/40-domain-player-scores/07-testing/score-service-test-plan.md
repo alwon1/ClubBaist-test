@@ -1,6 +1,6 @@
 # ScoreService – Test Plan
 
-High-level test case descriptions for UC-PS-01. These are not code — they describe the intent and expected outcome of each test. Implementation follows the existing MSTest + EF in-memory DB pattern in `ClubBaist.Domain2.Tests`.
+High-level test case descriptions for UC-PS-01. These are not code — they describe the intent and expected outcome of each test. Implementation should follow the existing MSTest + Aspire-backed real SQL Server test-host pattern in `ClubBaist.Domain2.Tests`.
 
 ---
 
@@ -28,7 +28,7 @@ Tests the time-lock filter and the "already scored" exclusion.
 | ID | Scenario | Expected outcome |
 |----|----------|-----------------|
 | T-11 | Valid request: active member, eligible booking, 18 scores all 1–20 | `GolfRound` stored; `ScoreSubmissionResult.Success = true` |
-| T-12 | Submitted `GolfRound.SubmittedAt` | Set to server-side UTC — not the value from any client field |
+| T-12 | Submitted `GolfRound.SubmittedAt` | Set server-side using club wall-clock (`DateTimeKind.Unspecified`) — not the value from any client field |
 | T-13 | Submitted `GolfRound.ActingUserId` | Matches `actingUserId` parameter; not a client-supplied value |
 | T-14 | After successful submission, booking no longer appears in `GetEligibleBookingsAsync` | Confirmed — `GolfRound` exists for booking |
 
@@ -58,7 +58,7 @@ Each test expects `ScoreSubmissionResult.Success = false` and no `GolfRound` sto
 
 | ID | Scenario | Expected outcome |
 |----|----------|-----------------|
-| T-26 | Two simultaneous submissions for the same booking; first commits successfully | Second transaction hits the unique index on `TeeTimeBookingId`; `DbUpdateException` caught; returns `ScoreSubmissionResult(false, "Score already submitted for this round")` |
+| T-26 | Two simultaneous submissions for the same booking by the same member; first commits successfully | Second transaction hits the composite unique index on `(TeeTimeBookingId, MembershipId)`; `DbUpdateException` caught; returns `ScoreSubmissionResult(false, "Score already submitted for this booking and member")` |
 | T-27 | Score service fails (simulated `SaveChangesAsync` exception) | Transaction rolled back; no `GolfRound` stored; `ScoreSubmissionResult.Success = false` |
 
 ---

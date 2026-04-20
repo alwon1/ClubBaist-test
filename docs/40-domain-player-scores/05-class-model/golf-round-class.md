@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Represents a single completed 18-hole golf round recorded by or on behalf of a member. Links a tee time booking to the member's hole-by-hole scores. One `GolfRound` per `TeeTimeBooking` — enforced by a unique index.
+Represents a single completed 18-hole golf round recorded by or on behalf of a member. Links a tee time booking to the member's hole-by-hole scores. One `GolfRound` per `TeeTimeBooking` per member — enforced by a composite unique index on `TeeTimeBookingId` and `MembershipId`.
 
 ## Namespace
 
@@ -27,7 +27,7 @@ public enum TeeColor { Red = 0, White = 1, Blue = 2 }
 | `Member` | `MemberShipInfo` | `[Required]` | Navigation property — required for EF Core to map the FK correctly |
 | `TeeColor` | `TeeColor` | `[Required]` | Tee colour chosen for this round; future lookup key for course/slope ratings |
 | `Scores` | `List<uint?>` | *(none)* | 18 nullable unsigned ints, initialized to length 18. Null = hole not yet entered. All 18 scores must be non-null and in range (1–20) before persisting, enforced by the service; UI validation may also exist for UX. |
-| `SubmittedAt` | `DateTime` | `[Required]` | Server-side timestamp of submission (set by the service, never from the client) |
+| `SubmittedAt` | `DateTime` | `[Required]` | Club wall-clock timestamp of submission (`DateTimeKind.Unspecified`) — set by the service, never from the client |
 | `ActingUserId` | `string` | `[Required]` `[MaxLength(450)]` | ASP.NET Identity user ID of the submitter — may be the member or a clerk acting on their behalf |
 
 ## Indexes

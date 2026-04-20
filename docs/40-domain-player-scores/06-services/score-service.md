@@ -111,9 +111,9 @@ BeginTransaction(Snapshot isolation)
 Return ScoreSubmissionResult(Success: true)
 ```
 
-**On unique-index violation** (concurrent duplicate): catch `DbUpdateException`, rollback, return `ScoreSubmissionResult(false, "Score already submitted for this round")`.
+**On unique-index violation** (concurrent duplicate on composite index): catch `DbUpdateException`, rollback, return `ScoreSubmissionResult(false, "Score already submitted for this booking and member")`.
 
-**SubmittedAt and ActingUserId** are set by the service from server-side context — never accepted from the client request.
+**SubmittedAt and ActingUserId** are set by the service from server-side context — never accepted from the client request. `SubmittedAt` uses `DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Unspecified)` (club wall-clock), consistent with the existing tee time domain convention.
 
 ---
 

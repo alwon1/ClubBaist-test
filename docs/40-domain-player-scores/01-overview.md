@@ -44,7 +44,7 @@ GolfRound (entity)
   Member                MemberShipInfo (navigation property — required for EF Core mapping)
   TeeColor              TeeColor (required)
   Scores                List<uint?>, length 18, initialized on construction
-  SubmittedAt           DateTime (UTC)
+  SubmittedAt           DateTime (club wall-clock, DateTimeKind.Unspecified)
   ActingUserId          string (ASP.NET Identity user ID — member or clerk)
 ```
 
