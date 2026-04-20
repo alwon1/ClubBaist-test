@@ -9,27 +9,30 @@ These diagrams are intentionally low-fidelity. They exist to support planning co
 ```mermaid
 flowchart LR
     M[Member] --> S1[My Score Submissions\nEligible Bookings List]
-    CL[Admin / Clerk] --> CS[Staff Score Entry Console\nSearch Member]
-    CS --> S1
+    CL[Admin / Clerk] --> CS[Today's Score Entry Console\nAll eligible rounds for today]
 
+    CS -->|Select round| S2[Score Entry Form\n18-Hole Scorecard]
     S1 -->|No eligible bookings| NA[Informative message:\nNo eligible rounds]
-    S1 -->|Select booking| S2[Score Entry Form\n18-Hole Scorecard]
+    S1 -->|Select booking| S2
 
     S2 --> SC{Submit}
     SC -->|Validation failure| S2
     SC -->|Success| S3[Submission Confirmation]
 
     S3 --> S1
+    S3 --> CS
 ```
 
 **Notes:**
-- Clerk path enters via member search (same pattern as Staff Reservation Console).
+- Clerk path enters via a day-level view of all eligible rounds — no member-search step.
+- Member path enters via their own eligible bookings list.
 - All eligibility and policy checks evaluate against the **member being scored**, not the acting clerk.
-- Validation failure returns the member to the form with fields highlighted — no page navigation.
+- Validation failure returns to the form with fields highlighted — no page navigation.
+- After confirmation, clerk returns to Today's Score Entry Console; member returns to their list.
 
 ---
 
-## B3 — Wireframe: My Score Submissions (Eligible Bookings List)
+## B3 — Wireframe: My Score Submissions (Member View — Eligible Bookings List)
 
 ```text
 +--------------------------------------------------------------------------------+
@@ -37,10 +40,10 @@ flowchart LR
 +--------------------------------------------------------------------------------+
 | Eligible rounds available to score:                                            |
 +--------------------------------------------------------------------------------+
-|  Date         Time    Players   Notes                                          |
-|  2026-05-18   07:50   4         -                                              |
-|  2026-05-10   10:20   2         -                                              |
-+----------------------------------+---------------------------------------------+
+|  Date         Time    Players                                                  |
+|  2026-05-18   07:50   4                                                        |
+|  2026-05-10   10:20   2                                                        |
++--------------------------------------------------------------------------------+
 |  [Enter Scores →]                                                              |
 +--------------------------------------------------------------------------------+
 
@@ -60,42 +63,61 @@ flowchart LR
 
 ---
 
-## B4 — Wireframe: Score Entry Form (18-Hole Scorecard)
+## B3b — Wireframe: Today's Score Entry Console (Clerk View)
 
 ```text
 +--------------------------------------------------------------------------------+
-| Record Score — May 18, 2026, 07:50, 4 Players                                 |
+| Today's Score Entry — May 18, 2026                                            |
 +--------------------------------------------------------------------------------+
-| Tee Colour:  ( ) Red   (•) White   ( ) Blue                                   |
+| Rounds eligible for score entry (time-lock elapsed, not yet scored):           |
 +--------------------------------------------------------------------------------+
-| FRONT NINE                                                                     |
-+-------+----+----+----+----+----+----+----+----+----+--------+                 |
-| Hole  |  1 |  2 |  3 |  4 |  5 |  6 |  7 |  8 |  9 |  OUT   |                 |
-| Par   |  4 |  5 |  3 |  4 |  4 |  4 |  4 |  5 |  4 |   37   |                 |
-| Score |[__]|[__]|[__]|[__]|[__]|[__]|[__]|[__]|[__]|   —    |                 |
-+-------+----+----+----+----+----+----+----+----+----+--------+                 |
-                                                                                 |
-| BACK NINE                                                                      |
-+-------+----+----+----+----+----+----+----+----+----+--------+--------+        |
-| Hole  | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 |  IN    | TOTAL  |        |
-| Par   |  4 |  4 |  3 |  5 |  4 |  4 |  3 |  5 |  4 |   36   |   73   |        |
-| Score |[__]|[__]|[__]|[__]|[__]|[__]|[__]|[__]|[__]|   —    |   —    |        |
-+-------+----+----+----+----+----+----+----+----+----+--------+--------+        |
-                                                                                 |
-| OUT and IN totals update as scores are entered.                                |
-| TOTAL = OUT + IN, displayed when all 18 holes are filled.                     |
-|                                                                                |
-| [Submit Scorecard]   [Cancel]                                                  |
+|  Member            Tee Time   Players   Status                                 |
+|  Smith, Jordan     07:30      4         Awaiting score                         |
+|  Das, Priya        07:50      2         Awaiting score                         |
+|  Rivers, Alex      08:10      3         Awaiting score                         |
+|  Patel, Kim        09:00      1         Score entered ✓                        |
++--------------------------------------------------------------------------------+
+|  [Enter Scores for Selected Member →]                                          |
 +--------------------------------------------------------------------------------+
 ```
 
 **Notes:**
+- Shows all tee time bookings from today where the time-lock has elapsed.
+- Already-scored bookings appear in the list as "Score entered ✓" (read-only, not selectable).
+- Bookings not yet past the time-lock do not appear.
+- Clerk selects a row and proceeds directly to the Score Entry Form — no separate member search step.
+- Score Entry Form header shows the member's name prominently when accessed via this console.
+
+---
+
+## B4 — Wireframe: Score Entry Form (18-Hole Scorecard)
+
+```text
++--------------------------------------------------------------------------------+
+| Record Score — May 18, 2026, 07:50                                             |
+| Member: Das, Priya  ·  2 Players                                               |
++--------------------------------------------------------------------------------+
+| Tee Colour:  ( ) Red   (•) White   ( ) Blue                                   |
++--------------------------------------------------------------------------------+
+| Hole  |  1 |  2 |  3 |  4 |  5 |  6 |  7 |  8 |  9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | TOTAL |
++-------+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+-------+
+| Par   |  4 |  5 |  3 |  4 |  4 |  4 |  4 |  5 |  4 |  4 |  4 |  3 |  5 |  4 |  4 |  3 |  5 |  4 |   73  |
+| Score |[__]|[__]|[__]|[__]|[__]|[__]|[__]|[__]|[__]|[__]|[__]|[__]|[__]|[__]|[__]|[__]|[__]|[__]|   —   |
++-------+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+-------+
+
+| TOTAL updates live as scores are entered. Displayed once all 18 holes are filled. |
+|                                                                                    |
+| [Submit Scorecard]   [Cancel]                                                      |
++------------------------------------------------------------------------------------+
+```
+
+**Notes:**
+- Single continuous row for all 18 holes — no front/back 9 grouping.
 - Par row is display-only (sourced from Club BAIST scorecard; no user input).
 - Score cells: numeric input, min 1, max 20. Validated on blur and on submit.
-- OUT updates live after holes 1–9; IN updates live after holes 10–18; TOTAL appears once all 18 are entered.
-- Hole 7 par shown as 4 (White/Blue) — tee colour selection does not change the displayed par in MVP; par display is informational only.
+- TOTAL = sum of all 18 hole scores, calculated by the system. Updates live as holes are filled.
 - Submit is disabled until all 18 holes have a value.
-- Clerk-assisted entry: member name and booking details shown in the header alongside the date/time.
+- Member name shown in the header when accessed via the Clerk console.
 
 ---
 
@@ -108,18 +130,19 @@ flowchart LR
 |                                                                                 |
 |   Round recorded successfully.                                                  |
 |                                                                                 |
-|   Date:         May 18, 2026                                                   |
-|   Tee Colour:   White                                                           |
-|   Front Nine:   43                                                              |
-|   Back Nine:    44                                                              |
-|   Total Score:  87                                                              |
+|   Member:        Das, Priya             (shown for clerk; hidden for member)   |
+|   Date:          May 18, 2026                                                  |
+|   Tee Colour:    White                                                          |
+|   Total Score:   87                                                             |
 |                                                                                 |
-|   [Return to My Score Submissions]                                              |
+|   [Return to My Score Submissions]          (member)                           |
+|   [Return to Today's Score Entry Console]   (clerk)                            |
 |                                                                                 |
 +--------------------------------------------------------------------------------+
 ```
 
 **Notes:**
 - No edit capability from this page — score is final once submitted.
-- "Return" link goes back to the Eligible Bookings List, where the submitted booking will now appear in the Past Submitted Rounds section (no longer in the eligible list).
-- Clerk-assisted: confirmation displayed to the clerk; member's name shown in the summary header.
+- Member sees their own confirmation without the "Member:" label.
+- Clerk sees the member name and returns to the day-level console.
+- Submitted booking moves to the "Score entered ✓" row in the clerk console and to Past Submitted Rounds in the member view.

@@ -27,7 +27,7 @@ flowchart TD
     D --> D1[My Score Submissions\nEligible Bookings List]
     D1 --> D2[Score Entry Form\n18-Hole Scorecard]
     D2 --> D3[Submission Confirmation]
-    D --> D4[Staff Score Entry Console\nMember Search]
+    D --> D4[Today's Score Entry Console\nAll Eligible Rounds for Today]
     D4 --> D2
 
     classDef member fill:#E8F3FF,stroke:#3B82F6,color:#0F172A;
