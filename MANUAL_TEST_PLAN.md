@@ -375,12 +375,6 @@
 ---
 
 ### TC-TEE-010 – Standing tee time request (Shareholder only)
-> ⚠️ **Status: Not yet executable — UI not yet implemented.**  
-> The domain model (`StandingTeeTime`) and database schema are in place, but no Razor page or
-> route for requesting or managing standing tee times has been built yet. See
-> `TODO-standing-tee-times.md` for the pending work items (member request page, admin
-> approve/deny page, and auto-generation of individual bookings).  
-> This test case should be executed once those pages are delivered.
 
 **Preconditions:** Logged in as `shareholder1@clubbaist.com`. A season exists.  
 **Steps (when UI is available):**
