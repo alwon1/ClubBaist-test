@@ -185,6 +185,13 @@ internal static class AppDbContextSeed
             ThrowIfFailed(await userManager.CreateAsync(user, DefaultPassword), $"create user '{seedUser.Email}'");
             ThrowIfFailed(await userManager.AddToRoleAsync(user, seedUser.Role), $"assign role '{seedUser.Role}' to '{seedUser.Email}'");
 
+            if (seedUser.MembershipLevelShortCode == "SH")
+            {
+                ThrowIfFailed(
+                    await userManager.AddClaimAsync(user, AppRoles.Claims.StandingTeeTimeBooking),
+                    $"add standing tee time claim to '{seedUser.Email}'");
+            }
+
             usersByEmail.Add(seedUser.Email, user);
         }
 
