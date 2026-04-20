@@ -1,8 +1,10 @@
-# TeeColor (Enum)
+# TeeColor (Enum — nested in GolfRound)
 
 ## Purpose
 
-Represents the tee colour a member selects when recording a round. Tee colour is the only round-level metadata stored in MVP — it serves as the future lookup key for course rating and slope rating when UC-PS-03 (Handicap Index) is implemented.
+Represents the tee colour a member selects when recording a round. Defined as a nested enum inside `GolfRound` — it has no meaning outside of a golf round.
+
+Tee colour is the only round-level metadata stored in MVP and serves as the future lookup key for course rating and slope rating when UC-PS-03 (Handicap Index) is implemented.
 
 ## Values
 
@@ -12,25 +14,8 @@ Represents the tee colour a member selects when recording a round. Tee colour is
 | `White` | White tees |
 | `Blue` | Blue tees |
 
-## Notes
+## Location
 
-- Stored as an integer column in the database via EF Core default enum mapping.
-- No data annotation is required on the enum itself; `[Required]` is applied on the `GolfRound.TeeColor` property.
-- The mapping from `TeeColor` + member gender to course/slope rating is deferred to UC-PS-03. `TeeColor` is stored now so that calculation is possible later without a schema change to `GolfRound`.
+Declared inside the `GolfRound` class. Referenced as `GolfRound.TeeColor` from outside the class.
 
-## Definition
-
-```csharp
-namespace ClubBaist.Domain2.Entities.Scoring;
-
-/// <summary>
-/// The tee colour selected by a member for a recorded golf round.
-/// Used as the lookup key for course and slope ratings in handicap calculation (UC-PS-03).
-/// </summary>
-public enum TeeColor
-{
-    Red = 0,
-    White = 1,
-    Blue = 2
-}
-```
+See `golf-round-class.md` for the full class definition including this enum.

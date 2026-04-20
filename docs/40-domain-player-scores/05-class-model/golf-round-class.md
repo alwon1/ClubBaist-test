@@ -8,6 +8,14 @@ Represents a single completed 18-hole golf round recorded by or on behalf of a m
 
 `ClubBaist.Domain2.Entities.Scoring`
 
+## Nested Types
+
+`TeeColor` is declared as a nested enum inside `GolfRound`. It has no meaning outside of a golf round.
+
+```csharp
+public enum TeeColor { Red = 0, White = 1, Blue = 2 }
+```
+
 ## Properties
 
 | Property | Type | Annotation(s) | Notes |
@@ -56,6 +64,11 @@ namespace ClubBaist.Domain2.Entities.Scoring;
 [Index(nameof(TeeTimeBookingId), IsUnique = true)]
 public class GolfRound
 {
+    /// <summary>
+    /// Tee colour selected for this round. Nested here because it has no meaning outside a golf round.
+    /// </summary>
+    public enum TeeColor { Red = 0, White = 1, Blue = 2 }
+
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int Id { get; init; }

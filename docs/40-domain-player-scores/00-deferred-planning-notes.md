@@ -26,7 +26,7 @@ Do not implement anything in this file. These are planning seeds only.
 - Course rating and slope rating are **not stored in MVP** — they are looked up at UC-PS-03 time using the stored tee color and the member's gender on file
 - No schema changes to `GolfRound` needed when this is implemented — the necessary inputs are already stored
 - Source documents: `HandicappingReferenceGuide.pdf`, `Golf-Canada-WHS-Rules-of-Handicap-–-ENG-Final.pdf`
-- Open design question (Q-F2): CourseRating lookup — DB seed table (updatable without deploy) vs. static constants in code? Lean toward constants for simplicity given data rarely changes, but decide at UC-PS-03 planning time.
+- **CourseRating storage (DECIDED):** Course and slope ratings will be stored in the database (seed table) when UC-PS-03 is implemented. This allows ratings to be updated without a deploy.
 - Open design question (Q-F4): WHS Playing Conditions Calculation (PCC) adjustment — is this a field on `GolfRound` (stored at submission time, requiring UC-PS-06 data to exist first) or computed on the fly from a `CourseCondition` record? Decide at UC-PS-03/UC-PS-06 planning time.
 
 ---
@@ -68,7 +68,7 @@ Do not implement anything in this file. These are planning seeds only.
 | ID | Question | Relevant UC |
 |----|----------|-------------|
 | Q-F1 | Should `ScoreService` use an `IScoreEligibilityRule` interface pattern (mirroring `IBookingRule`) for extensibility, or keep eligibility logic flat in `ScoreService`? | UC-PS-01 implementation |
-| Q-F2 | CourseRating lookup: DB seed table vs. static constants in code? | UC-PS-03 |
+| Q-F2 | ~~CourseRating lookup~~ **DECIDED — DB seed table** | UC-PS-03 |
 | Q-F3 | `GolfRound` `CourseSource` discriminator vs. separate `ExternalGolfRound` entity? | UC-PS-02 |
 | Q-F4 | WHS PCC adjustment — stored on `GolfRound` at submission time vs. computed from `CourseCondition` on the fly? | UC-PS-03 / UC-PS-06 |
 
