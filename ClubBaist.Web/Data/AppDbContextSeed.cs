@@ -121,13 +121,10 @@ internal static class AppDbContextSeed
     {
         foreach (var app in seed.Applications)
         {
-            // RequestedMembershipLevel is set via $ref; derive the scalar FK from it.
+            // All three nav properties are set via $ref; derive scalar FKs from them.
             app.RequestedMembershipLevelId = app.RequestedMembershipLevel.Id;
-
-            // Sponsor FKs are plain int columns with no nav property, so $ref cannot be used.
-            // Assign to the first two seeded members (matching the original seeding intent).
-            app.Sponsor1MemberId = seed.Members[0].Id;
-            app.Sponsor2MemberId = seed.Members[1].Id;
+            app.Sponsor1MemberId = app.Sponsor1Member!.Id;
+            app.Sponsor2MemberId = app.Sponsor2Member!.Id;
         }
 
         db.MembershipApplications.AddRange(seed.Applications);

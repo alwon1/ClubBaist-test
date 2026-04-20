@@ -14,10 +14,6 @@
    *                                     members (MembershipApplication.Sponsor1MemberId /
    *                                              MembershipApplication.Sponsor2MemberId FKs)
    *
-   * NOTE: Sponsor FKs are plain int columns with no navigation property — they
-   * cannot use $ref and are filled in by the seeder after members are saved
-   * (see AppDbContextSeed.SeedApplicationsAsync).
-   *
    * ── HOW CROSS-OBJECT REFERENCES WORK ───────────────────────────────────
    * Objects use $id / $ref (System.Text.Json ReferenceHandler.Preserve).
    *   • $id  — must be the FIRST property of the object being labelled.
@@ -310,10 +306,9 @@
   ],
 
   // ── 5. Membership Applications ───────────────────────────────────────────
-  // RequestedMembershipLevel is resolved via $ref; RequestedMembershipLevelId is
-  // set by the seeder after levels are saved.
-  // Sponsor1MemberId / Sponsor2MemberId are plain int FKs with no nav property —
-  // they cannot use $ref and are set by the seeder from members[0].Id / members[1].Id.
+  // All three nav properties (requestedMembershipLevel, sponsor1Member, sponsor2Member)
+  // are resolved via $ref. The seeder derives the scalar FK IDs from them after
+  // levels and members are saved.
   "applications": [
     {
       "firstName": "Frank",
@@ -326,6 +321,8 @@
       "email": "frank.pending@example.com",
       "dateOfBirth": "1990-03-22T00:00:00",
       "requestedMembershipLevel": { "$ref": "level-AS" },
+      "sponsor1Member": { "$ref": "member-sh1" },
+      "sponsor2Member": { "$ref": "member-sh2" },
       "status": "Submitted"
     },
     {
@@ -339,6 +336,8 @@
       "email": "grace.onhold@example.com",
       "dateOfBirth": "1988-07-14T00:00:00",
       "requestedMembershipLevel": { "$ref": "level-SV" },
+      "sponsor1Member": { "$ref": "member-sh1" },
+      "sponsor2Member": { "$ref": "member-sh2" },
       "status": "OnHold"
     },
     {
@@ -352,6 +351,8 @@
       "email": "henry.waitlist@example.com",
       "dateOfBirth": "1995-11-05T00:00:00",
       "requestedMembershipLevel": { "$ref": "level-AS" },
+      "sponsor1Member": { "$ref": "member-sh1" },
+      "sponsor2Member": { "$ref": "member-sh2" },
       "status": "Waitlisted"
     },
     {
@@ -365,6 +366,8 @@
       "email": "iris.submitted@example.com",
       "dateOfBirth": "1992-06-30T00:00:00",
       "requestedMembershipLevel": { "$ref": "level-BR" },
+      "sponsor1Member": { "$ref": "member-sh1" },
+      "sponsor2Member": { "$ref": "member-sh2" },
       "status": "Submitted"
     },
     {
@@ -378,6 +381,8 @@
       "email": "jack.waitlist@example.com",
       "dateOfBirth": "1985-09-18T00:00:00",
       "requestedMembershipLevel": { "$ref": "level-SV" },
+      "sponsor1Member": { "$ref": "member-sh1" },
+      "sponsor2Member": { "$ref": "member-sh2" },
       "status": "Waitlisted"
     }
   ]

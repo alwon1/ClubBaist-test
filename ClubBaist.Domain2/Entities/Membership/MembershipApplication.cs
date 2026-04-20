@@ -58,7 +58,10 @@ public class MembershipApplication
 
     public DateTime DateOfBirth { get; set; }
     public int Sponsor1MemberId { get; set; }
+    public MemberShipInfo? Sponsor1Member { get; set; }
+
     public int Sponsor2MemberId { get; set; }
+    public MemberShipInfo? Sponsor2Member { get; set; }
     public ApplicationStatus Status { get; set; } = ApplicationStatus.Submitted;
     [Required]
     [ForeignKey(nameof(RequestedMembershipLevel))]

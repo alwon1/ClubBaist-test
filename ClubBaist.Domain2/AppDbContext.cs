@@ -118,5 +118,17 @@ public class AppDbContext : IdentityDbContext<ClubBaistUser, IdentityRole<Guid>,
             .WithMany()
             .HasForeignKey(a => a.RequestedMembershipLevelId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<MembershipApplication>()
+            .HasOne(a => a.Sponsor1Member)
+            .WithMany()
+            .HasForeignKey(a => a.Sponsor1MemberId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<MembershipApplication>()
+            .HasOne(a => a.Sponsor2Member)
+            .WithMany()
+            .HasForeignKey(a => a.Sponsor2MemberId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
