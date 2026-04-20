@@ -121,12 +121,8 @@ Return ScoreSubmissionResult(Success: true)
 
 **Question:** Should the time-lock logic be extracted to an `IScoreEligibilityRule` interface (mirroring `IBookingRule` in `BookingService`), or stay flat inside `ScoreService`?
 
-**Recommendation — flat logic in ScoreService (MVP):**
-- There is exactly one eligibility rule (time-lock by player count). The `IBookingRule` pattern in `BookingService` was motivated by multiple independent rules needing independent evaluation. That situation does not exist here yet.
-- Flat logic is simpler to read and test for a single rule.
-- If UC-PS-02 (external courses) or future rules introduce multiple independent checks, extraction to an interface is straightforward at that point.
-
-> **Awaiting confirmation** — proceed with flat logic, or prefer the rule-interface pattern now for consistency with `BookingService`?
+**Decision — flat logic in ScoreService:**
+There is exactly one eligibility rule (time-lock by player count) and only one such rule will ever exist for this domain. No rule-interface pattern is needed. Eligibility logic stays flat inside `ScoreService`.
 
 ---
 

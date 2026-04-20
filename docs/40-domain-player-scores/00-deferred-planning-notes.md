@@ -67,7 +67,7 @@ Do not implement anything in this file. These are planning seeds only.
 
 | ID | Question | Relevant UC |
 |----|----------|-------------|
-| Q-F1 | Should `ScoreService` use an `IScoreEligibilityRule` interface pattern (mirroring `IBookingRule`) for extensibility, or keep eligibility logic flat in `ScoreService`? | UC-PS-01 implementation |
+| Q-F1 | ~~IScoreEligibilityRule pattern~~ **DECIDED — flat logic in ScoreService; only one eligibility rule will ever exist** | UC-PS-01 implementation |
 | Q-F2 | ~~CourseRating lookup~~ **DECIDED — DB seed table** | UC-PS-03 |
 | Q-F3 | `GolfRound` `CourseSource` discriminator vs. separate `ExternalGolfRound` entity? | UC-PS-02 |
 | Q-F4 | WHS PCC adjustment — stored on `GolfRound` at submission time vs. computed from `CourseCondition` on the fly? | UC-PS-03 / UC-PS-06 |
