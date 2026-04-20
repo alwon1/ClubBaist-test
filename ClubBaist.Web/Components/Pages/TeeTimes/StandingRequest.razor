@@ -1,0 +1,455 @@
+@page "/teetimes/standing/request"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Policy = AppRoles.Permissions.BookStandingTeeTime)]
+
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.EntityFrameworkCore
+@using ClubBaist.Domain2
+@using ClubBaist.Domain2.Entities
+@using ClubBaist.Services2
+
+@inject StandingTeeTimeService StandingTeeTimeService
+@inject IAppDbContext2 DbContext
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ILogger<StandingRequest> Logger
+
+<PageTitle>Standing Tee Time Request - Club Baist</PageTitle>
+
+<h3 class="mb-4">Standing Tee Time Request</h3>
+
+<p class="text-muted mb-4">
+    Shareholder members may submit one standing tee time request per season.
+    Requests are for a <strong>foursome only</strong> (you + 3 additional players).
+    Staff will assign a priority number and confirm your approved tee time.
+</p>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger alert-dismissible fade show">
+        @errorMessage
+        <button type="button" class="btn-close" @onclick="() => errorMessage = null"></button>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(successMessage))
+{
+    <div class="alert alert-success">@successMessage</div>
+}
+
+@if (isLoading)
+{
+    <div class="text-center my-4">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+}
+else
+{
+    @if (existingRequests.Count > 0)
+    {
+        <div class="card mb-4">
+            <div class="card-header">
+                <strong>Your Standing Tee Time Requests</strong>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-striped mb-0">
+                    <thead>
+                        <tr>
+                            <th>Day</th>
+                            <th>Requested Time</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                            <th>Players</th>
+                            <th>Status</th>
+                            <th>Approved Time</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var req in existingRequests)
+                        {
+                            <tr>
+                                <td>@req.RequestedDayOfWeek</td>
+                                <td>@req.RequestedTime.ToString("h:mm tt") <span class="text-muted small">(±@req.ToleranceMinutes min)</span></td>
+                                <td>@req.StartDate.ToString("MMM d, yyyy")</td>
+                                <td>@req.EndDate.ToString("MMM d, yyyy")</td>
+                                <td>@req.ParticipantCount</td>
+                                <td>
+                                    @switch (req.Status)
+                                    {
+                                        case StandingTeeTimeStatus.Draft:
+                                            <span class="badge bg-secondary">Pending Review</span>
+                                            break;
+                                        case StandingTeeTimeStatus.Approved:
+                                            <span class="badge bg-success">Approved</span>
+                                            break;
+                                        case StandingTeeTimeStatus.Allocated:
+                                            <span class="badge bg-primary">Allocated</span>
+                                            break;
+                                        case StandingTeeTimeStatus.Unallocated:
+                                            <span class="badge bg-warning text-dark">Unallocated</span>
+                                            break;
+                                        case StandingTeeTimeStatus.Cancelled:
+                                            <span class="badge bg-light text-dark">Cancelled</span>
+                                            break;
+                                        case StandingTeeTimeStatus.Denied:
+                                            <span class="badge bg-danger">Denied</span>
+                                            break;
+                                    }
+                                </td>
+                                <td>
+                                    @if (req.ApprovedTime.HasValue)
+                                    {
+                                        @req.ApprovedTime.Value.ToString("h:mm tt")
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">—</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (req.Status is not StandingTeeTimeStatus.Cancelled and not StandingTeeTimeStatus.Denied)
+                                    {
+                                        @if (cancelConfirmId == req.Id)
+                                        {
+                                            <button class="btn btn-sm btn-danger me-1"
+                                                    @onclick="() => ConfirmCancel(req.Id)"
+                                                    disabled="@isCancelling">
+                                                Confirm
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-secondary"
+                                                    @onclick="() => cancelConfirmId = null">
+                                                No
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <button class="btn btn-sm btn-outline-danger"
+                                                    @onclick="() => cancelConfirmId = req.Id">
+                                                Cancel
+                                            </button>
+                                        }
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+
+    @if (hasActiveRequest)
+    {
+        <div class="alert alert-info">
+            You already have an active standing tee time request. Cancel it above to submit a new one.
+        </div>
+    }
+    else
+    {
+        <div class="card mb-4">
+            <div class="card-header">
+                <strong>Booking Member</strong>
+            </div>
+            <div class="card-body">
+                @if (currentMember is not null)
+                {
+                    <p class="mb-0">@currentMember.MembershipNumber — @currentMember.User.FirstName @currentMember.User.LastName</p>
+                }
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <strong>Request Details</strong>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="form-floating">
+                            <select class="form-select" id="dayOfWeek" @bind="requestedDayOfWeek">
+                                @foreach (var day in Enum.GetValues<DayOfWeek>())
+                                {
+                                    <option value="@((int)day)">@day</option>
+                                }
+                            </select>
+                            <label for="dayOfWeek">Requested Day of Week</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-floating">
+                            <input type="time" class="form-control" id="requestedTime"
+                                   value="@requestedTimeString"
+                                   @onchange="OnTimeChanged"
+                                   min="07:00" max="19:00" />
+                            <label for="requestedTime">Requested Time <span class="text-muted">(± 30 min)</span></label>
+                        </div>
+                    </div>
+                </div>
+                <div class="row g-3 mt-1">
+                    <div class="col-md-4">
+                        <div class="form-floating">
+                            <input type="date" class="form-control" id="startDate"
+                                   value="@startDate.ToString("yyyy-MM-dd")"
+                                   @onchange="OnStartDateChanged"
+                                   min="@DateOnly.FromDateTime(DateTime.Today).ToString("yyyy-MM-dd")" />
+                            <label for="startDate">Start Date</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-floating">
+                            <input type="date" class="form-control" id="endDate"
+                                   value="@endDate.ToString("yyyy-MM-dd")"
+                                   @onchange="OnEndDateChanged"
+                                   min="@startDate.AddDays(1).ToString("yyyy-MM-dd")" />
+                            <label for="endDate">End Date</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <strong>Additional Players</strong>
+                <span class="text-muted ms-2 small">(3 required — standing tee times are for foursomes)</span>
+            </div>
+            <div class="card-body">
+                @for (var i = 0; i < 3; i++)
+                {
+                    var index = i;
+                    <div class="row mb-3 align-items-center">
+                        <div class="col">
+                            <div class="form-floating">
+                                <select class="form-select" id="@($"player-{index}")"
+                                        value="@additionalPlayerIds[index]"
+                                        @onchange="(e) => OnPlayerChanged(index, e)">
+                                    <option value="0">-- Select Player --</option>
+                                    @foreach (var member in allMembers.Where(m => m.Id != currentMember?.Id))
+                                    {
+                                        <option value="@member.Id"
+                                                disabled="@(additionalPlayerIds.Where((id, idx) => idx != index).Contains(member.Id))">
+                                            @member.MembershipNumber — @member.User.FirstName @member.User.LastName
+                                        </option>
+                                    }
+                                </select>
+                                <label for="@($"player-{index}")">Player @(index + 2)</label>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <button class="btn btn-primary" @onclick="SubmitRequest" disabled="@isSubmitting">
+            @if (isSubmitting)
+            {
+                <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+            }
+            Submit Standing Tee Time Request
+        </button>
+        <a href="/teetimes" class="btn btn-outline-secondary ms-2">Cancel</a>
+    }
+}
+
+@code {
+    private bool isLoading = true;
+    private bool isSubmitting;
+    private bool isCancelling;
+    private string? errorMessage;
+    private string? successMessage;
+    private int? cancelConfirmId;
+
+    private MemberShipInfo? currentMember;
+    private List<MemberShipInfo> allMembers = [];
+    private List<StandingTeeTime> existingRequests = [];
+    private bool hasActiveRequest;
+
+    // Form state
+    private int requestedDayOfWeek = (int)DayOfWeek.Saturday;
+    private TimeOnly requestedTime = new TimeOnly(9, 0);
+    private string requestedTimeString = "09:00";
+    private DateOnly startDate = DateOnly.FromDateTime(DateTime.Today);
+    private DateOnly endDate = DateOnly.FromDateTime(DateTime.Today).AddMonths(6);
+    private List<int> additionalPlayerIds = [0, 0, 0];
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            var userId = Guid.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+            currentMember = await DbContext.MemberShips
+                .FirstOrDefaultAsync(m => m.UserId == userId);
+
+            if (currentMember is null)
+            {
+                errorMessage = "Member account not found. Please contact an administrator.";
+                isLoading = false;
+                return;
+            }
+
+            allMembers = await DbContext.MemberShips
+                .OrderBy(m => m.User.LastName)
+                .ThenBy(m => m.User.FirstName)
+                .ToListAsync();
+
+            await LoadRequests();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to initialize standing tee time request page");
+            errorMessage = "An unexpected error occurred. Please try again later.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task LoadRequests()
+    {
+        if (currentMember is null)
+            return;
+
+        existingRequests = await StandingTeeTimeService.GetMemberRequestsAsync(currentMember.Id);
+        hasActiveRequest = existingRequests.Any(r =>
+            r.Status is not StandingTeeTimeStatus.Cancelled and not StandingTeeTimeStatus.Denied);
+    }
+
+    private void OnTimeChanged(ChangeEventArgs e)
+    {
+        var value = e.Value?.ToString();
+        if (!string.IsNullOrEmpty(value) && TimeOnly.TryParse(value, out var parsed))
+        {
+            requestedTime = parsed;
+            requestedTimeString = value;
+        }
+    }
+
+    private void OnStartDateChanged(ChangeEventArgs e)
+    {
+        if (DateOnly.TryParse(e.Value?.ToString(), out var parsed))
+        {
+            startDate = parsed;
+            if (endDate <= startDate)
+                endDate = startDate.AddMonths(6);
+        }
+    }
+
+    private void OnEndDateChanged(ChangeEventArgs e)
+    {
+        if (DateOnly.TryParse(e.Value?.ToString(), out var parsed))
+            endDate = parsed;
+    }
+
+    private void OnPlayerChanged(int index, ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var id))
+            additionalPlayerIds[index] = id;
+    }
+
+    private async Task SubmitRequest()
+    {
+        errorMessage = null;
+        successMessage = null;
+
+        if (currentMember is null)
+        {
+            errorMessage = "Member account not found.";
+            return;
+        }
+
+        if (additionalPlayerIds.Any(id => id == 0))
+        {
+            errorMessage = "Please select all 3 additional players.";
+            return;
+        }
+
+        isSubmitting = true;
+
+        try
+        {
+            var additionalParticipants = await DbContext.MemberShips
+                .Where(m => additionalPlayerIds.Contains(m.Id))
+                .ToListAsync();
+
+            if (additionalParticipants.Count != 3)
+            {
+                errorMessage = "One or more selected players could not be found. Please refresh and try again.";
+                return;
+            }
+
+            var request = new StandingTeeTime
+            {
+                BookingMemberId = currentMember.Id,
+                BookingMember = currentMember,
+                RequestedDayOfWeek = (DayOfWeek)requestedDayOfWeek,
+                RequestedTime = requestedTime,
+                ToleranceMinutes = 30,
+                StartDate = startDate,
+                EndDate = endDate,
+                AdditionalParticipants = additionalParticipants
+            };
+
+            var error = await StandingTeeTimeService.SubmitRequestAsync(request);
+
+            if (error is not null)
+            {
+                errorMessage = error;
+            }
+            else
+            {
+                successMessage = $"Your standing tee time request for {(DayOfWeek)requestedDayOfWeek}s at {requestedTime:h:mm tt} has been submitted. Staff will review and assign a priority number.";
+                additionalPlayerIds = [0, 0, 0];
+                await LoadRequests();
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to submit standing tee time request");
+            errorMessage = "An unexpected error occurred while submitting your request. Please try again later.";
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private async Task ConfirmCancel(int requestId)
+    {
+        errorMessage = null;
+        successMessage = null;
+        cancelConfirmId = null;
+        isCancelling = true;
+
+        try
+        {
+            var result = await StandingTeeTimeService.CancelRequestAsync(requestId, currentMember!.Id);
+
+            if (result)
+            {
+                successMessage = "Your standing tee time request has been cancelled.";
+                await LoadRequests();
+            }
+            else
+            {
+                errorMessage = "Unable to cancel the request.";
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to cancel standing tee time request {RequestId}", requestId);
+            errorMessage = "An unexpected error occurred while cancelling the request. Please try again later.";
+        }
+        finally
+        {
+            isCancelling = false;
+        }
+    }
+}

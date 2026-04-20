@@ -30,6 +30,19 @@
                                 </div>
                             </div>
                         </div>
+                        <AuthorizeView Policy="@AppRoles.Permissions.BookStandingTeeTime" Context="standingContext">
+                            <Authorized>
+                                <div class="col-md-4">
+                                    <div class="card h-100">
+                                        <div class="card-body">
+                                            <h5 class="card-title">Standing Tee Time</h5>
+                                            <p class="card-text">Submit or manage your standing weekly tee time request.</p>
+                                            <a href="teetimes/standing/request" class="btn btn-outline-primary">Manage Request</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </Authorized>
+                        </AuthorizeView>
                     </Authorized>
                 </AuthorizeView>
 

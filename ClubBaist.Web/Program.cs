@@ -66,7 +66,10 @@ public class Program
         builder.Services.AddAuthorizationBuilder()
             .AddPolicy(AppRoles.Admin, policy => policy.RequireRole(AppRoles.Admin))
             .AddPolicy(AppRoles.MembershipCommittee, policy => policy.RequireRole(AppRoles.Admin, AppRoles.MembershipCommittee))
-            .AddPolicy(AppRoles.Member, policy => policy.RequireRole(AppRoles.Member));
+            .AddPolicy(AppRoles.Member, policy => policy.RequireRole(AppRoles.Member))
+            .AddPolicy(AppRoles.Permissions.BookStandingTeeTime, policy =>
+                policy.RequireRole(AppRoles.Member)
+                      .RequireClaim(AppRoles.ClaimTypes.Permission, AppRoles.Permissions.BookStandingTeeTime));
 
         var app = builder.Build();
 

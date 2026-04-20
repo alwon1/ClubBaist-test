@@ -39,6 +39,16 @@
                     </Authorized>
                 </AuthorizeView>
 
+                <AuthorizeView Policy="@AppRoles.Permissions.BookStandingTeeTime" Context="standingContext">
+                    <Authorized>
+                        <div class="nav-item px-3">
+                            <NavLink class="nav-link" href="teetimes/standing/request">
+                                <span class="bi bi-calendar-check-fill" aria-hidden="true"></span> Standing Request
+                            </NavLink>
+                        </div>
+                    </Authorized>
+                </AuthorizeView>
+
                 <AuthorizeView Roles="@AppRoles.Admin" Context="adminContext">
                     <Authorized>
                         <div class="nav-item px-3">
