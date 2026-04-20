@@ -26,7 +26,16 @@ internal sealed class Domain2TestHost : IAsyncDisposable
 
     public static async Task<Domain2TestHost> CreateAsync()
     {
-        var baseConnectionString = await GetConnectionStringAsync();
+        string baseConnectionString;
+        try
+        {
+            baseConnectionString = await GetConnectionStringAsync();
+        }
+        catch (Exception ex)
+        {
+            Assert.Inconclusive($"Aspire host unavailable (requires Docker/SQL Server): {ex.Message}");
+            return default!;
+        }
         var sqlBuilder = new SqlConnectionStringBuilder(baseConnectionString)
         {
             InitialCatalog = $"clubbaist-domain2-tests-{Guid.NewGuid():N}",
