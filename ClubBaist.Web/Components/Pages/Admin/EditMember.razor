@@ -4,12 +4,14 @@
 
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
 @using ClubBaist.Domain2
 @using ClubBaist.Domain2.Entities.Membership
 @using ClubBaist.Services2
 
 @inject IAppDbContext2 DbContext
+@inject UserManager<ClubBaistUser> UserManager
 @inject ILogger<EditMember> Logger
 
 <PageTitle>Edit Member - Club Baist</PageTitle>
@@ -248,6 +250,38 @@ else
             _member.MembershipLevel = newLevel;
 
             await DbContext.SaveChangesAsync();
+
+            // Sync the standing-tee-time.book claim to reflect the new membership level.
+            var existingClaims = await UserManager.GetClaimsAsync(_member.User);
+            var hasStandingClaim = existingClaims.Any(c =>
+                c.Type == AppRoles.ClaimTypes.Permission &&
+                c.Value == AppRoles.Permissions.BookStandingTeeTime);
+
+            if (newLevel.ShortCode.Equals("SH", StringComparison.OrdinalIgnoreCase))
+            {
+                if (!hasStandingClaim)
+                {
+                    var addResult = await UserManager.AddClaimAsync(_member.User, AppRoles.Claims.StandingTeeTimeBooking);
+                    if (!addResult.Succeeded)
+                        Logger.LogWarning("Failed to add standing tee time claim for user {UserId}", _member.User.Id);
+                }
+            }
+            else
+            {
+                if (hasStandingClaim)
+                {
+                    var claimToRemove = existingClaims.FirstOrDefault(c =>
+                        c.Type == AppRoles.ClaimTypes.Permission &&
+                        c.Value == AppRoles.Permissions.BookStandingTeeTime);
+                    if (claimToRemove is not null)
+                    {
+                        var removeResult = await UserManager.RemoveClaimAsync(_member.User, claimToRemove);
+                        if (!removeResult.Succeeded)
+                            Logger.LogWarning("Failed to remove standing tee time claim for user {UserId}", _member.User.Id);
+                    }
+                }
+            }
+
             _resultMessage = "Member profile updated successfully.";
         }
         catch (Exception ex)

@@ -1,6 +1,6 @@
 @page "/teetimes/staff"
 @rendermode InteractiveServer
-@attribute [Authorize(Roles = AppRoles.Admin)]
+@attribute [Authorize(Roles = AppRoles.AdminOrProShopStaff)]
 @implements IDisposable
 
 @using System.Security.Claims

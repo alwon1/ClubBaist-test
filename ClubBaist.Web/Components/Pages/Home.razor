@@ -42,7 +42,7 @@
                     </Authorized>
                 </AuthorizeView>
 
-                <AuthorizeView Roles="@AppRoles.Admin" Context="adminContext">
+                <AuthorizeView Roles="@AppRoles.AdminOrProShopStaff" Context="adminContext">
                     <Authorized>
                         <div class="col-md-4">
                             <div class="card h-100">
@@ -53,6 +53,11 @@
                                 </div>
                             </div>
                         </div>
+                    </Authorized>
+                </AuthorizeView>
+
+                <AuthorizeView Roles="@AppRoles.Admin" Context="adminOnlyContext">
+                    <Authorized>
                         <div class="col-md-4">
                             <div class="card h-100">
                                 <div class="card-body">

@@ -24,6 +24,8 @@ internal static class AppDbContextSeed
     [
         new("admin@clubbaist.com", AppRoles.Admin, "Seed", "Admin", null),
         new("committee@clubbaist.com", AppRoles.MembershipCommittee, "Seed", "Committee", null),
+        new("clerk@clubbaist.com", AppRoles.Clerk, "Seed", "Clerk", null),
+        new("proshop@clubbaist.com", AppRoles.ProShopStaff, "Seed", "ProShop", null),
         new("shareholder1@clubbaist.com", AppRoles.Member, "Alice", "Shareholder", "SH"),
         new("shareholder2@clubbaist.com", AppRoles.Member, "Bob", "Shareholder", "SH"),
         new("shareholder3@clubbaist.com", AppRoles.Member, "Carol", "Shareholder", "SH"),
@@ -62,7 +64,7 @@ internal static class AppDbContextSeed
 
     private static async Task SeedRolesAsync(RoleManager<IdentityRole<Guid>> roleManager)
     {
-        foreach (var roleName in new[] { AppRoles.Admin, AppRoles.MembershipCommittee, AppRoles.Member })
+        foreach (var roleName in new[] { AppRoles.Admin, AppRoles.MembershipCommittee, AppRoles.Member, AppRoles.Clerk, AppRoles.ProShopStaff })
         {
             ThrowIfFailed(
                 await roleManager.CreateAsync(new IdentityRole<Guid> { Name = roleName }),
