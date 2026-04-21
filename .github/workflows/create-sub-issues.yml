@@ -49,6 +49,19 @@ jobs:
               }
             }
 
+            // Ensure required labels exist (create if missing)
+            for (const [name, color, description] of [
+              ['planning',        'E4E669', 'Planning and design decisions'],
+              ['questions-needed','D93F0B', 'Awaiting answers before implementation can begin'],
+            ]) {
+              try {
+                await github.rest.issues.getLabel({ owner: context.repo.owner, repo: context.repo.repo, name });
+              } catch {
+                await github.rest.issues.createLabel({ owner: context.repo.owner, repo: context.repo.repo, name, color, description });
+                console.log(`Created label: ${name}`);
+              }
+            }
+
             // Helper: create one issue and return { number, nodeId }
             async function createIssue(title, bodyFile) {
               const body = fs.readFileSync(`.github/issue-plans/${bodyFile}`, 'utf8');
