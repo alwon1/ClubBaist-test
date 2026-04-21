@@ -1,0 +1,98 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - link "Club BAIST" [ref=e6] [cursor=pointer]:
+      - /url: ""
+    - navigation [ref=e8]:
+      - link "Home" [ref=e10] [cursor=pointer]:
+        - /url: ""
+        - text: Home
+      - link "Tee Times" [ref=e13] [cursor=pointer]:
+        - /url: teetimes
+        - text: Tee Times
+      - link "My Reservations" [ref=e16] [cursor=pointer]:
+        - /url: teetimes/my
+        - text: My Reservations
+      - link "My Scores" [ref=e19] [cursor=pointer]:
+        - /url: scores/my
+        - text: My Scores
+      - link "My Standing Requests" [ref=e22] [cursor=pointer]:
+        - /url: teetimes/standing/my
+        - text: My Standing Requests
+      - link "shareholder3@clubbaist.com" [ref=e25] [cursor=pointer]:
+        - /url: Account/Manage
+        - text: shareholder3@clubbaist.com
+      - button "Logout" [ref=e29] [cursor=pointer]: Logout
+  - main [ref=e31]:
+    - link "About" [ref=e33] [cursor=pointer]:
+      - /url: https://learn.microsoft.com/aspnet/core/
+    - article [ref=e34]:
+      - generic [ref=e35]:
+        - heading "Apply for Membership" [level=2] [ref=e36]
+        - generic [ref=e37]:
+          - list [ref=e96]:
+            - listitem [ref=e97]: Enter a valid Canadian postal code (e.g. T2A 4K3).
+          - generic [ref=e38]:
+            - heading "Personal Information" [level=5] [ref=e40]
+            - generic [ref=e41]:
+              - generic [ref=e44]:
+                - textbox "Email Address" [ref=e45]:
+                  - /placeholder: Email
+                  - text: postal.test@example.com
+                - generic: Email Address
+              - generic [ref=e46]:
+                - generic [ref=e48]:
+                  - textbox "First Name" [ref=e49]: Postal
+                  - generic: First Name
+                - generic [ref=e51]:
+                  - textbox "Last Name" [ref=e52]: Test
+                  - generic: Last Name
+              - generic [ref=e55]:
+                - textbox "Date of Birth" [ref=e56]: 1990-05-15
+                - generic: Date of Birth
+              - generic [ref=e57]:
+                - generic [ref=e59]:
+                  - textbox "Phone (e.g. (403) 555-1234)" [ref=e60]:
+                    - /placeholder: Phone
+                    - text: (403) 555-1234
+                  - generic: Phone (e.g. (403) 555-1234)
+                - generic [ref=e62]:
+                  - textbox "Alternate Phone (Optional)" [ref=e63]:
+                    - /placeholder: Alternate Phone
+                  - generic: Alternate Phone (Optional)
+              - generic [ref=e64]:
+                - textbox "Address" [ref=e65]: 100 Test Street
+                - generic: Address
+              - generic [ref=e68]:
+                - textbox "Postal Code (e.g. T2A 4K3)" [ref=e69]:
+                  - /placeholder: Postal Code
+                  - text: "12345"
+                - generic: Postal Code (e.g. T2A 4K3)
+                - generic [ref=e98]: Enter a valid Canadian postal code (e.g. T2A 4K3).
+          - generic [ref=e70]:
+            - heading "Employment Information" [level=5] [ref=e72]
+            - generic [ref=e74]:
+              - generic [ref=e76]:
+                - textbox "Occupation" [ref=e77]: Tester
+                - generic: Occupation
+              - generic [ref=e79]:
+                - textbox "Company Name" [ref=e80]: Test Corp
+                - generic: Company Name
+          - generic [ref=e81]:
+            - heading "Membership Details" [level=5] [ref=e83]
+            - generic [ref=e84]:
+              - generic [ref=e85]:
+                - combobox "Membership Level" [ref=e86]:
+                  - option "-- Select Level --"
+                  - option "Shareholder"
+                  - option "Silver"
+                  - option "Bronze" [selected]
+                  - option "Associate"
+                - generic: Membership Level
+              - generic [ref=e87]:
+                - generic [ref=e89]:
+                  - spinbutton "Sponsor 1 Member ID" [ref=e90]: "1"
+                  - generic: Sponsor 1 Member ID
+                - generic [ref=e92]:
+                  - spinbutton "Sponsor 2 Member ID" [ref=e93]: "2"
+                  - generic: Sponsor 2 Member ID
+          - button "Submit Application" [active] [ref=e95] [cursor=pointer]

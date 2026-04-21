@@ -1,0 +1,33 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - link "Club BAIST" [ref=e6] [cursor=pointer]:
+      - /url: ""
+    - navigation [ref=e8]:
+      - link "Home" [ref=e10] [cursor=pointer]:
+        - /url: ""
+        - text: Home
+      - link "Tee Times" [ref=e13] [cursor=pointer]:
+        - /url: teetimes
+        - text: Tee Times
+      - link "My Reservations" [ref=e16] [cursor=pointer]:
+        - /url: teetimes/my
+        - text: My Reservations
+      - link "My Scores" [ref=e19] [cursor=pointer]:
+        - /url: scores/my
+        - text: My Scores
+      - link "My Standing Requests" [ref=e22] [cursor=pointer]:
+        - /url: teetimes/standing/my
+        - text: My Standing Requests
+      - link "shareholder1@clubbaist.com" [ref=e25] [cursor=pointer]:
+        - /url: Account/Manage
+        - text: shareholder1@clubbaist.com
+      - button "Logout" [ref=e29] [cursor=pointer]: Logout
+  - main [ref=e31]:
+    - link "About" [ref=e33] [cursor=pointer]:
+      - /url: https://learn.microsoft.com/aspnet/core/
+    - article [ref=e34]:
+      - heading "Book a Tee Time" [level=3] [ref=e35]
+      - generic [ref=e78]:
+        - paragraph [ref=e79]: Tee time booked successfully for Sunday, May 10, 2026 at 7:00 AM.
+        - link "View Reservations" [ref=e80] [cursor=pointer]:
+          - /url: /teetimes/my

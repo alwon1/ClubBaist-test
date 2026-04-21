@@ -1,0 +1,71 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - link "Club BAIST" [ref=e6] [cursor=pointer]:
+      - /url: ""
+    - navigation [ref=e8]:
+      - link "Home" [ref=e10] [cursor=pointer]:
+        - /url: ""
+        - text: Home
+      - link "Tee Times" [ref=e13] [cursor=pointer]:
+        - /url: teetimes
+        - text: Tee Times
+      - link "Staff Console" [ref=e16] [cursor=pointer]:
+        - /url: teetimes/staff
+        - text: Staff Console
+      - link "Score Console" [ref=e19] [cursor=pointer]:
+        - /url: scores/staff
+        - text: Score Console
+      - link "User Management" [ref=e22] [cursor=pointer]:
+        - /url: admin/users
+        - text: User Management
+      - link "Seasons" [ref=e25] [cursor=pointer]:
+        - /url: admin/seasons
+        - text: Seasons
+      - link "Standing Tee Times" [ref=e28] [cursor=pointer]:
+        - /url: admin/standing-teetimes
+        - text: Standing Tee Times
+      - link "Applications" [ref=e31] [cursor=pointer]:
+        - /url: membership/applications
+        - text: Applications
+      - link "admin@clubbaist.com" [ref=e34] [cursor=pointer]:
+        - /url: Account/Manage
+        - text: admin@clubbaist.com
+      - button "Logout" [ref=e38] [cursor=pointer]: Logout
+  - main [ref=e40]:
+    - link "About" [ref=e42] [cursor=pointer]:
+      - /url: https://learn.microsoft.com/aspnet/core/
+    - article [ref=e43]:
+      - heading "Season Management" [level=3] [ref=e45]
+      - generic [ref=e68]:
+        - heading "Add Season" [level=5] [ref=e70]
+        - generic [ref=e72]:
+          - generic [ref=e73]:
+            - generic [ref=e75]:
+              - textbox "Season Name" [ref=e76]: 2027 Season
+              - generic: Season Name
+            - generic [ref=e78]:
+              - textbox "Start Date" [ref=e79]: 2027-01-01
+              - generic: Start Date
+            - generic [ref=e81]:
+              - textbox "End Date" [ref=e82]: 2027-12-31
+              - generic: End Date
+          - generic [ref=e83]:
+            - button "Add Season" [active] [ref=e84] [cursor=pointer]
+            - button "Cancel" [ref=e85] [cursor=pointer]
+      - generic [ref=e47]:
+        - strong [ref=e49]: Seasons
+        - table [ref=e53]:
+          - rowgroup [ref=e54]:
+            - row "Name Start Date End Date Actions" [ref=e55]:
+              - columnheader "Name" [ref=e56]
+              - columnheader "Start Date" [ref=e57]
+              - columnheader "End Date" [ref=e58]
+              - columnheader "Actions" [ref=e59]
+          - rowgroup [ref=e60]:
+            - row "2026 Season Jan 1, 2026 Dec 31, 2026 Edit Delete" [ref=e61]:
+              - cell "2026 Season" [ref=e62]
+              - cell "Jan 1, 2026" [ref=e63]
+              - cell "Dec 31, 2026" [ref=e64]
+              - cell "Edit Delete" [ref=e65]:
+                - button "Edit" [disabled]
+                - button "Delete" [disabled]

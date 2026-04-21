@@ -2,6 +2,8 @@
 
 ## Must Fix
 
+- [ ] **No email uniqueness check on membership applications** — Submitting an application with an email that already has an active application (`sam.tester@example.com`) or that belongs to an existing member (`shareholder1@clubbaist.com`) both succeed silently with no error. Server-side uniqueness validation is missing entirely. (Failing: TC-MEM-004, TC-NEG-003)
+
 - [ ] **IDOR vulnerability in ReservationDetail.razor** — Any authenticated member can view, edit players on, or cancel any reservation by navigating to `/teetimes/reservation/{any-guid}`. `LoadData()`, `SaveChanges()`, and `ConfirmCancel()` never verify the logged-in user owns the reservation. Non-admin members must be restricted to their own reservations.
 
 - [ ] **Sponsor `[Required]` validation is a no-op in Apply.razor** — `Sponsor1MemberId` and `Sponsor2MemberId` are `Guid` (value type), not `Guid?`. `Guid.Empty` satisfies `[Required]`, so the form submits successfully with no sponsor selected. Fix: use `Guid?` or a custom validator rejecting `Guid.Empty`.

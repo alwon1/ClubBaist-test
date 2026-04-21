@@ -1,0 +1,77 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - link "Club BAIST" [ref=e6] [cursor=pointer]:
+      - /url: ""
+    - navigation [ref=e8]:
+      - link "Home" [ref=e10] [cursor=pointer]:
+        - /url: ""
+        - text: Home
+      - link "Tee Times" [ref=e13] [cursor=pointer]:
+        - /url: teetimes
+        - text: Tee Times
+      - link "Staff Console" [ref=e16] [cursor=pointer]:
+        - /url: teetimes/staff
+        - text: Staff Console
+      - link "Score Console" [ref=e19] [cursor=pointer]:
+        - /url: scores/staff
+        - text: Score Console
+      - link "User Management" [ref=e22] [cursor=pointer]:
+        - /url: admin/users
+        - text: User Management
+      - link "Seasons" [ref=e25] [cursor=pointer]:
+        - /url: admin/seasons
+        - text: Seasons
+      - link "Standing Tee Times" [ref=e28] [cursor=pointer]:
+        - /url: admin/standing-teetimes
+        - text: Standing Tee Times
+      - link "Applications" [ref=e31] [cursor=pointer]:
+        - /url: membership/applications
+        - text: Applications
+      - link "admin@clubbaist.com" [ref=e34] [cursor=pointer]:
+        - /url: Account/Manage
+        - text: admin@clubbaist.com
+      - button "Logout" [ref=e38] [cursor=pointer]: Logout
+  - main [ref=e40]:
+    - link "About" [ref=e42] [cursor=pointer]:
+      - /url: https://learn.microsoft.com/aspnet/core/
+    - article [ref=e43]:
+      - heading "Log in" [active] [level=1] [ref=e44]
+      - generic [ref=e45]:
+        - generic [ref=e48]:
+          - heading "Use a local account to log in." [level=2] [ref=e49]
+          - separator [ref=e50]
+          - generic [ref=e51]:
+            - textbox "Email" [ref=e52]:
+              - /placeholder: name@example.com
+            - generic: Email
+          - generic [ref=e53]:
+            - textbox "Password" [ref=e54]:
+              - /placeholder: password
+            - generic: Password
+          - generic [ref=e56]:
+            - checkbox "Remember me" [ref=e57]
+            - text: Remember me
+          - button "Log in" [ref=e59] [cursor=pointer]
+          - separator [ref=e60]
+          - generic [ref=e61]:
+            - generic [ref=e62]: OR
+            - button "Log in with a passkey" [ref=e63] [cursor=pointer]
+          - separator [ref=e64]
+          - generic [ref=e65]:
+            - paragraph [ref=e66]:
+              - link "Forgot your password?" [ref=e67] [cursor=pointer]:
+                - /url: Account/ForgotPassword
+            - paragraph [ref=e68]:
+              - link "Register as a new user" [ref=e69] [cursor=pointer]:
+                - /url: Account/Register
+            - paragraph [ref=e70]:
+              - link "Resend email confirmation" [ref=e71] [cursor=pointer]:
+                - /url: Account/ResendEmailConfirmation
+        - generic [ref=e73]:
+          - heading "Use another service to log in." [level=3] [ref=e74]
+          - separator [ref=e75]
+          - paragraph [ref=e77]:
+            - text: There are no external authentication services configured. See this
+            - link "article about setting up this ASP.NET application to support logging in via external services" [ref=e78] [cursor=pointer]:
+              - /url: https://go.microsoft.com/fwlink/?LinkID=532715
+            - text: .

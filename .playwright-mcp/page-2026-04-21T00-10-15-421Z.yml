@@ -1,0 +1,77 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - link "Club BAIST" [ref=e6] [cursor=pointer]:
+      - /url: ""
+    - navigation [ref=e8]:
+      - link "Home" [ref=e10] [cursor=pointer]:
+        - /url: ""
+        - text: Home
+      - link "Applications" [ref=e13] [cursor=pointer]:
+        - /url: membership/applications
+        - text: Applications
+      - link "committee@clubbaist.com" [ref=e16] [cursor=pointer]:
+        - /url: Account/Manage
+        - text: committee@clubbaist.com
+      - button "Logout" [ref=e20] [cursor=pointer]: Logout
+  - main [ref=e22]:
+    - link "About" [ref=e24] [cursor=pointer]:
+      - /url: https://learn.microsoft.com/aspnet/core/
+    - article [ref=e25]:
+      - generic [ref=e160]:
+        - generic [ref=e161]:
+          - heading "Review Application" [level=2] [ref=e162]
+          - link "Back to Inbox" [ref=e163] [cursor=pointer]:
+            - /url: /membership/applications
+        - alert [ref=e227]: Application approved. Member account created successfully.
+        - generic [ref=e164]:
+          - generic [ref=e166]:
+            - generic [ref=e167]:
+              - heading "Applicant Details" [level=5] [ref=e168]
+              - generic [ref=e169]: Accepted
+            - generic [ref=e170]:
+              - generic [ref=e171]:
+                - generic [ref=e172]:
+                  - strong [ref=e173]: "First Name:"
+                  - paragraph [ref=e174]: Frank
+                - generic [ref=e175]:
+                  - strong [ref=e176]: "Last Name:"
+                  - paragraph [ref=e177]: Pending
+              - generic [ref=e178]:
+                - generic [ref=e179]:
+                  - strong [ref=e180]: "Date of Birth:"
+                  - paragraph [ref=e181]: 1990-03-22
+                - generic [ref=e182]:
+                  - strong [ref=e183]: "Email:"
+                  - paragraph [ref=e184]: frank.pending@example.com
+              - generic [ref=e185]:
+                - generic [ref=e186]:
+                  - strong [ref=e187]: "Phone:"
+                  - paragraph [ref=e188]: 403-555-0200
+                - generic [ref=e189]:
+                  - strong [ref=e190]: "Alternate Phone:"
+                  - paragraph [ref=e191]: N/A
+              - generic [ref=e192]:
+                - generic [ref=e193]:
+                  - strong [ref=e194]: "Address:"
+                  - paragraph [ref=e195]: 456 Fairway Lane
+                - generic [ref=e196]:
+                  - strong [ref=e197]: "Postal Code:"
+                  - paragraph [ref=e198]: T2P 2B2
+              - generic [ref=e199]:
+                - generic [ref=e200]:
+                  - strong [ref=e201]: "Occupation:"
+                  - paragraph [ref=e202]: Software Developer
+                - generic [ref=e203]:
+                  - strong [ref=e204]: "Company:"
+                  - paragraph [ref=e205]: Acme Corp
+              - generic [ref=e207]:
+                - strong [ref=e208]: "Requested Level:"
+                - paragraph [ref=e209]: Associate
+              - generic [ref=e210]:
+                - generic [ref=e211]:
+                  - strong [ref=e212]: "Sponsor 1:"
+                  - paragraph [ref=e213]: Alice Shareholder (SH-0001)
+                - generic [ref=e214]:
+                  - strong [ref=e215]: "Sponsor 2:"
+                  - paragraph [ref=e216]: Bob Shareholder (SH-0002)
+          - paragraph [ref=e230]: No further status transitions are available for this application.

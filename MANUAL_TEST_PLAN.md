@@ -403,6 +403,126 @@
 
 ---
 
+## TC-SCORE: Scorekeeping
+
+> **Setup note for all TC-SCORE cases:** Score entry requires a tee time booking that is in the
+> past **and** has passed the minimum round-completion time-lock (solo = 2 h, twosome = 2 h 30 m,
+> threesome = 3 h, foursome = 3 h 30 m). The seeder creates a 2026 season with slots from
+> January 1 onward, so past slots exist. Before running TC-SCORE tests, log in as
+> `admin@clubbaist.com`, navigate to `/teetimes/staff`, and create at least one booking for
+> `shareholder1@clubbaist.com` (Alice) on any past date (e.g., April 17, 2026 at 8:00 AM) to use
+> as the eligible booking throughout this section.
+
+---
+
+### TC-SCORE-001 – Member views eligible bookings list
+**Preconditions:** Logged in as `shareholder1@clubbaist.com`. A past booking with an elapsed time-lock exists (see setup note above).  
+**Steps:**
+1. Navigate to `/scores/my`
+
+**Expected Result:** The **Eligible rounds available to score** section lists the past booking with the correct date, time, and player count. The **Past Submitted Rounds** section is empty (no rounds yet submitted).
+
+---
+
+### TC-SCORE-002 – Member submits a valid 18-hole round (happy path)
+**Preconditions:** Logged in as `shareholder1@clubbaist.com`. An eligible booking appears in `/scores/my`.  
+**Steps:**
+1. Navigate to `/scores/my`
+2. Click the eligible booking row (or the **Enter Scores →** button)
+3. On the score entry form, select tee colour **White**
+4. Enter a score of **5** for every hole (18 holes)
+5. Verify the running totals show: Front 9 = 45, Back 9 = 45, Total = 90
+6. Click **Submit**
+
+**Expected Result:** Redirected to the submission confirmation page. Confirmation displays the booking date, tee colour (White), and total score (90). No error is shown.
+
+---
+
+### TC-SCORE-003 – Submitted round appears in past rounds history
+**Preconditions:** TC-SCORE-002 completed.  
+**Steps:**
+1. Navigate to `/scores/my`
+
+**Expected Result:** The **Past Submitted Rounds** section lists the just-submitted round showing date, tee colour (White), total score (90), and submitted-on timestamp. The booking no longer appears in the **Eligible rounds** section.
+
+---
+
+### TC-SCORE-004 – No eligible bookings message
+**Preconditions:** Logged in as `silver@clubbaist.com` (Diana Silver). No past bookings have been created for this account.  
+**Steps:**
+1. Navigate to `/scores/my`
+
+**Expected Result:** The **Eligible rounds available to score** section shows a "No eligible rounds" (or equivalent) message instead of a table. No error is thrown.
+
+---
+
+### TC-SCORE-005 – Score entry: score out of range (above maximum)
+**Preconditions:** Logged in as `shareholder1@clubbaist.com`. A second eligible past booking exists (create one via admin staff console if needed).  
+**Steps:**
+1. Navigate to `/scores/my` and open the eligible booking
+2. Enter a score of **5** for holes 1–17
+3. Enter **21** for hole 18
+4. Click **Submit**
+
+**Expected Result:** Validation error indicating hole 18 score is out of range (valid range 1–20). The round is **not** submitted; the scorecard form remains with the error highlighted.
+
+---
+
+### TC-SCORE-006 – Score entry: missing hole score
+**Preconditions:** Logged in as `shareholder1@clubbaist.com`. An eligible booking exists.  
+**Steps:**
+1. Navigate to `/scores/my` and open the eligible booking
+2. Enter a score of **5** for holes 1–17
+3. Leave hole 18 blank
+4. Click **Submit**
+
+**Expected Result:** Validation error indicating the scorecard is incomplete (all 18 scores are required). The round is **not** submitted.
+
+---
+
+### TC-SCORE-007 – Duplicate submission (same booking scored twice)
+**Preconditions:** TC-SCORE-002 completed — the booking has an existing `GolfRound`.  
+**Steps:**
+1. Navigate directly to `/scores/record?bookingId=<id>` using the booking ID from TC-SCORE-002
+2. Enter valid scores for all 18 holes
+3. Click **Submit**
+
+**Expected Result:** Error "Score already submitted for this booking" (or equivalent). A second `GolfRound` record is **not** created.
+
+---
+
+### TC-SCORE-008 – Booking not yet past time-lock (too recent to score)
+**Preconditions:** Logged in as `shareholder1@clubbaist.com`. A booking exists whose tee time start was fewer than 2 hours ago (e.g., create a booking for today at a time that is currently less than 2 hours in the past).  
+**Steps:**
+1. Navigate to `/scores/my`
+
+**Expected Result:** The recent booking does **not** appear in the eligible rounds list (time-lock has not elapsed). No error — it simply isn't offered for scoring yet.
+
+---
+
+### TC-SCORE-009 – Staff scores on behalf of a member (score console)
+**Preconditions:** Logged in as `admin@clubbaist.com`. A past booking for `silver@clubbaist.com` (Diana Silver) exists for today's date (create via `/teetimes/staff` if needed) and the time-lock has elapsed.  
+**Steps:**
+1. Navigate to `/scores/staff`
+2. Locate Diana Silver's completed booking in today's grid
+3. Click her name / booking row to open the score entry form
+4. Select tee colour **Red**
+5. Enter a score of **6** for all 18 holes (total = 108)
+6. Click **Submit**
+
+**Expected Result:** Submission confirmation shown (date, tee colour Red, total 108). Log in as `silver@clubbaist.com`, navigate to `/scores/my` — the submitted round appears in the **Past Submitted Rounds** history.
+
+---
+
+### TC-SCORE-010 – Role-based access: member cannot access staff score console
+**Preconditions:** Logged in as `shareholder1@clubbaist.com`.  
+**Steps:**
+1. Navigate directly to `/scores/staff`
+
+**Expected Result:** Access denied or redirect to home. Staff score console content is not displayed.
+
+---
+
 ## TC-ADMIN: Administration
 
 ### TC-ADMIN-001 – Admin views user list
@@ -464,6 +584,8 @@
 | TC-NEG-005 | Non-admin navigates to season management | Log in as `silver@clubbaist.com`, go to `/admin/seasons` | Access denied / redirect |
 | TC-NEG-006 | Re-approve an already Accepted application | Frank Pending after TC-MEM-002 | Approve action not available (terminal state) |
 | TC-NEG-007 | Re-deny an already Denied application | Iris Submitted after TC-MEM-008 | Deny action not available (terminal state) |
+| TC-NEG-008 | Submit score with a 0 on any hole | Enter 0 for hole 1, 5 for holes 2–18 | Validation error: score out of range (1–20); round not submitted |
+| TC-NEG-009 | Member accesses staff score console | Log in as `silver@clubbaist.com`, go to `/scores/staff` | Access denied / redirect |
 
 ---
 
@@ -484,6 +606,10 @@ Run these cases in order to verify the complete member lifecycle from applicatio
 | 9 | TC-TEE-003 | sam.tester@example.com | Book a solo tee time |
 | 10 | TC-TEE-008 | sam.tester@example.com | Cancel that reservation |
 | 11 | — | — | Log out; log in as admin@clubbaist.com |
-| 12 | TC-TEE-009 | admin@clubbaist.com | Create a reservation for Sam via staff console |
+| 12 | TC-TEE-009 | admin@clubbaist.com | Create a reservation for Sam via staff console on a past date (e.g., April 17, 2026 8:00 AM) |
+| 13 | — | — | Log out; log in as sam.tester@example.com |
+| 14 | TC-SCORE-001 | sam.tester@example.com | Verify past booking appears in eligible rounds at `/scores/my` |
+| 15 | TC-SCORE-002 | sam.tester@example.com | Submit 18-hole round (all 5s, White tee) — confirm total 90 on confirmation page |
+| 16 | TC-SCORE-003 | sam.tester@example.com | Verify submitted round appears in past rounds history; eligible list is empty |
 
-**Pass criteria:** All 12 steps complete without errors or unexpected redirects.
+**Pass criteria:** All 16 steps complete without errors or unexpected redirects.

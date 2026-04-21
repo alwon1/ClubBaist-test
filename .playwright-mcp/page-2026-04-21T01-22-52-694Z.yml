@@ -1,0 +1,155 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - link "Club BAIST" [ref=e6] [cursor=pointer]:
+      - /url: ""
+    - navigation [ref=e8]:
+      - link "Home" [ref=e10] [cursor=pointer]:
+        - /url: ""
+        - text: Home
+      - link "Tee Times" [ref=e13] [cursor=pointer]:
+        - /url: teetimes
+        - text: Tee Times
+      - link "Staff Console" [ref=e16] [cursor=pointer]:
+        - /url: teetimes/staff
+        - text: Staff Console
+      - link "Score Console" [ref=e19] [cursor=pointer]:
+        - /url: scores/staff
+        - text: Score Console
+      - link "User Management" [ref=e22] [cursor=pointer]:
+        - /url: admin/users
+        - text: User Management
+      - link "Seasons" [ref=e25] [cursor=pointer]:
+        - /url: admin/seasons
+        - text: Seasons
+      - link "Standing Tee Times" [ref=e28] [cursor=pointer]:
+        - /url: admin/standing-teetimes
+        - text: Standing Tee Times
+      - link "Applications" [ref=e31] [cursor=pointer]:
+        - /url: membership/applications
+        - text: Applications
+      - link "admin@clubbaist.com" [ref=e34] [cursor=pointer]:
+        - /url: Account/Manage
+        - text: admin@clubbaist.com
+      - button "Logout" [ref=e38] [cursor=pointer]: Logout
+  - main [ref=e40]:
+    - link "About" [ref=e42] [cursor=pointer]:
+      - /url: https://learn.microsoft.com/aspnet/core/
+    - article [ref=e43]:
+      - heading "Staff Console" [level=3] [ref=e44]
+      - list [ref=e45]:
+        - listitem [ref=e46]:
+          - button "Members" [ref=e47] [cursor=pointer]
+        - listitem [ref=e48]:
+          - button "Reservations" [ref=e49] [cursor=pointer]
+      - generic [ref=e50]:
+        - strong [ref=e52]: Members
+        - generic [ref=e55]:
+          - generic [ref=e58]:
+            - textbox "Filter by name or member number" [ref=e59]:
+              - /placeholder: " "
+            - generic: Filter by name or member number
+          - table [ref=e60]:
+            - rowgroup [ref=e61]:
+              - 'row "Member # Name Email Level Action" [ref=e62]':
+                - 'columnheader "Member #" [ref=e63]':
+                  - 'button "Member #" [ref=e65] [cursor=pointer]':
+                    - generic [ref=e66]: "Member #"
+                - columnheader "Name" [ref=e68]:
+                  - button "Name" [ref=e70] [cursor=pointer]:
+                    - generic [ref=e71]: Name
+                - columnheader "Email" [ref=e73]:
+                  - generic [ref=e76]: Email
+                - columnheader "Level" [ref=e77]:
+                  - generic [ref=e80]: Level
+                - columnheader "Action" [ref=e81]:
+                  - generic [ref=e84]: Action
+            - rowgroup [ref=e85]:
+              - row "BR-0005 Evan Bronze bronze@clubbaist.com Bronze Select" [ref=e86]:
+                - cell "BR-0005" [ref=e87]
+                - cell "Evan Bronze" [ref=e88]
+                - cell "bronze@clubbaist.com" [ref=e89]
+                - cell "Bronze" [ref=e90]
+                - cell "Select" [ref=e91]:
+                  - button "Select" [ref=e92] [cursor=pointer]
+              - row "AS-0006 Frank Pending frank.pending@example.com Associate Select" [ref=e93]:
+                - cell "AS-0006" [ref=e94]
+                - cell "Frank Pending" [ref=e95]
+                - cell "frank.pending@example.com" [ref=e96]
+                - cell "Associate" [ref=e97]
+                - cell "Select" [ref=e98]:
+                  - button "Select" [ref=e99] [cursor=pointer]
+              - row "SH-0001 Alice Shareholder shareholder1@clubbaist.com Shareholder Select" [ref=e100]:
+                - cell "SH-0001" [ref=e101]
+                - cell "Alice Shareholder" [ref=e102]
+                - cell "shareholder1@clubbaist.com" [ref=e103]
+                - cell "Shareholder" [ref=e104]
+                - cell "Select" [ref=e105]:
+                  - button "Select" [ref=e106] [cursor=pointer]
+              - row "SH-0002 Bob Shareholder shareholder2@clubbaist.com Shareholder Select" [ref=e107]:
+                - cell "SH-0002" [ref=e108]
+                - cell "Bob Shareholder" [ref=e109]
+                - cell "shareholder2@clubbaist.com" [ref=e110]
+                - cell "Shareholder" [ref=e111]
+                - cell "Select" [ref=e112]:
+                  - button "Select" [ref=e113] [cursor=pointer]
+              - row "SH-0003 Carol Shareholder shareholder3@clubbaist.com Shareholder Select" [ref=e114]:
+                - cell "SH-0003" [ref=e115]
+                - cell "Carol Shareholder" [ref=e116]
+                - cell "shareholder3@clubbaist.com" [ref=e117]
+                - cell "Shareholder" [ref=e118]
+                - cell "Select" [ref=e119]:
+                  - button "Select" [ref=e120] [cursor=pointer]
+              - row "SV-0004 Diana Silver silver@clubbaist.com Silver Select" [ref=e121]:
+                - cell "SV-0004" [ref=e122]
+                - cell "Diana Silver" [ref=e123]
+                - cell "silver@clubbaist.com" [ref=e124]
+                - cell "Silver" [ref=e125]
+                - cell "Select" [ref=e126]:
+                  - button "Select" [active] [ref=e127] [cursor=pointer]
+      - generic [ref=e128]:
+        - generic [ref=e129]:
+          - strong [ref=e130]: Reservations for Diana Silver (SV-0004)
+          - button "Book on Behalf" [ref=e131] [cursor=pointer]
+        - table [ref=e133]:
+          - rowgroup [ref=e134]:
+            - row "Date Time Players Status Actions" [ref=e135]:
+              - columnheader "Date" [ref=e136]:
+                - button "Date" [ref=e138] [cursor=pointer]:
+                  - generic [ref=e139]: Date
+              - columnheader "Time" [ref=e141]:
+                - generic [ref=e144]: Time
+              - columnheader "Players" [ref=e145]:
+                - generic [ref=e148]: Players
+              - columnheader "Status" [ref=e149]:
+                - generic [ref=e152]: Status
+              - columnheader "Actions" [ref=e153]:
+                - generic [ref=e156]: Actions
+          - rowgroup [ref=e157]:
+            - row "Apr 19, 2026 9:00 AM 1 Past View/Edit" [ref=e158]:
+              - cell "Apr 19, 2026" [ref=e159]
+              - cell "9:00 AM" [ref=e160]
+              - cell "1" [ref=e161]
+              - cell "Past" [ref=e162]:
+                - generic [ref=e163]: Past
+              - cell "View/Edit" [ref=e164]:
+                - link "View/Edit" [ref=e165] [cursor=pointer]:
+                  - /url: /teetimes/reservation/5
+            - row "Apr 20, 2026 6:00 PM 2 Past View/Edit" [ref=e166]:
+              - cell "Apr 20, 2026" [ref=e167]
+              - cell "6:00 PM" [ref=e168]
+              - cell "2" [ref=e169]
+              - cell "Past" [ref=e170]:
+                - generic [ref=e171]: Past
+              - cell "View/Edit" [ref=e172]:
+                - link "View/Edit" [ref=e173] [cursor=pointer]:
+                  - /url: /teetimes/reservation/2
+            - row "Apr 21, 2026 8:00 AM 1 Upcoming View/Edit Cancel" [ref=e174]:
+              - cell "Apr 21, 2026" [ref=e175]
+              - cell "8:00 AM" [ref=e176]
+              - cell "1" [ref=e177]
+              - cell "Upcoming" [ref=e178]:
+                - generic [ref=e179]: Upcoming
+              - cell "View/Edit Cancel" [ref=e180]:
+                - link "View/Edit" [ref=e181] [cursor=pointer]:
+                  - /url: /teetimes/reservation/3
+                - button "Cancel" [ref=e182] [cursor=pointer]

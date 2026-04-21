@@ -1,0 +1,19 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - link "Club BAIST" [ref=e6] [cursor=pointer]:
+      - /url: ""
+    - navigation [ref=e8]:
+      - link "Home" [ref=e10] [cursor=pointer]:
+        - /url: ""
+        - text: Home
+      - link "newuser.test@example.com" [ref=e13] [cursor=pointer]:
+        - /url: Account/Manage
+        - text: newuser.test@example.com
+      - button "Logout" [ref=e17] [cursor=pointer]: Logout
+  - main [ref=e19]:
+    - link "About" [ref=e21] [cursor=pointer]:
+      - /url: https://learn.microsoft.com/aspnet/core/
+    - article [ref=e22]:
+      - generic [ref=e23]:
+        - heading "Welcome to Club BAIST" [active] [level=1] [ref=e24]
+        - paragraph [ref=e25]: An exclusive private golf club, founded in 1996.

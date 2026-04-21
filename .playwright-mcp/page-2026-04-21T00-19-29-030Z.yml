@@ -1,0 +1,82 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - link "Club BAIST" [ref=e6] [cursor=pointer]:
+      - /url: ""
+    - navigation [ref=e8]:
+      - link "Home" [ref=e10] [cursor=pointer]:
+        - /url: ""
+        - text: Home
+      - link "Apply for Membership" [ref=e13] [cursor=pointer]:
+        - /url: membership/apply
+        - text: Apply for Membership
+      - link "Login" [ref=e16] [cursor=pointer]:
+        - /url: Account/Login
+        - text: Login
+  - main [ref=e18]:
+    - link "About" [ref=e20] [cursor=pointer]:
+      - /url: https://learn.microsoft.com/aspnet/core/
+    - article [ref=e21]:
+      - generic [ref=e22]:
+        - heading "Apply for Membership" [level=2] [ref=e23]
+        - generic [ref=e24]:
+          - generic [ref=e25]:
+            - heading "Personal Information" [level=5] [ref=e27]
+            - generic [ref=e28]:
+              - generic [ref=e31]:
+                - textbox "Email Address" [ref=e32]:
+                  - /placeholder: Email
+                - generic: Email Address
+              - generic [ref=e33]:
+                - generic [ref=e35]:
+                  - textbox "First Name" [ref=e36]
+                  - generic: First Name
+                - generic [ref=e38]:
+                  - textbox "Last Name" [ref=e39]
+                  - generic: Last Name
+              - generic [ref=e42]:
+                - textbox "Date of Birth" [ref=e43]: 1996-04-20
+                - generic: Date of Birth
+              - generic [ref=e44]:
+                - generic [ref=e46]:
+                  - textbox "Phone (e.g. (403) 555-1234)" [ref=e47]:
+                    - /placeholder: Phone
+                  - generic: Phone (e.g. (403) 555-1234)
+                - generic [ref=e49]:
+                  - textbox "Alternate Phone (Optional)" [ref=e50]:
+                    - /placeholder: Alternate Phone
+                  - generic: Alternate Phone (Optional)
+              - generic [ref=e51]:
+                - textbox "Address" [ref=e52]
+                - generic: Address
+              - generic [ref=e55]:
+                - textbox "Postal Code (e.g. T2A 4K3)" [ref=e56]:
+                  - /placeholder: Postal Code
+                - generic: Postal Code (e.g. T2A 4K3)
+          - generic [ref=e57]:
+            - heading "Employment Information" [level=5] [ref=e59]
+            - generic [ref=e61]:
+              - generic [ref=e63]:
+                - textbox "Occupation" [ref=e64]
+                - generic: Occupation
+              - generic [ref=e66]:
+                - textbox "Company Name" [ref=e67]
+                - generic: Company Name
+          - generic [ref=e68]:
+            - heading "Membership Details" [level=5] [ref=e70]
+            - generic [ref=e71]:
+              - generic [ref=e72]:
+                - combobox "Membership Level" [ref=e73]:
+                  - option "-- Select Level --" [selected]
+                  - option "Shareholder"
+                  - option "Silver"
+                  - option "Bronze"
+                  - option "Associate"
+                - generic: Membership Level
+              - generic [ref=e74]:
+                - generic [ref=e76]:
+                  - spinbutton "Sponsor 1 Member ID" [ref=e77]
+                  - generic: Sponsor 1 Member ID
+                - generic [ref=e79]:
+                  - spinbutton "Sponsor 2 Member ID" [ref=e80]
+                  - generic: Sponsor 2 Member ID
+          - button "Submit Application" [ref=e82] [cursor=pointer]

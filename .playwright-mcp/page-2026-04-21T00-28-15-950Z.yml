@@ -1,0 +1,81 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - link "Club BAIST" [ref=e6] [cursor=pointer]:
+      - /url: ""
+    - navigation [ref=e8]:
+      - link "Home" [ref=e10] [cursor=pointer]:
+        - /url: ""
+        - text: Home
+      - link "Tee Times" [ref=e13] [cursor=pointer]:
+        - /url: teetimes
+        - text: Tee Times
+      - link "My Reservations" [ref=e16] [cursor=pointer]:
+        - /url: teetimes/my
+        - text: My Reservations
+      - link "My Scores" [ref=e19] [cursor=pointer]:
+        - /url: scores/my
+        - text: My Scores
+      - link "My Standing Requests" [ref=e22] [cursor=pointer]:
+        - /url: teetimes/standing/my
+        - text: My Standing Requests
+      - link "shareholder1@clubbaist.com" [ref=e25] [cursor=pointer]:
+        - /url: Account/Manage
+        - text: shareholder1@clubbaist.com
+      - button "Logout" [ref=e29] [cursor=pointer]: Logout
+  - main [ref=e31]:
+    - link "About" [ref=e33] [cursor=pointer]:
+      - /url: https://learn.microsoft.com/aspnet/core/
+    - article [ref=e34]:
+      - heading "Book a Tee Time" [level=3] [ref=e35]
+      - generic [ref=e78]: Unable to create booking. The slot may be full or booking rules prevent this booking.
+      - generic [ref=e39]:
+        - strong [ref=e41]: Selected Slot
+        - generic [ref=e42]:
+          - paragraph [ref=e43]:
+            - strong [ref=e44]: "Date:"
+            - text: Saturday, May 9, 2026
+          - paragraph [ref=e45]:
+            - strong [ref=e46]: "Time:"
+            - text: 7:07 AM
+      - generic [ref=e47]:
+        - strong [ref=e49]: Booking Member
+        - paragraph [ref=e51]: SH-0001 - Alice Shareholder
+      - generic [ref=e52]:
+        - strong [ref=e54]: Additional Players
+        - generic [ref=e56]:
+          - generic [ref=e60]:
+            - generic [ref=e62]:
+              - combobox "Player 2" [ref=e63]:
+                - option "-- Select Player --"
+                - option "BR-0005 - Evan Bronze"
+                - option "AS-0006 - Frank Pending"
+                - option "SH-0002 - Bob Shareholder" [selected]
+                - option "SH-0003 - Carol Shareholder"
+                - option "BR-0004 - Diana Silver"
+              - generic: Player 2
+            - button "Remove" [ref=e65] [cursor=pointer]
+          - generic [ref=e66]:
+            - generic [ref=e68]:
+              - combobox "Player 3" [ref=e69]:
+                - option "-- Select Player --"
+                - option "BR-0005 - Evan Bronze"
+                - option "AS-0006 - Frank Pending"
+                - option "SH-0002 - Bob Shareholder"
+                - option "SH-0003 - Carol Shareholder" [selected]
+                - option "BR-0004 - Diana Silver"
+              - generic: Player 3
+            - button "Remove" [ref=e71] [cursor=pointer]
+          - generic [ref=e72]:
+            - generic [ref=e74]:
+              - combobox "Player 4" [ref=e75]:
+                - option "-- Select Player --"
+                - option "BR-0005 - Evan Bronze"
+                - option "AS-0006 - Frank Pending"
+                - option "SH-0002 - Bob Shareholder"
+                - option "SH-0003 - Carol Shareholder"
+                - option "BR-0004 - Diana Silver" [selected]
+              - generic: Player 4
+            - button "Remove" [ref=e77] [cursor=pointer]
+      - button "Book Tee Time" [ref=e58] [cursor=pointer]
+      - link "Cancel" [ref=e59] [cursor=pointer]:
+        - /url: /teetimes

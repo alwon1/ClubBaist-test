@@ -1,0 +1,87 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - link "Club BAIST" [ref=e6] [cursor=pointer]:
+      - /url: ""
+    - navigation [ref=e8]:
+      - link "Home" [ref=e10] [cursor=pointer]:
+        - /url: ""
+        - text: Home
+      - link "Applications" [ref=e13] [cursor=pointer]:
+        - /url: membership/applications
+        - text: Applications
+      - link "committee@clubbaist.com" [ref=e16] [cursor=pointer]:
+        - /url: Account/Manage
+        - text: committee@clubbaist.com
+      - button "Logout" [ref=e20] [cursor=pointer]: Logout
+  - main [ref=e22]:
+    - link "About" [ref=e24] [cursor=pointer]:
+      - /url: https://learn.microsoft.com/aspnet/core/
+    - article [ref=e25]:
+      - generic [ref=e75]:
+        - generic [ref=e76]:
+          - heading "Review Application" [level=2] [ref=e77]
+          - link "Back to Inbox" [ref=e78] [cursor=pointer]:
+            - /url: /membership/applications
+        - generic [ref=e79]:
+          - generic [ref=e81]:
+            - generic [ref=e82]:
+              - heading "Applicant Details" [level=5] [ref=e83]
+              - generic [ref=e84]: Waitlisted
+            - generic [ref=e85]:
+              - generic [ref=e86]:
+                - generic [ref=e87]:
+                  - strong [ref=e88]: "First Name:"
+                  - paragraph [ref=e89]: Henry
+                - generic [ref=e90]:
+                  - strong [ref=e91]: "Last Name:"
+                  - paragraph [ref=e92]: Waitlist
+              - generic [ref=e93]:
+                - generic [ref=e94]:
+                  - strong [ref=e95]: "Date of Birth:"
+                  - paragraph [ref=e96]: 1995-11-05
+                - generic [ref=e97]:
+                  - strong [ref=e98]: "Email:"
+                  - paragraph [ref=e99]: henry.waitlist@example.com
+              - generic [ref=e100]:
+                - generic [ref=e101]:
+                  - strong [ref=e102]: "Phone:"
+                  - paragraph [ref=e103]: 403-555-0202
+                - generic [ref=e104]:
+                  - strong [ref=e105]: "Alternate Phone:"
+                  - paragraph [ref=e106]: N/A
+              - generic [ref=e107]:
+                - generic [ref=e108]:
+                  - strong [ref=e109]: "Address:"
+                  - paragraph [ref=e110]: 321 Bunker Road
+                - generic [ref=e111]:
+                  - strong [ref=e112]: "Postal Code:"
+                  - paragraph [ref=e113]: T2P 4D4
+              - generic [ref=e114]:
+                - generic [ref=e115]:
+                  - strong [ref=e116]: "Occupation:"
+                  - paragraph [ref=e117]: Civil Engineer
+                - generic [ref=e118]:
+                  - strong [ref=e119]: "Company:"
+                  - paragraph [ref=e120]: Prairie Systems
+              - generic [ref=e122]:
+                - strong [ref=e123]: "Requested Level:"
+                - paragraph [ref=e124]: Associate
+              - generic [ref=e125]:
+                - generic [ref=e126]:
+                  - strong [ref=e127]: "Sponsor 1:"
+                  - paragraph [ref=e128]: Alice Shareholder (SH-0001)
+                - generic [ref=e129]:
+                  - strong [ref=e130]: "Sponsor 2:"
+                  - paragraph [ref=e131]: Bob Shareholder (SH-0002)
+          - generic [ref=e133]:
+            - heading "Make Decision" [level=5] [ref=e135]
+            - generic [ref=e136]:
+              - generic [ref=e137]:
+                - combobox "New Status" [ref=e138]:
+                  - option "-- Select Status --"
+                  - option "Submitted"
+                  - option "OnHold" [selected]
+                  - option "Accepted"
+                  - option "Denied"
+                - generic: New Status
+              - button "Submit Decision" [disabled]

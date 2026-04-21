@@ -35,13 +35,7 @@ public class Program
             })
             .AddIdentityCookies();
 
-        builder.AddSqlServerDbContext<AppDbContext>(
-            "clubbaist",
-            configureDbContextOptions: options =>
-            {
-                options.UseSeeding((context, storeCreated) => AppDbContextSeed.Seed((AppDbContext)context, storeCreated));
-                options.UseAsyncSeeding((context, storeCreated, cancellationToken) => AppDbContextSeed.SeedAsync((AppDbContext)context, storeCreated, cancellationToken));
-            });
+        builder.AddSqlServerDbContext<AppDbContext>("clubbaist");
         builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
         builder.Services.AddIdentityCore<ClubBaistUser>(options =>
@@ -114,7 +108,8 @@ public class Program
             return;
         }
 
-        await db.Database.EnsureCreatedAsync();
+        var storeCreated = await db.Database.EnsureCreatedAsync();
         await db.EnsureSqlServerSnapshotIsolationAsync();
+        await AppDbContextSeed.SeedAsync(scope.ServiceProvider, db, storeCreated, CancellationToken.None);
     }
 }

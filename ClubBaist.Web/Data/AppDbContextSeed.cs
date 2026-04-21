@@ -40,25 +40,15 @@ internal static class AppDbContextSeed
         new("jack.waitlist@example.com", "Jack", "Waitlist", "Accountant", "Fairway Finance", "987 Sunset Terrace", "T2P 6F6", "403-555-0204", new DateTime(1985, 9, 18), "SV", ApplicationStatus.Waitlisted)
     ];
 
-    public static void Seed(AppDbContext db, bool storeCreated)
+    public static async Task SeedAsync(IServiceProvider serviceProvider, AppDbContext db, bool storeCreated, CancellationToken cancellationToken)
     {
         if (!storeCreated)
         {
             return;
         }
 
-        SeedAsync(db, storeCreated, CancellationToken.None).GetAwaiter().GetResult();
-    }
-
-    public static async Task SeedAsync(AppDbContext db, bool storeCreated, CancellationToken cancellationToken)
-    {
-        if (!storeCreated)
-        {
-            return;
-        }
-
-        var roleManager = db.GetService<RoleManager<IdentityRole<Guid>>>();
-        var userManager = db.GetService<UserManager<ClubBaistUser>>();
+        var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
+        var userManager = serviceProvider.GetRequiredService<UserManager<ClubBaistUser>>();
 
         await SeedRolesAsync(roleManager);
         var levelsByCode = await SeedMembershipLevelsAsync(db, cancellationToken);
@@ -67,6 +57,7 @@ internal static class AppDbContextSeed
 
         await SeedApplicationsAsync(db, levelsByCode, sponsors, cancellationToken);
         await SeedCurrentSeasonAsync(db, cancellationToken);
+        await SeedPastBookingsAsync(db, cancellationToken);
     }
 
     private static async Task SeedRolesAsync(RoleManager<IdentityRole<Guid>> roleManager)
@@ -263,11 +254,13 @@ internal static class AppDbContextSeed
     private static async Task SeedCurrentSeasonAsync(AppDbContext db, CancellationToken cancellationToken)
     {
         var today = DateOnly.FromDateTime(DateTime.Today);
+        // Start one month before today so past slots exist for score-entry testing.
+        // End Oct 15 — reflects a typical Edmonton-area golf season close.
         var season = new Season
         {
             Name = $"{today.Year} Season",
-            StartDate = new DateOnly(today.Year, 1, 1),
-            EndDate = new DateOnly(today.Year, 12, 31)
+            StartDate = today.AddMonths(-1),
+            EndDate = new DateOnly(today.Year, 10, 15)
         };
 
         db.Seasons.Add(season);
@@ -275,6 +268,120 @@ internal static class AppDbContextSeed
 
         var slots = SeasonService2.GenerateSlots(season, OperatingHours.AllDaysDefault()).ToList();
         await db.TeeTimeSlots.AddRangeAsync(slots, cancellationToken);
+        await db.SaveChangesAsync(cancellationToken);
+    }
+
+    private static async Task SeedPastBookingsAsync(AppDbContext db, CancellationToken cancellationToken)
+    {
+        var logger = db.GetService<ILoggerFactory>().CreateLogger(nameof(AppDbContextSeed));
+
+        // Member IDs assigned sequentially by EF during seeding:
+        //   1 = Alice Shareholder, 2 = Bob Shareholder, 3 = Carol Shareholder,
+        //   4 = Diana Silver, 5 = Evan Bronze
+        var alice = await db.MemberShips.FirstOrDefaultAsync(m => m.Id == 1, cancellationToken);
+        var diana = await db.MemberShips.FirstOrDefaultAsync(m => m.Id == 4, cancellationToken);
+
+        if (alice is null || diana is null)
+        {
+            logger.LogWarning("SeedPastBookingsAsync: expected member IDs not found — skipping past booking seed.");
+            return;
+        }
+
+        // Slot times are on the hour, operating hours 07:00–18:00.
+        // Clamp an hour value to valid operating hours and return a DateTimeKind.Unspecified DateTime
+        // suitable for matching TeeTimeSlot.Start.
+        static DateTime SlotTime(DateTime date, int hour) =>
+            DateTime.SpecifyKind(date.Date.AddHours(Math.Clamp(hour, 7, 18)), DateTimeKind.Unspecified);
+
+        var now = DateTime.Now;
+        var today = now.Date;
+
+        // Today, more than 2 hours ago (3 h back; clamped to 07:00)
+        var oldTodayStart = SlotTime(today, now.Hour - 3);
+
+        // Within the last 2 hours (1 h back; clamped to 07:00; must be later than oldTodayStart)
+        var recentStart = SlotTime(today, now.Hour - 1);
+        if (recentStart <= oldTodayStart)
+            recentStart = SlotTime(today, oldTodayStart.Hour + 1);
+
+        // Near future (1 h ahead; if past 18:00 operating limit, use tomorrow 08:00)
+        var futureHour = now.Hour + 1;
+        var futureStart = futureHour <= 18
+            ? SlotTime(today, futureHour)
+            : DateTime.SpecifyKind(today.AddDays(1).AddHours(8), DateTimeKind.Unspecified);
+
+        // Booking 1 — today, more than 2 hours ago — Alice solo
+        var slot1 = await db.TeeTimeSlots.FirstOrDefaultAsync(s => s.Start == oldTodayStart, cancellationToken);
+        if (slot1 is null)
+            logger.LogWarning("SeedPastBookingsAsync: slot {Start} not found — skipping.", oldTodayStart);
+        else
+            db.TeeTimeBookings.Add(new TeeTimeBooking
+            {
+                TeeTimeSlotStart = slot1.Start,
+                TeeTimeSlot = slot1,
+                BookingMemberId = alice.Id,
+                BookingMember = alice,
+                AdditionalParticipants = []
+            });
+
+        // Booking 2 — today, within the last 2 hours — Alice + Diana
+        var slot2 = await db.TeeTimeSlots.FirstOrDefaultAsync(s => s.Start == recentStart, cancellationToken);
+        if (slot2 is null)
+            logger.LogWarning("SeedPastBookingsAsync: slot {Start} not found — skipping.", recentStart);
+        else
+            db.TeeTimeBookings.Add(new TeeTimeBooking
+            {
+                TeeTimeSlotStart = slot2.Start,
+                TeeTimeSlot = slot2,
+                BookingMemberId = alice.Id,
+                BookingMember = alice,
+                AdditionalParticipants = [diana]
+            });
+
+        // Booking 3 — near future — Diana solo
+        var slot3 = await db.TeeTimeSlots.FirstOrDefaultAsync(s => s.Start == futureStart, cancellationToken);
+        if (slot3 is null)
+            logger.LogWarning("SeedPastBookingsAsync: slot {Start} not found — skipping.", futureStart);
+        else
+            db.TeeTimeBookings.Add(new TeeTimeBooking
+            {
+                TeeTimeSlotStart = slot3.Start,
+                TeeTimeSlot = slot3,
+                BookingMemberId = diana.Id,
+                BookingMember = diana,
+                AdditionalParticipants = []
+            });
+
+        // Booking 4 — yesterday at 08:00 — Alice solo (second eligible booking for TC-SCORE-005/006/007)
+        var yesterday8 = DateTime.SpecifyKind(today.AddDays(-1).AddHours(8), DateTimeKind.Unspecified);
+        var slot4 = await db.TeeTimeSlots.FirstOrDefaultAsync(s => s.Start == yesterday8, cancellationToken);
+        if (slot4 is null)
+            logger.LogWarning("SeedPastBookingsAsync: slot {Start} not found — skipping.", yesterday8);
+        else
+            db.TeeTimeBookings.Add(new TeeTimeBooking
+            {
+                TeeTimeSlotStart = slot4.Start,
+                TeeTimeSlot = slot4,
+                BookingMemberId = alice.Id,
+                BookingMember = alice,
+                AdditionalParticipants = []
+            });
+
+        // Booking 5 — yesterday at 09:00 — Diana solo (eligible booking for TC-SCORE-009 staff scoring)
+        var yesterday9 = DateTime.SpecifyKind(today.AddDays(-1).AddHours(9), DateTimeKind.Unspecified);
+        var slot5 = await db.TeeTimeSlots.FirstOrDefaultAsync(s => s.Start == yesterday9, cancellationToken);
+        if (slot5 is null)
+            logger.LogWarning("SeedPastBookingsAsync: slot {Start} not found — skipping.", yesterday9);
+        else
+            db.TeeTimeBookings.Add(new TeeTimeBooking
+            {
+                TeeTimeSlotStart = slot5.Start,
+                TeeTimeSlot = slot5,
+                BookingMemberId = diana.Id,
+                BookingMember = diana,
+                AdditionalParticipants = []
+            });
+
         await db.SaveChangesAsync(cancellationToken);
     }
 

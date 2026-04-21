@@ -1,0 +1,50 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - link "Club BAIST" [ref=e6] [cursor=pointer]:
+      - /url: ""
+    - navigation [ref=e8]:
+      - link "Home" [ref=e10] [cursor=pointer]:
+        - /url: ""
+        - text: Home
+      - link "Apply for Membership" [ref=e13] [cursor=pointer]:
+        - /url: membership/apply
+        - text: Apply for Membership
+      - link "Login" [ref=e16] [cursor=pointer]:
+        - /url: Account/Login
+        - text: Login
+  - main [ref=e18]:
+    - link "About" [ref=e20] [cursor=pointer]:
+      - /url: https://learn.microsoft.com/aspnet/core/
+    - article [ref=e21]:
+      - heading "Register" [active] [level=1] [ref=e22]
+      - generic [ref=e23]:
+        - generic [ref=e25]:
+          - heading "Create a new account." [level=2] [ref=e26]
+          - separator [ref=e27]
+          - alert [ref=e28]:
+            - listitem [ref=e29]: The password and confirmation password do not match.
+          - generic [ref=e30]:
+            - textbox "Email" [ref=e31]:
+              - /placeholder: name@example.com
+              - text: newuser2@example.com
+            - generic: Email
+          - generic [ref=e32]:
+            - textbox "Password" [ref=e33]:
+              - /placeholder: password
+              - text: Pass@word1
+            - generic: Password
+          - generic [ref=e34]:
+            - textbox "Confirm Password" [ref=e35]:
+              - /placeholder: password
+              - text: DifferentPass1
+            - generic: Confirm Password
+            - generic [ref=e36]: The password and confirmation password do not match.
+          - button "Register" [ref=e37] [cursor=pointer]
+        - generic [ref=e39]:
+          - heading "Use another service to register." [level=3] [ref=e40]
+          - separator [ref=e41]
+          - paragraph [ref=e43]:
+            - text: There are no external authentication services configured. See this
+            - link "article about setting up this ASP.NET application to support logging in via external services" [ref=e44] [cursor=pointer]:
+              - /url: https://go.microsoft.com/fwlink/?LinkID=532715
+            - text: .

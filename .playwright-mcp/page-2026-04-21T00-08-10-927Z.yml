@@ -1,0 +1,21 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - link "Club BAIST" [ref=e6] [cursor=pointer]:
+      - /url: ""
+    - navigation [ref=e8]:
+      - link "Home" [ref=e10] [cursor=pointer]:
+        - /url: ""
+        - text: Home
+      - link "Apply for Membership" [ref=e13] [cursor=pointer]:
+        - /url: membership/apply
+        - text: Apply for Membership
+      - link "Login" [ref=e16] [cursor=pointer]:
+        - /url: Account/Login
+        - text: Login
+  - main [ref=e18]:
+    - link "About" [ref=e20] [cursor=pointer]:
+      - /url: https://learn.microsoft.com/aspnet/core/
+    - article [ref=e21]:
+      - generic [ref=e22]:
+        - heading "Access denied" [active] [level=1] [ref=e23]
+        - paragraph [ref=e24]: You do not have access to this resource.
