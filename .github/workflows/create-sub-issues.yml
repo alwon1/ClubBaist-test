@@ -7,6 +7,11 @@ on:
         description: 'Parent issue number (default: 122)'
         required: false
         default: '122'
+  push:
+    branches:
+      - copilot/create-sub-issues-for-implementation
+    paths:
+      - '.github/workflows/create-sub-issues.yml'
 
 permissions:
   issues: write
@@ -24,7 +29,8 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
-            const parentNumber = parseInt('${{ github.event.inputs.parent_issue }}');
+            // Use workflow_dispatch input if available, otherwise default to 122
+            const parentNumber = parseInt(context.payload.inputs?.parent_issue ?? '122');
 
             // Helper: link a child issue as sub-issue of a parent (with comment fallback)
             async function linkSubIssue(parentNodeId, childNodeId, parentNumber, childNumber, label) {
@@ -60,6 +66,16 @@ jobs:
                 await github.rest.issues.createLabel({ owner: context.repo.owner, repo: context.repo.repo, name, color, description });
                 console.log(`Created label: ${name}`);
               }
+            }
+
+            // Idempotency: check if Area F issue already exists (by title search)
+            const existingSearch = await github.rest.search.issuesAndPullRequests({
+              q: `repo:${context.repo.owner}/${context.repo.repo} is:issue "Area F: Cross-Cutting Concerns" in:title`,
+            });
+            if (existingSearch.data.total_count > 0) {
+              console.log('Sub-issues appear to already exist — skipping creation to avoid duplicates.');
+              console.log('Existing Area F issue: #' + existingSearch.data.items[0].number);
+              return;
             }
 
             // Helper: create one issue and return { number, nodeId }
