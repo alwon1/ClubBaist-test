@@ -1,4 +1,4 @@
-using ClubBaist.Domain2;
+using ClubBaist.Domain;
 using Microsoft.EntityFrameworkCore;
 
 namespace ClubBaist.Web.Data;

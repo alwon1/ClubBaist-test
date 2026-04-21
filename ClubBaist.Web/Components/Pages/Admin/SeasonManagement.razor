@@ -5,11 +5,11 @@
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
-@using ClubBaist.Domain2
-@using ClubBaist.Services2
+@using ClubBaist.Domain
+@using ClubBaist.Services
 
-@inject IAppDbContext2 DbContext
-@inject SeasonService2 SeasonService
+@inject AppDbContext DbContext
+@inject SeasonService SeasonService
 @inject ILogger<SeasonManagement> Logger
 
 <PageTitle>Season Management - Club Baist</PageTitle>

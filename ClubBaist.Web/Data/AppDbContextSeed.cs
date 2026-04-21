@@ -1,7 +1,7 @@
-using ClubBaist.Domain2;
-using ClubBaist.Domain2.Entities;
-using ClubBaist.Domain2.Entities.Membership;
-using ClubBaist.Services2;
+using ClubBaist.Domain;
+using ClubBaist.Domain.Entities;
+using ClubBaist.Domain.Entities.Membership;
+using ClubBaist.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -266,7 +266,7 @@ internal static class AppDbContextSeed
         db.Seasons.Add(season);
         await db.SaveChangesAsync(cancellationToken);
 
-        var slots = SeasonService2.GenerateSlots(season, OperatingHours.AllDaysDefault()).ToList();
+        var slots = SeasonService.GenerateSlots(season, OperatingHours.AllDaysDefault()).ToList();
         await db.TeeTimeSlots.AddRangeAsync(slots, cancellationToken);
         await db.SaveChangesAsync(cancellationToken);
     }

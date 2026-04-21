@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
-using ClubBaist.Domain2.Entities;
+using ClubBaist.Domain.Entities;
 
 namespace ClubBaist.Web.Components.Account;
 

@@ -6,11 +6,11 @@
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.EntityFrameworkCore
-@using ClubBaist.Domain2
-@using ClubBaist.Domain2.Entities.Scoring
-@using ClubBaist.Services2.Scoring
+@using ClubBaist.Domain
+@using ClubBaist.Domain.Entities.Scoring
+@using ClubBaist.Services.Scoring
 
-@inject IAppDbContext2 DbContext
+@inject AppDbContext DbContext
 @inject ScoreService ScoreService
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager NavigationManager

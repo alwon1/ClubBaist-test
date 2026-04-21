@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
-using ClubBaist.Domain2.Entities;
+using ClubBaist.Domain.Entities;
 
 namespace ClubBaist.Web.Components.Account;
 

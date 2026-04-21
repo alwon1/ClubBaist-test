@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
-using ClubBaist.Domain2;
-using ClubBaist.Domain2.Entities;
-using ClubBaist.Services2;
-using ClubBaist.Services2.Membership;
-using ClubBaist.Services2.Membership.Applications;
+using ClubBaist.Domain;
+using ClubBaist.Domain.Entities;
+using ClubBaist.Services;
+using ClubBaist.Services.Membership;
+using ClubBaist.Services.Membership.Applications;
 using ClubBaist.Web.Components;
 using ClubBaist.Web.Components.Account;
 using ClubBaist.Web.Data;
@@ -52,8 +52,7 @@ public class Program
         builder.Services.AddHostedService<ClubBaist.Web.Data.DatabaseInitializerService>();
 
         // Domain services
-        builder.Services.AddScoped<IAppDbContext2>(sp => sp.GetRequiredService<AppDbContext>());
-        builder.Services.AddTeeTimeBookingServices2();
+        builder.Services.AddTeeTimeBookingServices();
         builder.Services.AddScoped<MembershipApplicationService>();
         builder.Services.AddScoped<MembershipService>();
         builder.Services.AddScoped<MembershipLevelService>();
