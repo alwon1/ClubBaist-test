@@ -408,6 +408,314 @@ public class StandingTeeTimeServiceTests
     }
 
     // -----------------------------------------------------------------------
+    // Q17 – Relaxed one-per-day-of-week rule
+    // -----------------------------------------------------------------------
+
+    [TestMethod]
+    public async Task SubmitRequestAsync_SecondRequest_DifferentDayOfWeek_Succeeds()
+    {
+        await using var host = await Domain2TestHost.CreateAsync();
+        await using var scope = host.CreateScope();
+        var provider = scope.ServiceProvider;
+
+        var db = provider.GetRequiredService<AppDbContext>();
+        var userManager = provider.GetRequiredService<UserManager<ClubBaistUser>>();
+        var service = provider.GetRequiredService<StandingTeeTimeService>();
+
+        var level = await Domain2TestData.CreateMembershipLevelAsync(db, "SH", "Shareholder");
+        var bookingMember = await Domain2TestData.CreateMemberAsync(userManager, db, level, "bm@test.com", "Booking", "Member");
+        var p1 = await Domain2TestData.CreateMemberAsync(userManager, db, level, "p1@test.com", "Player", "One");
+        var p2 = await Domain2TestData.CreateMemberAsync(userManager, db, level, "p2@test.com", "Player", "Two");
+        var p3 = await Domain2TestData.CreateMemberAsync(userManager, db, level, "p3@test.com", "Player", "Three");
+
+        // First request for Saturday – should succeed.
+        var saturday = BuildRequest(bookingMember, [p1, p2, p3], dayOfWeek: DayOfWeek.Saturday);
+        var (firstSuccess, _) = await service.SubmitRequestAsync(saturday);
+        Assert.IsTrue(firstSuccess);
+
+        // Second request for Thursday (different day) – should also succeed under the relaxed rule.
+        var thursday = BuildRequest(bookingMember, [p1, p2, p3], dayOfWeek: DayOfWeek.Thursday);
+        var (secondSuccess, secondError) = await service.SubmitRequestAsync(thursday);
+
+        Assert.IsTrue(secondSuccess);
+        Assert.IsNull(secondError);
+
+        var allRequests = await db.StandingTeeTimes.AsNoTracking()
+            .Where(s => s.BookingMemberId == bookingMember.Id)
+            .ToListAsync();
+        Assert.HasCount(2, allRequests);
+    }
+
+    [TestMethod]
+    public async Task SubmitRequestAsync_SecondRequest_SameDayOfWeek_ReturnsFalse()
+    {
+        await using var host = await Domain2TestHost.CreateAsync();
+        await using var scope = host.CreateScope();
+        var provider = scope.ServiceProvider;
+
+        var db = provider.GetRequiredService<AppDbContext>();
+        var userManager = provider.GetRequiredService<UserManager<ClubBaistUser>>();
+        var service = provider.GetRequiredService<StandingTeeTimeService>();
+
+        var level = await Domain2TestData.CreateMembershipLevelAsync(db, "SH", "Shareholder");
+        var bookingMember = await Domain2TestData.CreateMemberAsync(userManager, db, level, "bm@test.com", "Booking", "Member");
+        var p1 = await Domain2TestData.CreateMemberAsync(userManager, db, level, "p1@test.com", "Player", "One");
+        var p2 = await Domain2TestData.CreateMemberAsync(userManager, db, level, "p2@test.com", "Player", "Two");
+        var p3 = await Domain2TestData.CreateMemberAsync(userManager, db, level, "p3@test.com", "Player", "Three");
+
+        // Submit first Saturday request.
+        var first = BuildRequest(bookingMember, [p1, p2, p3], dayOfWeek: DayOfWeek.Saturday);
+        await service.SubmitRequestAsync(first);
+
+        // Submit second Saturday request – same day, should fail.
+        var second = BuildRequest(bookingMember, [p1, p2, p3], dayOfWeek: DayOfWeek.Saturday);
+        var (success, error) = await service.SubmitRequestAsync(second);
+
+        Assert.IsFalse(success);
+        Assert.IsNotNull(error);
+    }
+
+    // -----------------------------------------------------------------------
+    // Q16 – Weekly allocation engine
+    // -----------------------------------------------------------------------
+
+    [TestMethod]
+    public async Task RunWeeklyAllocationAsync_ApprovedRequest_CreatesBookingAndSetsAllocated()
+    {
+        await using var host = await Domain2TestHost.CreateAsync();
+        await using var scope = host.CreateScope();
+        var provider = scope.ServiceProvider;
+
+        var db = provider.GetRequiredService<AppDbContext>();
+        var userManager = provider.GetRequiredService<UserManager<ClubBaistUser>>();
+        var service = provider.GetRequiredService<StandingTeeTimeService>();
+
+        var level = await Domain2TestData.CreateMembershipLevelAsync(db, "SH", "Shareholder");
+        var bookingMember = await Domain2TestData.CreateMemberAsync(userManager, db, level, "bm@test.com", "Booking", "Member");
+        var p1 = await Domain2TestData.CreateMemberAsync(userManager, db, level, "p1@test.com", "Player", "One");
+        var p2 = await Domain2TestData.CreateMemberAsync(userManager, db, level, "p2@test.com", "Player", "Two");
+        var p3 = await Domain2TestData.CreateMemberAsync(userManager, db, level, "p3@test.com", "Player", "Three");
+
+        var targetDate = DateOnly.FromDateTime(DateTime.Today.AddDays(30));
+        var slotTime = new TimeOnly(8, 0);
+        var slot = await Domain2TestData.CreateSlotAtAsync(db, targetDate.ToDateTime(slotTime));
+
+        var standing = new StandingTeeTime
+        {
+            BookingMemberId = bookingMember.Id,
+            BookingMember = bookingMember,
+            RequestedDayOfWeek = targetDate.DayOfWeek,
+            RequestedTime = slotTime,
+            ToleranceMinutes = 30,
+            StartDate = targetDate.AddDays(-1),
+            EndDate = targetDate.AddDays(1),
+            Status = StandingTeeTimeStatus.Approved,
+            ApprovedTime = slotTime,
+            PriorityNumber = 1,
+            AdditionalParticipants = [p1, p2, p3]
+        };
+        db.StandingTeeTimes.Add(standing);
+        await db.SaveChangesAsync();
+
+        var result = await service.RunWeeklyAllocationAsync(targetDate);
+
+        Assert.AreEqual(1, result.Allocated);
+        Assert.AreEqual(0, result.Unallocated);
+        Assert.AreEqual(0, result.Skipped);
+
+        var updated = await db.StandingTeeTimes.AsNoTracking().SingleAsync(s => s.Id == standing.Id);
+        Assert.AreEqual(StandingTeeTimeStatus.Allocated, updated.Status);
+
+        var bookings = await db.TeeTimeBookings
+            .Where(b => b.StandingTeeTimeId == standing.Id)
+            .ToListAsync();
+        Assert.HasCount(1, bookings);
+        Assert.AreEqual(slot.Start, bookings[0].TeeTimeSlotStart);
+        Assert.AreEqual(bookingMember.Id, bookings[0].BookingMemberId);
+    }
+
+    [TestMethod]
+    public async Task RunWeeklyAllocationAsync_NoSlotAvailable_MarksUnallocated()
+    {
+        await using var host = await Domain2TestHost.CreateAsync();
+        await using var scope = host.CreateScope();
+        var provider = scope.ServiceProvider;
+
+        var db = provider.GetRequiredService<AppDbContext>();
+        var userManager = provider.GetRequiredService<UserManager<ClubBaistUser>>();
+        var service = provider.GetRequiredService<StandingTeeTimeService>();
+
+        var level = await Domain2TestData.CreateMembershipLevelAsync(db, "SH", "Shareholder");
+        var bookingMember = await Domain2TestData.CreateMemberAsync(userManager, db, level, "bm@test.com", "Booking", "Member");
+        var p1 = await Domain2TestData.CreateMemberAsync(userManager, db, level, "p1@test.com", "Player", "One");
+        var p2 = await Domain2TestData.CreateMemberAsync(userManager, db, level, "p2@test.com", "Player", "Two");
+        var p3 = await Domain2TestData.CreateMemberAsync(userManager, db, level, "p3@test.com", "Player", "Three");
+
+        var targetDate = DateOnly.FromDateTime(DateTime.Today.AddDays(30));
+
+        // Create a standing request but NO tee time slots for the target date.
+        var standing = new StandingTeeTime
+        {
+            BookingMemberId = bookingMember.Id,
+            BookingMember = bookingMember,
+            RequestedDayOfWeek = targetDate.DayOfWeek,
+            RequestedTime = new TimeOnly(8, 0),
+            ToleranceMinutes = 30,
+            StartDate = targetDate.AddDays(-1),
+            EndDate = targetDate.AddDays(1),
+            Status = StandingTeeTimeStatus.Approved,
+            ApprovedTime = new TimeOnly(8, 0),
+            AdditionalParticipants = [p1, p2, p3]
+        };
+        db.StandingTeeTimes.Add(standing);
+        await db.SaveChangesAsync();
+
+        var result = await service.RunWeeklyAllocationAsync(targetDate);
+
+        Assert.AreEqual(0, result.Allocated);
+        Assert.AreEqual(1, result.Unallocated);
+        Assert.AreEqual(0, result.Skipped);
+
+        var updated = await db.StandingTeeTimes.AsNoTracking().SingleAsync(s => s.Id == standing.Id);
+        Assert.AreEqual(StandingTeeTimeStatus.Unallocated, updated.Status);
+
+        var bookings = await db.TeeTimeBookings
+            .Where(b => b.StandingTeeTimeId == standing.Id)
+            .ToListAsync();
+        Assert.IsEmpty(bookings);
+    }
+
+    [TestMethod]
+    public async Task RunWeeklyAllocationAsync_RespectsAllocationPriority()
+    {
+        await using var host = await Domain2TestHost.CreateAsync();
+        await using var scope = host.CreateScope();
+        var provider = scope.ServiceProvider;
+
+        var db = provider.GetRequiredService<AppDbContext>();
+        var userManager = provider.GetRequiredService<UserManager<ClubBaistUser>>();
+        var service = provider.GetRequiredService<StandingTeeTimeService>();
+
+        var level = await Domain2TestData.CreateMembershipLevelAsync(db, "SH", "Shareholder");
+        var member1 = await Domain2TestData.CreateMemberAsync(userManager, db, level, "m1@test.com", "Member", "One");
+        var member2 = await Domain2TestData.CreateMemberAsync(userManager, db, level, "m2@test.com", "Member", "Two");
+        var p1 = await Domain2TestData.CreateMemberAsync(userManager, db, level, "p1@test.com", "Player", "One");
+        var p2 = await Domain2TestData.CreateMemberAsync(userManager, db, level, "p2@test.com", "Player", "Two");
+        var p3 = await Domain2TestData.CreateMemberAsync(userManager, db, level, "p3@test.com", "Player", "Three");
+        var p4 = await Domain2TestData.CreateMemberAsync(userManager, db, level, "p4@test.com", "Player", "Four");
+        var p5 = await Domain2TestData.CreateMemberAsync(userManager, db, level, "p5@test.com", "Player", "Five");
+        var p6 = await Domain2TestData.CreateMemberAsync(userManager, db, level, "p6@test.com", "Player", "Six");
+
+        var targetDate = DateOnly.FromDateTime(DateTime.Today.AddDays(30));
+        var slotTime = new TimeOnly(8, 0);
+
+        // Create exactly one slot that both requests want.
+        var slot = await Domain2TestData.CreateSlotAtAsync(db, targetDate.ToDateTime(slotTime));
+
+        // Higher priority (lower number) = member1.
+        var highPriority = new StandingTeeTime
+        {
+            BookingMemberId = member1.Id,
+            BookingMember = member1,
+            RequestedDayOfWeek = targetDate.DayOfWeek,
+            RequestedTime = slotTime,
+            ToleranceMinutes = 0,
+            StartDate = targetDate.AddDays(-1),
+            EndDate = targetDate.AddDays(1),
+            Status = StandingTeeTimeStatus.Approved,
+            ApprovedTime = slotTime,
+            PriorityNumber = 1,
+            AdditionalParticipants = [p1, p2, p3]
+        };
+
+        var lowPriority = new StandingTeeTime
+        {
+            BookingMemberId = member2.Id,
+            BookingMember = member2,
+            RequestedDayOfWeek = targetDate.DayOfWeek,
+            RequestedTime = slotTime,
+            ToleranceMinutes = 0,
+            StartDate = targetDate.AddDays(-1),
+            EndDate = targetDate.AddDays(1),
+            Status = StandingTeeTimeStatus.Approved,
+            ApprovedTime = slotTime,
+            PriorityNumber = 2,
+            AdditionalParticipants = [p4, p5, p6]
+        };
+
+        db.StandingTeeTimes.AddRange(highPriority, lowPriority);
+        await db.SaveChangesAsync();
+
+        var result = await service.RunWeeklyAllocationAsync(targetDate);
+
+        Assert.AreEqual(1, result.Allocated);
+        Assert.AreEqual(1, result.Unallocated);
+
+        var updatedHigh = await db.StandingTeeTimes.AsNoTracking().SingleAsync(s => s.Id == highPriority.Id);
+        var updatedLow = await db.StandingTeeTimes.AsNoTracking().SingleAsync(s => s.Id == lowPriority.Id);
+
+        Assert.AreEqual(StandingTeeTimeStatus.Allocated, updatedHigh.Status);
+        Assert.AreEqual(StandingTeeTimeStatus.Unallocated, updatedLow.Status);
+
+        var highBookings = await db.TeeTimeBookings.Where(b => b.StandingTeeTimeId == highPriority.Id).ToListAsync();
+        var lowBookings = await db.TeeTimeBookings.Where(b => b.StandingTeeTimeId == lowPriority.Id).ToListAsync();
+        Assert.HasCount(1, highBookings);
+        Assert.IsEmpty(lowBookings);
+    }
+
+    [TestMethod]
+    public async Task RunWeeklyAllocationAsync_IsIdempotent_WhenRerunOnSameDate()
+    {
+        await using var host = await Domain2TestHost.CreateAsync();
+        await using var scope = host.CreateScope();
+        var provider = scope.ServiceProvider;
+
+        var db = provider.GetRequiredService<AppDbContext>();
+        var userManager = provider.GetRequiredService<UserManager<ClubBaistUser>>();
+        var service = provider.GetRequiredService<StandingTeeTimeService>();
+
+        var level = await Domain2TestData.CreateMembershipLevelAsync(db, "SH", "Shareholder");
+        var bookingMember = await Domain2TestData.CreateMemberAsync(userManager, db, level, "bm@test.com", "Booking", "Member");
+        var p1 = await Domain2TestData.CreateMemberAsync(userManager, db, level, "p1@test.com", "Player", "One");
+        var p2 = await Domain2TestData.CreateMemberAsync(userManager, db, level, "p2@test.com", "Player", "Two");
+        var p3 = await Domain2TestData.CreateMemberAsync(userManager, db, level, "p3@test.com", "Player", "Three");
+
+        var targetDate = DateOnly.FromDateTime(DateTime.Today.AddDays(30));
+        var slotTime = new TimeOnly(8, 0);
+        await Domain2TestData.CreateSlotAtAsync(db, targetDate.ToDateTime(slotTime));
+
+        var standing = new StandingTeeTime
+        {
+            BookingMemberId = bookingMember.Id,
+            BookingMember = bookingMember,
+            RequestedDayOfWeek = targetDate.DayOfWeek,
+            RequestedTime = slotTime,
+            ToleranceMinutes = 30,
+            StartDate = targetDate.AddDays(-1),
+            EndDate = targetDate.AddDays(1),
+            Status = StandingTeeTimeStatus.Approved,
+            ApprovedTime = slotTime,
+            AdditionalParticipants = [p1, p2, p3]
+        };
+        db.StandingTeeTimes.Add(standing);
+        await db.SaveChangesAsync();
+
+        // First run: should allocate.
+        var first = await service.RunWeeklyAllocationAsync(targetDate);
+        Assert.AreEqual(1, first.Allocated);
+
+        // Second run on the same date: should skip the already-allocated request.
+        var second = await service.RunWeeklyAllocationAsync(targetDate);
+        Assert.AreEqual(0, second.Allocated);
+        Assert.AreEqual(0, second.Unallocated);
+        Assert.AreEqual(1, second.Skipped);
+
+        // Only one booking should exist.
+        var bookings = await db.TeeTimeBookings.Where(b => b.StandingTeeTimeId == standing.Id).ToListAsync();
+        Assert.HasCount(1, bookings);
+    }
+
+    // -----------------------------------------------------------------------
     // Helper
     // -----------------------------------------------------------------------
 
@@ -415,12 +723,13 @@ public class StandingTeeTimeServiceTests
         MemberShipInfo bookingMember,
         List<MemberShipInfo> additionalParticipants,
         DateOnly? startDate = null,
-        DateOnly? endDate = null) =>
+        DateOnly? endDate = null,
+        DayOfWeek dayOfWeek = DayOfWeek.Saturday) =>
         new()
         {
             BookingMemberId = bookingMember.Id,
             BookingMember = bookingMember,
-            RequestedDayOfWeek = DayOfWeek.Saturday,
+            RequestedDayOfWeek = dayOfWeek,
             RequestedTime = new TimeOnly(8, 0),
             ToleranceMinutes = 30,
             StartDate = startDate ?? new DateOnly(2026, 4, 1),

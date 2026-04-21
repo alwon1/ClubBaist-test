@@ -39,15 +39,17 @@ public class StandingTeeTimeService(IAppDbContext2 db, ILogger<StandingTeeTimeSe
         if (participantIds.Count != participantIds.Distinct().Count())
             return (false, "Duplicate players are not allowed.");
 
-        var hasActive = await db.StandingTeeTimes.AnyAsync(s =>
+        var hasActiveForDay = await db.StandingTeeTimes.AnyAsync(s =>
             s.BookingMemberId == request.BookingMemberId &&
+            s.RequestedDayOfWeek == request.RequestedDayOfWeek &&
             s.Status != StandingTeeTimeStatus.Cancelled &&
             s.Status != StandingTeeTimeStatus.Denied);
 
-        if (hasActive)
+        if (hasActiveForDay)
         {
-            logger.LogWarning("Member {MemberId} already has an active standing tee time request.", request.BookingMemberId);
-            return (false, "You already have an active standing tee time request.");
+            logger.LogWarning("Member {MemberId} already has an active standing tee time request for {DayOfWeek}.",
+                request.BookingMemberId, request.RequestedDayOfWeek);
+            return (false, $"You already have an active standing tee time request for {request.RequestedDayOfWeek}.");
         }
 
         db.StandingTeeTimes.Add(request);
@@ -152,4 +154,177 @@ public class StandingTeeTimeService(IAppDbContext2 db, ILogger<StandingTeeTimeSe
             logger.LogInformation("Standing tee time {Id} cancelled by member {MemberId}.", id, requestingMemberId);
         return saved;
     }
+
+    /// <summary>
+    /// Runs the weekly standing tee time allocation for a specific date.
+    /// Iterates approved requests in priority order (lower PriorityNumber first, nulls last)
+    /// and creates <see cref="TeeTimeBooking"/> records for available slots on the target date.
+    /// </summary>
+    /// <param name="targetDate">The specific date to allocate standing tee times for.</param>
+    /// <param name="maxParticipantsPerSlot">Maximum total participants allowed per slot (default 4).</param>
+    /// <returns>A summary of allocated, unallocated, and skipped requests.</returns>
+    public async Task<AllocationRunResult> RunWeeklyAllocationAsync(DateOnly targetDate, int maxParticipantsPerSlot = 4)
+    {
+        var dayStart = DateTime.SpecifyKind(targetDate.ToDateTime(TimeOnly.MinValue), DateTimeKind.Unspecified);
+        var dayEnd = DateTime.SpecifyKind(targetDate.ToDateTime(new TimeOnly(23, 59, 59)), DateTimeKind.Unspecified);
+
+        // Load eligible requests: Approved, Allocated, or Unallocated, covering this date and day of week.
+        var requests = await db.StandingTeeTimes
+            .Where(s =>
+                s.RequestedDayOfWeek == targetDate.DayOfWeek &&
+                s.StartDate <= targetDate &&
+                s.EndDate >= targetDate &&
+                (s.Status == StandingTeeTimeStatus.Approved ||
+                 s.Status == StandingTeeTimeStatus.Allocated ||
+                 s.Status == StandingTeeTimeStatus.Unallocated))
+            .OrderBy(s => s.PriorityNumber == null ? int.MaxValue : s.PriorityNumber)
+            .ThenBy(s => s.Id)
+            .ToListAsync();
+
+        if (requests.Count == 0)
+        {
+            logger.LogInformation("Weekly allocation for {TargetDate}: no eligible requests found.", targetDate);
+            return new AllocationRunResult(0, 0, 0);
+        }
+
+        // Load all tee time slots for the target day (tracked so they can be used as navigation properties).
+        var allDaySlots = await db.TeeTimeSlots
+            .Where(s => s.Start >= dayStart && s.Start <= dayEnd)
+            .OrderBy(s => s.Start)
+            .ToListAsync();
+
+        // Load special events overlapping the target day.
+        var daySpecialEvents = await db.SpecialEvents
+            .AsNoTracking()
+            .Where(e => e.Start <= dayEnd && e.End > dayStart)
+            .ToListAsync();
+
+        var blockedSlotStarts = allDaySlots
+            .Where(slot => daySpecialEvents.Any(e => slot.Start >= e.Start && slot.Start < e.End))
+            .Select(slot => slot.Start)
+            .ToHashSet();
+
+        // Load existing bookings for the target day to determine capacity and detect duplicates.
+        var existingBookings = await db.TeeTimeBookings
+            .AsNoTracking()
+            .Where(b => b.TeeTimeSlotStart >= dayStart && b.TeeTimeSlotStart <= dayEnd)
+            .Select(b => new
+            {
+                b.TeeTimeSlotStart,
+                b.BookingMemberId,
+                b.StandingTeeTimeId,
+                ParticipantCount = 1 + b.AdditionalParticipants.Count
+            })
+            .ToListAsync();
+
+        // Remaining capacity per slot, updated as this run allocates requests.
+        var slotCapacity = allDaySlots.ToDictionary(
+            s => s.Start,
+            s => maxParticipantsPerSlot - existingBookings
+                .Where(b => b.TeeTimeSlotStart == s.Start)
+                .Sum(b => b.ParticipantCount));
+
+        // Member+slot pairs already booked (to avoid duplicate bookings on re-run or conflict).
+        var memberSlotBooked = existingBookings
+            .Select(b => (b.TeeTimeSlotStart, b.BookingMemberId))
+            .ToHashSet();
+
+        // Standing request IDs that already have a booking on this date (idempotent re-run support).
+        var alreadyAllocatedStandingIds = existingBookings
+            .Where(b => b.StandingTeeTimeId.HasValue)
+            .Select(b => b.StandingTeeTimeId!.Value)
+            .ToHashSet();
+
+        // Slots claimed by higher-priority requests in this run.
+        var claimedThisRun = new HashSet<DateTime>();
+
+        int allocated = 0, unallocated = 0, skipped = 0;
+
+        foreach (var request in requests)
+        {
+            // Skip requests with no approved time.
+            if (!request.ApprovedTime.HasValue)
+            {
+                skipped++;
+                continue;
+            }
+
+            // Skip if this standing request already has a booking for this date (idempotent).
+            if (alreadyAllocatedStandingIds.Contains(request.Id))
+            {
+                skipped++;
+                continue;
+            }
+
+            var approvedTimeSpan = request.ApprovedTime.Value.ToTimeSpan();
+            var toleranceSpan = TimeSpan.FromMinutes(request.ToleranceMinutes);
+
+            var minTimeSpan = approvedTimeSpan - toleranceSpan;
+            var maxTimeSpan = approvedTimeSpan + toleranceSpan;
+
+            // Clamp to same-day bounds.
+            if (minTimeSpan < TimeSpan.Zero) minTimeSpan = TimeSpan.Zero;
+            if (maxTimeSpan >= TimeSpan.FromHours(24)) maxTimeSpan = TimeSpan.FromHours(24) - TimeSpan.FromSeconds(1);
+
+            int partySize = 1 + request.AdditionalParticipants.Count;
+
+            // Find the best available slot: within tolerance, not blocked by a special event,
+            // not already claimed this run, sufficient remaining capacity, and closest to approved time.
+            var candidateSlot = allDaySlots
+                .Where(s =>
+                    s.Start.TimeOfDay >= minTimeSpan &&
+                    s.Start.TimeOfDay <= maxTimeSpan &&
+                    !blockedSlotStarts.Contains(s.Start) &&
+                    !claimedThisRun.Contains(s.Start) &&
+                    !memberSlotBooked.Contains((s.Start, request.BookingMemberId)) &&
+                    slotCapacity.GetValueOrDefault(s.Start, 0) >= partySize)
+                .OrderBy(s => Math.Abs((s.Start.TimeOfDay - approvedTimeSpan).TotalMinutes))
+                .FirstOrDefault();
+
+            if (candidateSlot is not null)
+            {
+                var booking = new TeeTimeBooking
+                {
+                    TeeTimeSlotStart = candidateSlot.Start,
+                    TeeTimeSlot = candidateSlot,
+                    BookingMemberId = request.BookingMemberId,
+                    BookingMember = request.BookingMember,
+                    StandingTeeTimeId = request.Id,
+                    StandingTeeTime = request,
+                    AdditionalParticipants = request.AdditionalParticipants.ToList()
+                };
+
+                db.TeeTimeBookings.Add(booking);
+
+                claimedThisRun.Add(candidateSlot.Start);
+                slotCapacity[candidateSlot.Start] -= partySize;
+                memberSlotBooked.Add((candidateSlot.Start, request.BookingMemberId));
+
+                request.Status = StandingTeeTimeStatus.Allocated;
+                allocated++;
+            }
+            else
+            {
+                request.Status = StandingTeeTimeStatus.Unallocated;
+                unallocated++;
+            }
+        }
+
+        if (allocated + unallocated > 0)
+            await db.SaveChangesAsync();
+
+        logger.LogInformation(
+            "Weekly allocation for {TargetDate}: {Allocated} allocated, {Unallocated} unallocated, {Skipped} skipped.",
+            targetDate, allocated, unallocated, skipped);
+
+        return new AllocationRunResult(allocated, unallocated, skipped);
+    }
 }
+
+/// <summary>
+/// Summary of results from a weekly standing tee time allocation run.
+/// </summary>
+/// <param name="Allocated">Number of requests that were successfully allocated to a tee time slot.</param>
+/// <param name="Unallocated">Number of requests for which no suitable slot was available.</param>
+/// <param name="Skipped">Number of requests skipped (no approved time set, or already allocated for this date).</param>
+public record AllocationRunResult(int Allocated, int Unallocated, int Skipped);

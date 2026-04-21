@@ -16,6 +16,43 @@
 
 <h3 class="mb-4">Standing Tee Time Requests</h3>
 
+<div class="card mb-4">
+    <div class="card-header">
+        <strong>Run Weekly Allocation</strong>
+    </div>
+    <div class="card-body">
+        <p class="text-muted small mb-3">
+            Select a date and run the allocation engine to assign approved standing tee time requests
+            to available slots on that day. Requests are processed in priority order; each request is
+            marked <strong>Allocated</strong> or <strong>Unallocated</strong> based on slot availability.
+        </p>
+        <div class="d-flex align-items-end gap-3 flex-wrap">
+            <div>
+                <label class="form-label small mb-1" for="allocationDate">Target Date</label>
+                <input id="allocationDate" type="date" class="form-control form-control-sm"
+                       value="@allocationDateStr"
+                       @onchange="OnAllocationDateChanged" />
+            </div>
+            <button class="btn btn-primary" @onclick="RunAllocationAsync" disabled="@isRunningAllocation">
+                @if (isRunningAllocation)
+                {
+                    <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                }
+                Run Allocation
+            </button>
+        </div>
+        @if (allocationResult is not null)
+        {
+            <div class="alert alert-info mt-3 mb-0">
+                Allocation complete for <strong>@allocationDateStr</strong>:
+                <strong>@allocationResult.Allocated allocated</strong>,
+                @allocationResult.Unallocated unallocated,
+                @allocationResult.Skipped skipped.
+            </div>
+        }
+    </div>
+</div>
+
 @if (!string.IsNullOrEmpty(errorMessage))
 {
     <div class="alert alert-danger alert-dismissible">
@@ -187,6 +224,10 @@ else
 
     private int? denyConfirmId;
 
+    private string allocationDateStr = DateOnly.FromDateTime(DateTime.Today.AddDays(7)).ToString("yyyy-MM-dd");
+    private bool isRunningAllocation;
+    private AllocationRunResult? allocationResult;
+
     protected override async Task OnInitializedAsync()
     {
         await LoadDataAsync();
@@ -299,6 +340,40 @@ else
         finally
         {
             isProcessing = false;
+        }
+    }
+
+    private void OnAllocationDateChanged(ChangeEventArgs e) =>
+        allocationDateStr = e.Value?.ToString() ?? allocationDateStr;
+
+    private async Task RunAllocationAsync()
+    {
+        if (!DateOnly.TryParse(allocationDateStr, out var targetDate))
+        {
+            errorMessage = "Please enter a valid date for the allocation.";
+            return;
+        }
+
+        isRunningAllocation = true;
+        errorMessage = null;
+        allocationResult = null;
+
+        try
+        {
+            allocationResult = await StandingTeeTimeService.RunWeeklyAllocationAsync(targetDate);
+            if (allocationResult.Allocated > 0 || allocationResult.Unallocated > 0)
+            {
+                await LoadDataAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to run weekly allocation for {Date}", allocationDateStr);
+            errorMessage = "An unexpected error occurred while running the allocation. Please try again later.";
+        }
+        finally
+        {
+            isRunningAllocation = false;
         }
     }
 
