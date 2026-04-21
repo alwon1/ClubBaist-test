@@ -60,19 +60,19 @@
 
 ## Membership Levels & Tee Time Access Rules
 
-| Level | Short Code | Fee | Tee Time Access |
+| Tier | Level | Short Code | Tee Time Access |
 |---|---|---|---|
-| Gold/Shareholder | SH | $3,000 | Anytime (7 AM – 7 PM). Can request standing tee times. |
-| Associate | AS | $4,500 | Anytime (7 AM – 7 PM) |
-| Silver | SV | $2,500 | Anytime (7 AM – 7 PM) — see note below |
-| Bronze | BR | $1,000 | Anytime (7 AM – 7 PM) — see note below |
+| Gold | Shareholder | SH | Anytime (7 AM – 7 PM). Can request standing tee times. |
+| Gold | Associate | AS | Anytime (7 AM – 7 PM) |
+| Silver | Shareholder Spouse | SS | Weekdays: 7 AM–3 PM or 5:30 PM–7 PM; Weekends: 11 AM–7 PM |
+| Silver | Associate Spouse | SV | Weekdays: 7 AM–3 PM or 5:30 PM–7 PM; Weekends: 11 AM–7 PM |
+| Bronze | Pee Wee | PW | Weekdays: 7 AM–3 PM or 6 PM–7 PM; Weekends: 1 PM–7 PM |
+| Bronze | Junior | JR | Weekdays: 7 AM–3 PM or 6 PM–7 PM; Weekends: 1 PM–7 PM |
+| Bronze | Intermediate | BR | Weekdays: 7 AM–3 PM or 6 PM–7 PM; Weekends: 1 PM–7 PM |
+| Copper | Social | CP | No golf privileges — cannot book tee times |
 
-> **Note on time restrictions (TC-TEE-002, TC-TEE-007, TC-TEE-011):** The default seed gives every
-> membership level full 7 AM – 7 PM access on all days. To validate the time-restriction scenarios
-> you must first update the Silver and Bronze `MembershipLevelTeeTimeAvailability` rows in the
-> database so that their allowed windows match the business rules (e.g. Silver before 3 PM / after
-> 5:30 PM; Bronze before 3 PM / after 6 PM), or use the Admin UI when that feature is available.
-> Skip TC-TEE-002, TC-TEE-007, and TC-TEE-011 if the availability rows have not been configured.
+> **Seeded test users:** `shareholder1@clubbaist.com` (SH), `silver@clubbaist.com` (SV/Associate Spouse),
+> `bronze@clubbaist.com` (BR/Intermediate), `copper@clubbaist.com` (CP/Social). All use password `Pass@word1`.
 
 ---
 

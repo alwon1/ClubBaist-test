@@ -14,10 +14,18 @@ internal static class AppDbContextSeed
 
     private static readonly SeedMembershipLevel[] MembershipLevels =
     [
+        // Gold tier
         new("SH", "Shareholder"),
-        new("SV", "Silver"),
-        new("BR", "Bronze"),
-        new("AS", "Associate")
+        new("AS", "Associate"),
+        // Silver tier
+        new("SS", "Shareholder Spouse"),
+        new("SV", "Associate Spouse"),
+        // Bronze tier
+        new("PW", "Pee Wee"),
+        new("JR", "Junior"),
+        new("BR", "Intermediate"),
+        // Copper tier — Social members have no golf privileges
+        new("CP", "Social"),
     ];
 
     private static readonly SeedUser[] Users =
@@ -28,7 +36,8 @@ internal static class AppDbContextSeed
         new("shareholder2@clubbaist.com", AppRoles.Member, "Bob", "Shareholder", "SH"),
         new("shareholder3@clubbaist.com", AppRoles.Member, "Carol", "Shareholder", "SH"),
         new("silver@clubbaist.com", AppRoles.Member, "Diana", "Silver", "SV"),
-        new("bronze@clubbaist.com", AppRoles.Member, "Evan", "Bronze", "BR")
+        new("bronze@clubbaist.com", AppRoles.Member, "Evan", "Bronze", "BR"),
+        new("copper@clubbaist.com", AppRoles.Member, "Fiona", "Copper", "CP")
     ];
 
     private static readonly SeedApplication[] Applications =
@@ -108,7 +117,9 @@ internal static class AppDbContextSeed
 
         switch (level.ShortCode.ToUpperInvariant())
         {
-            case "SV": // Silver: weekdays two windows, weekends after 11 AM
+            case "SS": // Silver: Shareholder Spouse
+            case "SV": // Silver: Associate Spouse
+                // Silver members: weekdays two windows, weekends after 11 AM
                 foreach (var day in Weekdays)
                 {
                     AddAvailability(day, new TimeOnly(7, 0), new TimeOnly(15, 0));
@@ -120,7 +131,10 @@ internal static class AppDbContextSeed
                 }
                 break;
 
-            case "BR": // Bronze: weekdays two windows, weekends after 1 PM
+            case "PW": // Bronze: Pee Wee
+            case "JR": // Bronze: Junior
+            case "BR": // Bronze: Intermediate
+                // Bronze members: weekdays two windows, weekends after 1 PM
                 foreach (var day in Weekdays)
                 {
                     AddAvailability(day, new TimeOnly(7, 0), new TimeOnly(15, 0));
@@ -132,7 +146,10 @@ internal static class AppDbContextSeed
                 }
                 break;
 
-            default: // Gold (SH, AS) and any other level: 7 AM–7 PM all days
+            case "CP": // Copper: Social — no golf privileges; intentionally no availability windows
+                break;
+
+            default: // Gold (SH, AS): full access, 7 AM–7 PM all days
                 foreach (var day in Enum.GetValues<DayOfWeek>())
                 {
                     AddAvailability(day, new TimeOnly(7, 0), new TimeOnly(19, 0));
@@ -277,7 +294,8 @@ internal static class AppDbContextSeed
 
         // Member IDs assigned sequentially by EF during seeding:
         //   1 = Alice Shareholder, 2 = Bob Shareholder, 3 = Carol Shareholder,
-        //   4 = Diana Silver, 5 = Evan Bronze
+        //   4 = Diana Silver (Associate Spouse), 5 = Evan Bronze (Intermediate),
+        //   6 = Fiona Copper (Social)
         var alice = await db.MemberShips.FirstOrDefaultAsync(m => m.Id == 1, cancellationToken);
         var diana = await db.MemberShips.FirstOrDefaultAsync(m => m.Id == 4, cancellationToken);
 
