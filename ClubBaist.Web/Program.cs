@@ -49,6 +49,7 @@ public class Program
             .AddDefaultTokenProviders();
 
         builder.Services.AddSingleton<IEmailSender<ClubBaistUser>, IdentityNoOpEmailSender>();
+        builder.Services.AddHostedService<ClubBaist.Web.Data.DatabaseInitializerService>();
 
         // Domain services
         builder.Services.AddScoped<IAppDbContext2>(sp => sp.GetRequiredService<AppDbContext>());
@@ -67,8 +68,6 @@ public class Program
 
         var app = builder.Build();
 
-        await EnsureDatabaseInitializedAsync(app);
-
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())
         {
@@ -81,7 +80,10 @@ public class Program
         }
 
         app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
-        app.UseHttpsRedirection();
+        if (!app.Environment.IsDevelopment())
+        {
+            app.UseHttpsRedirection();
+        }
 
         app.UseAntiforgery();
 
@@ -93,23 +95,5 @@ public class Program
         app.MapAdditionalIdentityEndpoints();
 
         await app.RunAsync();
-    }
-
-    private static async Task EnsureDatabaseInitializedAsync(WebApplication app)
-    {
-        await using var scope = app.Services.CreateAsyncScope();
-        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-
-        var hasMigrations = db.Database.GetMigrations().Any();
-        if (hasMigrations)
-        {
-            await db.Database.MigrateAsync();
-            await db.EnsureSqlServerSnapshotIsolationAsync();
-            return;
-        }
-
-        var storeCreated = await db.Database.EnsureCreatedAsync();
-        await db.EnsureSqlServerSnapshotIsolationAsync();
-        await AppDbContextSeed.SeedAsync(scope.ServiceProvider, db, storeCreated, CancellationToken.None);
     }
 }
