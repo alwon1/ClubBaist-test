@@ -1,0 +1,418 @@
+name: Create Planning Sub-Issues
+
+on:
+  workflow_dispatch:
+    inputs:
+      parent_issue:
+        description: 'Parent issue number (default: 122)'
+        required: false
+        default: '122'
+
+permissions:
+  issues: write
+
+jobs:
+  create-sub-issues:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create Area F sub-issue (global parent)
+        id: area_f
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const body = fs.readFileSync('.github/issue-plans/area-f-cross-cutting.md', 'utf8');
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: 'Area F: Cross-Cutting Concerns – Design Questions (answer first)',
+              body: body,
+              labels: ['planning', 'questions-needed'],
+            });
+            console.log(`Created Area F issue: #${issue.data.number}`);
+            core.setOutput('issue_number', issue.data.number);
+            core.setOutput('issue_node_id', issue.data.node_id);
+            return issue.data.number;
+
+      - name: Link Area F as sub-issue of parent (#${{ github.event.inputs.parent_issue }})
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const parentNumber = parseInt('${{ github.event.inputs.parent_issue }}');
+            const childNumber = parseInt('${{ steps.area_f.outputs.issue_number }}');
+
+            // Get node IDs for GraphQL sub-issue linking
+            const parent = await github.rest.issues.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: parentNumber,
+            });
+            const child = await github.rest.issues.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: childNumber,
+            });
+
+            try {
+              await github.graphql(`
+                mutation AddSubIssue($parentId: ID!, $childId: ID!) {
+                  addSubIssue(input: { issueId: $parentId, subIssueId: $childId }) {
+                    issue { number }
+                    subIssue { number }
+                  }
+                }
+              `, { parentId: parent.data.node_id, childId: child.data.node_id });
+              console.log(`Linked #${childNumber} as sub-issue of #${parentNumber}`);
+            } catch (e) {
+              console.log(`Note: sub-issue linking via GraphQL not available; adding comment instead. Error: ${e.message}`);
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: parentNumber,
+                body: `Sub-issue created: #${childNumber} (Area F: Cross-Cutting Concerns)`,
+              });
+            }
+
+      - name: Create Area E sub-issue
+        id: area_e
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const body = fs.readFileSync('.github/issue-plans/area-e-auth-roles.md', 'utf8');
+            const areaFNumber = parseInt('${{ steps.area_f.outputs.issue_number }}');
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: 'Area E: Permissions & Authorization – Design Questions',
+              body: body,
+              labels: ['planning', 'questions-needed'],
+            });
+            console.log(`Created Area E issue: #${issue.data.number}`);
+            core.setOutput('issue_number', issue.data.number);
+
+            // Link as sub-issue of Area F
+            const parent = await github.rest.issues.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: areaFNumber,
+            });
+            const child = await github.rest.issues.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.data.number,
+            });
+            try {
+              await github.graphql(`
+                mutation AddSubIssue($parentId: ID!, $childId: ID!) {
+                  addSubIssue(input: { issueId: $parentId, subIssueId: $childId }) {
+                    issue { number }
+                    subIssue { number }
+                  }
+                }
+              `, { parentId: parent.data.node_id, childId: child.data.node_id });
+              console.log(`Linked #${issue.data.number} as sub-issue of #${areaFNumber}`);
+            } catch (e) {
+              console.log(`Note: sub-issue linking not available. Error: ${e.message}`);
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: areaFNumber,
+                body: `Sub-issue created: #${issue.data.number} (Area E: Permissions & Authorization)`,
+              });
+            }
+            return issue.data.number;
+
+      - name: Create Area A sub-issue
+        id: area_a
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const body = fs.readFileSync('.github/issue-plans/area-a-membership-applications.md', 'utf8');
+            const areaFNumber = parseInt('${{ steps.area_f.outputs.issue_number }}');
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: 'Area A: Membership Applications – Design Questions',
+              body: body,
+              labels: ['planning', 'questions-needed'],
+            });
+            console.log(`Created Area A issue: #${issue.data.number}`);
+            core.setOutput('issue_number', issue.data.number);
+
+            const parent = await github.rest.issues.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: areaFNumber,
+            });
+            const child = await github.rest.issues.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.data.number,
+            });
+            try {
+              await github.graphql(`
+                mutation AddSubIssue($parentId: ID!, $childId: ID!) {
+                  addSubIssue(input: { issueId: $parentId, subIssueId: $childId }) {
+                    issue { number }
+                    subIssue { number }
+                  }
+                }
+              `, { parentId: parent.data.node_id, childId: child.data.node_id });
+              console.log(`Linked #${issue.data.number} as sub-issue of #${areaFNumber}`);
+            } catch (e) {
+              console.log(`Note: sub-issue linking not available. Error: ${e.message}`);
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: areaFNumber,
+                body: `Sub-issue created: #${issue.data.number} (Area A: Membership Applications)`,
+              });
+            }
+            return issue.data.number;
+
+      - name: Create Area B sub-issue
+        id: area_b
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const body = fs.readFileSync('.github/issue-plans/area-b-tee-time-bookings.md', 'utf8');
+            const areaFNumber = parseInt('${{ steps.area_f.outputs.issue_number }}');
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: 'Area B: Regular Tee Time Bookings – Design Questions',
+              body: body,
+              labels: ['planning', 'questions-needed'],
+            });
+            console.log(`Created Area B issue: #${issue.data.number}`);
+            core.setOutput('issue_number', issue.data.number);
+
+            const parent = await github.rest.issues.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: areaFNumber,
+            });
+            const child = await github.rest.issues.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.data.number,
+            });
+            try {
+              await github.graphql(`
+                mutation AddSubIssue($parentId: ID!, $childId: ID!) {
+                  addSubIssue(input: { issueId: $parentId, subIssueId: $childId }) {
+                    issue { number }
+                    subIssue { number }
+                  }
+                }
+              `, { parentId: parent.data.node_id, childId: child.data.node_id });
+              console.log(`Linked #${issue.data.number} as sub-issue of #${areaFNumber}`);
+            } catch (e) {
+              console.log(`Note: sub-issue linking not available. Error: ${e.message}`);
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: areaFNumber,
+                body: `Sub-issue created: #${issue.data.number} (Area B: Regular Tee Time Bookings)`,
+              });
+            }
+            return issue.data.number;
+
+      - name: Create Area C sub-issue
+        id: area_c
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const body = fs.readFileSync('.github/issue-plans/area-c-standing-tee-times.md', 'utf8');
+            const areaFNumber = parseInt('${{ steps.area_f.outputs.issue_number }}');
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: 'Area C: Standing Tee Times – Design Questions',
+              body: body,
+              labels: ['planning', 'questions-needed'],
+            });
+            console.log(`Created Area C issue: #${issue.data.number}`);
+            core.setOutput('issue_number', issue.data.number);
+
+            const parent = await github.rest.issues.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: areaFNumber,
+            });
+            const child = await github.rest.issues.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.data.number,
+            });
+            try {
+              await github.graphql(`
+                mutation AddSubIssue($parentId: ID!, $childId: ID!) {
+                  addSubIssue(input: { issueId: $parentId, subIssueId: $childId }) {
+                    issue { number }
+                    subIssue { number }
+                  }
+                }
+              `, { parentId: parent.data.node_id, childId: child.data.node_id });
+              console.log(`Linked #${issue.data.number} as sub-issue of #${areaFNumber}`);
+            } catch (e) {
+              console.log(`Note: sub-issue linking not available. Error: ${e.message}`);
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: areaFNumber,
+                body: `Sub-issue created: #${issue.data.number} (Area C: Standing Tee Times)`,
+              });
+            }
+            return issue.data.number;
+
+      - name: Create Area D sub-issue
+        id: area_d
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const body = fs.readFileSync('.github/issue-plans/area-d-player-scoring.md', 'utf8');
+            const areaFNumber = parseInt('${{ steps.area_f.outputs.issue_number }}');
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: 'Area D: Player Scoring – Design Questions',
+              body: body,
+              labels: ['planning', 'questions-needed'],
+            });
+            console.log(`Created Area D issue: #${issue.data.number}`);
+            core.setOutput('issue_number', issue.data.number);
+
+            const parent = await github.rest.issues.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: areaFNumber,
+            });
+            const child = await github.rest.issues.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.data.number,
+            });
+            try {
+              await github.graphql(`
+                mutation AddSubIssue($parentId: ID!, $childId: ID!) {
+                  addSubIssue(input: { issueId: $parentId, subIssueId: $childId }) {
+                    issue { number }
+                    subIssue { number }
+                  }
+                }
+              `, { parentId: parent.data.node_id, childId: child.data.node_id });
+              console.log(`Linked #${issue.data.number} as sub-issue of #${areaFNumber}`);
+            } catch (e) {
+              console.log(`Note: sub-issue linking not available. Error: ${e.message}`);
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: areaFNumber,
+                body: `Sub-issue created: #${issue.data.number} (Area D: Player Scoring)`,
+              });
+            }
+            return issue.data.number;
+
+      - name: Create Area UI sub-issue
+        id: area_ui
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const body = fs.readFileSync('.github/issue-plans/area-ui-fluent-migration.md', 'utf8');
+            const areaFNumber = parseInt('${{ steps.area_f.outputs.issue_number }}');
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: 'Area UI: Fluent UI Blazor Migration – Design Questions',
+              body: body,
+              labels: ['planning', 'questions-needed'],
+            });
+            console.log(`Created Area UI issue: #${issue.data.number}`);
+            core.setOutput('issue_number', issue.data.number);
+
+            const parent = await github.rest.issues.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: areaFNumber,
+            });
+            const child = await github.rest.issues.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.data.number,
+            });
+            try {
+              await github.graphql(`
+                mutation AddSubIssue($parentId: ID!, $childId: ID!) {
+                  addSubIssue(input: { issueId: $parentId, subIssueId: $childId }) {
+                    issue { number }
+                    subIssue { number }
+                  }
+                }
+              `, { parentId: parent.data.node_id, childId: child.data.node_id });
+              console.log(`Linked #${issue.data.number} as sub-issue of #${areaFNumber}`);
+            } catch (e) {
+              console.log(`Note: sub-issue linking not available. Error: ${e.message}`);
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: areaFNumber,
+                body: `Sub-issue created: #${issue.data.number} (Area UI: Fluent UI Migration)`,
+              });
+            }
+            return issue.data.number;
+
+      - name: Summary
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const parentNumber = parseInt('${{ github.event.inputs.parent_issue }}');
+            const areaF = '${{ steps.area_f.outputs.issue_number }}';
+            const areaE = '${{ steps.area_e.outputs.issue_number }}';
+            const areaA = '${{ steps.area_a.outputs.issue_number }}';
+            const areaB = '${{ steps.area_b.outputs.issue_number }}';
+            const areaC = '${{ steps.area_c.outputs.issue_number }}';
+            const areaD = '${{ steps.area_d.outputs.issue_number }}';
+            const areaUI = '${{ steps.area_ui.outputs.issue_number }}';
+
+            const summary = `## Sub-issues created for #${parentNumber}
+
+            **Structure:**
+            - #${parentNumber} Create new issues (parent)
+              - #${areaF} Area F: Cross-Cutting Concerns ← answer first
+                - #${areaE} Area E: Permissions & Authorization
+                - #${areaA} Area A: Membership Applications
+                - #${areaB} Area B: Regular Tee Time Bookings
+                - #${areaC} Area C: Standing Tee Times
+                - #${areaD} Area D: Player Scoring
+                - #${areaUI} Area UI: Fluent UI Blazor Migration ← answer last
+
+            **Next step:** Answer the questions in #${areaF} first, then proceed to the area-specific issues.`;
+
+            console.log(summary);
+
+            // Post summary as comment on parent issue
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: parentNumber,
+              body: summary.replace(/^ {12}/gm, ''),
+            });
