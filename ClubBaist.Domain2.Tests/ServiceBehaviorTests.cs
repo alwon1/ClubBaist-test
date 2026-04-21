@@ -92,7 +92,8 @@ public class MembershipApplicationServiceTests
         var persisted = await db.MembershipApplications.SingleAsync(item => item.Email == "approved@test.com");
         var approved = await applicationService.ApproveMembershipApplicationAsync(persisted.Id, associate.Id);
 
-        Assert.IsTrue(approved);
+        Assert.IsTrue(approved.Success);
+        Assert.IsNotNull(approved.GeneratedPassword);
 
         var updatedApplication = await db.MembershipApplications.AsNoTracking().SingleAsync(item => item.Id == persisted.Id);
         var createdUser = await userManager.FindByEmailAsync("approved@test.com");

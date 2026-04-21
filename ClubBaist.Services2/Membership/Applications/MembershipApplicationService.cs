@@ -36,10 +36,10 @@ public class MembershipApplicationService(
         return await db.SaveChangesAsync() > 0;
     }
 
-    public async Task<bool> ApproveMembershipApplicationAsync(int applicationId, int membershipLevelId)
+    public async Task<(bool Success, string? GeneratedPassword)> ApproveMembershipApplicationAsync(int applicationId, int membershipLevelId)
     {
         var strategy = db.CreateExecutionStrategy();
-        return await strategy.ExecuteAsync(async () =>
+        return await strategy.ExecuteAsync<(bool Success, string? GeneratedPassword)>(async () =>
         {
             await using var transaction = await db.BeginTransactionAsync(System.Data.IsolationLevel.Snapshot);
             try
@@ -49,14 +49,14 @@ public class MembershipApplicationService(
                 {
                     logger.LogWarning("Approve requested for non-existent application {ApplicationId}", applicationId);
                     await transaction.RollbackAsync();
-                    return false;
+                    return (false, null);
                 }
 
                 if (application.Status is ApplicationStatus.Accepted or ApplicationStatus.Denied)
                 {
                     logger.LogWarning("Application {ApplicationId} is already {Status}; cannot approve.", applicationId, application.Status);
                     await transaction.RollbackAsync();
-                    return false;
+                    return (false, null);
                 }
 
                 var membershipLevel = await db.MembershipLevels.FindAsync(membershipLevelId);
@@ -64,7 +64,7 @@ public class MembershipApplicationService(
                 {
                     logger.LogWarning("MembershipLevel {LevelId} not found; cannot approve application {ApplicationId}.", membershipLevelId, applicationId);
                     await transaction.RollbackAsync();
-                    return false;
+                    return (false, null);
                 }
 
                 var user = new ClubBaistUser
@@ -83,7 +83,8 @@ public class MembershipApplicationService(
                     EmailConfirmed = true,
                 };
 
-                var result = await userManager.CreateAsync(user, "ChangeMe123!");
+                var generatedPassword = GenerateSecurePassword();
+                var result = await userManager.CreateAsync(user, generatedPassword);
                 if (!result.Succeeded)
                 {
                     foreach (var error in result.Errors)
@@ -92,7 +93,7 @@ public class MembershipApplicationService(
                     }
 
                     await transaction.RollbackAsync();
-                    return false;
+                    return (false, null);
                 }
 
                 if (!await roleManager.RoleExistsAsync(AppRoles.Member))
@@ -106,7 +107,7 @@ public class MembershipApplicationService(
                         }
 
                         await transaction.RollbackAsync();
-                        return false;
+                        return (false, null);
                     }
                 }
 
@@ -119,7 +120,7 @@ public class MembershipApplicationService(
                     }
 
                     await transaction.RollbackAsync();
-                    return false;
+                    return (false, null);
                 }
 
                 db.MemberShips.Add(new MemberShipInfo { User = user, MembershipLevel = membershipLevel });
@@ -129,11 +130,11 @@ public class MembershipApplicationService(
                 if (!saved)
                 {
                     await transaction.RollbackAsync();
-                    return false;
+                    return (false, null);
                 }
 
                 await transaction.CommitAsync();
-                return true;
+                return (true, generatedPassword);
             }
             catch (Exception ex)
             {
@@ -142,6 +143,38 @@ public class MembershipApplicationService(
                 throw;
             }
         });
+    }
+
+    private static string GenerateSecurePassword()
+    {
+        const string upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+        const string lower = "abcdefghjkmnpqrstuvwxyz";
+        const string digits = "23456789";
+        const string special = "!@#$%&*?";
+        const string all = upper + lower + digits + special;
+
+        var rng = System.Security.Cryptography.RandomNumberGenerator.Create();
+        var bytes = new byte[16];
+        rng.GetBytes(bytes);
+
+        // Guarantee at least one character from each required set
+        var chars = new char[16];
+        chars[0] = upper[bytes[0] % upper.Length];
+        chars[1] = lower[bytes[1] % lower.Length];
+        chars[2] = digits[bytes[2] % digits.Length];
+        chars[3] = special[bytes[3] % special.Length];
+        for (var i = 4; i < 16; i++)
+            chars[i] = all[bytes[i] % all.Length];
+
+        // Fisher-Yates shuffle
+        rng.GetBytes(bytes);
+        for (var i = chars.Length - 1; i > 0; i--)
+        {
+            var j = bytes[i] % (i + 1);
+            (chars[i], chars[j]) = (chars[j], chars[i]);
+        }
+
+        return new string(chars);
     }
 
     public async Task<bool> DenyApplicationAsync(int applicationId)

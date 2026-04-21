@@ -1,6 +1,13 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ClubBaist.Domain2;
+
+public enum MemberType
+{
+    Shareholder,
+    Associate
+}
 
 public class MembershipLevel
 {
@@ -12,6 +19,15 @@ public class MembershipLevel
     [Required]
     [MaxLength(100)]
     public string Name { get; set; } = default!;
+
+    public MemberType MemberType { get; set; } = MemberType.Associate;
+
+    [Column(TypeName = "decimal(18,2)")]
+    public decimal AnnualFee { get; set; }
+
+    public int? MinimumAge { get; set; }
+
+    public int? MaximumAge { get; set; }
 
     public List<MembershipLevelTeeTimeAvailability> Availabilities { get; } = new();
 }

@@ -1,0 +1,315 @@
+@page "/admin/membership-levels"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = AppRoles.Admin)]
+
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.EntityFrameworkCore
+@using ClubBaist.Domain2
+@using ClubBaist.Services2.Membership
+
+@inject MembershipLevelService LevelService
+@inject IAppDbContext2 DbContext
+@inject ILogger<MembershipLevels> Logger
+
+<PageTitle>Membership Levels - Club Baist</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3>Membership Levels</h3>
+    <button class="btn btn-primary" @onclick="ShowCreateForm">
+        <span class="bi bi-plus-circle me-1"></span> New Level
+    </button>
+</div>
+
+@if (!string.IsNullOrEmpty(_successMessage))
+{
+    <div class="alert alert-success alert-dismissible fade show">
+        @_successMessage
+        <button type="button" class="btn-close" @onclick="() => _successMessage = null"></button>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(_errorMessage))
+{
+    <div class="alert alert-danger alert-dismissible fade show">
+        @_errorMessage
+        <button type="button" class="btn-close" @onclick="() => _errorMessage = null"></button>
+    </div>
+}
+
+@if (_showForm)
+{
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">@(_editingId.HasValue ? "Edit Membership Level" : "Create Membership Level")</h5>
+        </div>
+        <div class="card-body">
+            <EditForm Model="_formModel" OnValidSubmit="HandleFormSubmitAsync" FormName="levelForm">
+                <DataAnnotationsValidator />
+                <ValidationSummary class="text-danger mb-3" />
+
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-floating mb-3">
+                            <InputText id="levelName" class="form-control" @bind-Value="_formModel.Name" placeholder="Name" />
+                            <label for="levelName">Name</label>
+                            <ValidationMessage For="() => _formModel.Name" />
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-floating mb-3">
+                            <InputText id="shortCode" class="form-control" @bind-Value="_formModel.ShortCode" placeholder="Code" maxlength="5" />
+                            <label for="shortCode">Short Code (max 5)</label>
+                            <ValidationMessage For="() => _formModel.ShortCode" />
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-floating mb-3">
+                            <InputSelect id="memberType" class="form-select" @bind-Value="_formModel.MemberType">
+                                @foreach (var mt in Enum.GetValues<MemberType>())
+                                {
+                                    <option value="@mt">@mt</option>
+                                }
+                            </InputSelect>
+                            <label for="memberType">Member Type</label>
+                            <ValidationMessage For="() => _formModel.MemberType" />
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-floating mb-3">
+                            <InputNumber id="annualFee" class="form-control" @bind-Value="_formModel.AnnualFee" placeholder="Annual Fee" />
+                            <label for="annualFee">Annual Fee ($)</label>
+                            <ValidationMessage For="() => _formModel.AnnualFee" />
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-floating mb-3">
+                            <InputNumber id="minAge" class="form-control" @bind-Value="_formModel.MinimumAge" placeholder="Min Age" />
+                            <label for="minAge">Minimum Age (optional)</label>
+                            <ValidationMessage For="() => _formModel.MinimumAge" />
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-floating mb-3">
+                            <InputNumber id="maxAge" class="form-control" @bind-Value="_formModel.MaximumAge" placeholder="Max Age" />
+                            <label for="maxAge">Maximum Age (optional)</label>
+                            <ValidationMessage For="() => _formModel.MaximumAge" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary" disabled="@_saving">
+                        @if (_saving)
+                        {
+                            <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                        }
+                        @(_editingId.HasValue ? "Save Changes" : "Create Level")
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" @onclick="CancelForm">Cancel</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+<div class="card">
+    <div class="card-header d-flex align-items-center gap-2">
+        <strong>Levels</strong>
+        @if (_loading)
+        {
+            <span class="spinner-border spinner-border-sm" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </span>
+        }
+    </div>
+    <div class="card-body p-0">
+        @if (_levels is { Count: > 0 })
+        {
+            <QuickGrid Items="@_levels.AsQueryable()" Class="table table-striped table-hover mb-0">
+                <TemplateColumn Title="Code" SortBy="@(GridSort<MembershipLevel>.ByAscending(l => l.ShortCode))">
+                    <span class="badge bg-secondary">@context.ShortCode</span>
+                </TemplateColumn>
+                <TemplateColumn Title="Name" SortBy="@(GridSort<MembershipLevel>.ByAscending(l => l.Name))">
+                    @context.Name
+                </TemplateColumn>
+                <TemplateColumn Title="Type" SortBy="@(GridSort<MembershipLevel>.ByAscending(l => l.MemberType))">
+                    <span class="badge @(context.MemberType == MemberType.Shareholder ? "bg-primary" : "bg-info text-dark")">
+                        @context.MemberType
+                    </span>
+                </TemplateColumn>
+                <TemplateColumn Title="Annual Fee" SortBy="@(GridSort<MembershipLevel>.ByAscending(l => l.AnnualFee))">
+                    @context.AnnualFee.ToString("C0")
+                </TemplateColumn>
+                <TemplateColumn Title="Age Range">
+                    @if (context.MinimumAge.HasValue || context.MaximumAge.HasValue)
+                    {
+                        <span>@(context.MinimumAge?.ToString() ?? "—") – @(context.MaximumAge?.ToString() ?? "—")</span>
+                    }
+                    else
+                    {
+                        <span class="text-muted">No restriction</span>
+                    }
+                </TemplateColumn>
+                <TemplateColumn Title="Actions">
+                    <button class="btn btn-sm btn-outline-primary" @onclick="() => ShowEditForm(context)">
+                        Edit
+                    </button>
+                </TemplateColumn>
+            </QuickGrid>
+        }
+        else if (!_loading)
+        {
+            <p class="text-muted p-3 mb-0">No membership levels defined.</p>
+        }
+    </div>
+</div>
+
+@code {
+    private List<MembershipLevel> _levels = [];
+    private bool _loading;
+    private bool _saving;
+    private bool _showForm;
+    private int? _editingId;
+    private string? _successMessage;
+    private string? _errorMessage;
+    private LevelFormModel _formModel = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadLevelsAsync();
+    }
+
+    private async Task LoadLevelsAsync()
+    {
+        _loading = true;
+        try
+        {
+            _levels = await DbContext.MembershipLevels
+                .OrderBy(l => l.Name)
+                .ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load membership levels");
+            _errorMessage = "Failed to load membership levels.";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void ShowCreateForm()
+    {
+        _editingId = null;
+        _formModel = new LevelFormModel();
+        _showForm = true;
+        _errorMessage = null;
+        _successMessage = null;
+    }
+
+    private void ShowEditForm(MembershipLevel level)
+    {
+        _editingId = level.Id;
+        _formModel = new LevelFormModel
+        {
+            Name = level.Name,
+            ShortCode = level.ShortCode,
+            MemberType = level.MemberType,
+            AnnualFee = level.AnnualFee,
+            MinimumAge = level.MinimumAge,
+            MaximumAge = level.MaximumAge
+        };
+        _showForm = true;
+        _errorMessage = null;
+        _successMessage = null;
+    }
+
+    private void CancelForm()
+    {
+        _showForm = false;
+        _editingId = null;
+        _formModel = new LevelFormModel();
+    }
+
+    private async Task HandleFormSubmitAsync()
+    {
+        _saving = true;
+        _errorMessage = null;
+        _successMessage = null;
+
+        try
+        {
+            bool result;
+            if (_editingId.HasValue)
+            {
+                result = await LevelService.UpdateMembershipLevelAsync(
+                    _editingId.Value,
+                    _formModel.Name!,
+                    _formModel.ShortCode!,
+                    _formModel.MemberType,
+                    _formModel.AnnualFee,
+                    _formModel.MinimumAge,
+                    _formModel.MaximumAge);
+                _successMessage = result ? "Membership level updated." : "Update failed — level not found.";
+            }
+            else
+            {
+                result = await LevelService.CreateMembershipLevelAsync(
+                    _formModel.Name!,
+                    _formModel.ShortCode!,
+                    _formModel.MemberType,
+                    _formModel.AnnualFee,
+                    _formModel.MinimumAge,
+                    _formModel.MaximumAge);
+                _successMessage = result ? "Membership level created." : "Creation failed.";
+            }
+
+            if (result)
+            {
+                _showForm = false;
+                _editingId = null;
+                await LoadLevelsAsync();
+            }
+            else
+            {
+                _errorMessage = _successMessage;
+                _successMessage = null;
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error saving membership level");
+            _errorMessage = "An unexpected error occurred. Please try again.";
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private sealed class LevelFormModel
+    {
+        [Required(ErrorMessage = "Name is required.")]
+        [MaxLength(100, ErrorMessage = "Name cannot exceed 100 characters.")]
+        public string? Name { get; set; }
+
+        [Required(ErrorMessage = "Short code is required.")]
+        [MaxLength(5, ErrorMessage = "Short code cannot exceed 5 characters.")]
+        public string? ShortCode { get; set; }
+
+        public MemberType MemberType { get; set; } = MemberType.Associate;
+
+        [Range(0, 999999, ErrorMessage = "Annual fee must be 0 or greater.")]
+        public decimal AnnualFee { get; set; }
+
+        [Range(0, 150, ErrorMessage = "Minimum age must be between 0 and 150.")]
+        public int? MinimumAge { get; set; }
+
+        [Range(0, 150, ErrorMessage = "Maximum age must be between 0 and 150.")]
+        public int? MaximumAge { get; set; }
+    }
+}

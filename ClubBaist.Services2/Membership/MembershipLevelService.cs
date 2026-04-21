@@ -5,7 +5,13 @@ namespace ClubBaist.Services2.Membership;
 
 public class MembershipLevelService(IAppDbContext2 db)
 {
-    public async Task<bool> CreateMembershipLevelAsync(string name, string shortCode)
+    public async Task<bool> CreateMembershipLevelAsync(
+        string name,
+        string shortCode,
+        MemberType memberType = MemberType.Associate,
+        decimal annualFee = 0,
+        int? minimumAge = null,
+        int? maximumAge = null)
     {
         var strategy = db.CreateExecutionStrategy();
         return await strategy.ExecuteAsync(async () =>
@@ -16,7 +22,11 @@ public class MembershipLevelService(IAppDbContext2 db)
                 var membershipLevel = new MembershipLevel
                 {
                     Name = name,
-                    ShortCode = shortCode
+                    ShortCode = shortCode,
+                    MemberType = memberType,
+                    AnnualFee = annualFee,
+                    MinimumAge = minimumAge,
+                    MaximumAge = maximumAge
                 };
                 db.MembershipLevels.Add(membershipLevel);
                 await db.SaveChangesAsync();
@@ -32,9 +42,23 @@ public class MembershipLevelService(IAppDbContext2 db)
     }
 
     public async Task<bool> UpdateMembershipLevelAsync(MembershipLevel membershipLevel) =>
-        await UpdateMembershipLevelAsync(membershipLevel.Id, membershipLevel.Name, membershipLevel.ShortCode);
+        await UpdateMembershipLevelAsync(
+            membershipLevel.Id,
+            membershipLevel.Name,
+            membershipLevel.ShortCode,
+            membershipLevel.MemberType,
+            membershipLevel.AnnualFee,
+            membershipLevel.MinimumAge,
+            membershipLevel.MaximumAge);
 
-    public async Task<bool> UpdateMembershipLevelAsync(int id, string name, string shortCode)
+    public async Task<bool> UpdateMembershipLevelAsync(
+        int id,
+        string name,
+        string shortCode,
+        MemberType memberType = MemberType.Associate,
+        decimal annualFee = 0,
+        int? minimumAge = null,
+        int? maximumAge = null)
     {
         var strategy = db.CreateExecutionStrategy();
         return await strategy.ExecuteAsync(async () =>
@@ -51,6 +75,10 @@ public class MembershipLevelService(IAppDbContext2 db)
 
                 membershipLevel.Name = name;
                 membershipLevel.ShortCode = shortCode;
+                membershipLevel.MemberType = memberType;
+                membershipLevel.AnnualFee = annualFee;
+                membershipLevel.MinimumAge = minimumAge;
+                membershipLevel.MaximumAge = maximumAge;
                 await db.SaveChangesAsync();
                 await trans.CommitAsync();
                 return true;

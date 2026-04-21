@@ -2,6 +2,8 @@
 @rendermode InteractiveServer
 
 @using System.ComponentModel.DataAnnotations
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
 @using ClubBaist.Domain2
@@ -12,6 +14,7 @@
 @inject MembershipApplicationService ApplicationService
 @inject IAppDbContext2 DbContext
 @inject ILogger<Apply> Logger
+@inject AuthenticationStateProvider AuthStateProvider
 
 <PageTitle>Apply for Membership</PageTitle>
 
@@ -148,7 +151,7 @@
                             <option value="">-- Select Level --</option>
                             @foreach (var level in _levels)
                             {
-                                <option value="@level.Id">@level.Name</option>
+                                <option value="@level.Id">@level.Name (@level.MemberType) — @level.AnnualFee.ToString("C0")/yr</option>
                             }
                         </InputSelect>
                         <label for="membershipLevel">Membership Level</label>
@@ -157,19 +160,136 @@
 
                     <div class="row">
                         <div class="col-md-6">
-                            <div class="form-floating mb-3">
-                                <InputNumber id="sponsor1" class="form-control" @bind-Value="_model.Sponsor1MemberId" placeholder="Sponsor 1 Member ID" />
-                                <label for="sponsor1">Sponsor 1 Member ID</label>
+                            <div class="mb-3">
+                                @if (_isStaffOrAdmin)
+                                {
+                                    <label class="form-label fw-semibold">Sponsor 1</label>
+                                    <div class="input-group mb-1">
+                                        <input type="text" class="form-control" id="sponsor1Search"
+                                               placeholder="Search by name..."
+                                               value="@_sponsor1SearchTerm"
+                                               @oninput="e => OnSponsorSearchInput(1, e.Value?.ToString() ?? string.Empty)" />
+                                        @if (_sponsor1LookupName is not null)
+                                        {
+                                            <button type="button" class="btn btn-outline-secondary" @onclick="() => ClearSponsor(1)">✕</button>
+                                        }
+                                    </div>
+                                    @if (_sponsor1SearchResults.Count > 0 && _model.Sponsor1MemberId is null)
+                                    {
+                                        <div class="list-group mb-1">
+                                            @foreach (var m in _sponsor1SearchResults)
+                                            {
+                                                var displayName1 = $"{m.User.FirstName} {m.User.LastName} (#{m.MembershipNumber})";
+                                                <button type="button" class="list-group-item list-group-item-action py-1"
+                                                        @onclick="() => SelectSponsor(1, m.Id, displayName1)">
+                                                    @m.User.FirstName @m.User.LastName — Member #@m.MembershipNumber
+                                                </button>
+                                            }
+                                        </div>
+                                    }
+                                    @if (_sponsor1LookupName is not null)
+                                    {
+                                        <div class="text-success small mb-1"><span class="bi bi-check-circle-fill me-1"></span>@_sponsor1LookupName</div>
+                                    }
+                                }
+                                else
+                                {
+                                    <div class="form-floating mb-1">
+                                        <InputNumber id="sponsor1" class="form-control" @bind-Value="_model.Sponsor1MemberId"
+                                                     placeholder="Sponsor 1 Member ID"
+                                                     @oninput="e => OnSponsorIdInput(1, e.Value?.ToString() ?? string.Empty)" />
+                                        <label for="sponsor1">Sponsor 1 Member ID</label>
+                                    </div>
+                                    @if (_sponsor1LookupName is not null)
+                                    {
+                                        <div class="text-success small"><span class="bi bi-check-circle-fill me-1"></span>@_sponsor1LookupName</div>
+                                    }
+                                    else if (_sponsor1LookupError is not null)
+                                    {
+                                        <div class="text-danger small">@_sponsor1LookupError</div>
+                                    }
+                                    else if (_sponsor1Loading)
+                                    {
+                                        <div class="text-muted small"><span class="spinner-border spinner-border-sm me-1"></span>Looking up member...</div>
+                                    }
+                                }
                                 <ValidationMessage For="() => _model.Sponsor1MemberId" />
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <div class="form-floating mb-3">
-                                <InputNumber id="sponsor2" class="form-control" @bind-Value="_model.Sponsor2MemberId" placeholder="Sponsor 2 Member ID" />
-                                <label for="sponsor2">Sponsor 2 Member ID</label>
+                            <div class="mb-3">
+                                @if (_isStaffOrAdmin)
+                                {
+                                    <label class="form-label fw-semibold">Sponsor 2</label>
+                                    <div class="input-group mb-1">
+                                        <input type="text" class="form-control" id="sponsor2Search"
+                                               placeholder="Search by name..."
+                                               value="@_sponsor2SearchTerm"
+                                               @oninput="e => OnSponsorSearchInput(2, e.Value?.ToString() ?? string.Empty)" />
+                                        @if (_sponsor2LookupName is not null)
+                                        {
+                                            <button type="button" class="btn btn-outline-secondary" @onclick="() => ClearSponsor(2)">✕</button>
+                                        }
+                                    </div>
+                                    @if (_sponsor2SearchResults.Count > 0 && _model.Sponsor2MemberId is null)
+                                    {
+                                        <div class="list-group mb-1">
+                                            @foreach (var m in _sponsor2SearchResults)
+                                            {
+                                                var displayName2 = $"{m.User.FirstName} {m.User.LastName} (#{m.MembershipNumber})";
+                                                <button type="button" class="list-group-item list-group-item-action py-1"
+                                                        @onclick="() => SelectSponsor(2, m.Id, displayName2)">
+                                                    @m.User.FirstName @m.User.LastName — Member #@m.MembershipNumber
+                                                </button>
+                                            }
+                                        </div>
+                                    }
+                                    @if (_sponsor2LookupName is not null)
+                                    {
+                                        <div class="text-success small mb-1"><span class="bi bi-check-circle-fill me-1"></span>@_sponsor2LookupName</div>
+                                    }
+                                }
+                                else
+                                {
+                                    <div class="form-floating mb-1">
+                                        <InputNumber id="sponsor2" class="form-control" @bind-Value="_model.Sponsor2MemberId"
+                                                     placeholder="Sponsor 2 Member ID"
+                                                     @oninput="e => OnSponsorIdInput(2, e.Value?.ToString() ?? string.Empty)" />
+                                        <label for="sponsor2">Sponsor 2 Member ID</label>
+                                    </div>
+                                    @if (_sponsor2LookupName is not null)
+                                    {
+                                        <div class="text-success small"><span class="bi bi-check-circle-fill me-1"></span>@_sponsor2LookupName</div>
+                                    }
+                                    else if (_sponsor2LookupError is not null)
+                                    {
+                                        <div class="text-danger small">@_sponsor2LookupError</div>
+                                    }
+                                    else if (_sponsor2Loading)
+                                    {
+                                        <div class="text-muted small"><span class="spinner-border spinner-border-sm me-1"></span>Looking up member...</div>
+                                    }
+                                }
                                 <ValidationMessage For="() => _model.Sponsor2MemberId" />
                             </div>
                         </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <InputCheckbox id="endorsementConfirm" class="form-check-input" @bind-Value="_model.SponsorEndorsementConfirmed" />
+                            <label class="form-check-label" for="endorsementConfirm">
+                                @if (_isStaffOrAdmin)
+                                {
+                                    <span>I confirm that both sponsors have reviewed and endorsed this application.</span>
+                                }
+                                else
+                                {
+                                    <span>I confirm that both sponsors are aware of and have endorsed my application. (This replaces the signature requirement.)</span>
+                                }
+                            </label>
+                        </div>
+                        <ValidationMessage For="() => _model.SponsorEndorsementConfirmed" />
                     </div>
                 </div>
             </div>
@@ -194,10 +314,163 @@
     private bool _submitted;
     private string? _successMessage;
     private string? _errorMessage;
+    private bool _isStaffOrAdmin;
+
+    // Sponsor 1 state
+    private string _sponsor1SearchTerm = string.Empty;
+    private List<MemberShipInfo> _sponsor1SearchResults = [];
+    private string? _sponsor1LookupName;
+    private string? _sponsor1LookupError;
+    private bool _sponsor1Loading;
+    private CancellationTokenSource? _sponsor1Debounce;
+
+    // Sponsor 2 state
+    private string _sponsor2SearchTerm = string.Empty;
+    private List<MemberShipInfo> _sponsor2SearchResults = [];
+    private string? _sponsor2LookupName;
+    private string? _sponsor2LookupError;
+    private bool _sponsor2Loading;
+    private CancellationTokenSource? _sponsor2Debounce;
 
     protected override async Task OnInitializedAsync()
     {
         _levels = await DbContext.MembershipLevels.ToListAsync();
+
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        _isStaffOrAdmin = user.IsInRole(AppRoles.Admin)
+                       || user.IsInRole(AppRoles.MembershipCommittee);
+    }
+
+    private async Task OnSponsorIdInput(int sponsorNumber, string rawValue)
+    {
+        if (!int.TryParse(rawValue, out var memberId) || memberId <= 0)
+        {
+            SetSponsorLookup(sponsorNumber, null, null, false);
+            return;
+        }
+
+        SetSponsorLookup(sponsorNumber, null, null, true);
+        StateHasChanged();
+
+        var cts = new CancellationTokenSource();
+        if (sponsorNumber == 1) { _sponsor1Debounce?.Cancel(); _sponsor1Debounce = cts; }
+        else { _sponsor2Debounce?.Cancel(); _sponsor2Debounce = cts; }
+
+        try
+        {
+            await Task.Delay(400, cts.Token);
+            var member = await DbContext.MemberShips
+                .Include(m => m.User)
+                .FirstOrDefaultAsync(m => m.Id == memberId, cts.Token);
+
+            if (member is not null)
+                SetSponsorLookup(sponsorNumber, $"{member.User.FirstName} {member.User.LastName} (#{member.MembershipNumber})", null, false);
+            else
+                SetSponsorLookup(sponsorNumber, null, "Member ID not found.", false);
+        }
+        catch (OperationCanceledException) { }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error looking up sponsor member ID");
+            SetSponsorLookup(sponsorNumber, null, "Error looking up member.", false);
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task OnSponsorSearchInput(int sponsorNumber, string term)
+    {
+        if (sponsorNumber == 1) _sponsor1SearchTerm = term;
+        else _sponsor2SearchTerm = term;
+
+        if (string.IsNullOrWhiteSpace(term))
+        {
+            if (sponsorNumber == 1) _sponsor1SearchResults = [];
+            else _sponsor2SearchResults = [];
+            StateHasChanged();
+            return;
+        }
+
+        var cts = new CancellationTokenSource();
+        if (sponsorNumber == 1) { _sponsor1Debounce?.Cancel(); _sponsor1Debounce = cts; }
+        else { _sponsor2Debounce?.Cancel(); _sponsor2Debounce = cts; }
+
+        try
+        {
+            await Task.Delay(300, cts.Token);
+            var pattern = $"%{term.Trim()}%";
+            var results = await DbContext.MemberShips
+                .Include(m => m.User)
+                .Where(m => EF.Functions.Like(m.User.FirstName, pattern)
+                         || EF.Functions.Like(m.User.LastName, pattern))
+                .OrderBy(m => m.User.LastName)
+                .ThenBy(m => m.User.FirstName)
+                .Take(10)
+                .ToListAsync(cts.Token);
+
+            if (sponsorNumber == 1) _sponsor1SearchResults = results;
+            else _sponsor2SearchResults = results;
+        }
+        catch (OperationCanceledException) { }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error searching sponsors");
+        }
+
+        StateHasChanged();
+    }
+
+    private void SelectSponsor(int sponsorNumber, int memberId, string displayName)
+    {
+        if (sponsorNumber == 1)
+        {
+            _model.Sponsor1MemberId = memberId;
+            _sponsor1LookupName = displayName;
+            _sponsor1SearchResults = [];
+            _sponsor1SearchTerm = displayName;
+        }
+        else
+        {
+            _model.Sponsor2MemberId = memberId;
+            _sponsor2LookupName = displayName;
+            _sponsor2SearchResults = [];
+            _sponsor2SearchTerm = displayName;
+        }
+    }
+
+    private void ClearSponsor(int sponsorNumber)
+    {
+        if (sponsorNumber == 1)
+        {
+            _model.Sponsor1MemberId = null;
+            _sponsor1LookupName = null;
+            _sponsor1SearchTerm = string.Empty;
+            _sponsor1SearchResults = [];
+        }
+        else
+        {
+            _model.Sponsor2MemberId = null;
+            _sponsor2LookupName = null;
+            _sponsor2SearchTerm = string.Empty;
+            _sponsor2SearchResults = [];
+        }
+    }
+
+    private void SetSponsorLookup(int sponsorNumber, string? name, string? error, bool loading)
+    {
+        if (sponsorNumber == 1)
+        {
+            _sponsor1LookupName = name;
+            _sponsor1LookupError = error;
+            _sponsor1Loading = loading;
+        }
+        else
+        {
+            _sponsor2LookupName = name;
+            _sponsor2LookupError = error;
+            _sponsor2Loading = loading;
+        }
     }
 
     private async Task HandleSubmitAsync()
@@ -320,5 +593,8 @@
 
         [Required(ErrorMessage = "Sponsor 2 member ID is required.")]
         public int? Sponsor2MemberId { get; set; }
+
+        [Range(typeof(bool), "true", "true", ErrorMessage = "You must confirm that both sponsors have endorsed your application.")]
+        public bool SponsorEndorsementConfirmed { get; set; }
     }
 }

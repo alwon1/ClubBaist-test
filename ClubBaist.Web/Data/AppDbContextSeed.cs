@@ -14,10 +14,10 @@ internal static class AppDbContextSeed
 
     private static readonly SeedMembershipLevel[] MembershipLevels =
     [
-        new("SH", "Shareholder"),
-        new("SV", "Silver"),
-        new("BR", "Bronze"),
-        new("AS", "Associate")
+        new("SH", "Shareholder", MemberType.Shareholder, 5000m),
+        new("SV", "Silver", MemberType.Associate, 2500m),
+        new("BR", "Bronze", MemberType.Associate, 1500m),
+        new("AS", "Associate", MemberType.Associate, 1000m)
     ];
 
     private static readonly SeedUser[] Users =
@@ -79,7 +79,9 @@ internal static class AppDbContextSeed
             var level = new MembershipLevel
             {
                 ShortCode = seedLevel.ShortCode,
-                Name = seedLevel.Name
+                Name = seedLevel.Name,
+                MemberType = seedLevel.MemberType,
+                AnnualFee = seedLevel.AnnualFee
             };
 
             AddAvailabilities(level);
@@ -396,7 +398,7 @@ internal static class AppDbContextSeed
         throw new InvalidOperationException($"Failed to {action}: {errors}");
     }
 
-    private sealed record SeedMembershipLevel(string ShortCode, string Name);
+    private sealed record SeedMembershipLevel(string ShortCode, string Name, MemberType MemberType, decimal AnnualFee);
 
     private sealed record SeedUser(
         string Email,
