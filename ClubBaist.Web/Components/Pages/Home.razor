@@ -30,15 +30,18 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-4">
-                            <div class="card h-100">
-                                <div class="card-body">
-                                    <h5 class="card-title">Standing Tee Time</h5>
-                                    <p class="card-text">View or manage your standing (weekly recurring) tee time requests.</p>
-                                    <a href="teetimes/standing/my" class="btn btn-outline-primary">My Standing Requests</a>
+                        @if (memberContext.User.HasClaim(AppRoles.ClaimTypes.Permission, AppRoles.Permissions.BookStandingTeeTime))
+                        {
+                            <div class="col-md-4">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Standing Tee Time</h5>
+                                        <p class="card-text">View or manage your standing (weekly recurring) tee time requests.</p>
+                                        <a href="teetimes/standing/my" class="btn btn-outline-primary">My Standing Requests</a>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        }
                     </Authorized>
                 </AuthorizeView>
 

@@ -41,11 +41,14 @@
                                 <span class="bi bi-bar-chart-fill" aria-hidden="true"></span> My Scores
                             </NavLink>
                         </div>
-                        <div class="nav-item px-3">
-                            <NavLink class="nav-link" href="teetimes/standing/my">
-                                <span class="bi bi-calendar-week-fill" aria-hidden="true"></span> My Standing Requests
-                            </NavLink>
-                        </div>
+                        @if (memberReservationsContext.User.HasClaim(AppRoles.ClaimTypes.Permission, AppRoles.Permissions.BookStandingTeeTime))
+                        {
+                            <div class="nav-item px-3">
+                                <NavLink class="nav-link" href="teetimes/standing/my">
+                                    <span class="bi bi-calendar-week-fill" aria-hidden="true"></span> My Standing Requests
+                                </NavLink>
+                            </div>
+                        }
                     </Authorized>
                 </AuthorizeView>
 

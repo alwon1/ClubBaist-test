@@ -275,11 +275,12 @@ internal static class AppDbContextSeed
     {
         var logger = db.GetService<ILoggerFactory>().CreateLogger(nameof(AppDbContextSeed));
 
-        // Member IDs assigned sequentially by EF during seeding:
-        //   1 = Alice Shareholder, 2 = Bob Shareholder, 3 = Carol Shareholder,
-        //   4 = Diana Silver, 5 = Evan Bronze
-        var alice = await db.MemberShips.FirstOrDefaultAsync(m => m.Id == 1, cancellationToken);
-        var diana = await db.MemberShips.FirstOrDefaultAsync(m => m.Id == 4, cancellationToken);
+        var alice = await db.MemberShips
+            .Include(m => m.User)
+            .FirstOrDefaultAsync(m => m.User.Email == "shareholder1@clubbaist.com", cancellationToken);
+        var diana = await db.MemberShips
+            .Include(m => m.User)
+            .FirstOrDefaultAsync(m => m.User.Email == "silver@clubbaist.com", cancellationToken);
 
         if (alice is null || diana is null)
         {

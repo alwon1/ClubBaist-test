@@ -255,7 +255,13 @@
                 Sponsor2MemberId = _model.Sponsor2MemberId!.Value
             };
 
-            await ApplicationService.SubmitMembershipApplicationAsync(application);
+            var submitted = await ApplicationService.SubmitMembershipApplicationAsync(application);
+
+            if (!submitted)
+            {
+                _errorMessage = "Your application could not be submitted. An active application or membership already exists for this email address.";
+                return;
+            }
 
             _successMessage = "Your membership application has been submitted successfully. You will be notified once your application has been reviewed.";
             _submitted = true;
@@ -316,9 +322,11 @@
         public int? RequestedMembershipLevelId { get; set; }
 
         [Required(ErrorMessage = "Sponsor 1 member ID is required.")]
+        [Range(1, int.MaxValue, ErrorMessage = "Please enter a valid Sponsor 1 Member ID.")]
         public int? Sponsor1MemberId { get; set; }
 
         [Required(ErrorMessage = "Sponsor 2 member ID is required.")]
+        [Range(1, int.MaxValue, ErrorMessage = "Please enter a valid Sponsor 2 Member ID.")]
         public int? Sponsor2MemberId { get; set; }
     }
 }
