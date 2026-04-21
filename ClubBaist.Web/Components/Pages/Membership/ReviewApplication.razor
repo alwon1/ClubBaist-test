@@ -212,9 +212,13 @@
 
             if (_application is not null)
             {
-                _validTransitions = _application.Status == ApplicationStatus.Accepted || _application.Status == ApplicationStatus.Denied
-                    ? []
-                    : Enum.GetValues<ApplicationStatus>().Where(s => s != _application.Status).ToList();
+                _validTransitions = _application.Status switch
+                {
+                    ApplicationStatus.Submitted => [ApplicationStatus.OnHold, ApplicationStatus.Waitlisted, ApplicationStatus.Accepted, ApplicationStatus.Denied],
+                    ApplicationStatus.OnHold => [ApplicationStatus.Submitted, ApplicationStatus.Waitlisted, ApplicationStatus.Accepted, ApplicationStatus.Denied],
+                    ApplicationStatus.Waitlisted => [ApplicationStatus.OnHold, ApplicationStatus.Accepted, ApplicationStatus.Denied],
+                    _ => [] // Accepted and Denied are terminal states
+                };
 
                 var sponsorIds = new[] { _application.Sponsor1MemberId, _application.Sponsor2MemberId };
                 _sponsorNames = (await DbContext.MemberShips

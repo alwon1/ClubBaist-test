@@ -20,6 +20,12 @@ public class MembershipApplicationService(
 
     public async Task<bool> SubmitMembershipApplicationAsync(MembershipApplication application)
     {
+        if (application.Sponsor1MemberId == application.Sponsor2MemberId)
+        {
+            logger.LogWarning("Application for {Email} has the same member ID for both sponsors.", application.Email);
+            return false;
+        }
+
         if (await db.MemberShips.AnyAsync(m => m.User.Email == application.Email))
         {
             logger.LogWarning("Application submitted for {Email} who is already a member.", application.Email);

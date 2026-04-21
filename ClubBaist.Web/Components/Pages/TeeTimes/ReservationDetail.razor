@@ -294,6 +294,13 @@ else
         successMessage = null;
         isSaving = true;
 
+        if (booking is null || (!isAdmin && booking.BookingMemberId != currentMemberId))
+        {
+            errorMessage = "Access denied.";
+            isSaving = false;
+            return;
+        }
+
         try
         {
             var playerIds = editPlayerIds.Where(id => id != 0).Distinct().ToList();
@@ -330,6 +337,12 @@ else
         errorMessage = null;
         successMessage = null;
         showCancelConfirm = false;
+
+        if (booking is null || (!isAdmin && booking.BookingMemberId != currentMemberId))
+        {
+            errorMessage = "Access denied.";
+            return;
+        }
 
         try
         {
