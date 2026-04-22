@@ -74,6 +74,11 @@ public sealed class HandicapCalculationService(IAppDbContext2 db, ILogger<Handic
 
             validDifferentials.Add((differential, round.SubmittedAt));
 
+            if (validDifferentials.Count == 20)
+            {
+                break;
+            }
+
             logger.LogInformation(
                 "Round {RoundId} included for member {MemberId}. AdjustedGross={AdjustedGross}, CourseRating={CourseRating}, Slope={Slope}, PCC={Pcc}, Differential={Differential}",
                 round.Id,
@@ -91,21 +96,21 @@ public sealed class HandicapCalculationService(IAppDbContext2 db, ILogger<Handic
             return CreateUnavailableResult("No valid rounds available for handicap calculation");
         }
 
-        var differentialCount = GetDifferentialCountForRoundCount(validDifferentials.Count);
+        var selectionRule = GetDifferentialSelectionRule(validDifferentials.Count);
         var selectedDifferentials = validDifferentials
             .OrderBy(d => d.Differential)
-            .Take(differentialCount)
+            .Take(selectionRule.DifferentialCount)
             .ToList();
 
         var averageDifferential = selectedDifferentials.Average(d => d.Differential);
-        var currentHandicap = TruncateToTenths(averageDifferential);
+        var currentHandicap = RoundHandicapIndex(averageDifferential + selectionRule.Adjustment);
         var lastUpdated = selectedDifferentials.Max(d => d.SubmittedAt);
 
         var result = new HandicapResult
         {
             CurrentHandicap = currentHandicap,
             RoundCount = validDifferentials.Count,
-            DifferentialCount = differentialCount,
+            DifferentialCount = selectionRule.DifferentialCount,
             LastUpdated = lastUpdated,
             IsProvisional = validDifferentials.Count < 20,
             IsAvailable = true
@@ -157,60 +162,95 @@ public sealed class HandicapCalculationService(IAppDbContext2 db, ILogger<Handic
         int slopeRating,
         decimal pccAdjustment)
     {
-        var raw = ((adjustedGross - courseRating) + pccAdjustment) * 113m / slopeRating;
-        return decimal.Round(raw, 1, MidpointRounding.AwayFromZero);
+        var raw = (adjustedGross - courseRating - pccAdjustment) * 113m / slopeRating;
+        return RoundDifferential(raw);
     }
 
-    private static int GetDifferentialCountForRoundCount(int roundCount)
+    private static (int DifferentialCount, decimal Adjustment) GetDifferentialSelectionRule(int roundCount)
     {
         if (roundCount <= 0)
         {
-            return 0;
+            return (0, 0m);
         }
 
-        if (roundCount < 5)
+        if (roundCount <= 2)
         {
-            return roundCount;
+            return (roundCount, 0m);
+        }
+
+        if (roundCount == 3)
+        {
+            return (1, -2.0m);
+        }
+
+        if (roundCount == 4)
+        {
+            return (1, -1.0m);
+        }
+
+        if (roundCount == 5)
+        {
+            return (1, 0m);
         }
 
         if (roundCount <= 6)
         {
-            return 1;
+            return (2, -1.0m);
         }
 
         if (roundCount <= 8)
         {
-            return 2;
+            return (2, 0m);
         }
 
         if (roundCount <= 10)
         {
-            return 3;
+            return (3, 0m);
         }
 
         if (roundCount <= 12)
         {
-            return 4;
+            return (4, 0m);
         }
 
         if (roundCount <= 14)
         {
-            return 5;
+            return (5, 0m);
         }
 
         if (roundCount <= 16)
         {
-            return 6;
+            return (6, 0m);
         }
 
         if (roundCount <= 19)
         {
-            return 7;
+            return (7, 0m);
         }
 
-        return 8;
+        return (8, 0m);
     }
 
-    private static decimal TruncateToTenths(decimal value) =>
-        decimal.Truncate(value * 10m) / 10m;
+    private static decimal RoundHandicapIndex(decimal value) =>
+        decimal.Round(value, 1, MidpointRounding.AwayFromZero);
+
+    private static decimal RoundDifferential(decimal value)
+    {
+        if (value >= 0m)
+        {
+            return decimal.Round(value, 1, MidpointRounding.AwayFromZero);
+        }
+
+        var absolute = decimal.Abs(value);
+        var scaled = absolute * 10m;
+        var whole = decimal.Truncate(scaled);
+        var fraction = scaled - whole;
+
+        if (fraction == 0.5m)
+        {
+            return -(whole / 10m);
+        }
+
+        return -decimal.Round(absolute, 1, MidpointRounding.AwayFromZero);
+    }
 }
