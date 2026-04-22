@@ -13,6 +13,11 @@ public class MembershipLevelService(IAppDbContext2 db)
         int? minimumAge = null,
         int? maximumAge = null)
     {
+        if (annualFee < 0)
+            throw new ArgumentOutOfRangeException(nameof(annualFee), "Annual fee cannot be negative.");
+        if (minimumAge.HasValue && maximumAge.HasValue && minimumAge.Value > maximumAge.Value)
+            throw new ArgumentException("Minimum age cannot be greater than maximum age.", nameof(minimumAge));
+
         var strategy = db.CreateExecutionStrategy();
         return await strategy.ExecuteAsync(async () =>
         {
@@ -60,6 +65,11 @@ public class MembershipLevelService(IAppDbContext2 db)
         int? minimumAge = null,
         int? maximumAge = null)
     {
+        if (annualFee < 0)
+            throw new ArgumentOutOfRangeException(nameof(annualFee), "Annual fee cannot be negative.");
+        if (minimumAge.HasValue && maximumAge.HasValue && minimumAge.Value > maximumAge.Value)
+            throw new ArgumentException("Minimum age cannot be greater than maximum age.", nameof(minimumAge));
+
         var strategy = db.CreateExecutionStrategy();
         return await strategy.ExecuteAsync(async () =>
         {

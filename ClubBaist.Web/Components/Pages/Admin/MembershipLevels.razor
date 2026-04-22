@@ -291,7 +291,7 @@
         }
     }
 
-    private sealed class LevelFormModel
+    private sealed class LevelFormModel : IValidatableObject
     {
         [Required(ErrorMessage = "Name is required.")]
         [MaxLength(100, ErrorMessage = "Name cannot exceed 100 characters.")]
@@ -311,5 +311,13 @@
 
         [Range(0, 150, ErrorMessage = "Maximum age must be between 0 and 150.")]
         public int? MaximumAge { get; set; }
+
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            if (MinimumAge.HasValue && MaximumAge.HasValue && MinimumAge.Value > MaximumAge.Value)
+                yield return new ValidationResult(
+                    "Minimum age cannot be greater than maximum age.",
+                    [nameof(MinimumAge), nameof(MaximumAge)]);
+        }
     }
 }

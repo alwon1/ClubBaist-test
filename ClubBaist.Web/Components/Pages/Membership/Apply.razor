@@ -2,9 +2,6 @@
 @rendermode InteractiveServer
 
 @using System.ComponentModel.DataAnnotations
-@using System.Security.Claims
-@using Microsoft.AspNetCore.Authorization
-@using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
 @using ClubBaist.Domain2
 @using ClubBaist.Domain2.Entities.Membership
@@ -275,22 +272,18 @@
                         </div>
                     </div>
 
-                    <div class="mb-3">
-                        <div class="form-check">
-                            <InputCheckbox id="endorsementConfirm" class="form-check-input" @bind-Value="_model.SponsorEndorsementConfirmed" />
-                            <label class="form-check-label" for="endorsementConfirm">
-                                @if (_isStaffOrAdmin)
-                                {
-                                    <span>I confirm that both sponsors have reviewed and endorsed this application.</span>
-                                }
-                                else
-                                {
-                                    <span>I confirm that both sponsors are aware of and have endorsed my application. (This replaces the signature requirement.)</span>
-                                }
-                            </label>
+                    @if (_isStaffOrAdmin)
+                    {
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <InputCheckbox id="endorsementConfirm" class="form-check-input" @bind-Value="_model.SponsorEndorsementConfirmed" />
+                                <label class="form-check-label" for="endorsementConfirm">
+                                    I confirm that both sponsors have reviewed and endorsed this application in person.
+                                </label>
+                            </div>
+                            <ValidationMessage For="() => _model.SponsorEndorsementConfirmed" />
                         </div>
-                        <ValidationMessage For="() => _model.SponsorEndorsementConfirmed" />
-                    </div>
+                    }
                 </div>
             </div>
 
@@ -354,8 +347,20 @@
         StateHasChanged();
 
         var cts = new CancellationTokenSource();
-        if (sponsorNumber == 1) { _sponsor1Debounce?.Cancel(); _sponsor1Debounce = cts; }
-        else { _sponsor2Debounce?.Cancel(); _sponsor2Debounce = cts; }
+        if (sponsorNumber == 1)
+        {
+            var old1 = _sponsor1Debounce;
+            _sponsor1Debounce = cts;
+            old1?.Cancel();
+            old1?.Dispose();
+        }
+        else
+        {
+            var old2 = _sponsor2Debounce;
+            _sponsor2Debounce = cts;
+            old2?.Cancel();
+            old2?.Dispose();
+        }
 
         try
         {
@@ -375,6 +380,10 @@
             Logger.LogError(ex, "Error looking up sponsor member ID");
             SetSponsorLookup(sponsorNumber, null, "Error looking up member.", false);
         }
+        finally
+        {
+            cts.Dispose();
+        }
 
         StateHasChanged();
     }
@@ -393,8 +402,20 @@
         }
 
         var cts = new CancellationTokenSource();
-        if (sponsorNumber == 1) { _sponsor1Debounce?.Cancel(); _sponsor1Debounce = cts; }
-        else { _sponsor2Debounce?.Cancel(); _sponsor2Debounce = cts; }
+        if (sponsorNumber == 1)
+        {
+            var old1 = _sponsor1Debounce;
+            _sponsor1Debounce = cts;
+            old1?.Cancel();
+            old1?.Dispose();
+        }
+        else
+        {
+            var old2 = _sponsor2Debounce;
+            _sponsor2Debounce = cts;
+            old2?.Cancel();
+            old2?.Dispose();
+        }
 
         try
         {
@@ -416,6 +437,10 @@
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error searching sponsors");
+        }
+        finally
+        {
+            cts.Dispose();
         }
 
         StateHasChanged();
@@ -481,6 +506,13 @@
 
         try
         {
+            if (_isStaffOrAdmin && !_model.SponsorEndorsementConfirmed)
+            {
+                _errorMessage = "You must confirm that both sponsors have endorsed this application.";
+                _submitting = false;
+                return;
+            }
+
             if (_model.Sponsor1MemberId == _model.Sponsor2MemberId)
             {
                 _errorMessage = "Sponsor 1 and Sponsor 2 must be different members.";
@@ -594,7 +626,7 @@
         [Required(ErrorMessage = "Sponsor 2 member ID is required.")]
         public int? Sponsor2MemberId { get; set; }
 
-        [Range(typeof(bool), "true", "true", ErrorMessage = "You must confirm that both sponsors have endorsed your application.")]
+        // Only used and validated when submitted by staff/admin/committee
         public bool SponsorEndorsementConfirmed { get; set; }
     }
 }

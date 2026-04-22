@@ -153,9 +153,8 @@ public class MembershipApplicationService(
         const string special = "!@#$%&*?";
         const string all = upper + lower + digits + special;
 
-        var rng = System.Security.Cryptography.RandomNumberGenerator.Create();
         var bytes = new byte[16];
-        rng.GetBytes(bytes);
+        System.Security.Cryptography.RandomNumberGenerator.Fill(bytes);
 
         // Guarantee at least one character from each required set
         var chars = new char[16];
@@ -166,11 +165,12 @@ public class MembershipApplicationService(
         for (var i = 4; i < 16; i++)
             chars[i] = all[bytes[i] % all.Length];
 
-        // Fisher-Yates shuffle
-        rng.GetBytes(bytes);
+        // Fisher-Yates shuffle using a fresh set of random bytes
+        var shuffleBytes = new byte[16];
+        System.Security.Cryptography.RandomNumberGenerator.Fill(shuffleBytes);
         for (var i = chars.Length - 1; i > 0; i--)
         {
-            var j = bytes[i] % (i + 1);
+            var j = shuffleBytes[i] % (i + 1);
             (chars[i], chars[j]) = (chars[j], chars[i]);
         }
 

@@ -325,7 +325,18 @@
 
     private async Task CopyPasswordToClipboard()
     {
-        if (_generatedPassword is not null)
+        if (_generatedPassword is null)
+            return;
+
+        try
+        {
             await JS.InvokeVoidAsync("navigator.clipboard.writeText", _generatedPassword);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Failed to copy generated password to clipboard for application {ApplicationId}.", ApplicationId);
+            _isError = true;
+            _resultMessage = "Unable to copy the generated password to the clipboard. Please copy it manually.";
+        }
     }
 }

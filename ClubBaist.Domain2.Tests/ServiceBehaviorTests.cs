@@ -95,6 +95,14 @@ public class MembershipApplicationServiceTests
         Assert.IsTrue(approved.Success);
         Assert.IsNotNull(approved.GeneratedPassword);
 
+        // Verify password strength policy
+        var pwd = approved.GeneratedPassword!;
+        Assert.AreEqual(16, pwd.Length, "Generated password must be 16 characters.");
+        Assert.IsTrue(pwd.Any(char.IsUpper), "Generated password must contain at least one uppercase letter.");
+        Assert.IsTrue(pwd.Any(char.IsLower), "Generated password must contain at least one lowercase letter.");
+        Assert.IsTrue(pwd.Any(char.IsDigit), "Generated password must contain at least one digit.");
+        Assert.IsTrue(pwd.Any(c => "!@#$%&*?".Contains(c)), "Generated password must contain at least one special character.");
+
         var updatedApplication = await db.MembershipApplications.AsNoTracking().SingleAsync(item => item.Id == persisted.Id);
         var createdUser = await userManager.FindByEmailAsync("approved@test.com");
         var membership = await db.MemberShips
