@@ -12,6 +12,7 @@
 
 @inject IAppDbContext2 DbContext
 @inject ScoreService ScoreService
+@inject RoundScoreDerivationService RoundScoreDerivationService
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager NavigationManager
 @inject ILogger<RecordScore> Logger
@@ -186,6 +187,12 @@ else if (booking is not null)
             <span class="text-muted small">All 18 hole scores are required before submitting.</span>
         }
     </div>
+
+    <div class="mt-3 small text-muted">
+        <div>Raw Total: @DerivedScore.RawTotal</div>
+        <div>Calculated Adjusted: @DerivedScore.AdjustedTotal</div>
+        <div>@DerivedScore.Basis</div>
+    </div>
 }
 
 @code {
@@ -208,6 +215,7 @@ else if (booking is not null)
     private static readonly int[] par = [4, 5, 3, 4, 4, 4, 4, 5, 4, 4, 4, 3, 5, 4, 4, 3, 5, 4];
 
     private bool AllScoresEntered => scores.All(s => s.HasValue);
+    private RoundScoreView DerivedScore => RoundScoreDerivationService.Compute(scores);
 
     protected override async Task OnInitializedAsync()
     {
