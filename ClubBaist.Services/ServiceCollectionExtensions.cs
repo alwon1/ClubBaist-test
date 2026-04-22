@@ -46,6 +46,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<StandingTeeTimeService>();
 
         services.AddScoped<ScoreService>();
+        services.AddScoped<HandicapCalculationService>();
 
         return services;
     }

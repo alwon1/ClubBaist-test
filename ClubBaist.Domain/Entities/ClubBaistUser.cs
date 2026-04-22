@@ -52,6 +52,9 @@ public class ClubBaistUser : IdentityUser<Guid>
     [DisplayName("Last Name")]
     public string? LastName { get; set; }
     [ProtectedPersonalData]
+    [DisplayName("Gender")]
+    public Gender? Gender { get; set; }
+    [ProtectedPersonalData]
     [DisplayName("Full Name")]
     public string FullName => $"{FirstName} {LastName}".Trim();
 }

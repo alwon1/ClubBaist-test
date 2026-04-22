@@ -26,6 +26,7 @@ public class AppDbContext : IdentityDbContext<ClubBaistUser, IdentityRole<Guid>,
     public DbSet<Season> Seasons { get; set; }
     public DbSet<StandingTeeTime> StandingTeeTimes { get; set; }
     public DbSet<GolfRound> GolfRounds { get; set; }
+    public DbSet<CourseRating> CourseRatings { get; set; }
 
     public Task<IDbContextTransaction> BeginTransactionAsync(IsolationLevel isolationLevel, CancellationToken cancellationToken = default) =>
         Database.BeginTransactionAsync(isolationLevel, cancellationToken);
@@ -144,6 +145,70 @@ public class AppDbContext : IdentityDbContext<ClubBaistUser, IdentityRole<Guid>,
                         v => v.Aggregate(0, (hash, item) => HashCode.Combine(hash, item.GetHashCode())),
                         v => v.ToList()))
                 .HasColumnType("nvarchar(max)");
+
+            entity.Navigation(r => r.TeeTimeBooking).AutoInclude();
+            entity.Navigation(r => r.Member).AutoInclude();
+        });
+
+        modelBuilder.Entity<CourseRating>(entity =>
+        {
+            entity.Property(r => r.Rating).HasPrecision(4, 1);
+
+            entity.HasData(
+                new CourseRating
+                {
+                    Id = 1,
+                    TeeColor = GolfRound.TeeColor.Red,
+                    Gender = Gender.Male,
+                    Rating = 66.2m,
+                    SlopeRating = 116,
+                    Source = "Club BAIST"
+                },
+                new CourseRating
+                {
+                    Id = 2,
+                    TeeColor = GolfRound.TeeColor.Red,
+                    Gender = Gender.Female,
+                    Rating = 71.0m,
+                    SlopeRating = 125,
+                    Source = "Club BAIST"
+                },
+                new CourseRating
+                {
+                    Id = 3,
+                    TeeColor = GolfRound.TeeColor.White,
+                    Gender = Gender.Male,
+                    Rating = 68.8m,
+                    SlopeRating = 123,
+                    Source = "Club BAIST"
+                },
+                new CourseRating
+                {
+                    Id = 4,
+                    TeeColor = GolfRound.TeeColor.White,
+                    Gender = Gender.Female,
+                    Rating = 75.0m,
+                    SlopeRating = 133,
+                    Source = "Club BAIST"
+                },
+                new CourseRating
+                {
+                    Id = 5,
+                    TeeColor = GolfRound.TeeColor.Blue,
+                    Gender = Gender.Male,
+                    Rating = 70.9m,
+                    SlopeRating = 127,
+                    Source = "Club BAIST"
+                },
+                new CourseRating
+                {
+                    Id = 6,
+                    TeeColor = GolfRound.TeeColor.Blue,
+                    Gender = Gender.Female,
+                    Rating = 76.6m,
+                    SlopeRating = 138,
+                    Source = "Club BAIST"
+                });
         });
     }
 }
