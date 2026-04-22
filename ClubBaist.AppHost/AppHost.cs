@@ -22,7 +22,6 @@ var sql = db.AddDatabase("clubbaist");
 
 
 builder.AddProject<Projects.ClubBaist_Web>("web")
-    .AsHttp2Service()
     .WithExternalHttpEndpoints()
     .WithReference(sql).WithReference(db)
     .WaitFor(sql);
