@@ -253,36 +253,41 @@ else
 
             // Sync the standing-tee-time.book claim to reflect the new membership level.
             var existingClaims = await UserManager.GetClaimsAsync(_member.User);
-            var hasStandingClaim = existingClaims.Any(c =>
-                c.Type == AppRoles.ClaimTypes.Permission &&
-                c.Value == AppRoles.Permissions.BookStandingTeeTime);
+            var standingClaims = existingClaims
+                .Where(c => c.Type == AppRoles.ClaimTypes.Permission &&
+                            c.Value == AppRoles.Permissions.BookStandingTeeTime)
+                .ToList();
 
+            var claimSyncWarning = false;
             if (newLevel.ShortCode.Equals("SH", StringComparison.OrdinalIgnoreCase))
             {
-                if (!hasStandingClaim)
+                if (standingClaims.Count == 0)
                 {
                     var addResult = await UserManager.AddClaimAsync(_member.User, AppRoles.Claims.StandingTeeTimeBooking);
                     if (!addResult.Succeeded)
+                    {
                         Logger.LogWarning("Failed to add standing tee time claim for user {UserId}", _member.User.Id);
+                        claimSyncWarning = true;
+                    }
                 }
             }
             else
             {
-                if (hasStandingClaim)
+                // Remove all copies of the claim to eliminate duplicates from historical/manual adds.
+                foreach (var claim in standingClaims)
                 {
-                    var claimToRemove = existingClaims.FirstOrDefault(c =>
-                        c.Type == AppRoles.ClaimTypes.Permission &&
-                        c.Value == AppRoles.Permissions.BookStandingTeeTime);
-                    if (claimToRemove is not null)
+                    var removeResult = await UserManager.RemoveClaimAsync(_member.User, claim);
+                    if (!removeResult.Succeeded)
                     {
-                        var removeResult = await UserManager.RemoveClaimAsync(_member.User, claimToRemove);
-                        if (!removeResult.Succeeded)
-                            Logger.LogWarning("Failed to remove standing tee time claim for user {UserId}", _member.User.Id);
+                        Logger.LogWarning("Failed to remove standing tee time claim for user {UserId}", _member.User.Id);
+                        claimSyncWarning = true;
                     }
                 }
             }
 
-            _resultMessage = "Member profile updated successfully.";
+            _resultMessage = claimSyncWarning
+                ? "Member profile saved, but the standing-tee-time permission could not be fully synced. Please review the user's claims."
+                : "Member profile updated successfully.";
         }
         catch (Exception ex)
         {
