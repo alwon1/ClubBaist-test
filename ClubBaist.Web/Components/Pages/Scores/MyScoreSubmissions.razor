@@ -12,6 +12,7 @@
 
 @inject IAppDbContext2 DbContext
 @inject ScoreService ScoreService
+@inject RoundScoreDerivationService RoundScoreDerivationService
 @inject AuthenticationStateProvider AuthStateProvider
 @inject ILogger<MyScoreSubmissions> Logger
 
@@ -72,8 +73,11 @@ else
             <TemplateColumn Title="Tee" SortBy="@(GridSort<GolfRound>.ByAscending(r => r.SelectedTeeColor))">
                 @context.SelectedTeeColor
             </TemplateColumn>
-            <TemplateColumn Title="Total Score">
-                @(context.Scores.Sum(s => (long?)s) ?? 0)
+            <TemplateColumn Title="Raw Total Score">
+                @RoundScoreDerivationService.Compute(context.Scores).RawTotal
+            </TemplateColumn>
+            <TemplateColumn Title="Calculated Adjusted Score">
+                @RoundScoreDerivationService.Compute(context.Scores).AdjustedTotal
             </TemplateColumn>
             <TemplateColumn Title="Submitted On" SortBy="@(GridSort<GolfRound>.ByDescending(r => r.SubmittedAt))">
                 @context.SubmittedAt.ToString("MMM d, yyyy h:mm tt")

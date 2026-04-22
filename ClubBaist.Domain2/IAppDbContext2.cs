@@ -28,6 +28,9 @@ public interface IAppDbContext2
     /// <summary>Submitted golf rounds, one per tee time booking per member.</summary>
     DbSet<GolfRound> GolfRounds { get; }
 
+    /// <summary>Reference course and slope ratings by tee color and gender.</summary>
+    DbSet<CourseRating> CourseRatings { get; }
+
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     Task<IDbContextTransaction> BeginTransactionAsync(IsolationLevel isolationLevel, CancellationToken cancellationToken = default);
     IExecutionStrategy CreateExecutionStrategy();
