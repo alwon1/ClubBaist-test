@@ -7,10 +7,11 @@
   Management if not present)
 - Browser: Chrome or Edge (latest)
 
-> **Note on tee time restrictions:** The default seed configures **all** membership levels with
-> full 7:00 AM – 7:00 PM availability every day. TC-TEE-002, TC-TEE-007, and TC-TEE-011 test
-> time-restriction enforcement and therefore require a one-time setup step (described in each
-> case) to narrow Silver and Bronze availability windows before running those tests.
+> **Note on tee time restrictions:** Silver (Associate Spouse, Shareholder Spouse) and Bronze (Pee
+> Wee, Junior, Intermediate) levels are seeded with their correct restricted availability windows.
+> TC-TEE-002, TC-TEE-007, and TC-TEE-011 work against these seeded windows without any additional
+> setup. Copper (Social) members are blocked from booking by an explicit rule regardless of
+> availability windows.
 
 ---
 
@@ -20,21 +21,22 @@
 |---|---|---|---|---|
 | admin@clubbaist.com | Pass@word1 | Admin | Seed Admin | — |
 | committee@clubbaist.com | Pass@word1 | MembershipCommittee | Seed Committee | — |
-| shareholder1@clubbaist.com | Pass@word1 | Member | Alice Shareholder | Gold/Shareholder |
-| shareholder2@clubbaist.com | Pass@word1 | Member | Bob Shareholder | Gold/Shareholder |
-| shareholder3@clubbaist.com | Pass@word1 | Member | Carol Shareholder | Gold/Shareholder |
-| silver@clubbaist.com | Pass@word1 | Member | Diana Silver | Silver |
-| bronze@clubbaist.com | Pass@word1 | Member | Evan Bronze | Bronze |
+| shareholder1@clubbaist.com | Pass@word1 | Member | Alice Shareholder | Gold – Shareholder (SH) |
+| shareholder2@clubbaist.com | Pass@word1 | Member | Bob Shareholder | Gold – Shareholder (SH) |
+| shareholder3@clubbaist.com | Pass@word1 | Member | Carol Shareholder | Gold – Shareholder (SH) |
+| silver@clubbaist.com | Pass@word1 | Member | Diana Silver | Silver – Associate Spouse (SV) |
+| bronze@clubbaist.com | Pass@word1 | Member | Evan Bronze | Bronze – Intermediate (BR) |
+| copper@clubbaist.com | Pass@word1 | Member | Fiona Copper | Copper – Social (CP) |
 
 **Pre-seeded pending applications (already in the database after seed):**
 
 | Email | Name | Status | Requested Level |
 |---|---|---|---|
-| frank.pending@example.com | Frank Pending | Submitted | Associate |
-| grace.onhold@example.com | Grace OnHold | OnHold | Silver |
-| henry.waitlist@example.com | Henry Waitlist | Waitlisted | Associate |
-| iris.submitted@example.com | Iris Submitted | Submitted | Bronze |
-| jack.waitlist@example.com | Jack Waitlist | Waitlisted | Silver |
+| frank.pending@example.com | Frank Pending | Submitted | Associate (Gold) |
+| grace.onhold@example.com | Grace OnHold | OnHold | Associate Spouse (Silver) |
+| henry.waitlist@example.com | Henry Waitlist | Waitlisted | Associate (Gold) |
+| iris.submitted@example.com | Iris Submitted | Submitted | Intermediate (Bronze) |
+| jack.waitlist@example.com | Jack Waitlist | Waitlisted | Associate Spouse (Silver) |
 
 **New Applicant test data (used in TC-MEM-003):**
 
@@ -274,20 +276,14 @@
 ---
 
 ### TC-TEE-002 – View tee time availability (Silver member – restricted hours)
-**Preconditions:** Logged in as `silver@clubbaist.com`.
-
-> **Setup required:** The default seed gives all levels full 7 AM – 7 PM access. Before running
-> this test, log in as `admin@clubbaist.com`, navigate to the membership level settings, and
-> restrict the **Silver** level to: before 3:00 PM and after 5:30 PM (remove or narrow the
-> availability window for the 3:00 PM – 5:30 PM block). Then log back in as
-> `silver@clubbaist.com`.
+**Preconditions:** Logged in as `silver@clubbaist.com` (Diana Silver, Associate Spouse). A season with generated slots exists.
 
 **Steps:**
 1. Navigate to `/teetimes`
-2. Select any date within the active season
+2. Select any **weekday** date within the active season
 3. Observe slots between **3:00 PM** and **5:30 PM**
 
-**Expected Result:** Slots between 3:00 PM and 5:30 PM are unavailable or greyed out. Slots before 3:00 PM and after 5:30 PM are shown as available.
+**Expected Result:** Slots between 3:00 PM and 5:30 PM are unavailable or greyed out. Slots before 3:00 PM and after 5:30 PM are shown as available. On weekends, all slots before 11:00 AM are unavailable.
 
 ---
 
@@ -338,13 +334,11 @@
 ---
 
 ### TC-TEE-007 – Silver member cannot book a restricted time slot
-**Preconditions:** Logged in as `silver@clubbaist.com`. Silver level restricted to before 3 PM / after 5:30 PM (see TC-TEE-002 setup).
-
-> **Setup required:** Same availability configuration from TC-TEE-002 must be in place.
+**Preconditions:** Logged in as `silver@clubbaist.com` (Diana Silver, Associate Spouse).
 
 **Steps:**
 1. Navigate to `/teetimes/book`
-2. Select a slot between **3:00 PM** and **5:30 PM**
+2. Select a **weekday** slot between **3:00 PM** and **5:30 PM**
 3. Click **Book**
 
 **Expected Result:** Error "Your membership level does not permit booking during this time" (or equivalent). Booking is not created.
@@ -388,18 +382,26 @@
 ---
 
 ### TC-TEE-011 – Bronze member cannot book outside restricted hours
-**Preconditions:** Logged in as `bronze@clubbaist.com` (Evan Bronze).
-
-> **Setup required:** Log in as `admin@clubbaist.com` and restrict the **Bronze** level to:
-> before 3:00 PM and after 6:00 PM (remove the 3:00 PM – 6:00 PM window). Then log back in
-> as `bronze@clubbaist.com`.
+**Preconditions:** Logged in as `bronze@clubbaist.com` (Evan Bronze, Intermediate).
 
 **Steps:**
 1. Navigate to `/teetimes/book`
-2. Select a slot between **3:00 PM** and **6:00 PM**
+2. Select a **weekday** slot between **3:00 PM** and **6:00 PM**
 3. Click **Book**
 
 **Expected Result:** Error about membership level restriction. Booking is not created.
+
+---
+
+### TC-TEE-012 – Copper (Social) member cannot book any tee time
+**Preconditions:** Logged in as `copper@clubbaist.com` (Fiona Copper, Social). A season with generated slots exists.
+
+**Steps:**
+1. Navigate to `/teetimes/book`
+2. Select any available future slot
+3. Click **Book**
+
+**Expected Result:** Error "Social members do not have golf privileges." (or equivalent). Booking is not created. The availability grid should show all slots as unavailable for this member.
 
 ---
 

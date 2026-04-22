@@ -706,6 +706,147 @@ public class BookingRuleExtensionsTests
     }
 }
 
+// ─── SocialMemberNoGolfRule ──────────────────────────────────────────────────
+
+[TestClass]
+public class SocialMemberNoGolfRuleTests
+{
+    private static MembershipLevel SocialLevel() =>
+        new() { Id = 10, Name = "Social", ShortCode = "CP" };
+
+    // ── Booking attempt overload ──────────────────────────────────────────────
+
+    [TestMethod]
+    public void SocialMember_BookingAttempt_IsDeniedWithNegativeOne()
+    {
+        var level   = SocialLevel();
+        var member  = Builders.MakeMember(Builders.Id1, level);
+        var slot    = Builders.SlotAt(9);
+        var booking = Builders.MakeBooking(slot, member);
+
+        var result = new SocialMemberNoGolfRule()
+            .Evaluate(Builders.Seed(slot), booking).Single();
+
+        Assert.AreEqual(-1, result.SpotsRemaining);
+        StringAssert.Contains(result.RejectionReason, "golf privileges");
+    }
+
+    [TestMethod]
+    public void NonSocialMember_BookingAttempt_PassesThrough()
+    {
+        var level   = Builders.Level(); // ShortCode defaults to "M"
+        var member  = Builders.MakeMember(Builders.Id1, level);
+        var slot    = Builders.SlotAt(9);
+        var booking = Builders.MakeBooking(slot, member);
+
+        var result = new SocialMemberNoGolfRule()
+            .Evaluate(Builders.Seed(slot, 3, null), booking).Single();
+
+        Assert.AreEqual(3, result.SpotsRemaining);
+        Assert.IsNull(result.RejectionReason);
+    }
+
+    [TestMethod]
+    public void AlreadyRejected_BookingAttempt_DoesNotOverwriteSpotsOrReason()
+    {
+        var level   = SocialLevel();
+        var member  = Builders.MakeMember(Builders.Id1, level);
+        var slot    = Builders.SlotAt(9);
+        var booking = Builders.MakeBooking(slot, member);
+
+        var result = new SocialMemberNoGolfRule()
+            .Evaluate(Builders.Seed(slot, -3, "Event block"), booking).Single();
+
+        Assert.AreEqual(-3, result.SpotsRemaining);
+        Assert.AreEqual("Event block", result.RejectionReason);
+    }
+
+    // ── Membership-level availability overload ────────────────────────────────
+
+    [TestMethod]
+    public void SocialLevel_AvailabilityQuery_IsDeniedWithNegativeOne()
+    {
+        var level  = SocialLevel();
+        var slot   = Builders.SlotAt(9);
+
+        var result = new SocialMemberNoGolfRule()
+            .Evaluate(Builders.Seed(slot), level).Single();
+
+        Assert.AreEqual(-1, result.SpotsRemaining);
+        StringAssert.Contains(result.RejectionReason, "golf privileges");
+    }
+
+    [TestMethod]
+    public void NonSocialLevel_AvailabilityQuery_PassesThrough()
+    {
+        var level = Builders.Level();
+        var slot  = Builders.SlotAt(9);
+
+        var result = new SocialMemberNoGolfRule()
+            .Evaluate(Builders.Seed(slot, 4, null), level).Single();
+
+        Assert.AreEqual(4, result.SpotsRemaining);
+        Assert.IsNull(result.RejectionReason);
+    }
+
+    [TestMethod]
+    public void AlreadyRejected_LevelAvailability_DoesNotOverwriteSpotsOrReason()
+    {
+        var level = SocialLevel();
+        var slot  = Builders.SlotAt(9);
+
+        var result = new SocialMemberNoGolfRule()
+            .Evaluate(Builders.Seed(slot, -5, "Special event"), level).Single();
+
+        Assert.AreEqual(-5, result.SpotsRemaining);
+        Assert.AreEqual("Special event", result.RejectionReason);
+    }
+
+    // ── Member availability overload ──────────────────────────────────────────
+
+    [TestMethod]
+    public void SocialMember_MemberAvailabilityQuery_IsDeniedWithNegativeOne()
+    {
+        var level  = SocialLevel();
+        var member = Builders.MakeMember(Builders.Id1, level);
+        var slot   = Builders.SlotAt(9);
+
+        var result = new SocialMemberNoGolfRule()
+            .Evaluate(Builders.Seed(slot), member).Single();
+
+        Assert.AreEqual(-1, result.SpotsRemaining);
+        StringAssert.Contains(result.RejectionReason, "golf privileges");
+    }
+
+    [TestMethod]
+    public void NonSocialMember_MemberAvailabilityQuery_PassesThrough()
+    {
+        var level  = Builders.Level();
+        var member = Builders.MakeMember(Builders.Id1, level);
+        var slot   = Builders.SlotAt(9);
+
+        var result = new SocialMemberNoGolfRule()
+            .Evaluate(Builders.Seed(slot, 2, null), member).Single();
+
+        Assert.AreEqual(2, result.SpotsRemaining);
+        Assert.IsNull(result.RejectionReason);
+    }
+
+    [TestMethod]
+    public void AlreadyRejected_MemberAvailability_DoesNotOverwriteSpotsOrReason()
+    {
+        var level  = SocialLevel();
+        var member = Builders.MakeMember(Builders.Id1, level);
+        var slot   = Builders.SlotAt(9);
+
+        var result = new SocialMemberNoGolfRule()
+            .Evaluate(Builders.Seed(slot, -7, "Duplicate booking"), member).Single();
+
+        Assert.AreEqual(-7, result.SpotsRemaining);
+        Assert.AreEqual("Duplicate booking", result.RejectionReason);
+    }
+}
+
 // ─── PastSlotRule ────────────────────────────────────────────────────────────
 
 [TestClass]
