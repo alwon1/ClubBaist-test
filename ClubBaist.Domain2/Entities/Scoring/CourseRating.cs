@@ -1,21 +1,9 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using ClubBaist.Domain2.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace ClubBaist.Domain2.Entities.Scoring;
-
-public enum TeeColor
-{
-    Red = 0,
-    White = 1,
-    Blue = 2
-}
-
-public enum Gender
-{
-    Male = 0,
-    Female = 1
-}
 
 /// <summary>
 /// Reference data for course and slope ratings by tee color and gender.
@@ -28,7 +16,7 @@ public class CourseRating
     public int Id { get; init; }
 
     [Required]
-    public TeeColor TeeColor { get; init; }
+    public GolfRound.TeeColor TeeColor { get; init; }
 
     [Required]
     public Gender Gender { get; init; }
@@ -41,6 +29,6 @@ public class CourseRating
     [Required]
     public int SlopeRating { get; init; }
 
-    [MaxLength(512)]
-    public string? Notes { get; init; }
+    [MaxLength(500)]
+    public string? Source { get; init; }
 }
