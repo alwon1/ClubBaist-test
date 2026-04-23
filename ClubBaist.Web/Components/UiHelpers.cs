@@ -25,6 +25,8 @@ public static class UiHelpers
         AppRoles.Admin => "bg-danger",
         AppRoles.MembershipCommittee => "bg-warning text-dark",
         AppRoles.Member => "bg-success",
+        AppRoles.Clerk => "bg-info text-dark",
+        AppRoles.ProShopStaff => "bg-primary",
         _ => "bg-secondary"
     };
 

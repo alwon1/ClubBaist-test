@@ -11,6 +11,7 @@ public class MembershipApplicationService(
     IAppDbContext2 db,
     UserManager<ClubBaistUser> userManager,
     RoleManager<IdentityRole<Guid>> roleManager,
+    IMemberClaimSynchroniser claimSynchroniser,
     ILogger<MembershipApplicationService> logger)
 {
     public IQueryable<MembershipApplication> GetMembershipApplications() => db.MembershipApplications.AsNoTracking();
@@ -132,6 +133,8 @@ public class MembershipApplicationService(
                     await transaction.RollbackAsync();
                     return (false, null);
                 }
+
+                await claimSynchroniser.SynchroniseAsync(user, membershipLevel);
 
                 await transaction.CommitAsync();
                 return (true, generatedPassword);
