@@ -116,13 +116,15 @@ internal static class Domain2TestData
         AppDbContext db,
         string shortCode,
         string name,
+        MemberType memberType = MemberType.Associate,
         int openingHour = 7,
         int closingHour = 19)
     {
         var membershipLevel = new MembershipLevel
         {
             ShortCode = shortCode,
-            Name = name
+            Name = name,
+            MemberType = memberType
         };
 
         foreach (var dayOfWeek in Enum.GetValues<DayOfWeek>())

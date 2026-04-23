@@ -17,5 +17,6 @@ public interface IMemberClaimSynchroniser
     ///   <item>All other levels → revoke all three claims.</item>
     /// </list>
     /// </summary>
-    Task SynchroniseAsync(ClubBaistUser user, MembershipLevel newLevel, CancellationToken ct = default);
+    /// <returns><c>true</c> if all claim operations succeeded; <c>false</c> if any operation failed (errors are logged).</returns>
+    Task<bool> SynchroniseAsync(ClubBaistUser user, MembershipLevel newLevel, CancellationToken ct = default);
 }

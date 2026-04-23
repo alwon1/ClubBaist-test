@@ -134,7 +134,15 @@ public class MembershipApplicationService(
                     return (false, null);
                 }
 
-                await claimSynchroniser.SynchroniseAsync(user, membershipLevel);
+                var claimsSynced = await claimSynchroniser.SynchroniseAsync(user, membershipLevel);
+                if (!claimsSynced)
+                {
+                    logger.LogError(
+                        "Claim synchronisation failed while approving membership application {ApplicationId} for {Email}; rolling back.",
+                        applicationId, application.Email);
+                    await transaction.RollbackAsync();
+                    return (false, null);
+                }
 
                 await transaction.CommitAsync();
                 return (true, generatedPassword);

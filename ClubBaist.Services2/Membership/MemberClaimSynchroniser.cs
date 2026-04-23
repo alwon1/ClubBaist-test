@@ -13,19 +13,24 @@ public sealed class MemberClaimSynchroniser(
     UserManager<ClubBaistUser> userManager,
     ILogger<MemberClaimSynchroniser> logger) : IMemberClaimSynchroniser
 {
-    public async Task SynchroniseAsync(ClubBaistUser user, MembershipLevel newLevel, CancellationToken ct = default)
+    public async Task<bool> SynchroniseAsync(ClubBaistUser user, MembershipLevel newLevel, CancellationToken ct = default)
     {
         var existingClaims = await userManager.GetClaimsAsync(user);
 
         bool isShareholder = newLevel.MemberType == MemberType.Shareholder;
         bool isCopper = newLevel.ShortCode.Equals("CP", StringComparison.OrdinalIgnoreCase);
 
-        await SyncClaimAsync(user, existingClaims, AppRoles.Claims.StandingTeeTimeBooking, isShareholder);
-        await SyncClaimAsync(user, existingClaims, AppRoles.Claims.ShareholderStatus, isShareholder);
-        await SyncClaimAsync(user, existingClaims, AppRoles.Claims.CopperTierStatus, isCopper);
+        ct.ThrowIfCancellationRequested();
+        bool ok = true;
+        ok &= await SyncClaimAsync(user, existingClaims, AppRoles.Claims.StandingTeeTimeBooking, isShareholder);
+        ct.ThrowIfCancellationRequested();
+        ok &= await SyncClaimAsync(user, existingClaims, AppRoles.Claims.ShareholderStatus, isShareholder);
+        ct.ThrowIfCancellationRequested();
+        ok &= await SyncClaimAsync(user, existingClaims, AppRoles.Claims.CopperTierStatus, isCopper);
+        return ok;
     }
 
-    private async Task SyncClaimAsync(
+    private async Task<bool> SyncClaimAsync(
         ClubBaistUser user,
         IList<Claim> existingClaims,
         Claim targetClaim,
@@ -42,6 +47,7 @@ public sealed class MemberClaimSynchroniser(
                     "Failed to add claim {ClaimType}={ClaimValue} for user {UserId}: {Errors}",
                     targetClaim.Type, targetClaim.Value, user.Id,
                     string.Join("; ", result.Errors.Select(e => e.Description)));
+                return false;
             }
         }
         else if (!shouldHave && hasClaim)
@@ -54,7 +60,10 @@ public sealed class MemberClaimSynchroniser(
                     "Failed to remove claim {ClaimType}={ClaimValue} for user {UserId}: {Errors}",
                     targetClaim.Type, targetClaim.Value, user.Id,
                     string.Join("; ", result.Errors.Select(e => e.Description)));
+                return false;
             }
         }
+
+        return true;
     }
 }

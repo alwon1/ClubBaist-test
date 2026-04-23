@@ -253,9 +253,12 @@ else
             await DbContext.SaveChangesAsync();
 
             // Sync membership-level claims (standing-tee-time.book, shareholder, copper-tier).
-            await ClaimSynchroniser.SynchroniseAsync(_member.User, newLevel);
+            var claimsSynced = await ClaimSynchroniser.SynchroniseAsync(_member.User, newLevel);
 
-            _resultMessage = "Member profile updated successfully.";
+            _resultMessage = claimsSynced
+                ? "Member profile updated successfully."
+                : "Member profile saved, but the permission claims could not be fully synced. Please check the server logs and verify this user's claims.";
+            _isError = !claimsSynced;
         }
         catch (Exception ex)
         {
