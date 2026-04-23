@@ -317,16 +317,67 @@ internal static class AppDbContextSeed
         static DateTime SlotTime(DateTime date, int hour) =>
             DateTime.SpecifyKind(date.Date.AddHours(Math.Clamp(hour, 7, 18)), DateTimeKind.Unspecified);
 
+        async Task AddBookingIfAvailableAsync(DateTime slotStart, MemberShipInfo bookingMember, List<MemberShipInfo>? additionalParticipants = null)
+        {
+            var slot = await db.TeeTimeSlots.FirstOrDefaultAsync(s => s.Start == slotStart, cancellationToken);
+            if (slot is null)
+            {
+                logger.LogWarning("SeedPastBookingsAsync: slot {Start} not found — skipping.", slotStart);
+                return;
+            }
+
+            var duplicateInChangeTracker = db.ChangeTracker.Entries<TeeTimeBooking>()
+                .Any(entry =>
+                    entry.Entity.BookingMemberId == bookingMember.Id
+                    && entry.Entity.TeeTimeSlotStart == slot.Start);
+
+            var duplicateInDatabase = await db.TeeTimeBookings
+                .AnyAsync(
+                    booking => booking.BookingMemberId == bookingMember.Id
+                               && booking.TeeTimeSlotStart == slot.Start,
+                    cancellationToken);
+
+            if (duplicateInChangeTracker || duplicateInDatabase)
+            {
+                logger.LogWarning(
+                    "SeedPastBookingsAsync: duplicate booking for slot {Start} and member {MemberId} — skipping.",
+                    slot.Start,
+                    bookingMember.Id);
+                return;
+            }
+
+            db.TeeTimeBookings.Add(new TeeTimeBooking
+            {
+                TeeTimeSlotStart = slot.Start,
+                TeeTimeSlot = slot,
+                BookingMemberId = bookingMember.Id,
+                BookingMember = bookingMember,
+                AdditionalParticipants = additionalParticipants ?? []
+            });
+        }
+
         var now = DateTime.Now;
         var today = now.Date;
 
         // Today, more than 2 hours ago (3 h back; clamped to 07:00)
         var oldTodayStart = SlotTime(today, now.Hour - 3);
 
-        // Within the last 2 hours (1 h back; clamped to 07:00; must be later than oldTodayStart)
+        // Another past slot today (1 h back). If clamping collapses to the same slot,
+        // shift by one hour to keep (slot, member) unique.
         var recentStart = SlotTime(today, now.Hour - 1);
         if (recentStart <= oldTodayStart)
-            recentStart = SlotTime(today, oldTodayStart.Hour + 1);
+        {
+            var earlierCandidate = SlotTime(today, oldTodayStart.Hour - 1);
+            if (earlierCandidate < oldTodayStart)
+            {
+                recentStart = earlierCandidate;
+            }
+            else
+            {
+                var laterCandidate = SlotTime(today, oldTodayStart.Hour + 1);
+                recentStart = laterCandidate > oldTodayStart ? laterCandidate : oldTodayStart;
+            }
+        }
 
         // Near future (1 h ahead; if past 18:00 operating limit, use tomorrow 08:00)
         var futureHour = now.Hour + 1;
@@ -335,76 +386,21 @@ internal static class AppDbContextSeed
             : DateTime.SpecifyKind(today.AddDays(1).AddHours(8), DateTimeKind.Unspecified);
 
         // Booking 1 — today, more than 2 hours ago — Alice solo
-        var slot1 = await db.TeeTimeSlots.FirstOrDefaultAsync(s => s.Start == oldTodayStart, cancellationToken);
-        if (slot1 is null)
-            logger.LogWarning("SeedPastBookingsAsync: slot {Start} not found — skipping.", oldTodayStart);
-        else
-            db.TeeTimeBookings.Add(new TeeTimeBooking
-            {
-                TeeTimeSlotStart = slot1.Start,
-                TeeTimeSlot = slot1,
-                BookingMemberId = alice.Id,
-                BookingMember = alice,
-                AdditionalParticipants = []
-            });
+        await AddBookingIfAvailableAsync(oldTodayStart, alice);
 
-        // Booking 2 — today, within the last 2 hours — Alice + Diana
-        var slot2 = await db.TeeTimeSlots.FirstOrDefaultAsync(s => s.Start == recentStart, cancellationToken);
-        if (slot2 is null)
-            logger.LogWarning("SeedPastBookingsAsync: slot {Start} not found — skipping.", recentStart);
-        else
-            db.TeeTimeBookings.Add(new TeeTimeBooking
-            {
-                TeeTimeSlotStart = slot2.Start,
-                TeeTimeSlot = slot2,
-                BookingMemberId = alice.Id,
-                BookingMember = alice,
-                AdditionalParticipants = [diana]
-            });
+        // Booking 2 — another past slot today — Alice + Diana
+        await AddBookingIfAvailableAsync(recentStart, alice, [diana]);
 
         // Booking 3 — near future — Diana solo
-        var slot3 = await db.TeeTimeSlots.FirstOrDefaultAsync(s => s.Start == futureStart, cancellationToken);
-        if (slot3 is null)
-            logger.LogWarning("SeedPastBookingsAsync: slot {Start} not found — skipping.", futureStart);
-        else
-            db.TeeTimeBookings.Add(new TeeTimeBooking
-            {
-                TeeTimeSlotStart = slot3.Start,
-                TeeTimeSlot = slot3,
-                BookingMemberId = diana.Id,
-                BookingMember = diana,
-                AdditionalParticipants = []
-            });
+        await AddBookingIfAvailableAsync(futureStart, diana);
 
         // Booking 4 — yesterday at 08:00 — Alice solo (second eligible booking for TC-SCORE-005/006/007)
         var yesterday8 = DateTime.SpecifyKind(today.AddDays(-1).AddHours(8), DateTimeKind.Unspecified);
-        var slot4 = await db.TeeTimeSlots.FirstOrDefaultAsync(s => s.Start == yesterday8, cancellationToken);
-        if (slot4 is null)
-            logger.LogWarning("SeedPastBookingsAsync: slot {Start} not found — skipping.", yesterday8);
-        else
-            db.TeeTimeBookings.Add(new TeeTimeBooking
-            {
-                TeeTimeSlotStart = slot4.Start,
-                TeeTimeSlot = slot4,
-                BookingMemberId = alice.Id,
-                BookingMember = alice,
-                AdditionalParticipants = []
-            });
+        await AddBookingIfAvailableAsync(yesterday8, alice);
 
         // Booking 5 — yesterday at 09:00 — Diana solo (eligible booking for TC-SCORE-009 staff scoring)
         var yesterday9 = DateTime.SpecifyKind(today.AddDays(-1).AddHours(9), DateTimeKind.Unspecified);
-        var slot5 = await db.TeeTimeSlots.FirstOrDefaultAsync(s => s.Start == yesterday9, cancellationToken);
-        if (slot5 is null)
-            logger.LogWarning("SeedPastBookingsAsync: slot {Start} not found — skipping.", yesterday9);
-        else
-            db.TeeTimeBookings.Add(new TeeTimeBooking
-            {
-                TeeTimeSlotStart = slot5.Start,
-                TeeTimeSlot = slot5,
-                BookingMemberId = diana.Id,
-                BookingMember = diana,
-                AdditionalParticipants = []
-            });
+        await AddBookingIfAvailableAsync(yesterday9, diana);
 
         await db.SaveChangesAsync(cancellationToken);
     }

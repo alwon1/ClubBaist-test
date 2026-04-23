@@ -205,6 +205,66 @@
 				"2404"
 			],
 			"isBackground": false
+		},
+		{
+			"label": "Kill AppHost now",
+			"type": "shell",
+			"command": "bash",
+			"args": [
+				"-lc",
+				"pkill -f 'ClubBaist.AppHost/ClubBaist.AppHost.csproj' || true; sleep 1; echo '---remaining processes---'; pgrep -fal 'ClubBaist.AppHost/ClubBaist.AppHost.csproj' || true; echo '---port 17289---'; lsof -nP -iTCP:17289 -sTCP:LISTEN || true"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "Verify AppHost stopped",
+			"type": "shell",
+			"command": "bash",
+			"args": [
+				"-lc",
+				"echo '---matching process---'; pgrep -fal ClubBaist.AppHost.csproj || true; echo '---port 17289---'; lsof -nP -iTCP:17289 -sTCP:LISTEN || true"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "Verify AppHost stopped noquotes",
+			"type": "shell",
+			"command": "bash",
+			"args": [
+				"-lc",
+				"echo ---matching-process---; pgrep -fal ClubBaist.AppHost.csproj || true; echo ---port-17289---; lsof -nP -iTCP:17289 -sTCP:LISTEN || true"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "Verify no AppHost dotnet process",
+			"type": "shell",
+			"command": "bash",
+			"args": [
+				"-lc",
+				"pgrep -fal dotnet.*ClubBaist.AppHost || true"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "Confirm AppHost process absent",
+			"type": "shell",
+			"command": "bash",
+			"args": [
+				"-lc",
+				"ps -ax | grep '[d]otnet run --project ClubBaist.AppHost/ClubBaist.AppHost.csproj' || true; lsof -nP -iTCP:17289 -sTCP:LISTEN || true"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "Final AppHost stop verification",
+			"type": "shell",
+			"command": "bash",
+			"args": [
+				"-lc",
+				"ps -ax | grep dotnet | grep ClubBaist.AppHost.csproj | grep -v grep || true; echo CHECK_PORT; lsof -nP -iTCP:17289 -sTCP:LISTEN || true"
+			],
+			"isBackground": false
 		}
 	]
 }

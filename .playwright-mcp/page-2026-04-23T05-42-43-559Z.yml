@@ -1,0 +1,32 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - link "Club BAIST" [ref=e6] [cursor=pointer]:
+      - /url: ""
+    - navigation [ref=e8]:
+      - link "Home" [ref=e10] [cursor=pointer]:
+        - /url: ""
+        - text: Home
+      - link "Apply for Membership" [ref=e13] [cursor=pointer]:
+        - /url: membership/apply
+        - text: Apply for Membership
+      - link "Login" [ref=e16] [cursor=pointer]:
+        - /url: Account/Login
+        - text: Login
+  - main [ref=e18]:
+    - link "About" [ref=e20] [cursor=pointer]:
+      - /url: https://learn.microsoft.com/aspnet/core/
+    - article [ref=e21]:
+      - generic [ref=e22]:
+        - heading "Welcome to Club BAIST" [level=1] [ref=e23]
+        - paragraph [ref=e24]: An exclusive private golf club, founded in 1996.
+        - generic [ref=e25]:
+          - generic [ref=e28]:
+            - heading "Already a Member?" [level=5] [ref=e29]
+            - paragraph [ref=e30]: Log in to access tee time reservations and your account.
+            - link "Login" [ref=e31] [cursor=pointer]:
+              - /url: Account/Login
+          - generic [ref=e34]:
+            - heading "Interested in Membership?" [level=5] [ref=e35]
+            - paragraph [ref=e36]: Submit a membership application to Club BAIST.
+            - link "Apply Now" [ref=e37] [cursor=pointer]:
+              - /url: membership/apply
