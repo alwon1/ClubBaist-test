@@ -30,14 +30,14 @@ internal static class AppDbContextSeed
 
     private static readonly SeedUser[] Users =
     [
-        new("admin@clubbaist.com", AppRoles.Admin, "Seed", "Admin", null),
-        new("committee@clubbaist.com", AppRoles.MembershipCommittee, "Seed", "Committee", null),
-        new("shareholder1@clubbaist.com", AppRoles.Member, "Alice", "Shareholder", "SH"),
-        new("shareholder2@clubbaist.com", AppRoles.Member, "Bob", "Shareholder", "SH"),
-        new("shareholder3@clubbaist.com", AppRoles.Member, "Carol", "Shareholder", "SH"),
-        new("silver@clubbaist.com", AppRoles.Member, "Diana", "Silver", "SV"),
-        new("bronze@clubbaist.com", AppRoles.Member, "Evan", "Bronze", "BR"),
-        new("copper@clubbaist.com", AppRoles.Member, "Fiona", "Copper", "CP")
+        new("admin@clubbaist.com", AppRoles.Admin, "Seed", "Admin", null, Gender.Male),
+        new("committee@clubbaist.com", AppRoles.MembershipCommittee, "Seed", "Committee", null, Gender.Female),
+        new("shareholder1@clubbaist.com", AppRoles.Member, "Alice", "Shareholder", "SH", Gender.Female),
+        new("shareholder2@clubbaist.com", AppRoles.Member, "Bob", "Shareholder", "SH", Gender.Male),
+        new("shareholder3@clubbaist.com", AppRoles.Member, "Carol", "Shareholder", "SH", Gender.Female),
+        new("silver@clubbaist.com", AppRoles.Member, "Diana", "Silver", "SV", Gender.Female),
+        new("bronze@clubbaist.com", AppRoles.Member, "Evan", "Bronze", "BR", Gender.Male),
+        new("copper@clubbaist.com", AppRoles.Member, "Fiona", "Copper", "CP", Gender.Female)
     ];
 
     private static readonly SeedApplication[] Applications =
@@ -181,6 +181,7 @@ internal static class AppDbContextSeed
                 EmailConfirmed = true,
                 FirstName = seedUser.FirstName,
                 LastName = seedUser.LastName,
+                Gender = seedUser.Gender,
                 DateOfBirth = new DateTime(1985, 1, 15),
                 PhoneNumber = "(403) 555-0000",
                 AlternatePhoneNumber = "(403) 555-0001",
@@ -421,7 +422,8 @@ internal static class AppDbContextSeed
         string Role,
         string FirstName,
         string LastName,
-        string? MembershipLevelShortCode);
+        string? MembershipLevelShortCode,
+        Gender? Gender);
 
     private sealed record SeedApplication(
         string Email,
