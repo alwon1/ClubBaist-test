@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
-using ClubBaist.Domain2.Entities;
+using ClubBaist.Domain.Entities;
 using ClubBaist.Web.Components.Account.Pages;
 using ClubBaist.Web.Components.Account.Pages.Manage;
 

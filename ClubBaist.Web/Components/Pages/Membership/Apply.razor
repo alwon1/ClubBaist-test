@@ -3,13 +3,13 @@
 
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.EntityFrameworkCore
-@using ClubBaist.Domain2
-@using ClubBaist.Domain2.Entities.Membership
-@using ClubBaist.Services2
-@using ClubBaist.Services2.Membership.Applications
+@using ClubBaist.Domain
+@using ClubBaist.Domain.Entities.Membership
+@using ClubBaist.Services
+@using ClubBaist.Services.Membership.Applications
 
 @inject MembershipApplicationService ApplicationService
-@inject IAppDbContext2 DbContext
+@inject AppDbContext DbContext
 @inject ILogger<Apply> Logger
 @inject AuthenticationStateProvider AuthStateProvider
 

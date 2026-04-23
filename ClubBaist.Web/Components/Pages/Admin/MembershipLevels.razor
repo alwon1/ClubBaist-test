@@ -5,11 +5,11 @@
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
-@using ClubBaist.Domain2
-@using ClubBaist.Services2.Membership
+@using ClubBaist.Domain
+@using ClubBaist.Services.Membership
 
 @inject MembershipLevelService LevelService
-@inject IAppDbContext2 DbContext
+@inject AppDbContext DbContext
 @inject ILogger<MembershipLevels> Logger
 
 <PageTitle>Membership Levels - Club Baist</PageTitle>

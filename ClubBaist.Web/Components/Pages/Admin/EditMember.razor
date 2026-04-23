@@ -6,11 +6,11 @@
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
-@using ClubBaist.Domain2
-@using ClubBaist.Domain2.Entities.Membership
-@using ClubBaist.Services2
+@using ClubBaist.Domain
+@using ClubBaist.Domain.Entities.Membership
+@using ClubBaist.Services
 
-@inject IAppDbContext2 DbContext
+@inject AppDbContext DbContext
 @inject UserManager<ClubBaistUser> UserManager
 @inject ILogger<EditMember> Logger
 

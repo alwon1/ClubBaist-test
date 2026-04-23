@@ -1,11 +1,11 @@
-@using ClubBaist.Domain2
-@using ClubBaist.Domain2.Entities
-@using ClubBaist.Domain2.Entities.Membership
-@using ClubBaist.Services2
+@using ClubBaist.Domain
+@using ClubBaist.Domain.Entities
+@using ClubBaist.Domain.Entities.Membership
+@using ClubBaist.Services
 @using Microsoft.AspNetCore.Components.QuickGrid
 @using Microsoft.EntityFrameworkCore
 
-@inject IAppDbContext2 DbContext
+@inject AppDbContext DbContext
 @inject ILogger<TeeTimeAvailabilityPanel> Logger
 
 @if (!string.IsNullOrEmpty(errorMessage))

@@ -19,8 +19,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ClubBaist.ServiceDefaults\ClubBaist.ServiceDefaults.csproj" />
-    <ProjectReference Include="..\ClubBaist.Domain2\ClubBaist.Domain2.csproj" />
-    <ProjectReference Include="..\ClubBaist.Services2\ClubBaist.Services2.csproj" />
+    <ProjectReference Include="..\ClubBaist.Domain\ClubBaist.Domain.csproj" />
+    <ProjectReference Include="..\ClubBaist.Services\ClubBaist.Services.csproj" />
   </ItemGroup>
 
 </Project>

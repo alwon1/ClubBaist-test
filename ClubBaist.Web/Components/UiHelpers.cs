@@ -1,5 +1,5 @@
-using ClubBaist.Domain2;
-using ClubBaist.Domain2.Entities.Membership;
+using ClubBaist.Domain;
+using ClubBaist.Domain.Entities.Membership;
 
 namespace ClubBaist.Web.Components;
 

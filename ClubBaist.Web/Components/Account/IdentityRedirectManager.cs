@@ -1,4 +1,4 @@
-using ClubBaist.Domain2.Entities;
+using ClubBaist.Domain.Entities;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Identity;
 

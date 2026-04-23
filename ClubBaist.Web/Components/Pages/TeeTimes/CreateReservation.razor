@@ -6,12 +6,12 @@
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.EntityFrameworkCore
-@using ClubBaist.Domain2
-@using ClubBaist.Domain2.Entities
-@using ClubBaist.Services2
+@using ClubBaist.Domain
+@using ClubBaist.Domain.Entities
+@using ClubBaist.Services
 
 @inject BookingService BookingService
-@inject IAppDbContext2 DbContext
+@inject AppDbContext DbContext
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Navigation
 @inject ILogger<CreateReservation> Logger
