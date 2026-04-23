@@ -1,0 +1,149 @@
+name: Create Planning Sub-Issues
+
+on:
+  workflow_dispatch:
+    inputs:
+      parent_issue:
+        description: 'Parent issue number (default: 122)'
+        required: false
+        default: '122'
+  push:
+    branches:
+      - copilot/create-sub-issues-for-implementation
+    paths:
+      - '.github/workflows/create-sub-issues.yml'
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  create-sub-issues:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create all sub-issues and link hierarchy
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            // Use workflow_dispatch input if available, otherwise default to 122
+            const parentNumber = parseInt(context.payload.inputs?.parent_issue ?? '122');
+
+            // Helper: link a child issue as sub-issue of a parent (with comment fallback)
+            async function linkSubIssue(parentNodeId, childNodeId, parentNumber, childNumber, label) {
+              try {
+                await github.graphql(`
+                  mutation AddSubIssue($parentId: ID!, $childId: ID!) {
+                    addSubIssue(input: { issueId: $parentId, subIssueId: $childId }) {
+                      issue { number }
+                      subIssue { number }
+                    }
+                  }
+                `, { parentId: parentNodeId, childId: childNodeId });
+                console.log(`Linked #${childNumber} as sub-issue of #${parentNumber}`);
+              } catch (e) {
+                console.log(`Note: GraphQL sub-issue link unavailable; posting comment. Error: ${e.message}`);
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: parentNumber,
+                  body: `Sub-issue: #${childNumber} (${label})`,
+                });
+              }
+            }
+
+            // Ensure required labels exist (create if missing)
+            for (const [name, color, description] of [
+              ['planning',        'E4E669', 'Planning and design decisions'],
+              ['questions-needed','D93F0B', 'Awaiting answers before implementation can begin'],
+            ]) {
+              try {
+                await github.rest.issues.getLabel({ owner: context.repo.owner, repo: context.repo.repo, name });
+              } catch {
+                await github.rest.issues.createLabel({ owner: context.repo.owner, repo: context.repo.repo, name, color, description });
+                console.log(`Created label: ${name}`);
+              }
+            }
+
+            // Idempotency: check if Area F issue already exists (by title search)
+            const existingSearch = await github.rest.search.issuesAndPullRequests({
+              q: `repo:${context.repo.owner}/${context.repo.repo} is:issue "Area F: Cross-Cutting Concerns" in:title`,
+            });
+            if (existingSearch.data.total_count > 0) {
+              console.log('Sub-issues appear to already exist — skipping creation to avoid duplicates.');
+              console.log('Existing Area F issue: #' + existingSearch.data.items[0].number);
+              return;
+            }
+
+            // Helper: create one issue and return { number, nodeId }
+            async function createIssue(title, bodyFile) {
+              const body = fs.readFileSync(`.github/issue-plans/${bodyFile}`, 'utf8');
+              const resp = await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body,
+                labels: ['planning', 'questions-needed'],
+              });
+              console.log(`Created issue #${resp.data.number}: ${title}`);
+              return { number: resp.data.number, nodeId: resp.data.node_id };
+            }
+
+            // Fetch the parent issue node_id once
+            const parentIssue = await github.rest.issues.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: parentNumber,
+            });
+            const parentNodeId = parentIssue.data.node_id;
+
+            // 1. Create Area F (global parent) and link under the parent issue
+            const areaF = await createIssue(
+              'Area F: Cross-Cutting Concerns – Design Questions (answer first)',
+              'area-f-cross-cutting.md'
+            );
+            await linkSubIssue(parentNodeId, areaF.nodeId, parentNumber, areaF.number, 'Area F: Cross-Cutting Concerns');
+
+            // 2. Create areas E, A, B, C, D, UI as sub-issues of Area F
+            const areas = [
+              { title: 'Area E: Permissions & Authorization – Design Questions',   file: 'area-e-auth-roles.md',             label: 'Area E: Permissions & Authorization' },
+              { title: 'Area A: Membership Applications – Design Questions',        file: 'area-a-membership-applications.md', label: 'Area A: Membership Applications' },
+              { title: 'Area B: Regular Tee Time Bookings – Design Questions',      file: 'area-b-tee-time-bookings.md',       label: 'Area B: Regular Tee Time Bookings' },
+              { title: 'Area C: Standing Tee Times – Design Questions',             file: 'area-c-standing-tee-times.md',      label: 'Area C: Standing Tee Times' },
+              { title: 'Area D: Player Scoring – Design Questions',                 file: 'area-d-player-scoring.md',          label: 'Area D: Player Scoring' },
+              { title: 'Area UI: Fluent UI Blazor Migration – Design Questions',    file: 'area-ui-fluent-migration.md',       label: 'Area UI: Fluent UI Migration' },
+            ];
+
+            const created = [];
+            for (const area of areas) {
+              const issue = await createIssue(area.title, area.file);
+              await linkSubIssue(areaF.nodeId, issue.nodeId, areaF.number, issue.number, area.label);
+              created.push({ ...area, number: issue.number });
+            }
+
+            // 3. Post summary on the parent issue
+            const lines = created.map(a => `  - #${a.number} ${a.label}`).join('\n');
+            const summary = [
+              `## Sub-issues created for #${parentNumber}`,
+              '',
+              '**Hierarchy:**',
+              `- #${parentNumber} Create new issues (parent)`,
+              `  - #${areaF.number} Area F: Cross-Cutting Concerns ← **answer first**`,
+              lines,
+              `  - *(Area UI answers last)*`,
+              '',
+              `**Next step:** Answer the questions in #${areaF.number} first, then proceed to the area-specific issues.`,
+            ].join('\n');
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: parentNumber,
+              body: summary,
+            });
+
+            console.log('\n' + summary);
