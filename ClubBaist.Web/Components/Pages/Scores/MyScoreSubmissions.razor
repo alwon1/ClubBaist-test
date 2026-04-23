@@ -7,12 +7,15 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.EntityFrameworkCore
 @using ClubBaist.Domain2
+@using ClubBaist.Domain2.Entities
 @using ClubBaist.Domain2.Entities.Scoring
 @using ClubBaist.Services2.Scoring
 
 @inject IAppDbContext2 DbContext
 @inject ScoreService ScoreService
 @inject RoundScoreDerivationService RoundScoreDerivationService
+@inject HandicapCalculationService HandicapCalculationService
+@inject CourseHoleReferenceService CourseHoleReferenceService
 @inject AuthenticationStateProvider AuthStateProvider
 @inject ILogger<MyScoreSubmissions> Logger
 
@@ -74,10 +77,10 @@ else
                 @context.SelectedTeeColor
             </TemplateColumn>
             <TemplateColumn Title="Raw Total Score">
-                @RoundScoreDerivationService.Compute(context.Scores).RawTotal
+                @GetDerivedScore(context).RawTotal
             </TemplateColumn>
             <TemplateColumn Title="Calculated Adjusted Score">
-                @RoundScoreDerivationService.Compute(context.Scores).AdjustedTotal
+                @GetDerivedScore(context).AdjustedTotal
             </TemplateColumn>
             <TemplateColumn Title="Submitted On" SortBy="@(GridSort<GolfRound>.ByDescending(r => r.SubmittedAt))">
                 @context.SubmittedAt.ToString("MMM d, yyyy h:mm tt")
@@ -97,6 +100,7 @@ else
     private int currentMemberId;
     private IReadOnlyList<TeeTimeBooking> eligibleBookings = [];
     private IReadOnlyList<GolfRound> pastRounds = [];
+    private Dictionary<int, RoundScoreView> derivedRoundScores = [];
 
     protected override async Task OnInitializedAsync()
     {
@@ -115,6 +119,7 @@ else
             var userId = Guid.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
             var member = await DbContext.MemberShips
+                .Include(m => m.User)
                 .FirstOrDefaultAsync(m => m.UserId == userId);
 
             if (member is null)
@@ -128,6 +133,8 @@ else
 
             eligibleBookings = await ScoreService.GetEligibleBookingsAsync(currentMemberId);
             pastRounds = await ScoreService.GetRoundsByMemberAsync(currentMemberId);
+
+            await PopulateDerivedRoundScoresAsync(member, pastRounds);
         }
         catch (Exception ex)
         {
@@ -138,5 +145,111 @@ else
         {
             isLoading = false;
         }
+    }
+
+    private async Task PopulateDerivedRoundScoresAsync(MemberShipInfo member, IReadOnlyList<GolfRound> rounds)
+    {
+        derivedRoundScores = [];
+
+        var fallback = rounds.ToDictionary(
+            round => round.Id,
+            round => RoundScoreDerivationService.Compute(round.Scores));
+
+        if (rounds.Count == 0)
+        {
+            derivedRoundScores = fallback;
+            return;
+        }
+
+        if (member.User.Gender is null)
+        {
+            derivedRoundScores = fallback;
+            return;
+        }
+
+        var gender = member.User.Gender.Value;
+        var handicapResult = await HandicapCalculationService.GetCurrentHandicapAsync(member.Id, CancellationToken.None);
+        var hasEstablishedHandicap = handicapResult.IsAvailable && handicapResult.RoundCount >= 3;
+
+        var ratingsByTee = await DbContext.CourseRatings
+            .Where(r => r.Gender == gender)
+            .ToDictionaryAsync(r => r.TeeColor);
+
+        var holeRefsByTee = new Dictionary<GolfRound.TeeColor, IReadOnlyList<CourseHoleReference>>();
+        foreach (var teeColor in rounds.Select(r => r.SelectedTeeColor).Distinct())
+        {
+            holeRefsByTee[teeColor] = await CourseHoleReferenceService.GetHoleReferencesAsync(teeColor);
+        }
+
+        foreach (var round in rounds)
+        {
+            if (!ratingsByTee.TryGetValue(round.SelectedTeeColor, out var rating))
+            {
+                derivedRoundScores[round.Id] = fallback[round.Id];
+                continue;
+            }
+
+            if (!holeRefsByTee.TryGetValue(round.SelectedTeeColor, out var holeRefs) || holeRefs.Count != 18)
+            {
+                derivedRoundScores[round.Id] = fallback[round.Id];
+                continue;
+            }
+
+            var courseHandicap = CalculateCourseHandicap(
+                handicapResult.CurrentHandicap,
+                rating.Rating,
+                rating.SlopeRating,
+                holeRefs.Sum(h => h.Par));
+
+            var holeInputs = BuildHoleInputs(round.Scores, holeRefs);
+            derivedRoundScores[round.Id] = RoundScoreDerivationService.ComputeWithWhsHoleAdjustments(
+                holeInputs,
+                courseHandicap,
+                hasEstablishedHandicap && handicapResult.CurrentHandicap.HasValue);
+        }
+    }
+
+    private static List<HoleScoreInput> BuildHoleInputs(
+        IReadOnlyList<uint?> scores,
+        IReadOnlyList<CourseHoleReference> holeRefs)
+    {
+        var holeInputs = new List<HoleScoreInput>(18);
+
+        for (var i = 0; i < 18; i++)
+        {
+            var state = scores.Count > i && scores[i].HasValue
+                ? HolePlayState.Completed
+                : HolePlayState.NotPlayed;
+
+            holeInputs.Add(new HoleScoreInput(
+                HoleNumber: i + 1,
+                Par: holeRefs[i].Par,
+                StrokeIndex: holeRefs[i].StrokeIndex,
+                RawScore: scores.Count > i && scores[i].HasValue ? Convert.ToInt32(scores[i]!.Value) : null,
+                State: state));
+        }
+
+        return holeInputs;
+    }
+
+    private static int CalculateCourseHandicap(decimal? handicapIndex, decimal courseRating, int slopeRating, int parTotal)
+    {
+        if (!handicapIndex.HasValue)
+        {
+            return 0;
+        }
+
+        var rawCourseHandicap = handicapIndex.Value * (slopeRating / 113m) + (courseRating - parTotal);
+        return Convert.ToInt32(decimal.Round(rawCourseHandicap, 0, MidpointRounding.AwayFromZero));
+    }
+
+    private RoundScoreView GetDerivedScore(GolfRound round)
+    {
+        if (derivedRoundScores.TryGetValue(round.Id, out var derived))
+        {
+            return derived;
+        }
+
+        return RoundScoreDerivationService.Compute(round.Scores);
     }
 }

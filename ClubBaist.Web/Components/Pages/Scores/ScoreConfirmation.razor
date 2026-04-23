@@ -7,11 +7,14 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.EntityFrameworkCore
 @using ClubBaist.Domain2
+@using ClubBaist.Domain2.Entities
 @using ClubBaist.Domain2.Entities.Scoring
 @using ClubBaist.Services2.Scoring
 
 @inject IAppDbContext2 DbContext
 @inject RoundScoreDerivationService RoundScoreDerivationService
+@inject HandicapCalculationService HandicapCalculationService
+@inject CourseHoleReferenceService CourseHoleReferenceService
 @inject AuthenticationStateProvider AuthStateProvider
 @inject ILogger<ScoreConfirmation> Logger
 
@@ -134,7 +137,7 @@ else
 
             if (round is not null)
             {
-                scoreView = RoundScoreDerivationService.Compute(round.Scores);
+                scoreView = await DeriveScoreViewAsync(round);
             }
         }
         catch (Exception ex)
@@ -146,5 +149,72 @@ else
         {
             isLoading = false;
         }
+    }
+
+    private async Task<RoundScoreView> DeriveScoreViewAsync(GolfRound golfRound)
+    {
+        var fallback = RoundScoreDerivationService.Compute(golfRound.Scores);
+        if (golfRound.Member.User.Gender is null)
+        {
+            return fallback with { Basis = "Derived from raw totals (member gender missing for WHS rules)" };
+        }
+
+        var gender = golfRound.Member.User.Gender.Value;
+        var rating = await DbContext.CourseRatings
+            .FirstOrDefaultAsync(r => r.TeeColor == golfRound.SelectedTeeColor && r.Gender == gender);
+
+        if (rating is null)
+        {
+            return fallback with { Basis = "Derived from raw totals (missing tee/gender course rating for WHS rules)" };
+        }
+
+        var handicapResult = await HandicapCalculationService.GetCurrentHandicapAsync(golfRound.MembershipId, CancellationToken.None);
+        var hasEstablishedHandicap = handicapResult.IsAvailable && handicapResult.RoundCount >= 3;
+        var holeRefs = await CourseHoleReferenceService.GetHoleReferencesAsync(golfRound.SelectedTeeColor);
+        if (holeRefs.Count != 18)
+        {
+            return fallback with { Basis = "Derived from raw totals (missing complete hole reference data for WHS rules)" };
+        }
+
+        var courseHandicap = CalculateCourseHandicap(handicapResult.CurrentHandicap, rating.Rating, rating.SlopeRating, holeRefs.Sum(h => h.Par));
+
+        return RoundScoreDerivationService.ComputeWithWhsHoleAdjustments(
+            BuildHoleInputs(golfRound.Scores, holeRefs),
+            courseHandicap,
+            hasEstablishedHandicap && handicapResult.CurrentHandicap.HasValue);
+    }
+
+    private static List<HoleScoreInput> BuildHoleInputs(
+        IReadOnlyList<uint?> scores,
+        IReadOnlyList<CourseHoleReference> holeRefs)
+    {
+        var holeInputs = new List<HoleScoreInput>(18);
+
+        for (var i = 0; i < 18; i++)
+        {
+            var state = scores.Count > i && scores[i].HasValue
+                ? HolePlayState.Completed
+                : HolePlayState.NotPlayed;
+
+            holeInputs.Add(new HoleScoreInput(
+                HoleNumber: i + 1,
+                Par: holeRefs[i].Par,
+                StrokeIndex: holeRefs[i].StrokeIndex,
+                RawScore: scores.Count > i && scores[i].HasValue ? Convert.ToInt32(scores[i]!.Value) : null,
+                State: state));
+        }
+
+        return holeInputs;
+    }
+
+    private static int CalculateCourseHandicap(decimal? handicapIndex, decimal courseRating, int slopeRating, int parTotal)
+    {
+        if (!handicapIndex.HasValue)
+        {
+            return 0;
+        }
+
+        var rawCourseHandicap = handicapIndex.Value * (slopeRating / 113m) + (courseRating - parTotal);
+        return Convert.ToInt32(decimal.Round(rawCourseHandicap, 0, MidpointRounding.AwayFromZero));
     }
 }

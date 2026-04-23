@@ -15,23 +15,25 @@ internal static class AppDbContextSeed
     private static readonly SeedMembershipLevel[] MembershipLevels =
     [
         // Gold tier
-        new("SH", "Shareholder"),
-        new("AS", "Associate"),
+        new("SH", "Shareholder", MemberType.Shareholder, 3000m),
+        new("AS", "Associate", MemberType.Associate, 4500m),
         // Silver tier
-        new("SS", "Shareholder Spouse"),
-        new("SV", "Associate Spouse"),
+        new("SS", "Shareholder Spouse", MemberType.Shareholder, 2000m),
+        new("SV", "Associate Spouse", MemberType.Associate, 2500m),
         // Bronze tier
-        new("PW", "Pee Wee"),
-        new("JR", "Junior"),
-        new("BR", "Intermediate"),
+        new("PW", "Pee Wee", MemberType.Associate, 250m),
+        new("JR", "Junior", MemberType.Associate, 500m),
+        new("BR", "Intermediate", MemberType.Associate, 1000m),
         // Copper tier — Social members have no golf privileges
-        new("CP", "Social"),
+        new("CP", "Social", MemberType.Associate, 100m),
     ];
 
     private static readonly SeedUser[] Users =
     [
         new("admin@clubbaist.com", AppRoles.Admin, "Seed", "Admin", null, Gender.Male),
         new("committee@clubbaist.com", AppRoles.MembershipCommittee, "Seed", "Committee", null, Gender.Female),
+        new("clerk@clubbaist.com", AppRoles.Clerk, "Seed", "Clerk", null, null),
+        new("proshop@clubbaist.com", AppRoles.ProShopStaff, "Seed", "ProShop", null, null),
         new("shareholder1@clubbaist.com", AppRoles.Member, "Alice", "Shareholder", "SH", Gender.Female),
         new("shareholder2@clubbaist.com", AppRoles.Member, "Bob", "Shareholder", "SH", Gender.Male),
         new("shareholder3@clubbaist.com", AppRoles.Member, "Carol", "Shareholder", "SH", Gender.Female),
@@ -71,7 +73,7 @@ internal static class AppDbContextSeed
 
     private static async Task SeedRolesAsync(RoleManager<IdentityRole<Guid>> roleManager)
     {
-        foreach (var roleName in new[] { AppRoles.Admin, AppRoles.MembershipCommittee, AppRoles.Member })
+        foreach (var roleName in new[] { AppRoles.Admin, AppRoles.MembershipCommittee, AppRoles.Member, AppRoles.Clerk, AppRoles.ProShopStaff })
         {
             ThrowIfFailed(
                 await roleManager.CreateAsync(new IdentityRole<Guid> { Name = roleName }),
@@ -88,7 +90,9 @@ internal static class AppDbContextSeed
             var level = new MembershipLevel
             {
                 ShortCode = seedLevel.ShortCode,
-                Name = seedLevel.Name
+                Name = seedLevel.Name,
+                MemberType = seedLevel.MemberType,
+                AnnualFee = seedLevel.AnnualFee
             };
 
             AddAvailabilities(level);
@@ -415,7 +419,7 @@ internal static class AppDbContextSeed
         throw new InvalidOperationException($"Failed to {action}: {errors}");
     }
 
-    private sealed record SeedMembershipLevel(string ShortCode, string Name);
+    private sealed record SeedMembershipLevel(string ShortCode, string Name, MemberType MemberType, decimal AnnualFee);
 
     private sealed record SeedUser(
         string Email,

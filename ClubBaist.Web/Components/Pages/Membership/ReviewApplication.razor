@@ -13,6 +13,7 @@
 @inject IAppDbContext2 DbContext
 @inject MembershipApplicationService ApplicationService
 @inject ILogger<ReviewApplication> Logger
+@inject IJSRuntime JS
 
 <PageTitle>Review Application</PageTitle>
 
@@ -42,6 +43,21 @@
         {
             <div class="alert @(_isError ? "alert-danger" : "alert-success")" role="alert">
                 @_resultMessage
+            </div>
+        }
+
+        @if (!string.IsNullOrEmpty(_generatedPassword))
+        {
+            <div class="alert alert-warning border border-warning" role="alert">
+                <h5 class="alert-heading"><span class="bi bi-key-fill me-2"></span>One-Time Password — Record This Now</h5>
+                <p class="mb-2">This password is shown <strong>only once</strong>. Please communicate it to the new member securely and ask them to change it upon first login.</p>
+                <div class="d-flex align-items-center gap-2">
+                    <code class="fs-5 user-select-all bg-light px-3 py-1 rounded border">@_generatedPassword</code>
+                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                            @onclick="CopyPasswordToClipboard">
+                        Copy
+                    </button>
+                </div>
             </div>
         }
 
@@ -194,6 +210,7 @@
     private bool _processing;
     private string? _resultMessage;
     private bool _isError;
+    private string? _generatedPassword;
 
     protected override async Task OnInitializedAsync()
     {
@@ -257,8 +274,13 @@
                     _isError = true;
                     return;
                 }
-                result = await ApplicationService.ApproveMembershipApplicationAsync(ApplicationId, _selectedLevelId.Value);
-                if (result) _resultMessage = "Application approved. Member account created successfully.";
+                var (success, password) = await ApplicationService.ApproveMembershipApplicationAsync(ApplicationId, _selectedLevelId.Value);
+                result = success;
+                if (result)
+                {
+                    _generatedPassword = password;
+                    _resultMessage = "Application approved. Member account created successfully.";
+                }
             }
             else if (_selectedStatus == ApplicationStatus.Denied)
             {
@@ -300,4 +322,21 @@
 
     private static string GetStatusBadgeClass(ApplicationStatus status) =>
         UiHelpers.GetStatusBadgeClass(status);
+
+    private async Task CopyPasswordToClipboard()
+    {
+        if (_generatedPassword is null)
+            return;
+
+        try
+        {
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", _generatedPassword);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Failed to copy generated password to clipboard for application {ApplicationId}.", ApplicationId);
+            _isError = true;
+            _resultMessage = "Unable to copy the generated password to the clipboard. Please copy it manually.";
+        }
+    }
 }
