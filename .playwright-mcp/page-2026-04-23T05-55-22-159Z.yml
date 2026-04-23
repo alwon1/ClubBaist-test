@@ -1,0 +1,48 @@
+- generic [ref=e57]:
+  - generic [ref=e58]:
+    - link "Club BAIST" [ref=e61] [cursor=pointer]:
+      - /url: ""
+    - navigation [ref=e63]:
+      - link "Home" [ref=e65] [cursor=pointer]:
+        - /url: ""
+        - text: Home
+      - link "Tee Times" [ref=e68] [cursor=pointer]:
+        - /url: teetimes
+        - text: Tee Times
+      - link "My Endorsements" [ref=e71] [cursor=pointer]:
+        - /url: membership/endorsements
+        - text: My Endorsements
+      - link "My Reservations" [ref=e74] [cursor=pointer]:
+        - /url: teetimes/my
+        - text: My Reservations
+      - link "My Scores" [ref=e77] [cursor=pointer]:
+        - /url: scores/my
+        - text: My Scores
+      - link "My Handicap" [ref=e80] [cursor=pointer]:
+        - /url: scores/handicap
+        - text: My Handicap
+      - link "My Standing Requests" [ref=e83] [cursor=pointer]:
+        - /url: teetimes/standing/my
+        - text: My Standing Requests
+      - link "shareholder1@clubbaist.com" [ref=e86] [cursor=pointer]:
+        - /url: Account/Manage
+        - text: shareholder1@clubbaist.com
+      - button "Logout" [ref=e90] [cursor=pointer]: Logout
+  - main [ref=e92]:
+    - link "About" [ref=e94] [cursor=pointer]:
+      - /url: https://learn.microsoft.com/aspnet/core/
+    - article [ref=e95]:
+      - heading "My Handicap" [level=3] [ref=e96]
+      - generic [ref=e97]:
+        - strong [ref=e99]: Handicap Snapshot
+        - generic [ref=e101]:
+          - term [ref=e102]: Member
+          - definition [ref=e103]: Alice Shareholder
+          - term [ref=e104]: "Membership #"
+          - definition [ref=e105]: SH-0001
+          - term [ref=e106]: Current Handicap Index
+          - definition [ref=e107]: Not available
+          - term [ref=e108]: Rounds Used
+          - definition [ref=e109]: "0"
+          - term [ref=e110]: Established Handicap
+          - definition [ref=e111]: "No"

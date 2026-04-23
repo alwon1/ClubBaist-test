@@ -1,0 +1,36 @@
+- generic [ref=e43]:
+  - generic [ref=e44]:
+    - link "Club BAIST" [ref=e47] [cursor=pointer]:
+      - /url: ""
+    - navigation [ref=e49]:
+      - link "Home" [ref=e51] [cursor=pointer]:
+        - /url: ""
+        - text: Home
+      - link "Tee Times" [ref=e54] [cursor=pointer]:
+        - /url: teetimes
+        - text: Tee Times
+      - link "My Endorsements" [ref=e57] [cursor=pointer]:
+        - /url: membership/endorsements
+        - text: My Endorsements
+      - link "My Reservations" [ref=e60] [cursor=pointer]:
+        - /url: teetimes/my
+        - text: My Reservations
+      - link "My Scores" [ref=e63] [cursor=pointer]:
+        - /url: scores/my
+        - text: My Scores
+      - link "My Handicap" [ref=e66] [cursor=pointer]:
+        - /url: scores/handicap
+        - text: My Handicap
+      - link "My Standing Requests" [ref=e69] [cursor=pointer]:
+        - /url: teetimes/standing/my
+        - text: My Standing Requests
+      - link "shareholder1@clubbaist.com" [ref=e72] [cursor=pointer]:
+        - /url: Account/Manage
+        - text: shareholder1@clubbaist.com
+      - button "Logout" [ref=e76] [cursor=pointer]: Logout
+  - main [ref=e78]:
+    - link "About" [ref=e80] [cursor=pointer]:
+      - /url: https://learn.microsoft.com/aspnet/core/
+    - article [ref=e81]:
+      - heading "My Handicap" [level=3] [ref=e82]
+      - generic [ref=e83]: Member account not found.

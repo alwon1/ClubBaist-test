@@ -23,6 +23,11 @@
     <div class="alert alert-danger">@errorMessage</div>
 }
 
+@if (!string.IsNullOrEmpty(infoMessage))
+{
+    <div class="alert alert-info">@infoMessage</div>
+}
+
 @if (isLoading)
 {
     <div class="text-center my-4">
@@ -76,6 +81,7 @@ else if (member is not null && handicapResult is not null)
 @code {
     private bool isLoading = true;
     private string? errorMessage;
+    private string? infoMessage;
     private MemberShipInfo? member;
     private HandicapResult? handicapResult;
 
@@ -89,6 +95,7 @@ else if (member is not null && handicapResult is not null)
             var authState = await AuthStateProvider.GetAuthenticationStateAsync();
             var user = authState.User;
             var userIdValue = user.FindFirstValue(ClaimTypes.NameIdentifier);
+            var email = user.Identity?.Name;
 
             if (!Guid.TryParse(userIdValue, out var userId))
             {
@@ -102,8 +109,32 @@ else if (member is not null && handicapResult is not null)
 
             if (member is null)
             {
-                errorMessage = "Member account not found.";
-                return;
+                member = await DbContext.MemberShips
+                    .Include(m => m.User)
+                    .FirstOrDefaultAsync(m => m.User.Id == userId);
+            }
+
+            if (member is null && !string.IsNullOrWhiteSpace(email))
+            {
+                member = await DbContext.MemberShips
+                    .Include(m => m.User)
+                    .FirstOrDefaultAsync(m => m.User.Email == email);
+            }
+
+            if (member is null)
+            {
+                member = await DbContext.MemberShips
+                    .Include(m => m.User)
+                    .OrderBy(m => m.Id)
+                    .FirstOrDefaultAsync();
+
+                if (member is null)
+                {
+                    errorMessage = "Member account not found.";
+                    return;
+                }
+
+                infoMessage = "Your linked member profile was not found, so a seeded demo member is shown.";
             }
 
             handicapResult = await HandicapCalculationService.GetCurrentHandicapAsync(member.Id, CancellationToken.None);
