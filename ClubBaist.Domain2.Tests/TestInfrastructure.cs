@@ -66,7 +66,8 @@ internal sealed class Domain2TestHost : IAsyncDisposable
                     new IdentityRole<Guid> { Name = AppRoles.Admin, NormalizedName = AppRoles.Admin.ToUpperInvariant() },
                     new IdentityRole<Guid> { Name = AppRoles.MembershipCommittee, NormalizedName = AppRoles.MembershipCommittee.ToUpperInvariant() },
                     new IdentityRole<Guid> { Name = AppRoles.Member, NormalizedName = AppRoles.Member.ToUpperInvariant() },
-                    new IdentityRole<Guid> { Name = AppRoles.Shareholder, NormalizedName = AppRoles.Shareholder.ToUpperInvariant() });
+                    new IdentityRole<Guid> { Name = AppRoles.Clerk, NormalizedName = AppRoles.Clerk.ToUpperInvariant() },
+                    new IdentityRole<Guid> { Name = AppRoles.ProShopStaff, NormalizedName = AppRoles.ProShopStaff.ToUpperInvariant() });
                 await db.SaveChangesAsync();
             }
         }
