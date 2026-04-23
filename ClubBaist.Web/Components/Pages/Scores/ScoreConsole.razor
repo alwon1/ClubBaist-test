@@ -1,6 +1,6 @@
 @page "/scores/staff"
 @rendermode InteractiveServer
-@attribute [Authorize(Roles = AppRoles.Admin)]
+@attribute [Authorize(Roles = AppRoles.AdminOrClerk)]
 
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore

@@ -39,4 +39,10 @@
 
 ## Future Work
 
+- [ ] **StaffConsole tee sheet: add missing columns** — The tee sheet in StaffConsole is missing four columns required by the business spec. Deferred from Area B Q15. Columns to add:
+  - **Phone** — booking member's phone number (requires JOIN to `ClubBaistUser`; no schema change)
+  - **Number of Carts** — carts requested per booking (requires new `NumberOfCarts` column on `TeeTimeBooking`)
+  - **Employee Name** — staff member who processed the booking (requires new `EmployeeName` column on `TeeTimeBooking`)
+  - **Day of Week** — derived from `TeeTimeSlotStart` (no schema change; format and display only)
+
 - [ ] **Membership application: use sponsor email instead of GUID** — The `Apply.razor` form currently uses a GUID dropdown to select sponsors. Change this to look up members by email address instead, improving usability. Left for later.

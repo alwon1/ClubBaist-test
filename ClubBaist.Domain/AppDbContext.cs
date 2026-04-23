@@ -27,6 +27,7 @@ public class AppDbContext : IdentityDbContext<ClubBaistUser, IdentityRole<Guid>,
     public DbSet<StandingTeeTime> StandingTeeTimes { get; set; }
     public DbSet<GolfRound> GolfRounds { get; set; }
     public DbSet<CourseRating> CourseRatings { get; set; }
+    public DbSet<CourseHole> CourseHoles { get; set; }
 
     public Task<IDbContextTransaction> BeginTransactionAsync(IsolationLevel isolationLevel, CancellationToken cancellationToken = default) =>
         Database.BeginTransactionAsync(isolationLevel, cancellationToken);
@@ -209,6 +210,32 @@ public class AppDbContext : IdentityDbContext<ClubBaistUser, IdentityRole<Guid>,
                     SlopeRating = 138,
                     Source = "Club BAIST"
                 });
+        });
+
+        modelBuilder.Entity<CourseHole>(entity =>
+        {
+            var parByHole = new[] { 4, 5, 3, 4, 4, 4, 4, 5, 4, 4, 4, 3, 5, 4, 4, 3, 5, 4 };
+            var strokeIndexByHole = Enumerable.Range(1, 18).ToArray();
+            var seededHoles = new List<CourseHole>();
+            var nextId = 1;
+
+            foreach (var teeColor in Enum.GetValues<GolfRound.TeeColor>())
+            {
+                for (var i = 0; i < 18; i++)
+                {
+                    seededHoles.Add(new CourseHole
+                    {
+                        Id = nextId++,
+                        TeeColor = teeColor,
+                        HoleNumber = i + 1,
+                        Par = parByHole[i],
+                        StrokeIndex = strokeIndexByHole[i],
+                        Source = "Club BAIST"
+                    });
+                }
+            }
+
+            entity.HasData(seededHoles);
         });
     }
 }

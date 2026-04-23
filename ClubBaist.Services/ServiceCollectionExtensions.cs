@@ -23,6 +23,9 @@ public static class ServiceCollectionExtensions
             return new SpecialEventBlockingRule(db.SpecialEvents);
         });
 
+        // Explicitly denies Social (Copper/CP) members — no golf privileges.
+        services.AddScoped<IBookingRule>(_ => new SocialMemberNoGolfRule());
+
         services.AddScoped<IBookingRule>(sp =>
         {
             var db = sp.GetRequiredService<AppDbContext>();
@@ -48,6 +51,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ScoreService>();
         services.AddScoped<HandicapCalculationService>();
         services.AddScoped<RoundScoreDerivationService>();
+        services.AddScoped<CourseHoleReferenceService>();
 
         return services;
     }

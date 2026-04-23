@@ -70,7 +70,7 @@ public class ScoreServiceTests
 
         var result = await svc.GetEligibleBookingsAsync(member.Id);
 
-        Assert.AreEqual(0, result.Count);
+        Assert.IsEmpty(result);
     }
 
     [TestMethod]
@@ -95,7 +95,7 @@ public class ScoreServiceTests
 
         var result = await svc.GetEligibleBookingsAsync(member.Id);
 
-        Assert.AreEqual(0, result.Count);
+        Assert.IsEmpty(result);
     }
 
     [TestMethod]
@@ -117,7 +117,7 @@ public class ScoreServiceTests
 
         var result = await svc.GetEligibleBookingsAsync(member.Id);
 
-        Assert.AreEqual(1, result.Count);
+        Assert.HasCount(1, result);
         Assert.AreEqual(slot.Start, result[0].TeeTimeSlotStart);
     }
 
@@ -143,7 +143,7 @@ public class ScoreServiceTests
 
         var result = await svc.GetEligibleBookingsAsync(member.Id);
 
-        Assert.AreEqual(0, result.Count);
+        Assert.IsEmpty(result);
     }
 
     [TestMethod]
@@ -179,7 +179,7 @@ public class ScoreServiceTests
 
         var result = await svc.GetEligibleBookingsAsync(member.Id);
 
-        Assert.AreEqual(2, result.Count);
+        Assert.HasCount(2, result);
         Assert.IsFalse(result.Any(b => b.TeeTimeSlotStart == slot3.Start));
     }
 
@@ -203,7 +203,7 @@ public class ScoreServiceTests
 
         var result = await svc.GetEligibleBookingsAsync(member.Id);
 
-        Assert.AreEqual(1, result.Count);
+        Assert.HasCount(1, result);
         Assert.AreEqual(2, result[0].ParticipantCount);
     }
 
@@ -228,7 +228,7 @@ public class ScoreServiceTests
 
         var result = await svc.GetEligibleBookingsAsync(member.Id);
 
-        Assert.AreEqual(1, result.Count);
+        Assert.HasCount(1, result);
         Assert.AreEqual(3, result[0].ParticipantCount);
     }
 
@@ -254,7 +254,7 @@ public class ScoreServiceTests
 
         var result = await svc.GetEligibleBookingsAsync(member.Id);
 
-        Assert.AreEqual(1, result.Count);
+        Assert.HasCount(1, result);
         Assert.AreEqual(4, result[0].ParticipantCount);
     }
 
@@ -280,7 +280,7 @@ public class ScoreServiceTests
 
         var result = await svc.GetEligibleBookingsAsync(secondaryMember.Id);
 
-        Assert.AreEqual(0, result.Count);
+        Assert.IsEmpty(result);
     }
 
     [TestMethod]
@@ -309,9 +309,9 @@ public class ScoreServiceTests
         var result1 = await svc.GetEligibleBookingsAsync(member1.Id);
         var result2 = await svc.GetEligibleBookingsAsync(member2.Id);
 
-        Assert.AreEqual(1, result1.Count);
+        Assert.HasCount(1, result1);
         Assert.AreEqual(slot1.Start, result1[0].TeeTimeSlotStart);
-        Assert.AreEqual(1, result2.Count);
+        Assert.HasCount(1, result2);
         Assert.AreEqual(slot2.Start, result2[0].TeeTimeSlotStart);
     }
 
@@ -781,7 +781,7 @@ public class ScoreServiceTests
 
         var result = await svc.GetRoundsByMemberAsync(member.Id);
 
-        Assert.AreEqual(0, result.Count);
+        Assert.IsEmpty(result);
     }
 
     [TestMethod]
@@ -813,7 +813,7 @@ public class ScoreServiceTests
 
         var rounds = await svc.GetRoundsByMemberAsync(member.Id);
 
-        Assert.AreEqual(2, rounds.Count);
+        Assert.HasCount(2, rounds);
         // Ordered by SubmittedAt descending — most recent first
         Assert.IsTrue(rounds[0].SubmittedAt >= rounds[1].SubmittedAt);
         Assert.AreEqual(booking2.Id, rounds[0].TeeTimeBookingId);
@@ -849,9 +849,9 @@ public class ScoreServiceTests
         var rounds1 = await svc.GetRoundsByMemberAsync(member1.Id);
         var rounds2 = await svc.GetRoundsByMemberAsync(member2.Id);
 
-        Assert.AreEqual(1, rounds1.Count);
+        Assert.HasCount(1, rounds1);
         Assert.AreEqual(booking1.Id, rounds1[0].TeeTimeBookingId);
-        Assert.AreEqual(1, rounds2.Count);
+        Assert.HasCount(1, rounds2);
         Assert.AreEqual(booking2.Id, rounds2[0].TeeTimeBookingId);
     }
 }
