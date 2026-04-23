@@ -118,6 +118,58 @@
 				"cd /Users/allyn/Repos/ClubBaist-test && git pull"
 			],
 			"isBackground": false
+		},
+		{
+			"label": "Run PlayingConditionService tests",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"test",
+				"--project",
+				"ClubBaist.Domain2.Tests/ClubBaist.Domain2.Tests.csproj",
+				"--filter",
+				"FullyQualifiedName~PlayingConditionServiceTests"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "Run HandicapCalculation tests with PCC",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"test",
+				"--project",
+				"ClubBaist.Domain2.Tests/ClubBaist.Domain2.Tests.csproj",
+				"--filter",
+				"FullyQualifiedName~HandicapCalculationServiceTests"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "Re-run PlayingConditionService tests after seed fix",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"test",
+				"--project",
+				"ClubBaist.Domain2.Tests/ClubBaist.Domain2.Tests.csproj",
+				"--filter",
+				"FullyQualifiedName~PlayingConditionServiceTests"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "Re-run HandicapCalculation tests after PCC",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"test",
+				"--project",
+				"ClubBaist.Domain2.Tests/ClubBaist.Domain2.Tests.csproj",
+				"--filter",
+				"FullyQualifiedName~HandicapCalculationServiceTests"
+			],
+			"isBackground": false
 		}
 	]
 }

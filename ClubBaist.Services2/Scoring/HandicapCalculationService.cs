@@ -69,7 +69,7 @@ public sealed class HandicapCalculationService(IAppDbContext2 db, ILogger<Handic
             }
 
             var adjustedGross = CalculateAdjustedGrossScore(round.Scores);
-            var pccAdjustment = ResolvePlayingConditionsAdjustment(round);
+            var pccAdjustment = await ResolvePlayingConditionsAdjustmentAsync(round, ct);
             var differential = CalculateHandicapDifferential(adjustedGross, courseRating.Rating, courseRating.SlopeRating, pccAdjustment);
 
             validDifferentials.Add((differential, round.SubmittedAt));
@@ -149,11 +149,26 @@ public sealed class HandicapCalculationService(IAppDbContext2 db, ILogger<Handic
         return scores.Sum(score => Convert.ToDecimal(score!.Value));
     }
 
-    private static decimal ResolvePlayingConditionsAdjustment(GolfRound round)
+    private async Task<decimal> ResolvePlayingConditionsAdjustmentAsync(GolfRound round, CancellationToken ct)
     {
-        // Contract point for future PCC integration. Returning zero keeps caller contract unchanged.
-        _ = round;
-        return 0m;
+        try
+        {
+            var effectiveDate = DateOnly.FromDateTime(round.SubmittedAt);
+            var adjustment = await db.PlayingConditionAdjustments
+                .Where(p => p.EffectiveDate == effectiveDate)
+                .Select(p => p.Adjustment)
+                .FirstOrDefaultAsync(ct);
+
+            return adjustment;
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(
+                ex,
+                "PCC lookup failed for round {RoundId}. Falling back to 0.",
+                round.Id);
+            return 0m;
+        }
     }
 
     private static decimal CalculateHandicapDifferential(

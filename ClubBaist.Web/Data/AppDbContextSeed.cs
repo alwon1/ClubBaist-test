@@ -44,7 +44,6 @@ internal static class AppDbContextSeed
         new("silver@clubbaist.com", AppRoles.Member, "Diana", "Silver", "SV", Gender.Female),
         new("bronze@clubbaist.com", AppRoles.Member, "Evan", "Bronze", "BR", Gender.Male),
         new("copper@clubbaist.com", AppRoles.Member, "Fiona", "Copper", "CP", Gender.Female)
-        new("bronze@clubbaist.com", AppRoles.Member, "Evan", "Bronze", "BR", Gender.Male)
     ];
 
     private static readonly SeedApplication[] Applications =

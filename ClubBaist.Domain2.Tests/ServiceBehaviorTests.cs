@@ -286,6 +286,7 @@ public class MembershipLevelServiceTests
         public DbSet<GolfRound> GolfRounds => inner.GolfRounds;
         public DbSet<CourseRating> CourseRatings => inner.CourseRatings;
         public DbSet<CourseHole> CourseHoles => inner.CourseHoles;
+        public DbSet<PlayingConditionAdjustment> PlayingConditionAdjustments => inner.PlayingConditionAdjustments;
 
         public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) =>
             throwOnSave

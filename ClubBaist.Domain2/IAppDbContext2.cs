@@ -34,6 +34,9 @@ public interface IAppDbContext2
     /// <summary>Reference hole metadata (par and stroke index) by tee color.</summary>
     DbSet<CourseHole> CourseHoles { get; }
 
+    /// <summary>Daily playing condition adjustments (PCC) keyed by effective date.</summary>
+    DbSet<PlayingConditionAdjustment> PlayingConditionAdjustments { get; }
+
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     Task<IDbContextTransaction> BeginTransactionAsync(IsolationLevel isolationLevel, CancellationToken cancellationToken = default);
     IExecutionStrategy CreateExecutionStrategy();

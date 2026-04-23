@@ -1,0 +1,149 @@
+@page "/scores/pcc"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = AppRoles.AdminOrClerk)]
+
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using ClubBaist.Services2.Scoring
+
+@inject PlayingConditionService PlayingConditionService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ILogger<PccConsole> Logger
+
+<PageTitle>PCC Console - Club Baist</PageTitle>
+
+<h3 class="mb-4">PCC Console</h3>
+
+<p class="text-muted">
+    Enter the daily Playing Conditions Calculation (PCC) adjustment used for handicap differential calculation.
+</p>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
+@if (!string.IsNullOrEmpty(successMessage))
+{
+    <div class="alert alert-success">@successMessage</div>
+}
+
+<EditForm Model="this" OnValidSubmit="SaveAsync">
+    <DataAnnotationsValidator />
+
+    <div class="card" style="max-width: 560px;">
+        <div class="card-body">
+            <div class="mb-3">
+                <label class="form-label">Effective Date</label>
+                <InputDate @bind-Value="effectiveDate" class="form-control" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">PCC Adjustment</label>
+                <InputSelect @bind-Value="adjustment" class="form-select">
+                    @foreach (var value in pccOptions)
+                    {
+                        <option value="@value">@value.ToString("0.0")</option>
+                    }
+                </InputSelect>
+                <div class="form-text">Allowed range: -1.0 to 3.0</div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Notes (optional)</label>
+                <InputTextArea @bind-Value="notes" class="form-control" rows="3" />
+            </div>
+
+            <div class="d-flex gap-2">
+                <button class="btn btn-primary" type="submit" disabled="@isSaving">
+                    @(isSaving ? "Saving..." : "Save PCC")
+                </button>
+                <button class="btn btn-outline-secondary" type="button" @onclick="LoadAsync" disabled="@isSaving">
+                    Reload
+                </button>
+            </div>
+        </div>
+    </div>
+</EditForm>
+
+@code {
+    private DateTime effectiveDate = DateTime.Today;
+    private decimal adjustment;
+    private string? notes;
+    private bool isSaving;
+    private string? errorMessage;
+    private string? successMessage;
+
+    private static readonly decimal[] pccOptions =
+    [
+        -1.0m, -0.5m, 0.0m, 0.5m, 1.0m, 1.5m, 2.0m, 2.5m, 3.0m
+    ];
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        errorMessage = null;
+        successMessage = null;
+
+        try
+        {
+            var model = await PlayingConditionService.GetByDateAsync(DateOnly.FromDateTime(effectiveDate));
+            if (model is not null)
+            {
+                adjustment = model.Adjustment;
+                notes = model.Notes;
+            }
+            else
+            {
+                adjustment = 0m;
+                notes = null;
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load PCC for {Date}", effectiveDate);
+            errorMessage = "Unable to load PCC value. Please try again.";
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        isSaving = true;
+        errorMessage = null;
+        successMessage = null;
+
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var actingUserId = authState.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "unknown";
+
+            var result = await PlayingConditionService.UpsertAsync(
+                DateOnly.FromDateTime(effectiveDate),
+                adjustment,
+                actingUserId,
+                notes);
+
+            if (!result.Success)
+            {
+                errorMessage = result.Error ?? "Unable to save PCC value.";
+                return;
+            }
+
+            successMessage = "PCC value saved.";
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to save PCC");
+            errorMessage = "Unable to save PCC value. Please try again.";
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+}
