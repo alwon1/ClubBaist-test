@@ -26,6 +26,10 @@ internal static class AppDbContextSeed
         new("BR", "Intermediate", MemberType.Associate, 1000m),
         // Copper tier — Social members have no golf privileges
         new("CP", "Social", MemberType.Associate, 100m),
+        new("SH", "Shareholder", MemberType.Shareholder, 5000m),
+        new("SV", "Silver", MemberType.Associate, 2500m),
+        new("BR", "Bronze", MemberType.Associate, 1500m),
+        new("AS", "Associate", MemberType.Associate, 1000m)
     ];
 
     private static readonly SeedUser[] Users =
@@ -40,6 +44,7 @@ internal static class AppDbContextSeed
         new("silver@clubbaist.com", AppRoles.Member, "Diana", "Silver", "SV", Gender.Female),
         new("bronze@clubbaist.com", AppRoles.Member, "Evan", "Bronze", "BR", Gender.Male),
         new("copper@clubbaist.com", AppRoles.Member, "Fiona", "Copper", "CP", Gender.Female)
+        new("bronze@clubbaist.com", AppRoles.Member, "Evan", "Bronze", "BR", Gender.Male)
     ];
 
     private static readonly SeedApplication[] Applications =
