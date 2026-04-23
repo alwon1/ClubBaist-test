@@ -47,6 +47,7 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<ScoreService>();
         services.AddScoped<HandicapCalculationService>();
+        services.AddScoped<RoundScoreDerivationService>();
 
         return services;
     }

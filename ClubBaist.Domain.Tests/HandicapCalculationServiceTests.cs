@@ -113,7 +113,7 @@ public class HandicapCalculationServiceTests
     }
 
     [TestMethod]
-    public async Task GetCurrentHandicapAsync_TwentyFiveRounds_StillUsesBestEight()
+    public async Task GetCurrentHandicapAsync_TwentyFiveRounds_UsesBestEightFromMostRecentTwenty()
     {
         await using var host = await DomainTestHost.CreateAsync();
         await using var scope = host.CreateScope();
@@ -123,14 +123,117 @@ public class HandicapCalculationServiceTests
         var service = provider.GetRequiredService<HandicapCalculationService>();
 
         var member = await CreateMemberWithGenderAsync(db, userManager, "twenty-five-rounds@clubbaist.com", Gender.Male);
-        await AddRoundsWithUniformScoresAsync(db, member, roundCount: 25, teeColor: GolfRound.TeeColor.White);
+
+        // Most recent 20 rounds are deliberately worse scores than the oldest 5,
+        // so best-8 selection must be constrained to the most recent 20 only.
+        for (var i = 1; i <= 20; i++)
+        {
+            await AddRoundAsync(db, member, GolfRound.TeeColor.White, i, CreateScores(6, 18));
+        }
+
+        for (var i = 21; i <= 25; i++)
+        {
+            await AddRoundAsync(db, member, GolfRound.TeeColor.White, i, CreateScores(3, 18));
+        }
 
         var result = await service.GetCurrentHandicapAsync(member.Id, CancellationToken.None);
+        var expected = await CalculateExpectedHandicapAsync(
+            db,
+            GolfRound.TeeColor.White,
+            Gender.Male,
+            holeScore: 6,
+            selectedCount: 8,
+            adjustment: 0m);
 
         Assert.IsTrue(result.IsAvailable);
-        Assert.AreEqual(25, result.RoundCount);
+        Assert.AreEqual(20, result.RoundCount);
         Assert.AreEqual(8, result.DifferentialCount);
         Assert.IsFalse(result.IsProvisional);
+        Assert.AreEqual(expected, result.CurrentHandicap);
+    }
+
+    [TestMethod]
+    public async Task GetCurrentHandicapAsync_ThreeRounds_AppliesFivePointTwoAAdjustment()
+    {
+        await using var host = await DomainTestHost.CreateAsync();
+        await using var scope = host.CreateScope();
+        var provider = scope.ServiceProvider;
+        var db = provider.GetRequiredService<AppDbContext>();
+        var userManager = provider.GetRequiredService<UserManager<ClubBaistUser>>();
+        var service = provider.GetRequiredService<HandicapCalculationService>();
+
+        var member = await CreateMemberWithGenderAsync(db, userManager, "three-rounds@clubbaist.com", Gender.Male);
+        await AddRoundsWithUniformScoresAsync(db, member, roundCount: 3, teeColor: GolfRound.TeeColor.White);
+
+        var result = await service.GetCurrentHandicapAsync(member.Id, CancellationToken.None);
+        var expected = await CalculateExpectedHandicapAsync(
+            db,
+            GolfRound.TeeColor.White,
+            Gender.Male,
+            holeScore: 5,
+            selectedCount: 1,
+            adjustment: -2.0m);
+
+        Assert.IsTrue(result.IsAvailable);
+        Assert.AreEqual(3, result.RoundCount);
+        Assert.AreEqual(1, result.DifferentialCount);
+        Assert.AreEqual(expected, result.CurrentHandicap);
+    }
+
+    [TestMethod]
+    public async Task GetCurrentHandicapAsync_FourRounds_AppliesFivePointTwoAAdjustment()
+    {
+        await using var host = await DomainTestHost.CreateAsync();
+        await using var scope = host.CreateScope();
+        var provider = scope.ServiceProvider;
+        var db = provider.GetRequiredService<AppDbContext>();
+        var userManager = provider.GetRequiredService<UserManager<ClubBaistUser>>();
+        var service = provider.GetRequiredService<HandicapCalculationService>();
+
+        var member = await CreateMemberWithGenderAsync(db, userManager, "four-rounds@clubbaist.com", Gender.Male);
+        await AddRoundsWithUniformScoresAsync(db, member, roundCount: 4, teeColor: GolfRound.TeeColor.White);
+
+        var result = await service.GetCurrentHandicapAsync(member.Id, CancellationToken.None);
+        var expected = await CalculateExpectedHandicapAsync(
+            db,
+            GolfRound.TeeColor.White,
+            Gender.Male,
+            holeScore: 5,
+            selectedCount: 1,
+            adjustment: -1.0m);
+
+        Assert.IsTrue(result.IsAvailable);
+        Assert.AreEqual(4, result.RoundCount);
+        Assert.AreEqual(1, result.DifferentialCount);
+        Assert.AreEqual(expected, result.CurrentHandicap);
+    }
+
+    [TestMethod]
+    public async Task GetCurrentHandicapAsync_SixRounds_UsesTwoDifferentialsAndAdjustment()
+    {
+        await using var host = await DomainTestHost.CreateAsync();
+        await using var scope = host.CreateScope();
+        var provider = scope.ServiceProvider;
+        var db = provider.GetRequiredService<AppDbContext>();
+        var userManager = provider.GetRequiredService<UserManager<ClubBaistUser>>();
+        var service = provider.GetRequiredService<HandicapCalculationService>();
+
+        var member = await CreateMemberWithGenderAsync(db, userManager, "six-rounds@clubbaist.com", Gender.Male);
+        await AddRoundsWithUniformScoresAsync(db, member, roundCount: 6, teeColor: GolfRound.TeeColor.White);
+
+        var result = await service.GetCurrentHandicapAsync(member.Id, CancellationToken.None);
+        var expected = await CalculateExpectedHandicapAsync(
+            db,
+            GolfRound.TeeColor.White,
+            Gender.Male,
+            holeScore: 5,
+            selectedCount: 2,
+            adjustment: -1.0m);
+
+        Assert.IsTrue(result.IsAvailable);
+        Assert.AreEqual(6, result.RoundCount);
+        Assert.AreEqual(2, result.DifferentialCount);
+        Assert.AreEqual(expected, result.CurrentHandicap);
     }
 
     [TestMethod]
@@ -235,5 +338,42 @@ public class HandicapCalculationServiceTests
     {
         var scores = Enumerable.Repeat<uint?>(value, holes).ToList();
         return scores;
+    }
+
+    private static async Task<decimal> CalculateExpectedHandicapAsync(
+        AppDbContext db,
+        GolfRound.TeeColor teeColor,
+        Gender gender,
+        uint holeScore,
+        int selectedCount,
+        decimal adjustment)
+    {
+        var rating = await db.CourseRatings.FirstAsync(r => r.TeeColor == teeColor && r.Gender == gender);
+        var adjustedGross = holeScore * 18m;
+        var rawDifferential = (adjustedGross - rating.Rating) * 113m / rating.SlopeRating;
+        var differential = RoundDifferentialForTest(rawDifferential);
+
+        var average = Enumerable.Repeat(differential, selectedCount).Average();
+        return decimal.Round(average + adjustment, 1, MidpointRounding.AwayFromZero);
+    }
+
+    private static decimal RoundDifferentialForTest(decimal value)
+    {
+        if (value >= 0m)
+        {
+            return decimal.Round(value, 1, MidpointRounding.AwayFromZero);
+        }
+
+        var absolute = decimal.Abs(value);
+        var scaled = absolute * 10m;
+        var whole = decimal.Truncate(scaled);
+        var fraction = scaled - whole;
+
+        if (fraction == 0.5m)
+        {
+            return -(whole / 10m);
+        }
+
+        return -decimal.Round(absolute, 1, MidpointRounding.AwayFromZero);
     }
 }

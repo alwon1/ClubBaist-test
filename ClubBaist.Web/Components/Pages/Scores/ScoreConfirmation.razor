@@ -11,6 +11,7 @@
 @using ClubBaist.Services.Scoring
 
 @inject AppDbContext DbContext
+@inject RoundScoreDerivationService RoundScoreDerivationService
 @inject AuthenticationStateProvider AuthStateProvider
 @inject ILogger<ScoreConfirmation> Logger
 
@@ -48,8 +49,14 @@ else if (round is not null)
                 <dt class="col-sm-5">Tee Colour</dt>
                 <dd class="col-sm-7">@round.SelectedTeeColor</dd>
 
-                <dt class="col-sm-5">Total Score</dt>
-                <dd class="col-sm-7">@(round.Scores.Sum(s => (long?)s) ?? 0)</dd>
+                <dt class="col-sm-5">Raw Total Score</dt>
+                <dd class="col-sm-7">@scoreView.RawTotal</dd>
+
+                <dt class="col-sm-5">Calculated Adjusted Score</dt>
+                <dd class="col-sm-7">@scoreView.AdjustedTotal</dd>
+
+                <dt class="col-sm-5">Calculation Basis</dt>
+                <dd class="col-sm-7 small text-muted">@scoreView.Basis</dd>
 
                 @if (isAdmin)
                 {
@@ -92,6 +99,7 @@ else
 
     private GolfRound? round;
     private bool isAdmin;
+    private RoundScoreView scoreView = new(0, 0, false, "No scores loaded");
 
     protected override async Task OnInitializedAsync()
     {
@@ -123,6 +131,10 @@ else
                 .Where(r => r.TeeTimeBookingId == BookingId && r.MembershipId == MemberId)
                 .OrderByDescending(r => r.SubmittedAt)
                 .FirstOrDefaultAsync();
+            if (round is not null)
+            {
+                scoreView = RoundScoreDerivationService.Compute(round.Scores);
+            }
         }
         catch (Exception ex)
         {
