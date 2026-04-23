@@ -198,7 +198,10 @@ internal static class AppDbContextSeed
             ThrowIfFailed(await userManager.CreateAsync(user, DefaultPassword), $"create user '{seedUser.Email}'");
             ThrowIfFailed(await userManager.AddToRoleAsync(user, seedUser.Role), $"assign role '{seedUser.Role}' to '{seedUser.Email}'");
 
-            if (seedUser.MembershipLevelShortCode == "SH")
+            var levelMemberType = Array.Find(MembershipLevels,
+                l => l.ShortCode.Equals(seedUser.MembershipLevelShortCode, StringComparison.OrdinalIgnoreCase))?.MemberType;
+
+            if (levelMemberType == MemberType.Shareholder)
             {
                 ThrowIfFailed(
                     await userManager.AddClaimAsync(user, AppRoles.Claims.StandingTeeTimeBooking),
