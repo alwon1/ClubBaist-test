@@ -7,6 +7,6 @@
     "record:detailed": "node record-detailed-demo.mjs"
   },
   "dependencies": {
-    "playwright": "1.49.0"
+    "playwright": "1.55.1"
   }
 }
