@@ -73,6 +73,7 @@ internal static class AppDbContextSeed
         await SeedApplicationsAsync(db, levelsByCode, sponsors, cancellationToken);
         await SeedCurrentSeasonAsync(db, cancellationToken);
         await SeedPastBookingsAsync(db, cancellationToken);
+        await SeedStandingTeeTimesAsync(db, cancellationToken);
     }
 
     private static async Task SeedRolesAsync(RoleManager<IdentityRole<Guid>> roleManager)
@@ -410,6 +411,123 @@ internal static class AppDbContextSeed
             });
 
         await db.SaveChangesAsync(cancellationToken);
+    }
+
+    private static async Task SeedStandingTeeTimesAsync(AppDbContext db, CancellationToken cancellationToken)
+    {
+        if (await db.StandingTeeTimes.AnyAsync(cancellationToken))
+        {
+            return;
+        }
+
+        var logger = db.GetService<ILoggerFactory>().CreateLogger(nameof(AppDbContextSeed));
+
+        var membersByEmail = await db.MemberShips
+            .Include(m => m.User)
+            .ToDictionaryAsync(m => m.User.Email!, StringComparer.OrdinalIgnoreCase, cancellationToken);
+
+        if (!membersByEmail.TryGetValue("shareholder1@clubbaist.com", out var alice)
+            || !membersByEmail.TryGetValue("shareholder2@clubbaist.com", out var bob)
+            || !membersByEmail.TryGetValue("shareholder3@clubbaist.com", out var carol)
+            || !membersByEmail.TryGetValue("silver@clubbaist.com", out var diana))
+        {
+            logger.LogWarning("SeedStandingTeeTimesAsync: expected seed members were not found — skipping standing tee time seeds.");
+            return;
+        }
+
+        var startDate = DateOnly.FromDateTime(DateTime.Today);
+        var endDate = startDate.AddMonths(3);
+
+        var draftRequest = new StandingTeeTime
+        {
+            BookingMemberId = alice.Id,
+            BookingMember = alice,
+            RequestedDayOfWeek = DayOfWeek.Saturday,
+            RequestedTime = new TimeOnly(8, 0),
+            ToleranceMinutes = 30,
+            StartDate = startDate,
+            EndDate = endDate,
+            Status = StandingTeeTimeStatus.Draft,
+            AdditionalParticipants = [bob, carol, diana]
+        };
+
+        var approvedRequest = new StandingTeeTime
+        {
+            BookingMemberId = bob.Id,
+            BookingMember = bob,
+            RequestedDayOfWeek = DayOfWeek.Sunday,
+            RequestedTime = new TimeOnly(9, 0),
+            ApprovedTime = new TimeOnly(9, 0),
+            PriorityNumber = 2,
+            ToleranceMinutes = 15,
+            StartDate = startDate,
+            EndDate = endDate,
+            Status = StandingTeeTimeStatus.Approved,
+            AdditionalParticipants = [alice, carol, diana]
+        };
+
+        var allocatedRequest = new StandingTeeTime
+        {
+            BookingMemberId = carol.Id,
+            BookingMember = carol,
+            RequestedDayOfWeek = DayOfWeek.Saturday,
+            RequestedTime = new TimeOnly(10, 0),
+            ApprovedTime = new TimeOnly(10, 0),
+            PriorityNumber = 1,
+            ToleranceMinutes = 0,
+            StartDate = startDate,
+            EndDate = endDate,
+            Status = StandingTeeTimeStatus.Allocated,
+            AdditionalParticipants = [alice, bob, diana]
+        };
+
+        db.StandingTeeTimes.AddRange(draftRequest, approvedRequest, allocatedRequest);
+        await db.SaveChangesAsync(cancellationToken);
+
+        var allocatedDate = NextDateOnOrAfter(startDate, allocatedRequest.RequestedDayOfWeek);
+        var allocatedStart = DateTime.SpecifyKind(
+            allocatedDate.ToDateTime(allocatedRequest.ApprovedTime ?? allocatedRequest.RequestedTime),
+            DateTimeKind.Unspecified);
+
+        var slot = await db.TeeTimeSlots
+            .FirstOrDefaultAsync(s => s.Start == allocatedStart, cancellationToken);
+
+        if (slot is null)
+        {
+            logger.LogWarning("SeedStandingTeeTimesAsync: slot {Start} not found for allocated standing tee time seed.", allocatedStart);
+            return;
+        }
+
+        var hasConflictingBooking = await db.TeeTimeBookings
+            .AnyAsync(b => b.TeeTimeSlotStart == allocatedStart && b.BookingMemberId == allocatedRequest.BookingMemberId, cancellationToken);
+
+        if (hasConflictingBooking)
+        {
+            logger.LogWarning(
+                "SeedStandingTeeTimesAsync: booking conflict for standing tee time seed at {Start} for member {MemberId}.",
+                allocatedStart,
+                allocatedRequest.BookingMemberId);
+            return;
+        }
+
+        db.TeeTimeBookings.Add(new TeeTimeBooking
+        {
+            TeeTimeSlotStart = slot.Start,
+            TeeTimeSlot = slot,
+            BookingMemberId = allocatedRequest.BookingMemberId,
+            BookingMember = allocatedRequest.BookingMember,
+            StandingTeeTimeId = allocatedRequest.Id,
+            StandingTeeTime = allocatedRequest,
+            AdditionalParticipants = [.. allocatedRequest.AdditionalParticipants]
+        });
+
+        await db.SaveChangesAsync(cancellationToken);
+    }
+
+    private static DateOnly NextDateOnOrAfter(DateOnly start, DayOfWeek targetDay)
+    {
+        var offset = ((int)targetDay - (int)start.DayOfWeek + 7) % 7;
+        return start.AddDays(offset);
     }
 
     private static void ThrowIfFailed(IdentityResult result, string action)
