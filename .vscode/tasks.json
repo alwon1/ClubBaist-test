@@ -2,6 +2,21 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
+			"label": "Record Detailed Demo",
+			"type": "shell",
+			"command": "bash",
+			"args": [
+				"-lc",
+				"cd /Users/allyn/Repos/ClubBaist-test/demo-script && BASE_URL=https://localhost:7021 node record-detailed-demo.mjs"
+			],
+			"isBackground": false,
+			"group": "build",
+			"presentation": {
+				"reveal": "always",
+				"panel": "new"
+			}
+		},
+		{
 			"label": "Run Aspire AppHost",
 			"type": "shell",
 			"command": "dotnet",
@@ -168,6 +183,26 @@
 				"ClubBaist.Domain2.Tests/ClubBaist.Domain2.Tests.csproj",
 				"--filter",
 				"FullyQualifiedName~HandicapCalculationServiceTests"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "Build ClubBaist.Web after standing changes",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"build",
+				"ClubBaist.Web/ClubBaist.Web.csproj"
+			],
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "Kill duplicate AppHost pid 2404",
+			"type": "shell",
+			"command": "kill",
+			"args": [
+				"2404"
 			],
 			"isBackground": false
 		}

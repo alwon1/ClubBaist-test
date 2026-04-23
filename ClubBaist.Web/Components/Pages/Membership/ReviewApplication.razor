@@ -137,6 +137,20 @@
                                 <p>@GetSponsorName(_application.Sponsor2MemberId)</p>
                             </div>
                         </div>
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <strong>Sponsor Endorsement:</strong>
+                                <p class="mb-2">
+                                    <span class="badge @GetEndorsementStatusBadgeClass(IsSponsorEndorsementConfirmed)">
+                                        @(IsSponsorEndorsementConfirmed ? "Confirmed" : "Pending")
+                                    </span>
+                                </p>
+                                <ul class="mb-0 small">
+                                    <li>Sponsor 1 (@GetSponsorName(_application.Sponsor1MemberId)): @GetSponsorConfirmationText(_application.Sponsor1EndorsementConfirmed, _application.Sponsor1EndorsementConfirmedAt)</li>
+                                    <li>Sponsor 2 (@GetSponsorName(_application.Sponsor2MemberId)): @GetSponsorConfirmationText(_application.Sponsor2EndorsementConfirmed, _application.Sponsor2EndorsementConfirmedAt)</li>
+                                </ul>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -319,6 +333,19 @@
 
     private string GetSponsorName(int sponsorId) =>
         _sponsorNames.TryGetValue(sponsorId, out var name) ? name : $"Member #{sponsorId}";
+
+    private bool IsSponsorEndorsementConfirmed =>
+        _application is not null
+        && _application.Sponsor1EndorsementConfirmed
+        && _application.Sponsor2EndorsementConfirmed;
+
+    private static string GetEndorsementStatusBadgeClass(bool confirmed) =>
+        confirmed ? "bg-success" : "bg-secondary";
+
+    private static string GetSponsorConfirmationText(bool confirmed, DateTime? confirmedAt) =>
+        confirmed
+            ? $"Confirmed{(confirmedAt.HasValue ? $" on {confirmedAt.Value:yyyy-MM-dd HH:mm}" : string.Empty)}"
+            : "Not confirmed";
 
     private static string GetStatusBadgeClass(ApplicationStatus status) =>
         UiHelpers.GetStatusBadgeClass(status);

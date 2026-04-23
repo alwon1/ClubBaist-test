@@ -176,10 +176,10 @@
                                         <div class="list-group mb-1">
                                             @foreach (var m in _sponsor1SearchResults)
                                             {
-                                                var displayName1 = $"{m.User.FirstName} {m.User.LastName} (#{m.MembershipNumber})";
+                                                var displayName1 = FormatMemberDisplayName(m);
                                                 <button type="button" class="list-group-item list-group-item-action py-1"
                                                         @onclick="() => SelectSponsor(1, m.Id, displayName1)">
-                                                    @m.User.FirstName @m.User.LastName — Member #@m.MembershipNumber
+                                                    @displayName1
                                                 </button>
                                             }
                                         </div>
@@ -233,10 +233,10 @@
                                         <div class="list-group mb-1">
                                             @foreach (var m in _sponsor2SearchResults)
                                             {
-                                                var displayName2 = $"{m.User.FirstName} {m.User.LastName} (#{m.MembershipNumber})";
+                                                var displayName2 = FormatMemberDisplayName(m);
                                                 <button type="button" class="list-group-item list-group-item-action py-1"
                                                         @onclick="() => SelectSponsor(2, m.Id, displayName2)">
-                                                    @m.User.FirstName @m.User.LastName — Member #@m.MembershipNumber
+                                                    @displayName2
                                                 </button>
                                             }
                                         </div>
@@ -315,7 +315,8 @@
     private string? _sponsor1LookupName;
     private string? _sponsor1LookupError;
     private bool _sponsor1Loading;
-    private CancellationTokenSource? _sponsor1Debounce;
+    private int _sponsor1LookupVersion;
+    private int _sponsor1SearchVersion;
 
     // Sponsor 2 state
     private string _sponsor2SearchTerm = string.Empty;
@@ -323,7 +324,8 @@
     private string? _sponsor2LookupName;
     private string? _sponsor2LookupError;
     private bool _sponsor2Loading;
-    private CancellationTokenSource? _sponsor2Debounce;
+    private int _sponsor2LookupVersion;
+    private int _sponsor2SearchVersion;
 
     protected override async Task OnInitializedAsync()
     {
@@ -346,43 +348,41 @@
         SetSponsorLookup(sponsorNumber, null, null, true);
         StateHasChanged();
 
-        var cts = new CancellationTokenSource();
-        if (sponsorNumber == 1)
-        {
-            var old1 = _sponsor1Debounce;
-            _sponsor1Debounce = cts;
-            old1?.Cancel();
-            old1?.Dispose();
-        }
-        else
-        {
-            var old2 = _sponsor2Debounce;
-            _sponsor2Debounce = cts;
-            old2?.Cancel();
-            old2?.Dispose();
-        }
+        var requestVersion = sponsorNumber == 1
+            ? ++_sponsor1LookupVersion
+            : ++_sponsor2LookupVersion;
 
         try
         {
-            await Task.Delay(400, cts.Token);
+            await Task.Delay(400);
+
+            if (sponsorNumber == 1 && requestVersion != _sponsor1LookupVersion)
+                return;
+
+            if (sponsorNumber == 2 && requestVersion != _sponsor2LookupVersion)
+                return;
+
             var member = await DbContext.MemberShips
                 .Include(m => m.User)
-                .FirstOrDefaultAsync(m => m.Id == memberId, cts.Token);
+                .FirstOrDefaultAsync(m => m.Id == memberId);
 
-            if (member is not null)
-                SetSponsorLookup(sponsorNumber, $"{member.User.FirstName} {member.User.LastName} (#{member.MembershipNumber})", null, false);
-            else
+            if (sponsorNumber == 1 && requestVersion != _sponsor1LookupVersion)
+                return;
+
+            if (sponsorNumber == 2 && requestVersion != _sponsor2LookupVersion)
+                return;
+
+            if (member is null)
                 SetSponsorLookup(sponsorNumber, null, "Member ID not found.", false);
+            else if (member.User is null)
+                SetSponsorLookup(sponsorNumber, null, "Member record is incomplete (missing user profile).", false);
+            else
+                SetSponsorLookup(sponsorNumber, FormatMemberDisplayName(member), null, false);
         }
-        catch (OperationCanceledException) { }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error looking up sponsor member ID");
             SetSponsorLookup(sponsorNumber, null, "Error looking up member.", false);
-        }
-        finally
-        {
-            cts.Dispose();
         }
 
         StateHasChanged();
@@ -401,46 +401,43 @@
             return;
         }
 
-        var cts = new CancellationTokenSource();
-        if (sponsorNumber == 1)
-        {
-            var old1 = _sponsor1Debounce;
-            _sponsor1Debounce = cts;
-            old1?.Cancel();
-            old1?.Dispose();
-        }
-        else
-        {
-            var old2 = _sponsor2Debounce;
-            _sponsor2Debounce = cts;
-            old2?.Cancel();
-            old2?.Dispose();
-        }
+        var requestVersion = sponsorNumber == 1
+            ? ++_sponsor1SearchVersion
+            : ++_sponsor2SearchVersion;
 
         try
         {
-            await Task.Delay(300, cts.Token);
+            await Task.Delay(300);
+
+            if (sponsorNumber == 1 && requestVersion != _sponsor1SearchVersion)
+                return;
+
+            if (sponsorNumber == 2 && requestVersion != _sponsor2SearchVersion)
+                return;
+
             var pattern = $"%{term.Trim()}%";
             var results = await DbContext.MemberShips
                 .Include(m => m.User)
+                .Where(m => m.User != null)
                 .Where(m => EF.Functions.Like(m.User.FirstName, pattern)
                          || EF.Functions.Like(m.User.LastName, pattern))
                 .OrderBy(m => m.User.LastName)
                 .ThenBy(m => m.User.FirstName)
                 .Take(10)
-                .ToListAsync(cts.Token);
+                .ToListAsync();
+
+            if (sponsorNumber == 1 && requestVersion != _sponsor1SearchVersion)
+                return;
+
+            if (sponsorNumber == 2 && requestVersion != _sponsor2SearchVersion)
+                return;
 
             if (sponsorNumber == 1) _sponsor1SearchResults = results;
             else _sponsor2SearchResults = results;
         }
-        catch (OperationCanceledException) { }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error searching sponsors");
-        }
-        finally
-        {
-            cts.Dispose();
         }
 
         StateHasChanged();
@@ -520,8 +517,22 @@
                 return;
             }
 
+            if (_model.Sponsor1MemberId is null || _model.Sponsor2MemberId is null)
+            {
+                _errorMessage = "Both sponsor member IDs are required.";
+                _submitting = false;
+                return;
+            }
+
+            if (_model.RequestedMembershipLevelId is null)
+            {
+                _errorMessage = "Please select a membership level.";
+                _submitting = false;
+                return;
+            }
+
             var sponsor1Exists = await DbContext.MemberShips
-                .AnyAsync(m => m.Id == _model.Sponsor1MemberId!.Value);
+                .AnyAsync(m => m.Id == _model.Sponsor1MemberId.Value);
 
             if (!sponsor1Exists)
             {
@@ -531,7 +542,7 @@
             }
 
             var sponsor2Exists = await DbContext.MemberShips
-                .AnyAsync(m => m.Id == _model.Sponsor2MemberId!.Value);
+                .AnyAsync(m => m.Id == _model.Sponsor2MemberId.Value);
 
             if (!sponsor2Exists)
             {
@@ -541,6 +552,10 @@
             }
 
             var normalizedPostalCode = NormalizePostalCode(_model.PostalCode!);
+            var sponsorEndorsementConfirmed = _isStaffOrAdmin && _model.SponsorEndorsementConfirmed;
+            var sponsorEndorsementConfirmedAt = sponsorEndorsementConfirmed
+                ? DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Unspecified)
+                : (DateTime?)null;
 
             var application = new MembershipApplication
             {
@@ -554,13 +569,23 @@
                 PostalCode = normalizedPostalCode,
                 Occupation = _model.Occupation!,
                 CompanyName = _model.CompanyName!,
-                RequestedMembershipLevelId = _model.RequestedMembershipLevelId!.Value,
-                RequestedMembershipLevel = (await DbContext.MembershipLevels.FindAsync(_model.RequestedMembershipLevelId!.Value))!,
-                Sponsor1MemberId = _model.Sponsor1MemberId!.Value,
-                Sponsor2MemberId = _model.Sponsor2MemberId!.Value
+                RequestedMembershipLevelId = _model.RequestedMembershipLevelId.Value,
+                RequestedMembershipLevel = (await DbContext.MembershipLevels.FindAsync(_model.RequestedMembershipLevelId.Value))!,
+                Sponsor1MemberId = _model.Sponsor1MemberId.Value,
+                Sponsor2MemberId = _model.Sponsor2MemberId.Value,
+                Sponsor1EndorsementConfirmed = sponsorEndorsementConfirmed,
+                Sponsor1EndorsementConfirmedAt = sponsorEndorsementConfirmedAt,
+                Sponsor2EndorsementConfirmed = sponsorEndorsementConfirmed,
+                Sponsor2EndorsementConfirmedAt = sponsorEndorsementConfirmedAt
             };
 
-            await ApplicationService.SubmitMembershipApplicationAsync(application);
+            var submitSucceeded = await ApplicationService.SubmitMembershipApplicationAsync(application);
+            if (!submitSucceeded)
+            {
+                _errorMessage = "Unable to submit this application. There may already be an active application for this email, or this person is already a member.";
+                _submitting = false;
+                return;
+            }
 
             _successMessage = "Your membership application has been submitted successfully. You will be notified once your application has been reviewed.";
             _submitted = true;
@@ -580,6 +605,14 @@
     {
         var cleaned = postalCode.ToUpperInvariant().Replace(" ", "");
         return cleaned.Length == 6 ? $"{cleaned[..3]} {cleaned[3..]}" : postalCode.ToUpperInvariant();
+    }
+
+    private static string FormatMemberDisplayName(MemberShipInfo member)
+    {
+        if (member.User is null)
+            return $"Member #{member.MembershipNumber}";
+
+        return $"{member.User.FirstName} {member.User.LastName} (#{member.MembershipNumber})";
     }
 
     private sealed class ApplicationFormModel

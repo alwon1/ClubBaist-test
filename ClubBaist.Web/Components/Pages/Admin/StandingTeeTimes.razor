@@ -32,6 +32,86 @@
     </div>
 }
 
+@if (!isLoading)
+{
+    <div class="card mb-4">
+        <div class="card-header">
+            <strong>Create Standing Tee Time Request (Admin)</strong>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label" for="bookingMember">Booking Shareholder</label>
+                    <select id="bookingMember" class="form-select" value="@selectedBookingMemberId" @onchange="OnBookingMemberChanged">
+                        <option value="0">-- Select Shareholder --</option>
+                        @foreach (var member in shareholderMembers)
+                        {
+                            <option value="@member.Id">@member.MembershipNumber - @member.User.FirstName @member.User.LastName</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label" for="requestedDay">Day</label>
+                    <select id="requestedDay" class="form-select" @bind="createRequestedDayOfWeek">
+                        @foreach (var day in Enum.GetValues<DayOfWeek>())
+                        {
+                            <option value="@day">@day</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label" for="requestedTime">Time</label>
+                    <input id="requestedTime" type="time" class="form-control" value="@createRequestedTimeStr" @onchange="OnCreateTimeChanged" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label" for="tolerance">Tolerance</label>
+                    <select id="tolerance" class="form-select" @bind="createToleranceMinutes">
+                        <option value="0">0 min</option>
+                        <option value="15">±15 min</option>
+                        <option value="30">±30 min</option>
+                        <option value="60">±60 min</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label" for="priority">Priority</label>
+                    <input id="priority" type="number" class="form-control" min="1" @bind="createPriority" placeholder="Optional" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label" for="startDate">Start Date</label>
+                    <input id="startDate" type="date" class="form-control" value="@createStartDateStr" @onchange="OnCreateStartDateChanged" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label" for="endDate">End Date</label>
+                    <input id="endDate" type="date" class="form-control" value="@createEndDateStr" @onchange="OnCreateEndDateChanged" />
+                </div>
+                @for (var i = 0; i < 3; i++)
+                {
+                    var idx = i;
+                    <div class="col-md-2">
+                        <label class="form-label" for="@($"player-{idx}")">Player @(idx + 2)</label>
+                        <select id="@($"player-{idx}")" class="form-select" value="@createAdditionalPlayerIds[idx]" @onchange="(e) => OnCreatePlayerChanged(idx, e)">
+                            <option value="0">-- Select --</option>
+                            @foreach (var member in allMembers.Where(m => m.Id != selectedBookingMemberId))
+                            {
+                                <option value="@member.Id">@member.MembershipNumber - @member.User.FirstName @member.User.LastName</option>
+                            }
+                        </select>
+                    </div>
+                }
+                <div class="col-md-3 align-self-end">
+                    <button class="btn btn-primary" @onclick="CreateStandingRequestAsync" disabled="@isCreatingRequest">
+                        @if (isCreatingRequest)
+                        {
+                            <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                        }
+                        Create Request
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 @if (isLoading)
 {
     <div class="text-center my-4">
@@ -175,6 +255,18 @@ else
     private StandingTeeTimeStatus? statusFilter;
 
     private IReadOnlyList<StandingTeeTime>? allRequests;
+    private List<MemberShipInfo> allMembers = [];
+    private List<MemberShipInfo> shareholderMembers = [];
+
+    private int selectedBookingMemberId;
+    private DayOfWeek createRequestedDayOfWeek = DayOfWeek.Saturday;
+    private string createRequestedTimeStr = "08:00";
+    private int createToleranceMinutes = 30;
+    private int? createPriority;
+    private string createStartDateStr = DateOnly.FromDateTime(DateTime.Today).ToString("yyyy-MM-dd");
+    private string createEndDateStr = DateOnly.FromDateTime(DateTime.Today.AddMonths(6)).ToString("yyyy-MM-dd");
+    private List<int> createAdditionalPlayerIds = [0, 0, 0];
+    private bool isCreatingRequest;
 
     private IReadOnlyList<StandingTeeTime> FilteredRequests =>
         allRequests is null ? [] :
@@ -200,6 +292,15 @@ else
         try
         {
             allRequests = await StandingTeeTimeService.GetAllAsync();
+            allMembers = await DbContext.MemberShips
+                .AsNoTracking()
+                .OrderBy(m => m.User.LastName)
+                .ThenBy(m => m.User.FirstName)
+                .ToListAsync();
+
+            shareholderMembers = allMembers
+                .Where(m => string.Equals(m.MembershipLevel.ShortCode, "SH", StringComparison.OrdinalIgnoreCase))
+                .ToList();
         }
         catch (Exception ex)
         {
@@ -227,6 +328,120 @@ else
 
     private void OnApprovedTimeChanged(ChangeEventArgs e) =>
         approvedTimeStr = e.Value?.ToString() ?? "08:00";
+
+    private void OnBookingMemberChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var memberId))
+        {
+            selectedBookingMemberId = memberId;
+        }
+    }
+
+    private void OnCreateTimeChanged(ChangeEventArgs e) =>
+        createRequestedTimeStr = e.Value?.ToString() ?? "08:00";
+
+    private void OnCreateStartDateChanged(ChangeEventArgs e) =>
+        createStartDateStr = e.Value?.ToString() ?? string.Empty;
+
+    private void OnCreateEndDateChanged(ChangeEventArgs e) =>
+        createEndDateStr = e.Value?.ToString() ?? string.Empty;
+
+    private void OnCreatePlayerChanged(int index, ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var memberId))
+        {
+            createAdditionalPlayerIds[index] = memberId;
+        }
+    }
+
+    private async Task CreateStandingRequestAsync()
+    {
+        errorMessage = null;
+        successMessage = null;
+
+        if (selectedBookingMemberId <= 0)
+        {
+            errorMessage = "Please select a booking shareholder member.";
+            return;
+        }
+
+        var bookingMember = shareholderMembers.FirstOrDefault(m => m.Id == selectedBookingMemberId);
+        if (bookingMember is null)
+        {
+            errorMessage = "Selected booking member is invalid. Only shareholders may be selected.";
+            return;
+        }
+
+        if (!TimeOnly.TryParse(createRequestedTimeStr, out var requestedTime))
+        {
+            errorMessage = "Please enter a valid requested time.";
+            return;
+        }
+
+        if (!DateOnly.TryParse(createStartDateStr, out var startDate) || !DateOnly.TryParse(createEndDateStr, out var endDate))
+        {
+            errorMessage = "Please enter valid start and end dates.";
+            return;
+        }
+
+        var playerIds = createAdditionalPlayerIds.Where(id => id > 0).Distinct().ToList();
+        if (playerIds.Count != 3)
+        {
+            errorMessage = "Please select exactly 3 unique additional players.";
+            return;
+        }
+
+        if (playerIds.Contains(selectedBookingMemberId))
+        {
+            errorMessage = "Booking member cannot also be selected as an additional player.";
+            return;
+        }
+
+        var players = allMembers.Where(m => playerIds.Contains(m.Id)).ToList();
+        if (players.Count != 3)
+        {
+            errorMessage = "One or more selected players are invalid.";
+            return;
+        }
+
+        isCreatingRequest = true;
+        try
+        {
+            var request = new StandingTeeTime
+            {
+                BookingMemberId = bookingMember.Id,
+                BookingMember = bookingMember,
+                RequestedDayOfWeek = createRequestedDayOfWeek,
+                RequestedTime = requestedTime,
+                ToleranceMinutes = createToleranceMinutes,
+                StartDate = startDate,
+                EndDate = endDate,
+                PriorityNumber = createPriority,
+                AdditionalParticipants = players
+            };
+
+            var (success, error) = await StandingTeeTimeService.SubmitRequestAsync(request);
+            if (!success)
+            {
+                errorMessage = error ?? "Unable to create standing tee time request.";
+                return;
+            }
+
+            successMessage = "Standing tee time request created.";
+            createAdditionalPlayerIds = [0, 0, 0];
+            createPriority = null;
+            await LoadDataAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to create standing tee time request from admin page");
+            errorMessage = "An unexpected error occurred while creating the request.";
+        }
+        finally
+        {
+            isCreatingRequest = false;
+        }
+    }
 
     private async Task ApproveAsync(int id)
     {

@@ -15,7 +15,7 @@ public class StandingTeeTimeService(IAppDbContext2 db, ILogger<StandingTeeTimeSe
     public async Task<IReadOnlyList<StandingTeeTime>> GetForMemberAsync(int memberId) =>
         await db.StandingTeeTimes
             .AsNoTracking()
-            .Where(s => s.BookingMemberId == memberId)
+            .Where(s => s.BookingMemberId == memberId && s.Status != StandingTeeTimeStatus.Cancelled)
             .OrderByDescending(s => s.Id)
             .ToListAsync();
 
@@ -73,7 +73,10 @@ public class StandingTeeTimeService(IAppDbContext2 db, ILogger<StandingTeeTimeSe
             return false;
         }
 
-        var request = await db.StandingTeeTimes.FindAsync(id);
+        var request = await db.StandingTeeTimes
+            .Include(s => s.BookingMember)
+            .Include(s => s.AdditionalParticipants)
+            .FirstOrDefaultAsync(s => s.Id == id);
         if (request is null)
         {
             logger.LogWarning("Approve requested for non-existent standing tee time {Id}.", id);
@@ -88,12 +91,153 @@ public class StandingTeeTimeService(IAppDbContext2 db, ILogger<StandingTeeTimeSe
 
         request.ApprovedTime = approvedTime;
         request.PriorityNumber = priorityNumber;
-        request.Status = StandingTeeTimeStatus.Approved;
+
+        var (createdCount, skippedCount) = await GenerateBookingsForApprovedRequestAsync(request, approvedTime);
+        request.Status = createdCount > 0
+            ? StandingTeeTimeStatus.Allocated
+            : StandingTeeTimeStatus.Unallocated;
 
         var saved = await db.SaveChangesAsync() > 0;
         if (saved)
-            logger.LogInformation("Standing tee time {Id} approved with time {ApprovedTime}.", id, approvedTime);
+            logger.LogInformation(
+                "Standing tee time {Id} approved with time {ApprovedTime}. Generated {CreatedCount} booking(s), skipped {SkippedCount} occurrence(s).",
+                id,
+                approvedTime,
+                createdCount,
+                skippedCount);
         return saved;
+    }
+
+    private async Task<(int CreatedCount, int SkippedCount)> GenerateBookingsForApprovedRequestAsync(
+        StandingTeeTime request,
+        TimeOnly approvedTime)
+    {
+        var additionalParticipantIds = request.AdditionalParticipants.Select(p => p.Id).ToList();
+
+        var participants = await db.MemberShips
+            .Where(m => additionalParticipantIds.Contains(m.Id))
+            .ToListAsync();
+
+        if (participants.Count != additionalParticipantIds.Count)
+        {
+            logger.LogWarning(
+                "Standing tee time {Id} approval could not resolve all additional participants. Expected {Expected}, resolved {Actual}.",
+                request.Id,
+                additionalParticipantIds.Count,
+                participants.Count);
+            return (0, 0);
+        }
+
+        var bookingMember = await db.MemberShips.FirstOrDefaultAsync(m => m.Id == request.BookingMemberId);
+        if (bookingMember is null)
+        {
+            logger.LogWarning("Standing tee time {Id} approval failed to resolve booking member {MemberId}.", request.Id, request.BookingMemberId);
+            return (0, 0);
+        }
+
+        var startDate = request.StartDate > DateOnly.FromDateTime(DateTime.Today)
+            ? request.StartDate
+            : DateOnly.FromDateTime(DateTime.Today);
+
+        if (startDate > request.EndDate)
+        {
+            return (0, 0);
+        }
+
+        var occurrenceDates = EnumerateOccurrenceDates(startDate, request.EndDate, request.RequestedDayOfWeek).ToList();
+        var createdCount = 0;
+        var skippedCount = 0;
+
+        foreach (var date in occurrenceDates)
+        {
+            var requestedDateTime = DateTime.SpecifyKind(date.ToDateTime(approvedTime), DateTimeKind.Unspecified);
+            var windowStart = requestedDateTime.AddMinutes(-request.ToleranceMinutes);
+            var windowEnd = requestedDateTime.AddMinutes(request.ToleranceMinutes);
+
+            var candidateSlots = await db.TeeTimeSlots
+                .Where(s => s.Start >= windowStart && s.Start <= windowEnd)
+                .ToListAsync();
+
+            var orderedSlots = candidateSlots
+                .OrderBy(slot => Math.Abs((slot.Start - requestedDateTime).TotalMinutes))
+                .ThenBy(slot => slot.Start)
+                .ToList();
+
+            var allocatedSlot = await FindAllocatableSlotAsync(
+                orderedSlots,
+                request,
+                additionalParticipantIds.ToHashSet());
+
+            if (allocatedSlot is null)
+            {
+                skippedCount++;
+                continue;
+            }
+
+            db.TeeTimeBookings.Add(new TeeTimeBooking
+            {
+                TeeTimeSlotStart = allocatedSlot.Start,
+                TeeTimeSlot = allocatedSlot,
+                BookingMemberId = bookingMember.Id,
+                BookingMember = bookingMember,
+                StandingTeeTimeId = request.Id,
+                StandingTeeTime = request,
+                AdditionalParticipants = [.. participants]
+            });
+
+            createdCount++;
+        }
+
+        return (createdCount, skippedCount);
+    }
+
+    private async Task<TeeTimeSlot?> FindAllocatableSlotAsync(
+        IReadOnlyList<TeeTimeSlot> orderedSlots,
+        StandingTeeTime request,
+        ISet<int> additionalParticipantIds)
+    {
+        foreach (var slot in orderedSlots)
+        {
+            var bookingsAtSlot = await db.TeeTimeBookings
+                .Include(b => b.AdditionalParticipants)
+                .Where(b => b.TeeTimeSlotStart == slot.Start)
+                .ToListAsync();
+
+            var totalBookedSpots = bookingsAtSlot.Sum(b => b.ParticipantCount);
+            if (totalBookedSpots + request.ParticipantCount > 4)
+            {
+                continue;
+            }
+
+            var existingParticipantIds = bookingsAtSlot
+                .SelectMany(b => b.ParticipantIds)
+                .ToHashSet();
+
+            if (existingParticipantIds.Contains(request.BookingMemberId))
+            {
+                continue;
+            }
+
+            if (additionalParticipantIds.Any(existingParticipantIds.Contains))
+            {
+                continue;
+            }
+
+            return slot;
+        }
+
+        return null;
+    }
+
+    private static IEnumerable<DateOnly> EnumerateOccurrenceDates(DateOnly startDate, DateOnly endDate, DayOfWeek dayOfWeek)
+    {
+        for (var date = startDate; date <= endDate; date = date.AddDays(1))
+        {
+            if (date.DayOfWeek == dayOfWeek)
+            {
+                yield return date;
+            }
+        }
     }
 
     /// <summary>

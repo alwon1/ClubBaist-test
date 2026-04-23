@@ -1,0 +1,87 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - link "Club BAIST" [ref=e6] [cursor=pointer]:
+      - /url: ""
+    - navigation [ref=e8]:
+      - link "Home" [ref=e10] [cursor=pointer]:
+        - /url: ""
+        - text: Home
+      - link "Applications" [ref=e13] [cursor=pointer]:
+        - /url: membership/applications
+        - text: Applications
+      - link "committee@clubbaist.com" [ref=e16] [cursor=pointer]:
+        - /url: Account/Manage
+        - text: committee@clubbaist.com
+      - button "Logout" [ref=e20] [cursor=pointer]: Logout
+  - main [ref=e22]:
+    - link "About" [ref=e24] [cursor=pointer]:
+      - /url: https://learn.microsoft.com/aspnet/core/
+    - article [ref=e25]:
+      - generic [ref=e225]:
+        - generic [ref=e226]:
+          - heading "Review Application" [level=2] [ref=e227]
+          - link "Back to Inbox" [ref=e228] [cursor=pointer]:
+            - /url: /membership/applications
+        - generic [ref=e229]:
+          - generic [ref=e231]:
+            - generic [ref=e232]:
+              - heading "Applicant Details" [level=5] [ref=e233]
+              - generic [ref=e234]: Submitted
+            - generic [ref=e235]:
+              - generic [ref=e236]:
+                - generic [ref=e237]:
+                  - strong [ref=e238]: "First Name:"
+                  - paragraph [ref=e239]: Sam
+                - generic [ref=e240]:
+                  - strong [ref=e241]: "Last Name:"
+                  - paragraph [ref=e242]: Demo
+              - generic [ref=e243]:
+                - generic [ref=e244]:
+                  - strong [ref=e245]: "Date of Birth:"
+                  - paragraph [ref=e246]: 1988-05-12
+                - generic [ref=e247]:
+                  - strong [ref=e248]: "Email:"
+                  - paragraph [ref=e249]: sam.demo.20260422@example.com
+              - generic [ref=e250]:
+                - generic [ref=e251]:
+                  - strong [ref=e252]: "Phone:"
+                  - paragraph [ref=e253]: (587) 555-9876
+                - generic [ref=e254]:
+                  - strong [ref=e255]: "Alternate Phone:"
+                  - paragraph [ref=e256]: (587) 555-0000
+              - generic [ref=e257]:
+                - generic [ref=e258]:
+                  - strong [ref=e259]: "Address:"
+                  - paragraph [ref=e260]: 456 Birdie Ave
+                - generic [ref=e261]:
+                  - strong [ref=e262]: "Postal Code:"
+                  - paragraph [ref=e263]: T3A 2B5
+              - generic [ref=e264]:
+                - generic [ref=e265]:
+                  - strong [ref=e266]: "Occupation:"
+                  - paragraph [ref=e267]: Software Engineer
+                - generic [ref=e268]:
+                  - strong [ref=e269]: "Company:"
+                  - paragraph [ref=e270]: Acme Corp
+              - generic [ref=e272]:
+                - strong [ref=e273]: "Requested Level:"
+                - paragraph [ref=e274]: Associate
+              - generic [ref=e275]:
+                - generic [ref=e276]:
+                  - strong [ref=e277]: "Sponsor 1:"
+                  - paragraph [ref=e278]: Alice Shareholder (SH-0001)
+                - generic [ref=e279]:
+                  - strong [ref=e280]: "Sponsor 2:"
+                  - paragraph [ref=e281]: Bob Shareholder (SH-0002)
+          - generic [ref=e283]:
+            - heading "Make Decision" [level=5] [ref=e285]
+            - generic [ref=e286]:
+              - generic [ref=e287]:
+                - combobox "New Status" [ref=e288]:
+                  - option "-- Select Status --"
+                  - option "OnHold" [selected]
+                  - option "Waitlisted"
+                  - option "Accepted"
+                  - option "Denied"
+                - generic: New Status
+              - button "Submit Decision" [disabled]

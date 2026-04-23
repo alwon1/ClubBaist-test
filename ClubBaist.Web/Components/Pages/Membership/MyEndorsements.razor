@@ -1,0 +1,198 @@
+@page "/membership/endorsements"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = AppRoles.Member)]
+
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.EntityFrameworkCore
+@using ClubBaist.Domain2
+@using ClubBaist.Domain2.Entities.Membership
+@using ClubBaist.Services2
+@using ClubBaist.Services2.Membership.Applications
+
+@inject IAppDbContext2 DbContext
+@inject AuthenticationStateProvider AuthStateProvider
+@inject MembershipApplicationService ApplicationService
+@inject ILogger<MyEndorsements> Logger
+
+<PageTitle>My Sponsorship Endorsements</PageTitle>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>My Sponsorship Endorsements</h2>
+        <a href="/" class="btn btn-outline-secondary">Back to Home</a>
+    </div>
+
+    @if (!string.IsNullOrEmpty(_message))
+    {
+        <div class="alert @(_isError ? "alert-danger" : "alert-success")" role="alert">
+            @_message
+        </div>
+    }
+
+    @if (_loading)
+    {
+        <div class="d-flex justify-content-center my-4">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else if (_notShareholder)
+    {
+        <div class="alert alert-warning" role="alert">
+            Endorsement confirmation is available to shareholder members only.
+        </div>
+    }
+    else if (_applications.Count == 0)
+    {
+        <div class="alert alert-info" role="alert">
+            You have no applications awaiting your endorsement.
+        </div>
+    }
+    else
+    {
+        <div class="card">
+            <div class="card-body p-0">
+                <table class="table table-striped mb-0">
+                    <thead>
+                        <tr>
+                            <th>Application</th>
+                            <th>Applicant</th>
+                            <th>Status</th>
+                            <th>Your Endorsement</th>
+                            <th class="text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var app in _applications)
+                        {
+                            var youAreSponsor1 = _memberId == app.Sponsor1MemberId;
+                            var youConfirmed = youAreSponsor1 ? app.Sponsor1EndorsementConfirmed : app.Sponsor2EndorsementConfirmed;
+                            var bothConfirmed = app.Sponsor1EndorsementConfirmed && app.Sponsor2EndorsementConfirmed;
+                            var canConfirm = !youConfirmed && app.Status is not (ApplicationStatus.Accepted or ApplicationStatus.Denied);
+
+                            <tr>
+                                <td>#@app.Id</td>
+                                <td>@app.FirstName @app.LastName</td>
+                                <td>
+                                    <span class="badge @UiHelpers.GetStatusBadgeClass(app.Status)">@app.Status</span>
+                                </td>
+                                <td>
+                                    <span class="badge @(youConfirmed ? "bg-success" : "bg-secondary")">
+                                        @(youConfirmed ? "Confirmed" : "Pending")
+                                    </span>
+                                    @if (bothConfirmed)
+                                    {
+                                        <span class="badge bg-success ms-1">Fully Confirmed</span>
+                                    }
+                                </td>
+                                <td class="text-end">
+                                    @if (canConfirm)
+                                    {
+                                        <button class="btn btn-sm btn-primary"
+                                                @onclick="() => ConfirmAsync(app.Id)">
+                                            Confirm Endorsement
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">No action required</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private bool _loading = true;
+    private bool _notShareholder;
+    private int _memberId;
+    private string? _message;
+    private bool _isError;
+    private List<MembershipApplication> _applications = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _message = null;
+        _isError = false;
+
+        try
+        {
+            var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+            var userIdText = auth.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(userIdText, out var userId))
+            {
+                _isError = true;
+                _message = "Unable to identify the signed-in member.";
+                return;
+            }
+
+            var member = await DbContext.MemberShips
+                .Include(m => m.MembershipLevel)
+                .FirstOrDefaultAsync(m => m.UserId == userId);
+
+            if (member is null)
+            {
+                _isError = true;
+                _message = "No membership record was found for your account.";
+                return;
+            }
+
+            _memberId = member.Id;
+            _notShareholder = member.MembershipLevel.MemberType != MemberType.Shareholder;
+            if (_notShareholder)
+            {
+                _applications = [];
+                return;
+            }
+
+            _applications = await DbContext.MembershipApplications
+                .Where(a => a.Sponsor1MemberId == _memberId || a.Sponsor2MemberId == _memberId)
+                .Where(a => a.Status != ApplicationStatus.Accepted && a.Status != ApplicationStatus.Denied)
+                .OrderByDescending(a => a.Id)
+                .ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load endorsement applications for member {MemberId}", _memberId);
+            _isError = true;
+            _message = "Unable to load endorsement requests right now.";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task ConfirmAsync(int applicationId)
+    {
+        try
+        {
+            var success = await ApplicationService.ConfirmSponsorEndorsementAsync(applicationId, _memberId);
+            _isError = !success;
+            _message = success
+                ? $"Your endorsement for application #{applicationId} has been recorded."
+                : "Unable to confirm this endorsement.";
+
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to confirm endorsement for application {ApplicationId}", applicationId);
+            _isError = true;
+            _message = "An unexpected error occurred while confirming endorsement.";
+        }
+    }
+}

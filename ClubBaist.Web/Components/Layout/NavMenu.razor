@@ -32,6 +32,11 @@
                 <AuthorizeView Roles="@AppRoles.Member" Context="memberReservationsContext">
                     <Authorized>
                         <div class="nav-item px-3">
+                            <NavLink class="nav-link" href="membership/endorsements">
+                                <span class="bi bi-check2-square" aria-hidden="true"></span> My Endorsements
+                            </NavLink>
+                        </div>
+                        <div class="nav-item px-3">
                             <NavLink class="nav-link" href="teetimes/my">
                                 <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> My Reservations
                             </NavLink>
@@ -120,7 +125,7 @@
                     </NavLink>
                 </div>
                 <div class="nav-item px-3">
-                    <form action="Account/Logout" method="post">
+                    <form action="Account/Logout" method="post" data-enhance="false">
                         <AntiforgeryToken />
                         <input type="hidden" name="ReturnUrl" value="@currentUrl" />
                         <button type="submit" class="nav-link">

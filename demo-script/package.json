@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "record": "node record-demo.mjs"
+    "record": "node record-demo.mjs",
+    "record:detailed": "node record-detailed-demo.mjs"
   },
   "dependencies": {
     "playwright": "1.49.0"

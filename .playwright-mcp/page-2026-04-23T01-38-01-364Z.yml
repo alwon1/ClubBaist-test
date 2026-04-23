@@ -1,0 +1,64 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - link "Club BAIST" [ref=e6] [cursor=pointer]:
+      - /url: ""
+    - navigation [ref=e8]:
+      - link "Home" [ref=e10] [cursor=pointer]:
+        - /url: ""
+        - text: Home
+      - link "Tee Times" [ref=e13] [cursor=pointer]:
+        - /url: teetimes
+        - text: Tee Times
+      - link "My Reservations" [ref=e16] [cursor=pointer]:
+        - /url: teetimes/my
+        - text: My Reservations
+      - link "My Scores" [ref=e19] [cursor=pointer]:
+        - /url: scores/my
+        - text: My Scores
+      - link "My Standing Requests" [ref=e22] [cursor=pointer]:
+        - /url: teetimes/standing/my
+        - text: My Standing Requests
+      - link "shareholder1@clubbaist.com" [ref=e25] [cursor=pointer]:
+        - /url: Account/Manage
+        - text: shareholder1@clubbaist.com
+      - button "Logout" [ref=e29] [cursor=pointer]: Logout
+  - main [ref=e31]:
+    - link "About" [ref=e33] [cursor=pointer]:
+      - /url: https://learn.microsoft.com/aspnet/core/
+    - article [ref=e34]:
+      - generic [ref=e85]:
+        - heading "My Standing Tee Time Requests" [level=3] [ref=e86]
+        - link "New Request" [ref=e87] [cursor=pointer]:
+          - /url: /teetimes/standing/request
+      - table [ref=e88]:
+        - rowgroup [ref=e89]:
+          - row "Day / Time Season Players Status Approved Time / Priority Actions" [ref=e90]:
+            - columnheader "Day / Time" [ref=e91]:
+              - button "Day / Time" [ref=e93] [cursor=pointer]:
+                - generic [ref=e94]: Day / Time
+            - columnheader "Season" [ref=e96]:
+              - generic [ref=e99]: Season
+            - columnheader "Players" [ref=e100]:
+              - generic [ref=e103]: Players
+            - columnheader "Status" [ref=e104]:
+              - button "Status" [ref=e106] [cursor=pointer]:
+                - generic [ref=e107]: Status
+            - columnheader "Approved Time / Priority" [ref=e109]:
+              - generic [ref=e112]: Approved Time / Priority
+            - columnheader "Actions" [ref=e113]:
+              - generic [ref=e116]: Actions
+        - rowgroup [ref=e117]:
+          - row "Saturday 8:00 AM (±30 min) Apr 22, 2026 – Oct 22, 2026 Alice Shareholder, Bob Shareholder, Carol Shareholder, Diana Silver Draft — Cancel Request" [ref=e118]:
+            - cell "Saturday 8:00 AM (±30 min)" [ref=e119]:
+              - strong [ref=e120]: Saturday
+              - text: 8:00 AM
+              - generic [ref=e121]: (±30 min)
+            - cell "Apr 22, 2026 – Oct 22, 2026" [ref=e122]
+            - cell "Alice Shareholder, Bob Shareholder, Carol Shareholder, Diana Silver" [ref=e123]:
+              - generic [ref=e124]: Alice Shareholder
+              - text: ", Bob Shareholder, Carol Shareholder, Diana Silver"
+            - cell "Draft" [ref=e125]:
+              - generic [ref=e126]: Draft
+            - cell "—" [ref=e127]
+            - cell "Cancel Request" [ref=e128]:
+              - button "Cancel Request" [ref=e129] [cursor=pointer]

@@ -49,7 +49,6 @@ public class Program
             .AddDefaultTokenProviders();
 
         builder.Services.AddSingleton<IEmailSender<ClubBaistUser>, IdentityNoOpEmailSender>();
-        builder.Services.AddHostedService<ClubBaist.Web.Data.DatabaseInitializerService>();
 
         // Domain services
         builder.Services.AddScoped<IAppDbContext2>(sp => sp.GetRequiredService<AppDbContext>());
@@ -68,6 +67,8 @@ public class Program
 
         var app = builder.Build();
 
+        await DatabaseInitializerService.InitializeAsync(app.Services, app.Lifetime.ApplicationStopping);
+
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())
         {
@@ -84,6 +85,9 @@ public class Program
         {
             app.UseHttpsRedirection();
         }
+
+        app.UseAuthentication();
+        app.UseAuthorization();
 
         app.UseAntiforgery();
 

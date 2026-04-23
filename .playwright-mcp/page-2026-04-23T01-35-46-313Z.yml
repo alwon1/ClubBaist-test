@@ -1,0 +1,66 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - link "Club BAIST" [ref=e6] [cursor=pointer]:
+      - /url: ""
+    - navigation [ref=e8]:
+      - link "Home" [ref=e10] [cursor=pointer]:
+        - /url: ""
+        - text: Home
+      - link "Tee Times" [ref=e13] [cursor=pointer]:
+        - /url: teetimes
+        - text: Tee Times
+      - link "My Reservations" [ref=e16] [cursor=pointer]:
+        - /url: teetimes/my
+        - text: My Reservations
+      - link "My Scores" [ref=e19] [cursor=pointer]:
+        - /url: scores/my
+        - text: My Scores
+      - link "My Standing Requests" [ref=e22] [cursor=pointer]:
+        - /url: teetimes/standing/my
+        - text: My Standing Requests
+      - link "shareholder1@clubbaist.com" [ref=e25] [cursor=pointer]:
+        - /url: Account/Manage
+        - text: shareholder1@clubbaist.com
+      - button "Logout" [ref=e29] [cursor=pointer]: Logout
+  - main [ref=e31]:
+    - link "About" [ref=e33] [cursor=pointer]:
+      - /url: https://learn.microsoft.com/aspnet/core/
+    - article [ref=e34]:
+      - heading "Manage your account" [active] [level=1] [ref=e57]
+      - generic [ref=e35]:
+        - heading "Change your account settings" [level=2] [ref=e58]
+        - separator [ref=e59]
+        - generic [ref=e38]:
+          - list [ref=e60]:
+            - listitem [ref=e61]:
+              - link "Profile" [ref=e62] [cursor=pointer]:
+                - /url: Account/Manage
+            - listitem [ref=e63]:
+              - link "Email" [ref=e64] [cursor=pointer]:
+                - /url: Account/Manage/Email
+            - listitem [ref=e65]:
+              - link "Password" [ref=e66] [cursor=pointer]:
+                - /url: Account/Manage/ChangePassword
+            - listitem [ref=e67]:
+              - link "Two-factor authentication" [ref=e68] [cursor=pointer]:
+                - /url: Account/Manage/TwoFactorAuthentication
+            - listitem [ref=e69]:
+              - link "Passkeys" [ref=e70] [cursor=pointer]:
+                - /url: Account/Manage/Passkeys
+            - listitem [ref=e71]:
+              - link "Personal data" [ref=e72] [cursor=pointer]:
+                - /url: Account/Manage/PersonalData
+          - generic [ref=e45]:
+            - heading "Profile" [level=3] [ref=e73]
+            - generic [ref=e74]:
+              - generic [ref=e75]:
+                - textbox "Username" [disabled] [ref=e76]:
+                  - /placeholder: Choose your username.
+                  - text: shareholder1@clubbaist.com
+                - generic: Username
+              - generic [ref=e77]:
+                - textbox "Phone number" [ref=e78]:
+                  - /placeholder: Enter your phone number
+                  - text: (403) 555-0000
+                - generic: Phone number
+              - button "Save" [ref=e79] [cursor=pointer]

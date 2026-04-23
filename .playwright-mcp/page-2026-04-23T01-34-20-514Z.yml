@@ -1,0 +1,100 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - link "Club BAIST" [ref=e6] [cursor=pointer]:
+      - /url: ""
+    - navigation [ref=e8]:
+      - link "Home" [ref=e10] [cursor=pointer]:
+        - /url: ""
+        - text: Home
+      - link "Applications" [active] [ref=e13] [cursor=pointer]:
+        - /url: membership/applications
+        - text: Applications
+      - link "committee@clubbaist.com" [ref=e16] [cursor=pointer]:
+        - /url: Account/Manage
+        - text: committee@clubbaist.com
+      - button "Logout" [ref=e20] [cursor=pointer]: Logout
+  - main [ref=e22]:
+    - link "About" [ref=e24] [cursor=pointer]:
+      - /url: https://learn.microsoft.com/aspnet/core/
+    - article [ref=e25]:
+      - generic [ref=e149]:
+        - heading "Membership Application Inbox" [level=2] [ref=e150]
+        - generic [ref=e153]:
+          - generic [ref=e155]:
+            - combobox "Filter by Status" [ref=e156]:
+              - option "All Actionable" [selected]
+              - option "Submitted"
+              - option "OnHold"
+              - option "Waitlisted"
+            - generic: Filter by Status
+          - button "Search" [ref=e159] [cursor=pointer]
+        - table [ref=e161]:
+          - rowgroup [ref=e162]:
+            - row "First Name Last Name Email Requested Level Status Action" [ref=e163]:
+              - columnheader "First Name" [ref=e164]
+              - columnheader "Last Name" [ref=e165]
+              - columnheader "Email" [ref=e166]
+              - columnheader "Requested Level" [ref=e167]
+              - columnheader "Status" [ref=e168]
+              - columnheader "Action" [ref=e169]
+          - rowgroup [ref=e170]:
+            - row "Frank Pending frank.pending@example.com Associate Submitted Review" [ref=e171]:
+              - cell "Frank" [ref=e172]
+              - cell "Pending" [ref=e173]
+              - cell "frank.pending@example.com" [ref=e174]
+              - cell "Associate" [ref=e175]
+              - cell "Submitted" [ref=e176]:
+                - generic [ref=e177]: Submitted
+              - cell "Review" [ref=e178]:
+                - link "Review" [ref=e179] [cursor=pointer]:
+                  - /url: /membership/applications/1
+            - row "Grace OnHold grace.onhold@example.com Silver OnHold Review" [ref=e180]:
+              - cell "Grace" [ref=e181]
+              - cell "OnHold" [ref=e182]
+              - cell "grace.onhold@example.com" [ref=e183]
+              - cell "Silver" [ref=e184]
+              - cell "OnHold" [ref=e185]:
+                - generic [ref=e186]: OnHold
+              - cell "Review" [ref=e187]:
+                - link "Review" [ref=e188] [cursor=pointer]:
+                  - /url: /membership/applications/2
+            - row "Henry Waitlist henry.waitlist@example.com Associate Waitlisted Review" [ref=e189]:
+              - cell "Henry" [ref=e190]
+              - cell "Waitlist" [ref=e191]
+              - cell "henry.waitlist@example.com" [ref=e192]
+              - cell "Associate" [ref=e193]
+              - cell "Waitlisted" [ref=e194]:
+                - generic [ref=e195]: Waitlisted
+              - cell "Review" [ref=e196]:
+                - link "Review" [ref=e197] [cursor=pointer]:
+                  - /url: /membership/applications/3
+            - row "Iris Submitted iris.submitted@example.com Bronze Submitted Review" [ref=e198]:
+              - cell "Iris" [ref=e199]
+              - cell "Submitted" [ref=e200]
+              - cell "iris.submitted@example.com" [ref=e201]
+              - cell "Bronze" [ref=e202]
+              - cell "Submitted" [ref=e203]:
+                - generic [ref=e204]: Submitted
+              - cell "Review" [ref=e205]:
+                - link "Review" [ref=e206] [cursor=pointer]:
+                  - /url: /membership/applications/4
+            - row "Jack Waitlist jack.waitlist@example.com Silver Waitlisted Review" [ref=e207]:
+              - cell "Jack" [ref=e208]
+              - cell "Waitlist" [ref=e209]
+              - cell "jack.waitlist@example.com" [ref=e210]
+              - cell "Silver" [ref=e211]
+              - cell "Waitlisted" [ref=e212]:
+                - generic [ref=e213]: Waitlisted
+              - cell "Review" [ref=e214]:
+                - link "Review" [ref=e215] [cursor=pointer]:
+                  - /url: /membership/applications/5
+            - row "Sam Demo sam.demo.20260422@example.com Associate Submitted Review" [ref=e216]:
+              - cell "Sam" [ref=e217]
+              - cell "Demo" [ref=e218]
+              - cell "sam.demo.20260422@example.com" [ref=e219]
+              - cell "Associate" [ref=e220]
+              - cell "Submitted" [ref=e221]:
+                - generic [ref=e222]: Submitted
+              - cell "Review" [ref=e223]:
+                - link "Review" [ref=e224] [cursor=pointer]:
+                  - /url: /membership/applications/6

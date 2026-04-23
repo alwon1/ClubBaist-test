@@ -129,7 +129,7 @@
                                 <option value="">-- Select Level --</option>
                                 @foreach (var level in _levels)
                                 {
-                                    <option value="@level.Id">@level.Name</option>
+                                    <option value="@level.Id">@level.Name (@level.MemberType)</option>
                                 }
                             </InputSelect>
                             <label for="membershipLevel">Membership Level</label>
@@ -276,12 +276,13 @@
                 return;
             }
 
-            // Assign non-member roles, validating each result
-            var nonMemberRoles = new List<string>();
-            if (_model.IsAdmin) nonMemberRoles.Add(AppRoles.Admin);
-            if (_model.IsMembershipCommittee) nonMemberRoles.Add(AppRoles.MembershipCommittee);
+            // Assign selected roles, validating each result
+            var selectedRoles = new List<string>();
+            if (_model.IsAdmin) selectedRoles.Add(AppRoles.Admin);
+            if (_model.IsMembershipCommittee) selectedRoles.Add(AppRoles.MembershipCommittee);
+            if (_model.IsMember) selectedRoles.Add(AppRoles.Member);
 
-            foreach (var role in nonMemberRoles)
+            foreach (var role in selectedRoles.Where(role => role != AppRoles.Member))
             {
                 var roleResult = await UserManager.AddToRoleAsync(user, role);
                 if (!roleResult.Succeeded)

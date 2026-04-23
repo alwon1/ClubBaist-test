@@ -36,6 +36,48 @@ public class MembershipApplicationService(
         return await db.SaveChangesAsync() > 0;
     }
 
+    public async Task<bool> ConfirmSponsorEndorsementAsync(int applicationId, int sponsorMemberId)
+    {
+        var application = await db.MembershipApplications.FindAsync(applicationId);
+        if (application is null)
+            return false;
+
+        if (application.Status is ApplicationStatus.Accepted or ApplicationStatus.Denied)
+            return false;
+
+        var now = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Unspecified);
+        var changed = false;
+
+        if (application.Sponsor1MemberId == sponsorMemberId)
+        {
+            if (!application.Sponsor1EndorsementConfirmed)
+            {
+                application.Sponsor1EndorsementConfirmed = true;
+                application.Sponsor1EndorsementConfirmedAt = now;
+                changed = true;
+            }
+        }
+        else if (application.Sponsor2MemberId == sponsorMemberId)
+        {
+            if (!application.Sponsor2EndorsementConfirmed)
+            {
+                application.Sponsor2EndorsementConfirmed = true;
+                application.Sponsor2EndorsementConfirmedAt = now;
+                changed = true;
+            }
+        }
+        else
+        {
+            logger.LogWarning("Member {SponsorMemberId} attempted to confirm endorsement for unrelated application {ApplicationId}.", sponsorMemberId, applicationId);
+            return false;
+        }
+
+        if (!changed)
+            return true;
+
+        return await db.SaveChangesAsync() > 0;
+    }
+
     public async Task<(bool Success, string? GeneratedPassword)> ApproveMembershipApplicationAsync(int applicationId, int membershipLevelId)
     {
         var strategy = db.CreateExecutionStrategy();

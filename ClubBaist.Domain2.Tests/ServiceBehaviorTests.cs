@@ -141,6 +141,61 @@ public class MembershipApplicationServiceTests
         Assert.AreEqual(ApplicationStatus.OnHold, (await db.MembershipApplications.AsNoTracking().SingleAsync(item => item.Id == persisted.Id)).Status);
         Assert.IsFalse(await applicationService.SetApplicationStatusAsync(persisted.Id, ApplicationStatus.Accepted));
     }
+
+    [TestMethod]
+    public async Task ConfirmSponsorEndorsementAsync_WhenSponsorMatches_RecordsConfirmation()
+    {
+        await using var host = await Domain2TestHost.CreateAsync();
+        await using var scope = host.CreateScope();
+        var provider = scope.ServiceProvider;
+
+        var db = provider.GetRequiredService<AppDbContext>();
+        var userManager = provider.GetRequiredService<UserManager<ClubBaistUser>>();
+        var applicationService = provider.GetRequiredService<MembershipApplicationService>();
+
+        var shareholder = await Domain2TestData.CreateMembershipLevelAsync(db, "SH", "Shareholder");
+        var associate = await Domain2TestData.CreateMembershipLevelAsync(db, "AS", "Associate");
+        var sponsor1 = await Domain2TestData.CreateMemberAsync(userManager, db, shareholder, "sponsor1@test.com", "Sponsor", "One");
+        var sponsor2 = await Domain2TestData.CreateMemberAsync(userManager, db, shareholder, "sponsor2@test.com", "Sponsor", "Two");
+
+        var application = Domain2TestData.CreateApplication(associate, sponsor1.Id, sponsor2.Id, email: "endorse@test.com");
+        Assert.IsTrue(await applicationService.SubmitMembershipApplicationAsync(application));
+
+        var persisted = await db.MembershipApplications.SingleAsync(item => item.Email == "endorse@test.com");
+
+        Assert.IsTrue(await applicationService.ConfirmSponsorEndorsementAsync(persisted.Id, sponsor1.Id));
+        Assert.IsTrue(await applicationService.ConfirmSponsorEndorsementAsync(persisted.Id, sponsor2.Id));
+
+        var updated = await db.MembershipApplications.AsNoTracking().SingleAsync(item => item.Id == persisted.Id);
+        Assert.IsTrue(updated.Sponsor1EndorsementConfirmed);
+        Assert.IsTrue(updated.Sponsor2EndorsementConfirmed);
+        Assert.IsTrue(updated.Sponsor1EndorsementConfirmedAt.HasValue);
+        Assert.IsTrue(updated.Sponsor2EndorsementConfirmedAt.HasValue);
+    }
+
+    [TestMethod]
+    public async Task ConfirmSponsorEndorsementAsync_WhenMemberIsNotSponsor_ReturnsFalse()
+    {
+        await using var host = await Domain2TestHost.CreateAsync();
+        await using var scope = host.CreateScope();
+        var provider = scope.ServiceProvider;
+
+        var db = provider.GetRequiredService<AppDbContext>();
+        var userManager = provider.GetRequiredService<UserManager<ClubBaistUser>>();
+        var applicationService = provider.GetRequiredService<MembershipApplicationService>();
+
+        var shareholder = await Domain2TestData.CreateMembershipLevelAsync(db, "SH", "Shareholder");
+        var associate = await Domain2TestData.CreateMembershipLevelAsync(db, "AS", "Associate");
+        var sponsor1 = await Domain2TestData.CreateMemberAsync(userManager, db, shareholder, "sponsor1@test.com", "Sponsor", "One");
+        var sponsor2 = await Domain2TestData.CreateMemberAsync(userManager, db, shareholder, "sponsor2@test.com", "Sponsor", "Two");
+        var unrelated = await Domain2TestData.CreateMemberAsync(userManager, db, shareholder, "unrelated@test.com", "Unrelated", "Member");
+
+        var application = Domain2TestData.CreateApplication(associate, sponsor1.Id, sponsor2.Id, email: "notsponsor@test.com");
+        Assert.IsTrue(await applicationService.SubmitMembershipApplicationAsync(application));
+
+        var persisted = await db.MembershipApplications.SingleAsync(item => item.Email == "notsponsor@test.com");
+        Assert.IsFalse(await applicationService.ConfirmSponsorEndorsementAsync(persisted.Id, unrelated.Id));
+    }
 }
 
 [TestClass]

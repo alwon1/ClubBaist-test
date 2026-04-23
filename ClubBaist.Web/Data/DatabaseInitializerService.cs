@@ -5,7 +5,7 @@ namespace ClubBaist.Web.Data;
 
 internal sealed class DatabaseInitializerService(IServiceProvider services) : IHostedLifecycleService
 {
-    public async Task StartedAsync(CancellationToken cancellationToken)
+    public static async Task InitializeAsync(IServiceProvider services, CancellationToken cancellationToken)
     {
         await using var scope = services.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -20,6 +20,11 @@ internal sealed class DatabaseInitializerService(IServiceProvider services) : IH
         var storeCreated = await db.Database.EnsureCreatedAsync(cancellationToken);
         await db.EnsureSqlServerSnapshotIsolationAsync();
         await AppDbContextSeed.SeedAsync(scope.ServiceProvider, db, storeCreated, cancellationToken);
+    }
+
+    public async Task StartedAsync(CancellationToken cancellationToken)
+    {
+        await InitializeAsync(services, cancellationToken);
     }
 
     public Task StartingAsync(CancellationToken cancellationToken) => Task.CompletedTask;

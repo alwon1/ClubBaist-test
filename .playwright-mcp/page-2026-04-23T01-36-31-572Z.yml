@@ -1,0 +1,58 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - link "Club BAIST" [ref=e6] [cursor=pointer]:
+      - /url: ""
+    - navigation [ref=e8]:
+      - link "Home" [ref=e10] [cursor=pointer]:
+        - /url: ""
+        - text: Home
+      - link "Tee Times" [ref=e13] [cursor=pointer]:
+        - /url: teetimes
+        - text: Tee Times
+      - link "My Reservations" [ref=e16] [cursor=pointer]:
+        - /url: teetimes/my
+        - text: My Reservations
+      - link "My Scores" [ref=e19] [cursor=pointer]:
+        - /url: scores/my
+        - text: My Scores
+      - link "My Standing Requests" [ref=e22] [cursor=pointer]:
+        - /url: teetimes/standing/my
+        - text: My Standing Requests
+      - link "shareholder1@clubbaist.com" [ref=e25] [cursor=pointer]:
+        - /url: Account/Manage
+        - text: shareholder1@clubbaist.com
+      - button "Logout" [ref=e29] [cursor=pointer]: Logout
+  - main [ref=e31]:
+    - link "About" [ref=e33] [cursor=pointer]:
+      - /url: https://learn.microsoft.com/aspnet/core/
+    - article [ref=e34]:
+      - heading "My Reservations" [level=3] [ref=e2408]
+      - generic [ref=e2410]:
+        - checkbox "Show past reservations" [ref=e2411]
+        - generic [ref=e2412]: Show past reservations
+      - table [ref=e2413]:
+        - rowgroup [ref=e2414]:
+          - row "Date Time Players Status Actions" [ref=e2415]:
+            - columnheader "Date" [ref=e2416]:
+              - button "Date" [ref=e2418] [cursor=pointer]:
+                - generic [ref=e2419]: Date
+            - columnheader "Time" [ref=e2421]:
+              - button "Time" [ref=e2423] [cursor=pointer]:
+                - generic [ref=e2424]: Time
+            - columnheader "Players" [ref=e2426]:
+              - generic [ref=e2429]: Players
+            - columnheader "Status" [ref=e2430]:
+              - generic [ref=e2433]: Status
+            - columnheader "Actions" [ref=e2434]:
+              - generic [ref=e2437]: Actions
+        - rowgroup [ref=e2438]:
+          - row "Apr 23, 2026 7:00 AM 1 Upcoming View/Edit Cancel" [ref=e2439]:
+            - cell "Apr 23, 2026" [ref=e2440]
+            - cell "7:00 AM" [ref=e2441]
+            - cell "1" [ref=e2442]
+            - cell "Upcoming" [ref=e2443]:
+              - generic [ref=e2444]: Upcoming
+            - cell "View/Edit Cancel" [ref=e2445]:
+              - link "View/Edit" [ref=e2446] [cursor=pointer]:
+                - /url: /teetimes/reservation/6
+              - button "Cancel" [ref=e2447] [cursor=pointer]

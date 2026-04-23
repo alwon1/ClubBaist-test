@@ -1,0 +1,98 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - link "Club BAIST" [ref=e6] [cursor=pointer]:
+      - /url: ""
+    - navigation [ref=e8]:
+      - link "Home" [ref=e10] [cursor=pointer]:
+        - /url: ""
+        - text: Home
+      - link "Tee Times" [ref=e13] [cursor=pointer]:
+        - /url: teetimes
+        - text: Tee Times
+      - link "My Reservations" [ref=e16] [cursor=pointer]:
+        - /url: teetimes/my
+        - text: My Reservations
+      - link "My Scores" [ref=e19] [cursor=pointer]:
+        - /url: scores/my
+        - text: My Scores
+      - link "My Standing Requests" [ref=e22] [cursor=pointer]:
+        - /url: teetimes/standing/my
+        - text: My Standing Requests
+      - link "shareholder1@clubbaist.com" [ref=e25] [cursor=pointer]:
+        - /url: Account/Manage
+        - text: shareholder1@clubbaist.com
+      - button "Logout" [ref=e29] [cursor=pointer]: Logout
+  - main [ref=e31]:
+    - link "About" [ref=e33] [cursor=pointer]:
+      - /url: https://learn.microsoft.com/aspnet/core/
+    - article [ref=e34]:
+      - generic [ref=e35]:
+        - heading "Request a Standing Tee Time" [level=3] [ref=e36]
+        - link "My Standing Requests" [ref=e37] [cursor=pointer]:
+          - /url: /teetimes/standing/my
+      - generic [ref=e38]:
+        - strong [ref=e40]: Booking Member
+        - paragraph [ref=e42]:
+          - strong [ref=e43]: Alice Shareholder
+          - text: "— Member #SH-0001 (Shareholder)"
+      - generic [ref=e44]:
+        - strong [ref=e46]: Request Details
+        - generic [ref=e48]:
+          - generic [ref=e49]:
+            - generic [ref=e50]: Day of Week *
+            - combobox "Day of Week *" [ref=e51]:
+              - option "Sunday"
+              - option "Monday"
+              - option "Tuesday"
+              - option "Wednesday"
+              - option "Thursday"
+              - option "Friday"
+              - option "Saturday" [selected]
+          - generic [ref=e52]:
+            - generic [ref=e53]: Requested Time *
+            - textbox "Requested Time *" [ref=e54]: 08:00
+          - generic [ref=e55]:
+            - generic [ref=e56]: Tolerance (minutes)
+            - combobox "Tolerance (minutes)" [ref=e57]:
+              - option "0 min (exact)"
+              - option "±15 min"
+              - option "±30 min" [selected]
+              - option "±60 min"
+          - generic [ref=e58]:
+            - generic [ref=e59]: Start Date *
+            - textbox "Start Date *" [ref=e60]: 2026-04-22
+          - generic [ref=e61]:
+            - generic [ref=e62]: End Date *
+            - textbox "End Date *" [ref=e63]: 2026-10-22
+      - generic [ref=e64]:
+        - generic [ref=e65]:
+          - strong [ref=e66]: Additional Players
+          - text: (3 required — foursome)
+        - generic [ref=e67]:
+          - generic [ref=e70]:
+            - combobox "Player 2" [ref=e71]:
+              - option "-- Select Player --"
+              - option "BR-0005 - Evan Bronze"
+              - option "SH-0002 - Bob Shareholder" [selected]
+              - option "SH-0003 - Carol Shareholder"
+              - option "SV-0004 - Diana Silver"
+            - generic: Player 2
+          - generic [ref=e74]:
+            - combobox "Player 3" [ref=e75]:
+              - option "-- Select Player --" [selected]
+              - option "BR-0005 - Evan Bronze"
+              - option "SH-0002 - Bob Shareholder"
+              - option "SH-0003 - Carol Shareholder"
+              - option "SV-0004 - Diana Silver"
+            - generic: Player 3
+          - generic [ref=e78]:
+            - combobox "Player 4" [ref=e79]:
+              - option "-- Select Player --" [selected]
+              - option "BR-0005 - Evan Bronze"
+              - option "SH-0002 - Bob Shareholder"
+              - option "SH-0003 - Carol Shareholder"
+              - option "SV-0004 - Diana Silver"
+            - generic: Player 4
+      - button "Submit Request" [ref=e80] [cursor=pointer]
+      - link "Cancel" [ref=e81] [cursor=pointer]:
+        - /url: /

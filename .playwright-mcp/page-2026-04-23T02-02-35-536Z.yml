@@ -1,0 +1,1475 @@
+- generic [ref=e2]:
+  - generic "Aspire" [ref=e4]:
+    - link "Aspire" [ref=e5] [cursor=pointer]:
+      - /url: /
+      - generic:
+        - generic:
+          - generic:
+            - img
+  - banner [ref=e6]:
+    - generic [ref=e7]:
+      - link "ClubBaist" [ref=e9] [cursor=pointer]:
+        - /url: /
+        - generic:
+          - generic: ClubBaist
+      - generic "Aspire repo" [ref=e10]:
+        - link "Aspire repo" [ref=e11] [cursor=pointer]:
+          - /url: https://aka.ms/dotnet/aspire/repo
+          - generic:
+            - generic:
+              - img
+      - generic "Help" [ref=e12] [cursor=pointer]:
+        - button "Help" [ref=e13]:
+          - generic:
+            - generic:
+              - img
+      - generic "MCP Server" [ref=e14] [cursor=pointer]:
+        - button "MCP Server" [ref=e15]:
+          - generic:
+            - generic:
+              - img
+      - generic "Settings" [ref=e16] [cursor=pointer]:
+        - button "Settings" [ref=e17]:
+          - generic:
+            - generic:
+              - img
+  - navigation [ref=e18]:
+    - generic "Resources" [ref=e19]:
+      - link "Resources" [ref=e21] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e22]:
+          - img [ref=e23]
+          - generic [ref=e25]: Resources
+    - generic "Console" [ref=e26]:
+      - link "Console" [ref=e28] [cursor=pointer]:
+        - /url: /consolelogs
+        - generic [ref=e29]:
+          - img [ref=e30]
+          - generic [ref=e32]: Console
+    - generic "Structured" [ref=e33]:
+      - link "Structured" [ref=e35] [cursor=pointer]:
+        - /url: /structuredlogs
+        - generic [ref=e36]:
+          - img [ref=e37]
+          - generic [ref=e39]: Structured
+    - generic "Traces" [ref=e40]:
+      - link "Traces" [ref=e42] [cursor=pointer]:
+        - /url: /traces
+        - generic [ref=e43]:
+          - img [ref=e44]
+          - generic [ref=e46]: Traces
+    - generic "Metrics" [ref=e47]:
+      - link "Metrics" [ref=e49] [cursor=pointer]:
+        - /url: /metrics
+        - generic [ref=e50]:
+          - img [ref=e51]
+          - generic [ref=e53]: Metrics
+  - generic [ref=e56]:
+    - img [ref=e58]
+    - generic [ref=e60]:
+      - generic [ref=e61]: Update now
+      - text: Aspire 13.2.3 is available.
+      - generic "Link" [ref=e62]:
+        - link "Upgrade instructions" [ref=e63] [cursor=pointer]:
+          - /url: https://aka.ms/dotnet/aspire/update-latest
+          - generic:
+            - generic: Upgrade instructions
+    - generic [ref=e64]:
+      - generic "Alert action" [ref=e65] [cursor=pointer]:
+        - button "Alert action" [ref=e66]:
+          - generic:
+            - generic: Ignore
+      - img [ref=e67] [cursor=pointer]
+  - generic [ref=e70]:
+    - generic [ref=e1031]:
+      - img [ref=e1032]
+      - generic [ref=e1034]: web "Start" succeeded
+      - img [ref=e1036] [cursor=pointer]
+    - generic [ref=e72]:
+      - banner "Page toolbar" [ref=e73]:
+        - toolbar [ref=e74]:
+          - generic [ref=e75]:
+            - heading "Resources" [level=1] [ref=e76]
+            - generic [ref=e77]:
+              - generic:
+                - generic [ref=e79]:
+                  - img [ref=e82]
+                  - generic [ref=e84]:
+                    - searchbox [ref=e85]
+                    - button [ref=e87]:
+                      - img [ref=e89]
+                - generic "No filters" [ref=e91] [cursor=pointer]:
+                  - button "No filters" [ref=e92]:
+                    - generic:
+                      - generic:
+                        - img
+                - generic "View options" [ref=e93] [cursor=pointer]:
+                  - button "View options" [ref=e94]:
+                    - generic:
+                      - generic:
+                        - img
+      - main [ref=e95]:
+        - generic [ref=e97]:
+          - generic [ref=e101]:
+            - generic [ref=e102]:
+              - tablist [ref=e103]:
+                - generic:
+                  - tab "Resources" [selected] [ref=e104] [cursor=pointer]:
+                    - generic:
+                      - img [ref=e105]
+                      - text: Resources
+                  - tab "Parameters" [ref=e107] [cursor=pointer]:
+                    - generic:
+                      - img [ref=e108]
+                      - text: Parameters
+                  - tab "Graph. For an accessible view please navigate to the Resources tab" [ref=e110] [cursor=pointer]:
+                    - generic:
+                      - img [ref=e111]
+                      - text: Graph
+              - generic:
+                - generic:
+                  - tabpanel "Resources"
+            - table [ref=e115]:
+              - rowgroup [ref=e116]:
+                - row "Name State Start time Source URLs Actions" [ref=e117]:
+                  - columnheader "Name" [ref=e118]:
+                    - generic "Name" [ref=e120] [cursor=pointer]:
+                      - button "Name" [ref=e121]:
+                        - generic:
+                          - generic:
+                            - generic "Name"
+                  - columnheader "State" [ref=e124]:
+                    - generic "State" [ref=e126] [cursor=pointer]:
+                      - button "State" [ref=e127]:
+                        - generic:
+                          - generic:
+                            - generic "State"
+                  - columnheader "Start time" [ref=e130]:
+                    - generic "Start time" [ref=e132] [cursor=pointer]:
+                      - button "Start time" [ref=e133]:
+                        - generic:
+                          - generic:
+                            - generic "Start time"
+                  - columnheader "Source" [ref=e136]:
+                    - generic "Source" [ref=e138] [cursor=pointer]:
+                      - button "Source" [ref=e139]:
+                        - generic:
+                          - generic:
+                            - generic "Source"
+                  - columnheader "URLs" [ref=e142]:
+                    - generic "URLs" [ref=e144] [cursor=pointer]:
+                      - button "URLs" [ref=e145]:
+                        - generic:
+                          - generic:
+                            - generic "URLs"
+                  - columnheader "Actions" [ref=e148]:
+                    - generic "Actions" [ref=e150] [cursor=pointer]:
+                      - button "Actions" [ref=e151]:
+                        - generic:
+                          - generic:
+                            - generic "Actions"
+              - rowgroup [ref=e154]:
+                - 'row "Container: sql Running 4/22/2026 7:58:57 PM mcr.microsoft.com/mssql/server:2022-latest tcp://localhost:53878 Stop resource Console logs Actions" [ref=e155]':
+                  - 'gridcell "Container: sql" [ref=e156]':
+                    - generic [ref=e157]:
+                      - generic "Toggle nesting" [ref=e159] [cursor=pointer]:
+                        - button "Toggle nesting" [ref=e160]:
+                          - generic:
+                            - generic:
+                              - img
+                      - generic [ref=e161]:
+                        - img [ref=e162]
+                        - generic [ref=e164]: sql
+                  - gridcell "Running" [ref=e165]:
+                    - generic [ref=e166]:
+                      - img [ref=e167]
+                      - text: Running
+                  - gridcell "4/22/2026 7:58:57 PM" [ref=e169]: 7:58:57 PM
+                  - gridcell "mcr.microsoft.com/mssql/server:2022-latest" [ref=e170]:
+                    - generic [ref=e171]:
+                      - generic "mcr.microsoft.com/mssql/server:2022-latest" [ref=e172]
+                      - generic "Open in text visualizer" [ref=e173] [cursor=pointer]:
+                        - button "Open in text visualizer" [ref=e174]:
+                          - generic:
+                            - generic:
+                              - img
+                  - gridcell "tcp://localhost:53878" [ref=e175]
+                  - gridcell "Stop resource Console logs Actions" [ref=e176]:
+                    - generic [ref=e177]:
+                      - generic "Stop resource" [ref=e178] [cursor=pointer]:
+                        - button "Stop resource" [ref=e179]:
+                          - generic:
+                            - generic:
+                              - img
+                      - generic "Console logs" [ref=e180] [cursor=pointer]:
+                        - button "Console logs" [ref=e181]:
+                          - generic:
+                            - generic:
+                              - img
+                      - generic "Actions" [ref=e182] [cursor=pointer]:
+                        - button "Actions" [ref=e183]:
+                          - generic:
+                            - generic:
+                              - img
+                - 'row "SqlServerDatabaseResource: clubbaist Running 4/22/2026 7:58:57 PM - - Console logs Actions" [ref=e184]':
+                  - 'gridcell "SqlServerDatabaseResource: clubbaist" [ref=e185]':
+                    - generic [ref=e187]:
+                      - img [ref=e188]
+                      - generic [ref=e190]: clubbaist
+                  - gridcell "Running" [ref=e191]:
+                    - generic [ref=e192]:
+                      - img [ref=e193]
+                      - text: Running
+                  - gridcell "4/22/2026 7:58:57 PM" [ref=e195]: 7:58:57 PM
+                  - gridcell "-" [ref=e196]:
+                    - generic [ref=e197]: "-"
+                  - gridcell "-" [ref=e198]:
+                    - generic [ref=e199]: "-"
+                  - gridcell "Console logs Actions" [ref=e200]:
+                    - generic [ref=e201]:
+                      - generic "Console logs" [ref=e202] [cursor=pointer]:
+                        - button "Console logs" [ref=e203]:
+                          - generic:
+                            - generic:
+                              - img
+                      - generic "Actions" [ref=e204] [cursor=pointer]:
+                        - button "Actions" [ref=e205]:
+                          - generic:
+                            - generic:
+                              - img
+                - 'row "Project: web Running 4/22/2026 8:02:34 PM /Users/allyn/Repos/ClubBaist-test/ClubBaist.Web/ClubBaist.Web.csproj https://localhost:7021, http://localhost:5270 Stop resource Console logs Actions" [ref=e1044]':
+                  - 'gridcell "Project: web" [ref=e207] [cursor=pointer]':
+                    - generic [ref=e209]:
+                      - img [ref=e210]
+                      - generic [ref=e212]: web
+                  - gridcell "Running" [ref=e1045] [cursor=pointer]:
+                    - generic [ref=e214]:
+                      - img [ref=e215]
+                      - text: Running
+                      - generic "16 error logs" [ref=e217]:
+                        - link "16 error logs" [ref=e218]:
+                          - /url: /structuredlogs/resource/dwtrzvrk?logLevel=error
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - generic: 9+
+                  - gridcell "4/22/2026 8:02:34 PM" [ref=e1047] [cursor=pointer]: 8:02:34 PM
+                  - gridcell "/Users/allyn/Repos/ClubBaist-test/ClubBaist.Web/ClubBaist.Web.csproj" [ref=e220] [cursor=pointer]:
+                    - generic [ref=e221]:
+                      - generic "/Users/allyn/Repos/ClubBaist-test/ClubBaist.Web/ClubBaist.Web.csproj" [ref=e222]: ClubBaist.Web.csproj
+                      - generic "Open in text visualizer" [ref=e223]:
+                        - button "Open in text visualizer" [ref=e224]:
+                          - generic:
+                            - generic:
+                              - img
+                  - gridcell "https://localhost:7021, http://localhost:5270" [ref=e1048] [cursor=pointer]:
+                    - generic [ref=e1049]:
+                      - link "https://localhost:7021" [ref=e1051]:
+                        - /url: https://localhost:7021
+                      - button "+1" [ref=e1055]:
+                        - generic:
+                          - generic: "+1"
+                  - gridcell "Stop resource Console logs Actions" [ref=e1056] [cursor=pointer]:
+                    - generic [ref=e228]:
+                      - generic "Stop resource" [ref=e1057]:
+                        - button "Stop resource" [ref=e1058]:
+                          - generic:
+                            - generic:
+                              - img
+                      - generic "Console logs" [ref=e231]:
+                        - button "Console logs" [ref=e232]:
+                          - generic:
+                            - generic:
+                              - img
+                      - generic "Actions" [ref=e233]:
+                        - button "Actions" [ref=e234]:
+                          - generic:
+                            - generic:
+                              - img
+          - generic [ref=e248]:
+            - generic [ref=e249]:
+              - 'heading "Project: web" [level=2] [ref=e250]'
+              - generic [ref=e251]:
+                - generic "Split horizontal" [ref=e252] [cursor=pointer]:
+                  - button "Split horizontal" [ref=e253]:
+                    - generic:
+                      - generic:
+                        - img
+                - generic "Close" [ref=e254] [cursor=pointer]:
+                  - button "Close" [ref=e255]:
+                    - generic:
+                      - generic:
+                        - img
+            - generic [ref=e256]:
+              - toolbar [ref=e257]:
+                - generic [ref=e259]:
+                  - generic:
+                    - generic [ref=e261]:
+                      - img [ref=e264]
+                      - generic [ref=e266]:
+                        - searchbox [ref=e267]
+                        - button [ref=e269]:
+                          - img [ref=e271]
+                    - generic "View options" [ref=e273] [cursor=pointer]:
+                      - button "View options" [ref=e274]:
+                        - generic:
+                          - generic:
+                            - img
+              - generic [ref=e276]:
+                - generic:
+                  - generic [ref=e277]:
+                    - heading "Resource 7" [level=2] [ref=e1059]:
+                      - button "Resource" [expanded] [ref=e279] [cursor=pointer]:
+                        - generic [ref=e280]:
+                          - generic: Resource
+                      - generic [ref=e285]: "7"
+                      - generic:
+                        - generic:
+                          - img
+                    - region "Resource" [ref=e286]:
+                      - table [ref=e288]:
+                        - rowgroup [ref=e289]:
+                          - row "Name Value" [ref=e290]:
+                            - columnheader "Name" [ref=e291]:
+                              - generic "Name" [ref=e293] [cursor=pointer]:
+                                - button "Name" [ref=e294]:
+                                  - generic:
+                                    - generic:
+                                      - generic "Name"
+                            - columnheader "Value" [ref=e297]:
+                              - generic "Value" [ref=e299] [cursor=pointer]:
+                                - button "Value" [ref=e300]:
+                                  - generic:
+                                    - generic:
+                                      - generic "Value"
+                        - rowgroup [ref=e303]:
+                          - row "Display name Open in text visualizer web Open in text visualizer" [ref=e304]:
+                            - gridcell "Display name Open in text visualizer" [ref=e305]:
+                              - generic [ref=e306]:
+                                - generic "Display name" [ref=e307]
+                                - generic "Open in text visualizer" [ref=e308] [cursor=pointer]:
+                                  - button "Open in text visualizer" [ref=e309]:
+                                    - generic:
+                                      - generic:
+                                        - img
+                            - gridcell "web Open in text visualizer" [ref=e310]:
+                              - generic [ref=e311]:
+                                - generic "web" [ref=e312]:
+                                  - img [ref=e313]
+                                  - text: web
+                                - generic "Open in text visualizer" [ref=e315] [cursor=pointer]:
+                                  - button "Open in text visualizer" [ref=e316]:
+                                    - generic:
+                                      - generic:
+                                        - img
+                          - row "State Open in text visualizer Running Open in text visualizer" [ref=e1062]:
+                            - gridcell "State Open in text visualizer" [ref=e318]:
+                              - generic [ref=e319]:
+                                - generic "State" [ref=e320]
+                                - generic "Open in text visualizer" [ref=e321] [cursor=pointer]:
+                                  - button "Open in text visualizer" [ref=e322]:
+                                    - generic:
+                                      - generic:
+                                        - img
+                            - gridcell "Running Open in text visualizer" [ref=e1063]:
+                              - generic [ref=e324]:
+                                - generic "Running" [ref=e1064]:
+                                  - img [ref=e326]
+                                  - text: Running
+                                - generic "Open in text visualizer" [ref=e328] [cursor=pointer]:
+                                  - button "Open in text visualizer" [ref=e329]:
+                                    - generic:
+                                      - generic:
+                                        - img
+                          - row "Health state Open in text visualizer Healthy Open in text visualizer" [ref=e1066]:
+                            - gridcell "Health state Open in text visualizer" [ref=e1067]:
+                              - generic [ref=e1068]:
+                                - generic "Health state" [ref=e1069]
+                                - generic "Open in text visualizer" [ref=e1070] [cursor=pointer]:
+                                  - button "Open in text visualizer" [ref=e1071]:
+                                    - generic:
+                                      - generic:
+                                        - img
+                            - gridcell "Healthy Open in text visualizer" [ref=e1072]:
+                              - generic [ref=e1073]:
+                                - generic "Healthy" [ref=e1074]:
+                                  - img [ref=e1075]
+                                  - text: Healthy
+                                - generic "Open in text visualizer" [ref=e1077] [cursor=pointer]:
+                                  - button "Open in text visualizer" [ref=e1078]:
+                                    - generic:
+                                      - generic:
+                                        - img
+                          - row "Start time Open in text visualizer 4/22/2026 8:02:34 PM Open in text visualizer" [ref=e1079]:
+                            - gridcell "Start time Open in text visualizer" [ref=e331]:
+                              - generic [ref=e332]:
+                                - generic "Start time" [ref=e333]
+                                - generic "Open in text visualizer" [ref=e334] [cursor=pointer]:
+                                  - button "Open in text visualizer" [ref=e335]:
+                                    - generic:
+                                      - generic:
+                                        - img
+                            - gridcell "4/22/2026 8:02:34 PM Open in text visualizer" [ref=e1080]:
+                              - generic [ref=e337]:
+                                - generic "4/22/2026 8:02:34 PM" [ref=e1081]
+                                - generic "Open in text visualizer" [ref=e339] [cursor=pointer]:
+                                  - button "Open in text visualizer" [ref=e340]:
+                                    - generic:
+                                      - generic:
+                                        - img
+                          - row "Project path Open in text visualizer /Users/allyn/Repos/ClubBaist-test/ClubBaist.Web/ClubBaist.Web.csproj Open in text visualizer" [ref=e363]:
+                            - gridcell "Project path Open in text visualizer" [ref=e364]:
+                              - generic [ref=e365]:
+                                - generic "Project path" [ref=e366]
+                                - generic "Open in text visualizer" [ref=e367] [cursor=pointer]:
+                                  - button "Open in text visualizer" [ref=e368]:
+                                    - generic:
+                                      - generic:
+                                        - img
+                            - gridcell "/Users/allyn/Repos/ClubBaist-test/ClubBaist.Web/ClubBaist.Web.csproj Open in text visualizer" [ref=e369]:
+                              - generic [ref=e370]:
+                                - generic "/Users/allyn/Repos/ClubBaist-test/ClubBaist.Web/ClubBaist.Web.csproj" [ref=e371]
+                                - generic "Open in text visualizer" [ref=e372] [cursor=pointer]:
+                                  - button "Open in text visualizer" [ref=e373]:
+                                    - generic:
+                                      - generic:
+                                        - img
+                          - row "Launch profile Open in text visualizer https Open in text visualizer" [ref=e374]:
+                            - gridcell "Launch profile Open in text visualizer" [ref=e375]:
+                              - generic [ref=e376]:
+                                - generic "Launch profile" [ref=e377]
+                                - generic "Open in text visualizer" [ref=e378] [cursor=pointer]:
+                                  - button "Open in text visualizer" [ref=e379]:
+                                    - generic:
+                                      - generic:
+                                        - img
+                            - gridcell "https Open in text visualizer" [ref=e380]:
+                              - generic [ref=e381]:
+                                - generic "https" [ref=e382]
+                                - generic "Open in text visualizer" [ref=e383] [cursor=pointer]:
+                                  - button "Open in text visualizer" [ref=e384]:
+                                    - generic:
+                                      - generic:
+                                        - img
+                          - row "Process ID Open in text visualizer 97392 Open in text visualizer" [ref=e1082]:
+                            - gridcell "Process ID Open in text visualizer" [ref=e386]:
+                              - generic [ref=e387]:
+                                - generic "Process ID" [ref=e388]
+                                - generic "Open in text visualizer" [ref=e389] [cursor=pointer]:
+                                  - button "Open in text visualizer" [ref=e390]:
+                                    - generic:
+                                      - generic:
+                                        - img
+                            - gridcell "97392 Open in text visualizer" [ref=e1083]:
+                              - generic [ref=e392]:
+                                - generic "97392" [ref=e1084]
+                                - generic "Open in text visualizer" [ref=e394] [cursor=pointer]:
+                                  - button "Open in text visualizer" [ref=e395]:
+                                    - generic:
+                                      - generic:
+                                        - img
+                  - generic [ref=e396]:
+                    - heading "URLs 2" [level=2] [ref=e1085]:
+                      - button "URLs" [expanded] [ref=e398] [cursor=pointer]:
+                        - generic [ref=e399]:
+                          - generic: URLs
+                      - generic [ref=e404]: "2"
+                      - generic:
+                        - generic:
+                          - img
+                    - region "URLs" [ref=e1086]:
+                      - table [ref=e1087]:
+                        - rowgroup [ref=e1088]:
+                          - row "Address Text Endpoint name" [ref=e1089]:
+                            - columnheader "Address" [ref=e1090]:
+                              - generic "Address" [ref=e1092] [cursor=pointer]:
+                                - button "Address" [ref=e1093]:
+                                  - generic:
+                                    - generic:
+                                      - generic "Address"
+                            - columnheader "Text" [ref=e1095]:
+                              - generic "Text" [ref=e1097] [cursor=pointer]:
+                                - button "Text" [ref=e1098]:
+                                  - generic:
+                                    - generic:
+                                      - generic "Text"
+                            - columnheader "Endpoint name" [ref=e1100]:
+                              - generic "Endpoint name" [ref=e1102] [cursor=pointer]:
+                                - button "Endpoint name" [ref=e1103]:
+                                  - generic:
+                                    - generic:
+                                      - generic "Endpoint name"
+                        - rowgroup [ref=e1105]:
+                          - row "https://localhost:7021 Open in text visualizer - Open in text visualizer https Open in text visualizer" [ref=e1106]:
+                            - gridcell "https://localhost:7021 Open in text visualizer" [ref=e1107]:
+                              - generic [ref=e1108]:
+                                - generic "https://localhost:7021" [ref=e1109]:
+                                  - link "https://localhost:7021" [ref=e1110] [cursor=pointer]:
+                                    - /url: https://localhost:7021
+                                - generic "Open in text visualizer" [ref=e1111] [cursor=pointer]:
+                                  - button "Open in text visualizer" [ref=e1112]:
+                                    - generic:
+                                      - generic:
+                                        - img
+                            - gridcell "- Open in text visualizer" [ref=e1113]:
+                              - generic [ref=e1114]:
+                                - generic [ref=e1116]: "-"
+                                - generic "Open in text visualizer" [ref=e1117] [cursor=pointer]:
+                                  - button "Open in text visualizer" [disabled] [ref=e1118]:
+                                    - generic:
+                                      - generic:
+                                        - img
+                            - gridcell "https Open in text visualizer" [ref=e1119]:
+                              - generic [ref=e1120]:
+                                - generic "https" [ref=e1121]
+                                - generic "Open in text visualizer" [ref=e1122] [cursor=pointer]:
+                                  - button "Open in text visualizer" [ref=e1123]:
+                                    - generic:
+                                      - generic:
+                                        - img
+                          - row "http://localhost:5270 Open in text visualizer - Open in text visualizer http Open in text visualizer" [ref=e1124]:
+                            - gridcell "http://localhost:5270 Open in text visualizer" [ref=e1125]:
+                              - generic [ref=e1126]:
+                                - generic "http://localhost:5270" [ref=e1127]:
+                                  - link "http://localhost:5270" [ref=e1128] [cursor=pointer]:
+                                    - /url: http://localhost:5270
+                                - generic "Open in text visualizer" [ref=e1129] [cursor=pointer]:
+                                  - button "Open in text visualizer" [ref=e1130]:
+                                    - generic:
+                                      - generic:
+                                        - img
+                            - gridcell "- Open in text visualizer" [ref=e1131]:
+                              - generic [ref=e1132]:
+                                - generic [ref=e1134]: "-"
+                                - generic "Open in text visualizer" [ref=e1135] [cursor=pointer]:
+                                  - button "Open in text visualizer" [disabled] [ref=e1136]:
+                                    - generic:
+                                      - generic:
+                                        - img
+                            - gridcell "http Open in text visualizer" [ref=e1137]:
+                              - generic [ref=e1138]:
+                                - generic "http" [ref=e1139]
+                                - generic "Open in text visualizer" [ref=e1140] [cursor=pointer]:
+                                  - button "Open in text visualizer" [ref=e1141]:
+                                    - generic:
+                                      - generic:
+                                        - img
+                  - generic [ref=e405]:
+                    - heading "References 2" [level=2] [ref=e406]:
+                      - button "References" [expanded] [ref=e407] [cursor=pointer]:
+                        - generic [ref=e408]:
+                          - generic: References
+                      - generic [ref=e413]: "2"
+                      - generic:
+                        - generic:
+                          - img
+                    - region "References" [ref=e414]:
+                      - table [ref=e415]:
+                        - rowgroup [ref=e416]:
+                          - row "Resource Type View" [ref=e417]:
+                            - columnheader "Resource" [ref=e418]:
+                              - button "Resource" [ref=e421] [cursor=pointer]:
+                                - generic:
+                                  - generic:
+                                    - generic: Resource
+                            - columnheader "Type" [ref=e424]:
+                              - button "Type" [ref=e427] [cursor=pointer]:
+                                - generic:
+                                  - generic:
+                                    - generic: Type
+                            - columnheader "View" [ref=e430]:
+                              - button "View" [ref=e433] [cursor=pointer]:
+                                - generic:
+                                  - generic:
+                                    - generic: View
+                        - rowgroup [ref=e436]:
+                          - row "clubbaist Reference, WaitFor View" [ref=e437]:
+                            - gridcell "clubbaist" [ref=e438]:
+                              - img [ref=e439]
+                              - text: clubbaist
+                            - gridcell "Reference, WaitFor" [ref=e441]
+                            - gridcell "View" [ref=e442]:
+                              - button "View" [ref=e444] [cursor=pointer]:
+                                - generic:
+                                  - generic: View
+                          - row "sql Reference View" [ref=e445]:
+                            - gridcell "sql" [ref=e446]:
+                              - img [ref=e447]
+                              - text: sql
+                            - gridcell "Reference" [ref=e449]
+                            - gridcell "View" [ref=e450]:
+                              - button "View" [ref=e452] [cursor=pointer]:
+                                - generic:
+                                  - generic: View
+                  - heading "Back references 0" [level=2] [ref=e454]:
+                    - button "Back references" [ref=e455] [cursor=pointer]:
+                      - generic [ref=e456]:
+                        - generic: Back references
+                    - generic [ref=e461]: "0"
+                    - generic:
+                      - generic:
+                        - img
+                  - heading "Health checks 0" [level=2] [ref=e463]:
+                    - button "Health checks" [ref=e464] [cursor=pointer]:
+                      - generic [ref=e465]:
+                        - generic: Health checks
+                    - generic [ref=e470]: "0"
+                    - generic:
+                      - generic:
+                        - img
+                  - generic [ref=e496]:
+                    - heading "Environment variables 36" [level=2] [ref=e497]:
+                      - button "Environment variables" [expanded] [ref=e498] [cursor=pointer]:
+                        - generic [ref=e499]:
+                          - generic: Environment variables
+                      - generic [ref=e504]: "36"
+                      - generic:
+                        - generic:
+                          - img
+                    - region "Environment variables" [ref=e505]:
+                      - table [ref=e507]:
+                        - rowgroup [ref=e508]:
+                          - row "Name Value" [ref=e509]:
+                            - columnheader "Name" [ref=e510]:
+                              - generic "Name" [ref=e512] [cursor=pointer]:
+                                - button "Name" [ref=e513]:
+                                  - generic:
+                                    - generic:
+                                      - generic "Name"
+                            - columnheader "Value" [ref=e516]:
+                              - generic "Value" [ref=e518] [cursor=pointer]:
+                                - button "Value" [ref=e519]:
+                                  - generic:
+                                    - generic:
+                                      - generic "Value"
+                        - rowgroup [ref=e522]:
+                          - row "ASPNETCORE_ENVIRONMENT Open in text visualizer ●●●●●●●● Open in text visualizer Show value" [ref=e523]:
+                            - gridcell "ASPNETCORE_ENVIRONMENT Open in text visualizer" [ref=e524]:
+                              - generic [ref=e525]:
+                                - generic "ASPNETCORE_ENVIRONMENT" [ref=e526]
+                                - generic "Open in text visualizer" [ref=e527] [cursor=pointer]:
+                                  - button "Open in text visualizer" [ref=e528]:
+                                    - generic:
+                                      - generic:
+                                        - img
+                            - gridcell "●●●●●●●● Open in text visualizer Show value" [ref=e529]:
+                              - generic [ref=e530]:
+                                - generic [ref=e531]: ●●●●●●●●
+                                - generic [ref=e532]:
+                                  - generic "Open in text visualizer" [ref=e533] [cursor=pointer]:
+                                    - button "Open in text visualizer" [ref=e534]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                                  - generic "Show value" [ref=e535] [cursor=pointer]:
+                                    - button "Show value" [ref=e536]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                          - row "ASPNETCORE_HTTPS_PORT Open in text visualizer ●●●●●●●● Open in text visualizer Show value" [ref=e537]:
+                            - gridcell "ASPNETCORE_HTTPS_PORT Open in text visualizer" [ref=e538]:
+                              - generic [ref=e539]:
+                                - generic "ASPNETCORE_HTTPS_PORT" [ref=e540]
+                                - generic "Open in text visualizer" [ref=e541] [cursor=pointer]:
+                                  - button "Open in text visualizer" [ref=e542]:
+                                    - generic:
+                                      - generic:
+                                        - img
+                            - gridcell "●●●●●●●● Open in text visualizer Show value" [ref=e543]:
+                              - generic [ref=e544]:
+                                - generic [ref=e545]: ●●●●●●●●
+                                - generic [ref=e546]:
+                                  - generic "Open in text visualizer" [ref=e547] [cursor=pointer]:
+                                    - button "Open in text visualizer" [ref=e548]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                                  - generic "Show value" [ref=e549] [cursor=pointer]:
+                                    - button "Show value" [ref=e550]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                          - row "ASPNETCORE_URLS Open in text visualizer ●●●●●●●● Open in text visualizer Show value" [ref=e551]:
+                            - gridcell "ASPNETCORE_URLS Open in text visualizer" [ref=e552]:
+                              - generic [ref=e553]:
+                                - generic "ASPNETCORE_URLS" [ref=e554]
+                                - generic "Open in text visualizer" [ref=e555] [cursor=pointer]:
+                                  - button "Open in text visualizer" [ref=e556]:
+                                    - generic:
+                                      - generic:
+                                        - img
+                            - gridcell "●●●●●●●● Open in text visualizer Show value" [ref=e557]:
+                              - generic [ref=e558]:
+                                - generic [ref=e559]: ●●●●●●●●
+                                - generic [ref=e560]:
+                                  - generic "Open in text visualizer" [ref=e561] [cursor=pointer]:
+                                    - button "Open in text visualizer" [ref=e562]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                                  - generic "Show value" [ref=e563] [cursor=pointer]:
+                                    - button "Show value" [ref=e564]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                          - row "CLUBBAIST_DATABASENAME Open in text visualizer ●●●●●●●● Open in text visualizer Show value" [ref=e565]:
+                            - gridcell "CLUBBAIST_DATABASENAME Open in text visualizer" [ref=e566]:
+                              - generic [ref=e567]:
+                                - generic "CLUBBAIST_DATABASENAME" [ref=e568]
+                                - generic "Open in text visualizer" [ref=e569] [cursor=pointer]:
+                                  - button "Open in text visualizer" [ref=e570]:
+                                    - generic:
+                                      - generic:
+                                        - img
+                            - gridcell "●●●●●●●● Open in text visualizer Show value" [ref=e571]:
+                              - generic [ref=e572]:
+                                - generic [ref=e573]: ●●●●●●●●
+                                - generic [ref=e574]:
+                                  - generic "Open in text visualizer" [ref=e575] [cursor=pointer]:
+                                    - button "Open in text visualizer" [ref=e576]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                                  - generic "Show value" [ref=e577] [cursor=pointer]:
+                                    - button "Show value" [ref=e578]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                          - row "CLUBBAIST_HOST Open in text visualizer ●●●●●●●● Open in text visualizer Show value" [ref=e579]:
+                            - gridcell "CLUBBAIST_HOST Open in text visualizer" [ref=e580]:
+                              - generic [ref=e581]:
+                                - generic "CLUBBAIST_HOST" [ref=e582]
+                                - generic "Open in text visualizer" [ref=e583] [cursor=pointer]:
+                                  - button "Open in text visualizer" [ref=e584]:
+                                    - generic:
+                                      - generic:
+                                        - img
+                            - gridcell "●●●●●●●● Open in text visualizer Show value" [ref=e585]:
+                              - generic [ref=e586]:
+                                - generic [ref=e587]: ●●●●●●●●
+                                - generic [ref=e588]:
+                                  - generic "Open in text visualizer" [ref=e589] [cursor=pointer]:
+                                    - button "Open in text visualizer" [ref=e590]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                                  - generic "Show value" [ref=e591] [cursor=pointer]:
+                                    - button "Show value" [ref=e592]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                          - row "CLUBBAIST_JDBCCONNECTIONSTRING Open in text visualizer ●●●●●●●● Open in text visualizer Show value" [ref=e593]:
+                            - gridcell "CLUBBAIST_JDBCCONNECTIONSTRING Open in text visualizer" [ref=e594]:
+                              - generic [ref=e595]:
+                                - generic "CLUBBAIST_JDBCCONNECTIONSTRING" [ref=e596]
+                                - generic "Open in text visualizer" [ref=e597] [cursor=pointer]:
+                                  - button "Open in text visualizer" [ref=e598]:
+                                    - generic:
+                                      - generic:
+                                        - img
+                            - gridcell "●●●●●●●● Open in text visualizer Show value" [ref=e599]:
+                              - generic [ref=e600]:
+                                - generic [ref=e601]: ●●●●●●●●
+                                - generic [ref=e602]:
+                                  - generic "Open in text visualizer" [ref=e603] [cursor=pointer]:
+                                    - button "Open in text visualizer" [ref=e604]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                                  - generic "Show value" [ref=e605] [cursor=pointer]:
+                                    - button "Show value" [ref=e606]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                          - row "CLUBBAIST_PASSWORD Open in text visualizer ●●●●●●●● Open in text visualizer Show value" [ref=e607]:
+                            - gridcell "CLUBBAIST_PASSWORD Open in text visualizer" [ref=e608]:
+                              - generic [ref=e609]:
+                                - generic "CLUBBAIST_PASSWORD" [ref=e610]
+                                - generic "Open in text visualizer" [ref=e611] [cursor=pointer]:
+                                  - button "Open in text visualizer" [ref=e612]:
+                                    - generic:
+                                      - generic:
+                                        - img
+                            - gridcell "●●●●●●●● Open in text visualizer Show value" [ref=e613]:
+                              - generic [ref=e614]:
+                                - generic [ref=e615]: ●●●●●●●●
+                                - generic [ref=e616]:
+                                  - generic "Open in text visualizer" [ref=e617] [cursor=pointer]:
+                                    - button "Open in text visualizer" [ref=e618]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                                  - generic "Show value" [ref=e619] [cursor=pointer]:
+                                    - button "Show value" [ref=e620]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                          - row "CLUBBAIST_PORT Open in text visualizer ●●●●●●●● Open in text visualizer Show value" [ref=e621]:
+                            - gridcell "CLUBBAIST_PORT Open in text visualizer" [ref=e622]:
+                              - generic [ref=e623]:
+                                - generic "CLUBBAIST_PORT" [ref=e624]
+                                - generic "Open in text visualizer" [ref=e625] [cursor=pointer]:
+                                  - button "Open in text visualizer" [ref=e626]:
+                                    - generic:
+                                      - generic:
+                                        - img
+                            - gridcell "●●●●●●●● Open in text visualizer Show value" [ref=e627]:
+                              - generic [ref=e628]:
+                                - generic [ref=e629]: ●●●●●●●●
+                                - generic [ref=e630]:
+                                  - generic "Open in text visualizer" [ref=e631] [cursor=pointer]:
+                                    - button "Open in text visualizer" [ref=e632]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                                  - generic "Show value" [ref=e633] [cursor=pointer]:
+                                    - button "Show value" [ref=e634]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                          - row "CLUBBAIST_URI Open in text visualizer ●●●●●●●● Open in text visualizer Show value" [ref=e635]:
+                            - gridcell "CLUBBAIST_URI Open in text visualizer" [ref=e636]:
+                              - generic [ref=e637]:
+                                - generic "CLUBBAIST_URI" [ref=e638]
+                                - generic "Open in text visualizer" [ref=e639] [cursor=pointer]:
+                                  - button "Open in text visualizer" [ref=e640]:
+                                    - generic:
+                                      - generic:
+                                        - img
+                            - gridcell "●●●●●●●● Open in text visualizer Show value" [ref=e641]:
+                              - generic [ref=e642]:
+                                - generic [ref=e643]: ●●●●●●●●
+                                - generic [ref=e644]:
+                                  - generic "Open in text visualizer" [ref=e645] [cursor=pointer]:
+                                    - button "Open in text visualizer" [ref=e646]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                                  - generic "Show value" [ref=e647] [cursor=pointer]:
+                                    - button "Show value" [ref=e648]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                          - row "CLUBBAIST_USERNAME Open in text visualizer ●●●●●●●● Open in text visualizer Show value" [ref=e649]:
+                            - gridcell "CLUBBAIST_USERNAME Open in text visualizer" [ref=e650]:
+                              - generic [ref=e651]:
+                                - generic "CLUBBAIST_USERNAME" [ref=e652]
+                                - generic "Open in text visualizer" [ref=e653] [cursor=pointer]:
+                                  - button "Open in text visualizer" [ref=e654]:
+                                    - generic:
+                                      - generic:
+                                        - img
+                            - gridcell "●●●●●●●● Open in text visualizer Show value" [ref=e655]:
+                              - generic [ref=e656]:
+                                - generic [ref=e657]: ●●●●●●●●
+                                - generic [ref=e658]:
+                                  - generic "Open in text visualizer" [ref=e659] [cursor=pointer]:
+                                    - button "Open in text visualizer" [ref=e660]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                                  - generic "Show value" [ref=e661] [cursor=pointer]:
+                                    - button "Show value" [ref=e662]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                          - row "ConnectionStrings__clubbaist Open in text visualizer ●●●●●●●● Open in text visualizer Show value" [ref=e663]:
+                            - gridcell "ConnectionStrings__clubbaist Open in text visualizer" [ref=e664]:
+                              - generic [ref=e665]:
+                                - generic "ConnectionStrings__clubbaist" [ref=e666]
+                                - generic "Open in text visualizer" [ref=e667] [cursor=pointer]:
+                                  - button "Open in text visualizer" [ref=e668]:
+                                    - generic:
+                                      - generic:
+                                        - img
+                            - gridcell "●●●●●●●● Open in text visualizer Show value" [ref=e669]:
+                              - generic [ref=e670]:
+                                - generic [ref=e671]: ●●●●●●●●
+                                - generic [ref=e672]:
+                                  - generic "Open in text visualizer" [ref=e673] [cursor=pointer]:
+                                    - button "Open in text visualizer" [ref=e674]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                                  - generic "Show value" [ref=e675] [cursor=pointer]:
+                                    - button "Show value" [ref=e676]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                          - row "ConnectionStrings__sql Open in text visualizer ●●●●●●●● Open in text visualizer Show value" [ref=e677]:
+                            - gridcell "ConnectionStrings__sql Open in text visualizer" [ref=e678]:
+                              - generic [ref=e679]:
+                                - generic "ConnectionStrings__sql" [ref=e680]
+                                - generic "Open in text visualizer" [ref=e681] [cursor=pointer]:
+                                  - button "Open in text visualizer" [ref=e682]:
+                                    - generic:
+                                      - generic:
+                                        - img
+                            - gridcell "●●●●●●●● Open in text visualizer Show value" [ref=e683]:
+                              - generic [ref=e684]:
+                                - generic [ref=e685]: ●●●●●●●●
+                                - generic [ref=e686]:
+                                  - generic "Open in text visualizer" [ref=e687] [cursor=pointer]:
+                                    - button "Open in text visualizer" [ref=e688]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                                  - generic "Show value" [ref=e689] [cursor=pointer]:
+                                    - button "Show value" [ref=e690]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                          - row "DOTNET_LAUNCH_PROFILE Open in text visualizer ●●●●●●●● Open in text visualizer Show value" [ref=e691]:
+                            - gridcell "DOTNET_LAUNCH_PROFILE Open in text visualizer" [ref=e692]:
+                              - generic [ref=e693]:
+                                - generic "DOTNET_LAUNCH_PROFILE" [ref=e694]
+                                - generic "Open in text visualizer" [ref=e695] [cursor=pointer]:
+                                  - button "Open in text visualizer" [ref=e696]:
+                                    - generic:
+                                      - generic:
+                                        - img
+                            - gridcell "●●●●●●●● Open in text visualizer Show value" [ref=e697]:
+                              - generic [ref=e698]:
+                                - generic [ref=e699]: ●●●●●●●●
+                                - generic [ref=e700]:
+                                  - generic "Open in text visualizer" [ref=e701] [cursor=pointer]:
+                                    - button "Open in text visualizer" [ref=e702]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                                  - generic "Show value" [ref=e703] [cursor=pointer]:
+                                    - button "Show value" [ref=e704]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                          - row "DOTNET_SYSTEM_CONSOLE_ALLOW_ANSI_COLOR_REDIRECTION Open in text visualizer ●●●●●●●● Open in text visualizer Show value" [ref=e705]:
+                            - gridcell "DOTNET_SYSTEM_CONSOLE_ALLOW_ANSI_COLOR_REDIRECTION Open in text visualizer" [ref=e706]:
+                              - generic [ref=e707]:
+                                - generic "DOTNET_SYSTEM_CONSOLE_ALLOW_ANSI_COLOR_REDIRECTION" [ref=e708]
+                                - generic "Open in text visualizer" [ref=e709] [cursor=pointer]:
+                                  - button "Open in text visualizer" [ref=e710]:
+                                    - generic:
+                                      - generic:
+                                        - img
+                            - gridcell "●●●●●●●● Open in text visualizer Show value" [ref=e711]:
+                              - generic [ref=e712]:
+                                - generic [ref=e713]: ●●●●●●●●
+                                - generic [ref=e714]:
+                                  - generic "Open in text visualizer" [ref=e715] [cursor=pointer]:
+                                    - button "Open in text visualizer" [ref=e716]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                                  - generic "Show value" [ref=e717] [cursor=pointer]:
+                                    - button "Show value" [ref=e718]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                          - row "LOGGING__CONSOLE__FORMATTERNAME Open in text visualizer ●●●●●●●● Open in text visualizer Show value" [ref=e719]:
+                            - gridcell "LOGGING__CONSOLE__FORMATTERNAME Open in text visualizer" [ref=e720]:
+                              - generic [ref=e721]:
+                                - generic "LOGGING__CONSOLE__FORMATTERNAME" [ref=e722]
+                                - generic "Open in text visualizer" [ref=e723] [cursor=pointer]:
+                                  - button "Open in text visualizer" [ref=e724]:
+                                    - generic:
+                                      - generic:
+                                        - img
+                            - gridcell "●●●●●●●● Open in text visualizer Show value" [ref=e725]:
+                              - generic [ref=e726]:
+                                - generic [ref=e727]: ●●●●●●●●
+                                - generic [ref=e728]:
+                                  - generic "Open in text visualizer" [ref=e729] [cursor=pointer]:
+                                    - button "Open in text visualizer" [ref=e730]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                                  - generic "Show value" [ref=e731] [cursor=pointer]:
+                                    - button "Show value" [ref=e732]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                          - row "OTEL_BLRP_SCHEDULE_DELAY Open in text visualizer ●●●●●●●● Open in text visualizer Show value" [ref=e733]:
+                            - gridcell "OTEL_BLRP_SCHEDULE_DELAY Open in text visualizer" [ref=e734]:
+                              - generic [ref=e735]:
+                                - generic "OTEL_BLRP_SCHEDULE_DELAY" [ref=e736]
+                                - generic "Open in text visualizer" [ref=e737] [cursor=pointer]:
+                                  - button "Open in text visualizer" [ref=e738]:
+                                    - generic:
+                                      - generic:
+                                        - img
+                            - gridcell "●●●●●●●● Open in text visualizer Show value" [ref=e739]:
+                              - generic [ref=e740]:
+                                - generic [ref=e741]: ●●●●●●●●
+                                - generic [ref=e742]:
+                                  - generic "Open in text visualizer" [ref=e743] [cursor=pointer]:
+                                    - button "Open in text visualizer" [ref=e744]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                                  - generic "Show value" [ref=e745] [cursor=pointer]:
+                                    - button "Show value" [ref=e746]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                          - row "OTEL_BSP_SCHEDULE_DELAY Open in text visualizer ●●●●●●●● Open in text visualizer Show value" [ref=e747]:
+                            - gridcell "OTEL_BSP_SCHEDULE_DELAY Open in text visualizer" [ref=e748]:
+                              - generic [ref=e749]:
+                                - generic "OTEL_BSP_SCHEDULE_DELAY" [ref=e750]
+                                - generic "Open in text visualizer" [ref=e751] [cursor=pointer]:
+                                  - button "Open in text visualizer" [ref=e752]:
+                                    - generic:
+                                      - generic:
+                                        - img
+                            - gridcell "●●●●●●●● Open in text visualizer Show value" [ref=e753]:
+                              - generic [ref=e754]:
+                                - generic [ref=e755]: ●●●●●●●●
+                                - generic [ref=e756]:
+                                  - generic "Open in text visualizer" [ref=e757] [cursor=pointer]:
+                                    - button "Open in text visualizer" [ref=e758]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                                  - generic "Show value" [ref=e759] [cursor=pointer]:
+                                    - button "Show value" [ref=e760]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                          - row "OTEL_DOTNET_EXPERIMENTAL_ASPNETCORE_DISABLE_URL_QUERY_REDACTION Open in text visualizer ●●●●●●●● Open in text visualizer Show value" [ref=e761]:
+                            - gridcell "OTEL_DOTNET_EXPERIMENTAL_ASPNETCORE_DISABLE_URL_QUERY_REDACTION Open in text visualizer" [ref=e762]:
+                              - generic [ref=e763]:
+                                - generic "OTEL_DOTNET_EXPERIMENTAL_ASPNETCORE_DISABLE_URL_QUERY_REDACTION" [ref=e764]
+                                - generic "Open in text visualizer" [ref=e765] [cursor=pointer]:
+                                  - button "Open in text visualizer" [ref=e766]:
+                                    - generic:
+                                      - generic:
+                                        - img
+                            - gridcell "●●●●●●●● Open in text visualizer Show value" [ref=e767]:
+                              - generic [ref=e768]:
+                                - generic [ref=e769]: ●●●●●●●●
+                                - generic [ref=e770]:
+                                  - generic "Open in text visualizer" [ref=e771] [cursor=pointer]:
+                                    - button "Open in text visualizer" [ref=e772]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                                  - generic "Show value" [ref=e773] [cursor=pointer]:
+                                    - button "Show value" [ref=e774]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                          - row "OTEL_DOTNET_EXPERIMENTAL_HTTPCLIENT_DISABLE_URL_QUERY_REDACTION Open in text visualizer ●●●●●●●● Open in text visualizer Show value" [ref=e775]:
+                            - gridcell "OTEL_DOTNET_EXPERIMENTAL_HTTPCLIENT_DISABLE_URL_QUERY_REDACTION Open in text visualizer" [ref=e776]:
+                              - generic [ref=e777]:
+                                - generic "OTEL_DOTNET_EXPERIMENTAL_HTTPCLIENT_DISABLE_URL_QUERY_REDACTION" [ref=e778]
+                                - generic "Open in text visualizer" [ref=e779] [cursor=pointer]:
+                                  - button "Open in text visualizer" [ref=e780]:
+                                    - generic:
+                                      - generic:
+                                        - img
+                            - gridcell "●●●●●●●● Open in text visualizer Show value" [ref=e781]:
+                              - generic [ref=e782]:
+                                - generic [ref=e783]: ●●●●●●●●
+                                - generic [ref=e784]:
+                                  - generic "Open in text visualizer" [ref=e785] [cursor=pointer]:
+                                    - button "Open in text visualizer" [ref=e786]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                                  - generic "Show value" [ref=e787] [cursor=pointer]:
+                                    - button "Show value" [ref=e788]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                          - row "OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY Open in text visualizer ●●●●●●●● Open in text visualizer Show value" [ref=e789]:
+                            - gridcell "OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY Open in text visualizer" [ref=e790]:
+                              - generic [ref=e791]:
+                                - generic "OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY" [ref=e792]
+                                - generic "Open in text visualizer" [ref=e793] [cursor=pointer]:
+                                  - button "Open in text visualizer" [ref=e794]:
+                                    - generic:
+                                      - generic:
+                                        - img
+                            - gridcell "●●●●●●●● Open in text visualizer Show value" [ref=e795]:
+                              - generic [ref=e796]:
+                                - generic [ref=e797]: ●●●●●●●●
+                                - generic [ref=e798]:
+                                  - generic "Open in text visualizer" [ref=e799] [cursor=pointer]:
+                                    - button "Open in text visualizer" [ref=e800]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                                  - generic "Show value" [ref=e801] [cursor=pointer]:
+                                    - button "Show value" [ref=e802]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                          - row "OTEL_EXPORTER_OTLP_ENDPOINT Open in text visualizer ●●●●●●●● Open in text visualizer Show value" [ref=e803]:
+                            - gridcell "OTEL_EXPORTER_OTLP_ENDPOINT Open in text visualizer" [ref=e804]:
+                              - generic [ref=e805]:
+                                - generic "OTEL_EXPORTER_OTLP_ENDPOINT" [ref=e806]
+                                - generic "Open in text visualizer" [ref=e807] [cursor=pointer]:
+                                  - button "Open in text visualizer" [ref=e808]:
+                                    - generic:
+                                      - generic:
+                                        - img
+                            - gridcell "●●●●●●●● Open in text visualizer Show value" [ref=e809]:
+                              - generic [ref=e810]:
+                                - generic [ref=e811]: ●●●●●●●●
+                                - generic [ref=e812]:
+                                  - generic "Open in text visualizer" [ref=e813] [cursor=pointer]:
+                                    - button "Open in text visualizer" [ref=e814]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                                  - generic "Show value" [ref=e815] [cursor=pointer]:
+                                    - button "Show value" [ref=e816]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                          - row "OTEL_EXPORTER_OTLP_HEADERS Open in text visualizer ●●●●●●●● Open in text visualizer Show value" [ref=e817]:
+                            - gridcell "OTEL_EXPORTER_OTLP_HEADERS Open in text visualizer" [ref=e818]:
+                              - generic [ref=e819]:
+                                - generic "OTEL_EXPORTER_OTLP_HEADERS" [ref=e820]
+                                - generic "Open in text visualizer" [ref=e821] [cursor=pointer]:
+                                  - button "Open in text visualizer" [ref=e822]:
+                                    - generic:
+                                      - generic:
+                                        - img
+                            - gridcell "●●●●●●●● Open in text visualizer Show value" [ref=e823]:
+                              - generic [ref=e824]:
+                                - generic [ref=e825]: ●●●●●●●●
+                                - generic [ref=e826]:
+                                  - generic "Open in text visualizer" [ref=e827] [cursor=pointer]:
+                                    - button "Open in text visualizer" [ref=e828]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                                  - generic "Show value" [ref=e829] [cursor=pointer]:
+                                    - button "Show value" [ref=e830]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                          - row "OTEL_EXPORTER_OTLP_PROTOCOL Open in text visualizer ●●●●●●●● Open in text visualizer Show value" [ref=e831]:
+                            - gridcell "OTEL_EXPORTER_OTLP_PROTOCOL Open in text visualizer" [ref=e832]:
+                              - generic [ref=e833]:
+                                - generic "OTEL_EXPORTER_OTLP_PROTOCOL" [ref=e834]
+                                - generic "Open in text visualizer" [ref=e835] [cursor=pointer]:
+                                  - button "Open in text visualizer" [ref=e836]:
+                                    - generic:
+                                      - generic:
+                                        - img
+                            - gridcell "●●●●●●●● Open in text visualizer Show value" [ref=e837]:
+                              - generic [ref=e838]:
+                                - generic [ref=e839]: ●●●●●●●●
+                                - generic [ref=e840]:
+                                  - generic "Open in text visualizer" [ref=e841] [cursor=pointer]:
+                                    - button "Open in text visualizer" [ref=e842]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                                  - generic "Show value" [ref=e843] [cursor=pointer]:
+                                    - button "Show value" [ref=e844]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                          - row "OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT Open in text visualizer ●●●●●●●● Open in text visualizer Show value" [ref=e845]:
+                            - gridcell "OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT Open in text visualizer" [ref=e846]:
+                              - generic [ref=e847]:
+                                - generic "OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT" [ref=e848]
+                                - generic "Open in text visualizer" [ref=e849] [cursor=pointer]:
+                                  - button "Open in text visualizer" [ref=e850]:
+                                    - generic:
+                                      - generic:
+                                        - img
+                            - gridcell "●●●●●●●● Open in text visualizer Show value" [ref=e851]:
+                              - generic [ref=e852]:
+                                - generic [ref=e853]: ●●●●●●●●
+                                - generic [ref=e854]:
+                                  - generic "Open in text visualizer" [ref=e855] [cursor=pointer]:
+                                    - button "Open in text visualizer" [ref=e856]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                                  - generic "Show value" [ref=e857] [cursor=pointer]:
+                                    - button "Show value" [ref=e858]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                          - row "OTEL_METRIC_EXPORT_INTERVAL Open in text visualizer ●●●●●●●● Open in text visualizer Show value" [ref=e859]:
+                            - gridcell "OTEL_METRIC_EXPORT_INTERVAL Open in text visualizer" [ref=e860]:
+                              - generic [ref=e861]:
+                                - generic "OTEL_METRIC_EXPORT_INTERVAL" [ref=e862]
+                                - generic "Open in text visualizer" [ref=e863] [cursor=pointer]:
+                                  - button "Open in text visualizer" [ref=e864]:
+                                    - generic:
+                                      - generic:
+                                        - img
+                            - gridcell "●●●●●●●● Open in text visualizer Show value" [ref=e865]:
+                              - generic [ref=e866]:
+                                - generic [ref=e867]: ●●●●●●●●
+                                - generic [ref=e868]:
+                                  - generic "Open in text visualizer" [ref=e869] [cursor=pointer]:
+                                    - button "Open in text visualizer" [ref=e870]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                                  - generic "Show value" [ref=e871] [cursor=pointer]:
+                                    - button "Show value" [ref=e872]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                          - row "OTEL_METRICS_EXEMPLAR_FILTER Open in text visualizer ●●●●●●●● Open in text visualizer Show value" [ref=e873]:
+                            - gridcell "OTEL_METRICS_EXEMPLAR_FILTER Open in text visualizer" [ref=e874]:
+                              - generic [ref=e875]:
+                                - generic "OTEL_METRICS_EXEMPLAR_FILTER" [ref=e876]
+                                - generic "Open in text visualizer" [ref=e877] [cursor=pointer]:
+                                  - button "Open in text visualizer" [ref=e878]:
+                                    - generic:
+                                      - generic:
+                                        - img
+                            - gridcell "●●●●●●●● Open in text visualizer Show value" [ref=e879]:
+                              - generic [ref=e880]:
+                                - generic [ref=e881]: ●●●●●●●●
+                                - generic [ref=e882]:
+                                  - generic "Open in text visualizer" [ref=e883] [cursor=pointer]:
+                                    - button "Open in text visualizer" [ref=e884]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                                  - generic "Show value" [ref=e885] [cursor=pointer]:
+                                    - button "Show value" [ref=e886]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                          - row "OTEL_RESOURCE_ATTRIBUTES Open in text visualizer ●●●●●●●● Open in text visualizer Show value" [ref=e887]:
+                            - gridcell "OTEL_RESOURCE_ATTRIBUTES Open in text visualizer" [ref=e888]:
+                              - generic [ref=e889]:
+                                - generic "OTEL_RESOURCE_ATTRIBUTES" [ref=e890]
+                                - generic "Open in text visualizer" [ref=e891] [cursor=pointer]:
+                                  - button "Open in text visualizer" [ref=e892]:
+                                    - generic:
+                                      - generic:
+                                        - img
+                            - gridcell "●●●●●●●● Open in text visualizer Show value" [ref=e893]:
+                              - generic [ref=e894]:
+                                - generic [ref=e895]: ●●●●●●●●
+                                - generic [ref=e896]:
+                                  - generic "Open in text visualizer" [ref=e897] [cursor=pointer]:
+                                    - button "Open in text visualizer" [ref=e898]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                                  - generic "Show value" [ref=e899] [cursor=pointer]:
+                                    - button "Show value" [ref=e900]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                          - row "OTEL_SERVICE_NAME Open in text visualizer ●●●●●●●● Open in text visualizer Show value" [ref=e901]:
+                            - gridcell "OTEL_SERVICE_NAME Open in text visualizer" [ref=e902]:
+                              - generic [ref=e903]:
+                                - generic "OTEL_SERVICE_NAME" [ref=e904]
+                                - generic "Open in text visualizer" [ref=e905] [cursor=pointer]:
+                                  - button "Open in text visualizer" [ref=e906]:
+                                    - generic:
+                                      - generic:
+                                        - img
+                            - gridcell "●●●●●●●● Open in text visualizer Show value" [ref=e907]:
+                              - generic [ref=e908]:
+                                - generic [ref=e909]: ●●●●●●●●
+                                - generic [ref=e910]:
+                                  - generic "Open in text visualizer" [ref=e911] [cursor=pointer]:
+                                    - button "Open in text visualizer" [ref=e912]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                                  - generic "Show value" [ref=e913] [cursor=pointer]:
+                                    - button "Show value" [ref=e914]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                          - row "OTEL_TRACES_SAMPLER Open in text visualizer ●●●●●●●● Open in text visualizer Show value" [ref=e915]:
+                            - gridcell "OTEL_TRACES_SAMPLER Open in text visualizer" [ref=e916]:
+                              - generic [ref=e917]:
+                                - generic "OTEL_TRACES_SAMPLER" [ref=e918]
+                                - generic "Open in text visualizer" [ref=e919] [cursor=pointer]:
+                                  - button "Open in text visualizer" [ref=e920]:
+                                    - generic:
+                                      - generic:
+                                        - img
+                            - gridcell "●●●●●●●● Open in text visualizer Show value" [ref=e921]:
+                              - generic [ref=e922]:
+                                - generic [ref=e923]: ●●●●●●●●
+                                - generic [ref=e924]:
+                                  - generic "Open in text visualizer" [ref=e925] [cursor=pointer]:
+                                    - button "Open in text visualizer" [ref=e926]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                                  - generic "Show value" [ref=e927] [cursor=pointer]:
+                                    - button "Show value" [ref=e928]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                          - row "SQL_HOST Open in text visualizer ●●●●●●●● Open in text visualizer Show value" [ref=e929]:
+                            - gridcell "SQL_HOST Open in text visualizer" [ref=e930]:
+                              - generic [ref=e931]:
+                                - generic "SQL_HOST" [ref=e932]
+                                - generic "Open in text visualizer" [ref=e933] [cursor=pointer]:
+                                  - button "Open in text visualizer" [ref=e934]:
+                                    - generic:
+                                      - generic:
+                                        - img
+                            - gridcell "●●●●●●●● Open in text visualizer Show value" [ref=e935]:
+                              - generic [ref=e936]:
+                                - generic [ref=e937]: ●●●●●●●●
+                                - generic [ref=e938]:
+                                  - generic "Open in text visualizer" [ref=e939] [cursor=pointer]:
+                                    - button "Open in text visualizer" [ref=e940]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                                  - generic "Show value" [ref=e941] [cursor=pointer]:
+                                    - button "Show value" [ref=e942]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                          - row "SQL_JDBCCONNECTIONSTRING Open in text visualizer ●●●●●●●● Open in text visualizer Show value" [ref=e943]:
+                            - gridcell "SQL_JDBCCONNECTIONSTRING Open in text visualizer" [ref=e944]:
+                              - generic [ref=e945]:
+                                - generic "SQL_JDBCCONNECTIONSTRING" [ref=e946]
+                                - generic "Open in text visualizer" [ref=e947] [cursor=pointer]:
+                                  - button "Open in text visualizer" [ref=e948]:
+                                    - generic:
+                                      - generic:
+                                        - img
+                            - gridcell "●●●●●●●● Open in text visualizer Show value" [ref=e949]:
+                              - generic [ref=e950]:
+                                - generic [ref=e951]: ●●●●●●●●
+                                - generic [ref=e952]:
+                                  - generic "Open in text visualizer" [ref=e953] [cursor=pointer]:
+                                    - button "Open in text visualizer" [ref=e954]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                                  - generic "Show value" [ref=e955] [cursor=pointer]:
+                                    - button "Show value" [ref=e956]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                          - row "SQL_PASSWORD Open in text visualizer ●●●●●●●● Open in text visualizer Show value" [ref=e957]:
+                            - gridcell "SQL_PASSWORD Open in text visualizer" [ref=e958]:
+                              - generic [ref=e959]:
+                                - generic "SQL_PASSWORD" [ref=e960]
+                                - generic "Open in text visualizer" [ref=e961] [cursor=pointer]:
+                                  - button "Open in text visualizer" [ref=e962]:
+                                    - generic:
+                                      - generic:
+                                        - img
+                            - gridcell "●●●●●●●● Open in text visualizer Show value" [ref=e963]:
+                              - generic [ref=e964]:
+                                - generic [ref=e965]: ●●●●●●●●
+                                - generic [ref=e966]:
+                                  - generic "Open in text visualizer" [ref=e967] [cursor=pointer]:
+                                    - button "Open in text visualizer" [ref=e968]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                                  - generic "Show value" [ref=e969] [cursor=pointer]:
+                                    - button "Show value" [ref=e970]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                          - row "SQL_PORT Open in text visualizer ●●●●●●●● Open in text visualizer Show value" [ref=e971]:
+                            - gridcell "SQL_PORT Open in text visualizer" [ref=e972]:
+                              - generic [ref=e973]:
+                                - generic "SQL_PORT" [ref=e974]
+                                - generic "Open in text visualizer" [ref=e975] [cursor=pointer]:
+                                  - button "Open in text visualizer" [ref=e976]:
+                                    - generic:
+                                      - generic:
+                                        - img
+                            - gridcell "●●●●●●●● Open in text visualizer Show value" [ref=e977]:
+                              - generic [ref=e978]:
+                                - generic [ref=e979]: ●●●●●●●●
+                                - generic [ref=e980]:
+                                  - generic "Open in text visualizer" [ref=e981] [cursor=pointer]:
+                                    - button "Open in text visualizer" [ref=e982]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                                  - generic "Show value" [ref=e983] [cursor=pointer]:
+                                    - button "Show value" [ref=e984]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                          - row "SQL_URI Open in text visualizer ●●●●●●●● Open in text visualizer Show value" [ref=e985]:
+                            - gridcell "SQL_URI Open in text visualizer" [ref=e986]:
+                              - generic [ref=e987]:
+                                - generic "SQL_URI" [ref=e988]
+                                - generic "Open in text visualizer" [ref=e989] [cursor=pointer]:
+                                  - button "Open in text visualizer" [ref=e990]:
+                                    - generic:
+                                      - generic:
+                                        - img
+                            - gridcell "●●●●●●●● Open in text visualizer Show value" [ref=e991]:
+                              - generic [ref=e992]:
+                                - generic [ref=e993]: ●●●●●●●●
+                                - generic [ref=e994]:
+                                  - generic "Open in text visualizer" [ref=e995] [cursor=pointer]:
+                                    - button "Open in text visualizer" [ref=e996]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                                  - generic "Show value" [ref=e997] [cursor=pointer]:
+                                    - button "Show value" [ref=e998]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                          - row "SQL_USERNAME Open in text visualizer ●●●●●●●● Open in text visualizer Show value" [ref=e999]:
+                            - gridcell "SQL_USERNAME Open in text visualizer" [ref=e1000]:
+                              - generic [ref=e1001]:
+                                - generic "SQL_USERNAME" [ref=e1002]
+                                - generic "Open in text visualizer" [ref=e1003] [cursor=pointer]:
+                                  - button "Open in text visualizer" [ref=e1004]:
+                                    - generic:
+                                      - generic:
+                                        - img
+                            - gridcell "●●●●●●●● Open in text visualizer Show value" [ref=e1005]:
+                              - generic [ref=e1006]:
+                                - generic [ref=e1007]: ●●●●●●●●
+                                - generic [ref=e1008]:
+                                  - generic "Open in text visualizer" [ref=e1009] [cursor=pointer]:
+                                    - button "Open in text visualizer" [ref=e1010]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                                  - generic "Show value" [ref=e1011] [cursor=pointer]:
+                                    - button "Show value" [ref=e1012]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                          - row "SSL_CERT_DIR Open in text visualizer ●●●●●●●● Open in text visualizer Show value" [ref=e1013]:
+                            - gridcell "SSL_CERT_DIR Open in text visualizer" [ref=e1014]:
+                              - generic [ref=e1015]:
+                                - generic "SSL_CERT_DIR" [ref=e1016]
+                                - generic "Open in text visualizer" [ref=e1017] [cursor=pointer]:
+                                  - button "Open in text visualizer" [ref=e1018]:
+                                    - generic:
+                                      - generic:
+                                        - img
+                            - gridcell "●●●●●●●● Open in text visualizer Show value" [ref=e1019]:
+                              - generic [ref=e1020]:
+                                - generic [ref=e1021]: ●●●●●●●●
+                                - generic [ref=e1022]:
+                                  - generic "Open in text visualizer" [ref=e1023] [cursor=pointer]:
+                                    - button "Open in text visualizer" [ref=e1024]:
+                                      - generic:
+                                        - generic:
+                                          - img
+                                  - generic "Show value" [ref=e1025] [cursor=pointer]:
+                                    - button "Show value" [ref=e1026]:
+                                      - generic:
+                                        - generic:
+                                          - img

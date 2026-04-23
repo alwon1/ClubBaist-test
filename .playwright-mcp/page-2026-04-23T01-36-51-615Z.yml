@@ -1,0 +1,60 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - link "Club BAIST" [ref=e6] [cursor=pointer]:
+      - /url: ""
+    - navigation [ref=e8]:
+      - link "Home" [ref=e10] [cursor=pointer]:
+        - /url: ""
+        - text: Home
+      - link "Tee Times" [ref=e13] [cursor=pointer]:
+        - /url: teetimes
+        - text: Tee Times
+      - link "My Reservations" [ref=e16] [cursor=pointer]:
+        - /url: teetimes/my
+        - text: My Reservations
+      - link "My Scores" [ref=e19] [cursor=pointer]:
+        - /url: scores/my
+        - text: My Scores
+      - link "My Standing Requests" [ref=e22] [cursor=pointer]:
+        - /url: teetimes/standing/my
+        - text: My Standing Requests
+      - link "shareholder1@clubbaist.com" [ref=e25] [cursor=pointer]:
+        - /url: Account/Manage
+        - text: shareholder1@clubbaist.com
+      - button "Logout" [ref=e29] [cursor=pointer]: Logout
+  - main [ref=e31]:
+    - link "About" [ref=e33] [cursor=pointer]:
+      - /url: https://learn.microsoft.com/aspnet/core/
+    - article [ref=e34]:
+      - heading "Reservation Details" [level=3] [ref=e2448]
+      - generic [ref=e2449]:
+        - generic [ref=e2450]:
+          - strong [ref=e2451]: Reservation Information
+          - generic [ref=e2452]: Upcoming
+        - generic [ref=e2454]:
+          - generic [ref=e2455]:
+            - paragraph [ref=e2456]:
+              - strong [ref=e2457]: "Date:"
+              - text: Thursday, April 23, 2026
+            - paragraph [ref=e2458]:
+              - strong [ref=e2459]: "Time:"
+              - text: 7:00 AM
+          - generic [ref=e2460]:
+            - paragraph [ref=e2461]:
+              - strong [ref=e2462]: "Booking Member:"
+              - text: Alice Shareholder (SH-0001)
+            - paragraph [ref=e2463]:
+              - strong [ref=e2464]: "Total Players:"
+              - text: "1"
+      - generic [ref=e2465]:
+        - strong [ref=e2467]: Players
+        - list [ref=e2469]:
+          - listitem [ref=e2470]:
+            - strong [ref=e2471]: "1."
+            - text: Alice Shareholder (SH-0001)
+            - generic [ref=e2472]: Booking Member
+      - generic [ref=e2473]:
+        - button "Edit Players" [ref=e2474] [cursor=pointer]
+        - button "Cancel Reservation" [ref=e2475] [cursor=pointer]
+      - link "Back to My Reservations" [ref=e2477] [cursor=pointer]:
+        - /url: /teetimes/my

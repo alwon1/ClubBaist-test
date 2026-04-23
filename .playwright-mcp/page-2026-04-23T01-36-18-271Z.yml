@@ -1,0 +1,49 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - link "Club BAIST" [ref=e6] [cursor=pointer]:
+      - /url: ""
+    - navigation [ref=e8]:
+      - link "Home" [ref=e10] [cursor=pointer]:
+        - /url: ""
+        - text: Home
+      - link "Tee Times" [ref=e13] [cursor=pointer]:
+        - /url: teetimes
+        - text: Tee Times
+      - link "My Reservations" [ref=e16] [cursor=pointer]:
+        - /url: teetimes/my
+        - text: My Reservations
+      - link "My Scores" [ref=e19] [cursor=pointer]:
+        - /url: scores/my
+        - text: My Scores
+      - link "My Standing Requests" [ref=e22] [cursor=pointer]:
+        - /url: teetimes/standing/my
+        - text: My Standing Requests
+      - link "shareholder1@clubbaist.com" [ref=e25] [cursor=pointer]:
+        - /url: Account/Manage
+        - text: shareholder1@clubbaist.com
+      - button "Logout" [ref=e29] [cursor=pointer]: Logout
+  - main [ref=e31]:
+    - link "About" [ref=e33] [cursor=pointer]:
+      - /url: https://learn.microsoft.com/aspnet/core/
+    - article [ref=e34]:
+      - heading "Book a Tee Time" [level=3] [ref=e2383]
+      - generic [ref=e2384]:
+        - strong [ref=e2386]: Selected Slot
+        - generic [ref=e2387]:
+          - paragraph [ref=e2388]:
+            - strong [ref=e2389]: "Date:"
+            - text: Thursday, April 23, 2026
+          - paragraph [ref=e2390]:
+            - strong [ref=e2391]: "Time:"
+            - text: 7:00 AM
+      - generic [ref=e2392]:
+        - strong [ref=e2394]: Booking Member
+        - paragraph [ref=e2396]: SH-0001 - Alice Shareholder
+      - generic [ref=e2397]:
+        - generic [ref=e2398]:
+          - strong [ref=e2399]: Additional Players
+          - button "+ Add Player" [ref=e2400] [cursor=pointer]
+        - paragraph [ref=e2402]: No additional players added.
+      - button "Book Tee Time" [ref=e2403] [cursor=pointer]
+      - link "Cancel" [ref=e2404] [cursor=pointer]:
+        - /url: /teetimes

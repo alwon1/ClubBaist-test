@@ -58,6 +58,25 @@ else if (round is not null)
                 <dt class="col-sm-5">Calculated Adjusted Score</dt>
                 <dd class="col-sm-7">@scoreView.AdjustedTotal</dd>
 
+                <dt class="col-sm-5">Current Handicap Index</dt>
+                <dd class="col-sm-7">
+                    @if (handicapResult?.IsAvailable == true && handicapResult.CurrentHandicap.HasValue)
+                    {
+                        <span>@handicapResult.CurrentHandicap.Value.ToString("0.0")</span>
+                        @if (handicapResult.IsProvisional)
+                        {
+                            <span class="badge bg-warning text-dark ms-1">Provisional</span>
+                        }
+                    }
+                    else
+                    {
+                        <span class="text-muted">Not available</span>
+                    }
+                </dd>
+
+                <dt class="col-sm-5">Rounds Used</dt>
+                <dd class="col-sm-7">@(handicapResult?.RoundCount ?? 0)</dd>
+
                 <dt class="col-sm-5">Calculation Basis</dt>
                 <dd class="col-sm-7 small text-muted">@scoreView.Basis</dd>
 
@@ -102,6 +121,7 @@ else
 
     private GolfRound? round;
     private bool isAdmin;
+    private HandicapResult? handicapResult;
     private RoundScoreView scoreView = new(0, 0, false, "No scores loaded");
 
     protected override async Task OnInitializedAsync()
@@ -137,7 +157,8 @@ else
 
             if (round is not null)
             {
-                scoreView = await DeriveScoreViewAsync(round);
+                handicapResult = await HandicapCalculationService.GetCurrentHandicapAsync(round.MembershipId, CancellationToken.None);
+                scoreView = await DeriveScoreViewAsync(round, handicapResult);
             }
         }
         catch (Exception ex)
@@ -151,7 +172,7 @@ else
         }
     }
 
-    private async Task<RoundScoreView> DeriveScoreViewAsync(GolfRound golfRound)
+    private async Task<RoundScoreView> DeriveScoreViewAsync(GolfRound golfRound, HandicapResult handicap)
     {
         var fallback = RoundScoreDerivationService.Compute(golfRound.Scores);
         if (golfRound.Member.User.Gender is null)
@@ -168,20 +189,19 @@ else
             return fallback with { Basis = "Derived from raw totals (missing tee/gender course rating for WHS rules)" };
         }
 
-        var handicapResult = await HandicapCalculationService.GetCurrentHandicapAsync(golfRound.MembershipId, CancellationToken.None);
-        var hasEstablishedHandicap = handicapResult.IsAvailable && handicapResult.RoundCount >= 3;
+        var hasEstablishedHandicap = handicap.IsAvailable && handicap.RoundCount >= 3;
         var holeRefs = await CourseHoleReferenceService.GetHoleReferencesAsync(golfRound.SelectedTeeColor);
         if (holeRefs.Count != 18)
         {
             return fallback with { Basis = "Derived from raw totals (missing complete hole reference data for WHS rules)" };
         }
 
-        var courseHandicap = CalculateCourseHandicap(handicapResult.CurrentHandicap, rating.Rating, rating.SlopeRating, holeRefs.Sum(h => h.Par));
+        var courseHandicap = CalculateCourseHandicap(handicap.CurrentHandicap, rating.Rating, rating.SlopeRating, holeRefs.Sum(h => h.Par));
 
         return RoundScoreDerivationService.ComputeWithWhsHoleAdjustments(
             BuildHoleInputs(golfRound.Scores, holeRefs),
             courseHandicap,
-            hasEstablishedHandicap && handicapResult.CurrentHandicap.HasValue);
+            hasEstablishedHandicap && handicap.CurrentHandicap.HasValue);
     }
 
     private static List<HoleScoreInput> BuildHoleInputs(
