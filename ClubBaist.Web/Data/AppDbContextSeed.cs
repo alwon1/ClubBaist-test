@@ -199,11 +199,24 @@ internal static class AppDbContextSeed
             ThrowIfFailed(await userManager.CreateAsync(user, DefaultPassword), $"create user '{seedUser.Email}'");
             ThrowIfFailed(await userManager.AddToRoleAsync(user, seedUser.Role), $"assign role '{seedUser.Role}' to '{seedUser.Email}'");
 
-            if (seedUser.MembershipLevelShortCode == "SH")
+            var levelMemberType = Array.Find(MembershipLevels,
+                l => l.ShortCode.Equals(seedUser.MembershipLevelShortCode, StringComparison.OrdinalIgnoreCase))?.MemberType;
+
+            if (levelMemberType == MemberType.Shareholder)
             {
                 ThrowIfFailed(
                     await userManager.AddClaimAsync(user, AppRoles.Claims.StandingTeeTimeBooking),
                     $"add standing tee time claim to '{seedUser.Email}'");
+                ThrowIfFailed(
+                    await userManager.AddClaimAsync(user, AppRoles.Claims.ShareholderStatus),
+                    $"add shareholder status claim to '{seedUser.Email}'");
+            }
+
+            if (seedUser.MembershipLevelShortCode == "CP")
+            {
+                ThrowIfFailed(
+                    await userManager.AddClaimAsync(user, AppRoles.Claims.CopperTierStatus),
+                    $"add copper tier status claim to '{seedUser.Email}'");
             }
 
             usersByEmail.Add(seedUser.Email, user);

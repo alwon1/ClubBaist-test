@@ -11,6 +11,7 @@ public class MembershipApplicationService(
     IAppDbContext2 db,
     UserManager<ClubBaistUser> userManager,
     RoleManager<IdentityRole<Guid>> roleManager,
+    IMemberClaimSynchroniser claimSynchroniser,
     ILogger<MembershipApplicationService> logger)
 {
     public IQueryable<MembershipApplication> GetMembershipApplications() => db.MembershipApplications.AsNoTracking();
@@ -171,6 +172,16 @@ public class MembershipApplicationService(
                 var saved = await db.SaveChangesAsync() > 0;
                 if (!saved)
                 {
+                    await transaction.RollbackAsync();
+                    return (false, null);
+                }
+
+                var claimsSynced = await claimSynchroniser.SynchroniseAsync(user, membershipLevel);
+                if (!claimsSynced)
+                {
+                    logger.LogError(
+                        "Claim synchronisation failed while approving membership application {ApplicationId} for {Email}; rolling back.",
+                        applicationId, application.Email);
                     await transaction.RollbackAsync();
                     return (false, null);
                 }

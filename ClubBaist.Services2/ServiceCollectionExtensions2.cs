@@ -1,4 +1,5 @@
 using ClubBaist.Domain2;
+using ClubBaist.Services2.Membership;
 using ClubBaist.Services2.Scoring;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -53,6 +54,8 @@ public static class ServiceCollectionExtensions2
         services.AddScoped<PlayingConditionService>();
         services.AddScoped<RoundScoreDerivationService>();
         services.AddScoped<CourseHoleReferenceService>();
+
+        services.AddScoped<IMemberClaimSynchroniser, MemberClaimSynchroniser>();
 
         return services;
     }

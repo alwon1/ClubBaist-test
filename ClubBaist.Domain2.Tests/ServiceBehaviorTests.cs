@@ -1,4 +1,5 @@
 using System.Data;
+using ClubBaist.Domain2;
 using ClubBaist.Domain2.Entities;
 using ClubBaist.Domain2.Entities.Membership;
 using ClubBaist.Domain2.Entities.Scoring;
@@ -195,6 +196,148 @@ public class MembershipApplicationServiceTests
 
         var persisted = await db.MembershipApplications.SingleAsync(item => item.Email == "notsponsor@test.com");
         Assert.IsFalse(await applicationService.ConfirmSponsorEndorsementAsync(persisted.Id, unrelated.Id));
+    }
+}
+
+[TestClass]
+public class MemberClaimSynchroniserTests
+{
+    [TestMethod]
+    public async Task ApproveMembershipApplicationAsync_ShareholderLevel_GrantsShareholderAndBookingClaims()
+    {
+        await using var host = await Domain2TestHost.CreateAsync();
+        await using var scope = host.CreateScope();
+        var provider = scope.ServiceProvider;
+
+        var db = provider.GetRequiredService<AppDbContext>();
+        var userManager = provider.GetRequiredService<UserManager<ClubBaistUser>>();
+        var applicationService = provider.GetRequiredService<MembershipApplicationService>();
+
+        var shareholderLevel = await Domain2TestData.CreateMembershipLevelAsync(db, "SH", "Shareholder", MemberType.Shareholder);
+        var sponsor1 = await Domain2TestData.CreateMemberAsync(userManager, db, shareholderLevel, "sponsor1@test.com", "Sponsor", "One");
+        var sponsor2 = await Domain2TestData.CreateMemberAsync(userManager, db, shareholderLevel, "sponsor2@test.com", "Sponsor", "Two");
+
+        var application = Domain2TestData.CreateApplication(shareholderLevel, sponsor1.Id, sponsor2.Id, email: "sh-applicant@test.com");
+        Assert.IsTrue(await applicationService.SubmitMembershipApplicationAsync(application));
+        var persisted = await db.MembershipApplications.SingleAsync(a => a.Email == "sh-applicant@test.com");
+
+        var result = await applicationService.ApproveMembershipApplicationAsync(persisted.Id, shareholderLevel.Id);
+
+        Assert.IsTrue(result.Success);
+        var createdUser = await userManager.FindByEmailAsync("sh-applicant@test.com");
+        Assert.IsNotNull(createdUser);
+        var claims = await userManager.GetClaimsAsync(createdUser);
+
+        Assert.IsTrue(claims.Any(c => c.Type == AppRoles.ClaimTypes.Permission && c.Value == AppRoles.Permissions.BookStandingTeeTime),
+            "Shareholder should have the standing-tee-time.book permission claim.");
+        Assert.IsTrue(claims.Any(c => c.Type == AppRoles.ClaimTypes.MembershipFact && c.Value == AppRoles.MembershipFacts.Shareholder),
+            "Shareholder should have the clubbaist.membership=shareholder claim.");
+        Assert.IsFalse(claims.Any(c => c.Type == AppRoles.ClaimTypes.MembershipFact && c.Value == AppRoles.MembershipFacts.CopperTier),
+            "Shareholder should NOT have the copper-tier claim.");
+    }
+
+    [TestMethod]
+    public async Task ApproveMembershipApplicationAsync_CopperLevel_GrantsCopperTierClaimOnly()
+    {
+        await using var host = await Domain2TestHost.CreateAsync();
+        await using var scope = host.CreateScope();
+        var provider = scope.ServiceProvider;
+
+        var db = provider.GetRequiredService<AppDbContext>();
+        var userManager = provider.GetRequiredService<UserManager<ClubBaistUser>>();
+        var applicationService = provider.GetRequiredService<MembershipApplicationService>();
+
+        var shareholderLevel = await Domain2TestData.CreateMembershipLevelAsync(db, "SH", "Shareholder", MemberType.Shareholder);
+        var copperLevel = await Domain2TestData.CreateMembershipLevelAsync(db, "CP", "Social", MemberType.Associate, openingHour: 7, closingHour: 19);
+        var sponsor1 = await Domain2TestData.CreateMemberAsync(userManager, db, shareholderLevel, "sponsor1@test.com", "Sponsor", "One");
+        var sponsor2 = await Domain2TestData.CreateMemberAsync(userManager, db, shareholderLevel, "sponsor2@test.com", "Sponsor", "Two");
+
+        var application = Domain2TestData.CreateApplication(copperLevel, sponsor1.Id, sponsor2.Id, email: "cp-applicant@test.com");
+        Assert.IsTrue(await applicationService.SubmitMembershipApplicationAsync(application));
+        var persisted = await db.MembershipApplications.SingleAsync(a => a.Email == "cp-applicant@test.com");
+
+        var result = await applicationService.ApproveMembershipApplicationAsync(persisted.Id, copperLevel.Id);
+
+        Assert.IsTrue(result.Success);
+        var createdUser = await userManager.FindByEmailAsync("cp-applicant@test.com");
+        Assert.IsNotNull(createdUser);
+        var claims = await userManager.GetClaimsAsync(createdUser);
+
+        Assert.IsTrue(claims.Any(c => c.Type == AppRoles.ClaimTypes.MembershipFact && c.Value == AppRoles.MembershipFacts.CopperTier),
+            "Copper-tier member should have the copper-tier claim.");
+        Assert.IsFalse(claims.Any(c => c.Type == AppRoles.ClaimTypes.Permission && c.Value == AppRoles.Permissions.BookStandingTeeTime),
+            "Copper-tier member should NOT have the standing-tee-time.book claim.");
+        Assert.IsFalse(claims.Any(c => c.Type == AppRoles.ClaimTypes.MembershipFact && c.Value == AppRoles.MembershipFacts.Shareholder),
+            "Copper-tier member should NOT have the shareholder claim.");
+    }
+
+    [TestMethod]
+    public async Task ApproveMembershipApplicationAsync_AssociateLevel_GrantsNoClaims()
+    {
+        await using var host = await Domain2TestHost.CreateAsync();
+        await using var scope = host.CreateScope();
+        var provider = scope.ServiceProvider;
+
+        var db = provider.GetRequiredService<AppDbContext>();
+        var userManager = provider.GetRequiredService<UserManager<ClubBaistUser>>();
+        var applicationService = provider.GetRequiredService<MembershipApplicationService>();
+
+        var shareholderLevel = await Domain2TestData.CreateMembershipLevelAsync(db, "SH", "Shareholder", MemberType.Shareholder);
+        var associateLevel = await Domain2TestData.CreateMembershipLevelAsync(db, "AS", "Associate");
+        var sponsor1 = await Domain2TestData.CreateMemberAsync(userManager, db, shareholderLevel, "sponsor1@test.com", "Sponsor", "One");
+        var sponsor2 = await Domain2TestData.CreateMemberAsync(userManager, db, shareholderLevel, "sponsor2@test.com", "Sponsor", "Two");
+
+        var application = Domain2TestData.CreateApplication(associateLevel, sponsor1.Id, sponsor2.Id, email: "as-applicant@test.com");
+        Assert.IsTrue(await applicationService.SubmitMembershipApplicationAsync(application));
+        var persisted = await db.MembershipApplications.SingleAsync(a => a.Email == "as-applicant@test.com");
+
+        var result = await applicationService.ApproveMembershipApplicationAsync(persisted.Id, associateLevel.Id);
+
+        Assert.IsTrue(result.Success);
+        var createdUser = await userManager.FindByEmailAsync("as-applicant@test.com");
+        Assert.IsNotNull(createdUser);
+        var claims = await userManager.GetClaimsAsync(createdUser);
+
+        Assert.IsFalse(claims.Any(c => c.Type == AppRoles.ClaimTypes.Permission && c.Value == AppRoles.Permissions.BookStandingTeeTime),
+            "Associate member should NOT have the standing-tee-time.book claim.");
+        Assert.IsFalse(claims.Any(c => c.Type == AppRoles.ClaimTypes.MembershipFact),
+            "Associate member should have no membership-fact claims.");
+    }
+
+    [TestMethod]
+    public async Task ApproveMembershipApplicationAsync_ShareholderSpouseLevel_GrantsStandingTeeTimeClaim()
+    {
+        // Shareholder Spouse (SS) has MemberType.Shareholder — claims should be granted by MemberType, not ShortCode.
+        await using var host = await Domain2TestHost.CreateAsync();
+        await using var scope = host.CreateScope();
+        var provider = scope.ServiceProvider;
+
+        var db = provider.GetRequiredService<AppDbContext>();
+        var userManager = provider.GetRequiredService<UserManager<ClubBaistUser>>();
+        var applicationService = provider.GetRequiredService<MembershipApplicationService>();
+
+        var shareholderLevel = await Domain2TestData.CreateMembershipLevelAsync(db, "SH", "Shareholder", MemberType.Shareholder);
+        var shareholderSpouseLevel = await Domain2TestData.CreateMembershipLevelAsync(db, "SS", "Shareholder Spouse", MemberType.Shareholder);
+        var sponsor1 = await Domain2TestData.CreateMemberAsync(userManager, db, shareholderLevel, "sponsor1@test.com", "Sponsor", "One");
+        var sponsor2 = await Domain2TestData.CreateMemberAsync(userManager, db, shareholderLevel, "sponsor2@test.com", "Sponsor", "Two");
+
+        var application = Domain2TestData.CreateApplication(shareholderSpouseLevel, sponsor1.Id, sponsor2.Id, email: "ss-applicant@test.com");
+        Assert.IsTrue(await applicationService.SubmitMembershipApplicationAsync(application));
+        var persisted = await db.MembershipApplications.SingleAsync(a => a.Email == "ss-applicant@test.com");
+
+        var result = await applicationService.ApproveMembershipApplicationAsync(persisted.Id, shareholderSpouseLevel.Id);
+
+        Assert.IsTrue(result.Success);
+        var createdUser = await userManager.FindByEmailAsync("ss-applicant@test.com");
+        Assert.IsNotNull(createdUser);
+        var claims = await userManager.GetClaimsAsync(createdUser);
+
+        Assert.IsTrue(claims.Any(c => c.Type == AppRoles.ClaimTypes.Permission && c.Value == AppRoles.Permissions.BookStandingTeeTime),
+            "Shareholder Spouse should have the standing-tee-time.book permission claim.");
+        Assert.IsTrue(claims.Any(c => c.Type == AppRoles.ClaimTypes.MembershipFact && c.Value == AppRoles.MembershipFacts.Shareholder),
+            "Shareholder Spouse should have the clubbaist.membership=shareholder claim.");
+        Assert.IsFalse(claims.Any(c => c.Type == AppRoles.ClaimTypes.MembershipFact && c.Value == AppRoles.MembershipFacts.CopperTier),
+            "Shareholder Spouse should NOT have the copper-tier claim.");
     }
 }
 

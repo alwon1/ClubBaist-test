@@ -85,6 +85,22 @@ else
                     Club member with tee time access
                 </label>
             </div>
+            <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" id="roleClerk"
+                       @bind="_roleClerk" />
+                <label class="form-check-label" for="roleClerk">
+                    <span class="badge @UiHelpers.GetRoleBadgeClass(AppRoles.Clerk) me-1">Clerk</span>
+                    Front-desk staff: score entry and check-in access
+                </label>
+            </div>
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="roleProShopStaff"
+                       @bind="_roleProShopStaff" />
+                <label class="form-check-label" for="roleProShopStaff">
+                    <span class="badge @UiHelpers.GetRoleBadgeClass(AppRoles.ProShopStaff) me-1">ProShopStaff</span>
+                    Pro-shop staff: booking management access
+                </label>
+            </div>
             @if (!_roleMember && _memberAccount is not null)
             {
                 <div class="alert alert-warning py-2 mb-3">
@@ -165,6 +181,8 @@ else
     private bool _roleAdmin;
     private bool _roleCommittee;
     private bool _roleMember;
+    private bool _roleClerk;
+    private bool _roleProShopStaff;
 
     private bool _savingRoles;
     private string? _rolesMessage;
@@ -193,6 +211,8 @@ else
             _roleAdmin = roles.Contains(AppRoles.Admin);
             _roleCommittee = roles.Contains(AppRoles.MembershipCommittee);
             _roleMember = roles.Contains(AppRoles.Member);
+            _roleClerk = roles.Contains(AppRoles.Clerk);
+            _roleProShopStaff = roles.Contains(AppRoles.ProShopStaff);
 
             _memberAccount = await DbContext.MemberShips
                 .Include(m => m.User)
@@ -224,6 +244,8 @@ else
             await ApplyRoleChangeAsync(_roleAdmin, AppRoles.Admin, currentRoles);
             await ApplyRoleChangeAsync(_roleCommittee, AppRoles.MembershipCommittee, currentRoles);
             await ApplyRoleChangeAsync(_roleMember, AppRoles.Member, currentRoles);
+            await ApplyRoleChangeAsync(_roleClerk, AppRoles.Clerk, currentRoles);
+            await ApplyRoleChangeAsync(_roleProShopStaff, AppRoles.ProShopStaff, currentRoles);
 
             _rolesMessage = "Roles updated successfully.";
         }

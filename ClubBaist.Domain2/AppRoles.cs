@@ -28,6 +28,7 @@ public static class AppRoles
     public static class ClaimTypes
     {
         public const string Permission = "clubbaist.permission";
+        public const string MembershipFact = "clubbaist.membership";
     }
 
     public static class Permissions
@@ -35,9 +36,21 @@ public static class AppRoles
         public const string BookStandingTeeTime = "standing-tee-time.book";
     }
 
+    public static class MembershipFacts
+    {
+        public const string Shareholder = "shareholder";
+        public const string CopperTier = "copper-tier";
+    }
+
     public static class Claims
     {
         public static Claim StandingTeeTimeBooking { get; } =
             new(ClaimTypes.Permission, Permissions.BookStandingTeeTime);
+
+        public static Claim ShareholderStatus { get; } =
+            new(ClaimTypes.MembershipFact, MembershipFacts.Shareholder);
+
+        public static Claim CopperTierStatus { get; } =
+            new(ClaimTypes.MembershipFact, MembershipFacts.CopperTier);
     }
 }

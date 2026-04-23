@@ -63,7 +63,19 @@ public class Program
             .AddPolicy(AppRoles.Member, policy => policy.RequireRole(AppRoles.Member))
             .AddPolicy(AppRoles.Permissions.BookStandingTeeTime, policy =>
                 policy.RequireRole(AppRoles.Member)
-                      .RequireClaim(AppRoles.ClaimTypes.Permission, AppRoles.Permissions.BookStandingTeeTime));
+                      .RequireClaim(AppRoles.ClaimTypes.Permission, AppRoles.Permissions.BookStandingTeeTime))
+            // Named policies — use [Authorize(Policy = PolicyNames.Xyz)] on new pages
+            .AddPolicy(PolicyNames.Admin, policy => policy.RequireRole(AppRoles.Admin))
+            .AddPolicy(PolicyNames.AdminOrCommittee, policy => policy.RequireRole(AppRoles.Admin, AppRoles.MembershipCommittee))
+            .AddPolicy(PolicyNames.AdminOrClerk, policy => policy.RequireRole(AppRoles.Admin, AppRoles.Clerk))
+            .AddPolicy(PolicyNames.AdminOrProShop, policy => policy.RequireRole(AppRoles.Admin, AppRoles.ProShopStaff))
+            .AddPolicy(PolicyNames.MemberAny, policy => policy.RequireRole(AppRoles.Member))
+            .AddPolicy(PolicyNames.MemberWithStandingBooking, policy =>
+                policy.RequireRole(AppRoles.Member)
+                      .RequireClaim(AppRoles.ClaimTypes.Permission, AppRoles.Permissions.BookStandingTeeTime))
+            .AddPolicy(PolicyNames.ShareholderMember, policy =>
+                policy.RequireRole(AppRoles.Member)
+                      .RequireClaim(AppRoles.ClaimTypes.MembershipFact, AppRoles.MembershipFacts.Shareholder));
 
         var app = builder.Build();
 
