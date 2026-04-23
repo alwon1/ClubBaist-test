@@ -28,6 +28,7 @@ public class AppDbContext : IdentityDbContext<ClubBaistUser, IdentityRole<Guid>,
     public DbSet<GolfRound> GolfRounds { get; set; }
     public DbSet<CourseRating> CourseRatings { get; set; }
     public DbSet<CourseHole> CourseHoles { get; set; }
+    public DbSet<PlayingConditionAdjustment> PlayingConditionAdjustments { get; set; }
 
     public Task<IDbContextTransaction> BeginTransactionAsync(IsolationLevel isolationLevel, CancellationToken cancellationToken = default) =>
         Database.BeginTransactionAsync(isolationLevel, cancellationToken);
@@ -236,6 +237,11 @@ public class AppDbContext : IdentityDbContext<ClubBaistUser, IdentityRole<Guid>,
             }
 
             entity.HasData(seededHoles);
+        });
+
+        modelBuilder.Entity<PlayingConditionAdjustment>(entity =>
+        {
+            entity.Property(p => p.Adjustment).HasPrecision(2, 1);
         });
     }
 }

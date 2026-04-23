@@ -50,6 +50,7 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<ScoreService>();
         services.AddScoped<HandicapCalculationService>();
+        services.AddScoped<PlayingConditionService>();
         services.AddScoped<RoundScoreDerivationService>();
         services.AddScoped<CourseHoleReferenceService>();
 
