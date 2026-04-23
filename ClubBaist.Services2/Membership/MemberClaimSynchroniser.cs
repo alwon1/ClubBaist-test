@@ -31,11 +31,9 @@ public sealed class MemberClaimSynchroniser(
         Claim targetClaim,
         bool shouldHave)
     {
-        var matches = existingClaims
-            .Where(c => c.Type == targetClaim.Type && c.Value == targetClaim.Value)
-            .ToList();
+        bool hasClaim = existingClaims.Any(c => c.Type == targetClaim.Type && c.Value == targetClaim.Value);
 
-        if (shouldHave && matches.Count == 0)
+        if (shouldHave && !hasClaim)
         {
             var result = await userManager.AddClaimAsync(user, targetClaim);
             if (!result.Succeeded)
@@ -45,16 +43,11 @@ public sealed class MemberClaimSynchroniser(
                     targetClaim.Type, targetClaim.Value, user.Id,
                     string.Join("; ", result.Errors.Select(e => e.Description)));
             }
-            return;
         }
-
-        // Remove all copies (deduplicates any historical manual additions)
-        foreach (var claim in matches)
+        else if (!shouldHave && hasClaim)
         {
-            if (shouldHave && matches.IndexOf(claim) == 0)
-                continue; // keep exactly one
-
-            var result = await userManager.RemoveClaimAsync(user, claim);
+            // RemoveClaimAsync removes all matching type+value entries, eliminating any duplicates.
+            var result = await userManager.RemoveClaimAsync(user, targetClaim);
             if (!result.Succeeded)
             {
                 logger.LogWarning(
