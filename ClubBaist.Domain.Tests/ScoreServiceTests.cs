@@ -46,6 +46,7 @@ public class ScoreServiceTests
     private sealed class ThrowingOnSaveDbContext(DbContextOptions<AppDbContext> options) : AppDbContext(options)
     {
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) =>
+
             throw new InvalidOperationException("Simulated save failure");
     }
 
