@@ -1,0 +1,82 @@
+- generic [ref=e97]:
+  - generic [ref=e98]:
+    - link "Club BAIST" [ref=e101] [cursor=pointer]:
+      - /url: ""
+    - navigation [ref=e103]:
+      - link "Home" [ref=e105] [cursor=pointer]:
+        - /url: ""
+        - text: Home
+      - link "Tee Times" [ref=e108] [cursor=pointer]:
+        - /url: teetimes
+        - text: Tee Times
+      - link "Staff Console" [ref=e111] [cursor=pointer]:
+        - /url: teetimes/staff
+        - text: Staff Console
+      - link "Score Console" [ref=e114] [cursor=pointer]:
+        - /url: scores/staff
+        - text: Score Console
+      - link "PCC Console" [ref=e117] [cursor=pointer]:
+        - /url: scores/pcc
+        - text: PCC Console
+      - link "User Management" [ref=e120] [cursor=pointer]:
+        - /url: admin/users
+        - text: User Management
+      - link "Seasons" [ref=e123] [cursor=pointer]:
+        - /url: admin/seasons
+        - text: Seasons
+      - link "Standing Tee Times" [ref=e126] [cursor=pointer]:
+        - /url: admin/standing-teetimes
+        - text: Standing Tee Times
+      - link "Membership Levels" [ref=e129] [cursor=pointer]:
+        - /url: admin/membership-levels
+        - text: Membership Levels
+      - link "Applications" [ref=e132] [cursor=pointer]:
+        - /url: membership/applications
+        - text: Applications
+      - link "Apply for Membership" [ref=e135] [cursor=pointer]:
+        - /url: membership/apply
+        - text: Apply for Membership
+      - link "admin@clubbaist.com" [ref=e138] [cursor=pointer]:
+        - /url: Account/Manage
+        - text: admin@clubbaist.com
+      - button "Logout" [ref=e142] [cursor=pointer]: Logout
+  - main [ref=e144]:
+    - link "About" [ref=e146] [cursor=pointer]:
+      - /url: https://learn.microsoft.com/aspnet/core/
+    - article [ref=e147]:
+      - heading "Score Console" [level=3] [ref=e148]
+      - paragraph [ref=e149]: Today's tee times — Wednesday, April 22, 2026
+      - table [ref=e150]:
+        - rowgroup [ref=e151]:
+          - row "Time Booking Member Players Status Action" [ref=e152]:
+            - columnheader "Time" [ref=e153]:
+              - button "Time" [ref=e155] [cursor=pointer]:
+                - generic [ref=e156]: Time
+            - columnheader "Booking Member" [ref=e158]:
+              - button "Booking Member" [ref=e160] [cursor=pointer]:
+                - generic [ref=e161]: Booking Member
+            - columnheader "Players" [ref=e163]:
+              - generic [ref=e166]: Players
+            - columnheader "Status" [ref=e167]:
+              - generic [ref=e170]: Status
+            - columnheader "Action" [ref=e171]:
+              - generic [ref=e174]: Action
+        - rowgroup [ref=e175]:
+          - row "5:00 PM Alice Shareholder 2 Eligible Record Score" [ref=e176]:
+            - cell "5:00 PM" [ref=e177]
+            - cell "Alice Shareholder" [ref=e178]
+            - cell "2" [ref=e179]
+            - cell "Eligible" [ref=e180]:
+              - generic [ref=e181]: Eligible
+            - cell "Record Score" [ref=e182]:
+              - link "Record Score" [ref=e183] [cursor=pointer]:
+                - /url: /scores/record?bookingId=2&amp;memberId=1
+          - row "6:00 PM Alice Shareholder 1 Eligible Record Score" [ref=e184]:
+            - cell "6:00 PM" [ref=e185]
+            - cell "Alice Shareholder" [ref=e186]
+            - cell "1" [ref=e187]
+            - cell "Eligible" [ref=e188]:
+              - generic [ref=e189]: Eligible
+            - cell "Record Score" [ref=e190]:
+              - link "Record Score" [ref=e191] [cursor=pointer]:
+                - /url: /scores/record?bookingId=1&amp;memberId=1

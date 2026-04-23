@@ -1,0 +1,74 @@
+- generic [ref=e97]:
+  - generic [ref=e98]:
+    - link "Club BAIST" [ref=e101] [cursor=pointer]:
+      - /url: ""
+    - navigation [ref=e103]:
+      - link "Home" [ref=e105] [cursor=pointer]:
+        - /url: ""
+        - text: Home
+      - link "Tee Times" [ref=e108] [cursor=pointer]:
+        - /url: teetimes
+        - text: Tee Times
+      - link "Staff Console" [ref=e111] [cursor=pointer]:
+        - /url: teetimes/staff
+        - text: Staff Console
+      - link "Score Console" [ref=e114] [cursor=pointer]:
+        - /url: scores/staff
+        - text: Score Console
+      - link "PCC Console" [ref=e117] [cursor=pointer]:
+        - /url: scores/pcc
+        - text: PCC Console
+      - link "User Management" [ref=e120] [cursor=pointer]:
+        - /url: admin/users
+        - text: User Management
+      - link "Seasons" [ref=e123] [cursor=pointer]:
+        - /url: admin/seasons
+        - text: Seasons
+      - link "Standing Tee Times" [ref=e126] [cursor=pointer]:
+        - /url: admin/standing-teetimes
+        - text: Standing Tee Times
+      - link "Membership Levels" [ref=e129] [cursor=pointer]:
+        - /url: admin/membership-levels
+        - text: Membership Levels
+      - link "Applications" [ref=e132] [cursor=pointer]:
+        - /url: membership/applications
+        - text: Applications
+      - link "Apply for Membership" [ref=e135] [cursor=pointer]:
+        - /url: membership/apply
+        - text: Apply for Membership
+      - link "admin@clubbaist.com" [ref=e138] [cursor=pointer]:
+        - /url: Account/Manage
+        - text: admin@clubbaist.com
+      - button "Logout" [ref=e142] [cursor=pointer]: Logout
+  - main [ref=e144]:
+    - link "About" [ref=e146] [cursor=pointer]:
+      - /url: https://learn.microsoft.com/aspnet/core/
+    - article [ref=e147]:
+      - heading "Score Submitted" [level=3] [ref=e322]
+      - generic [ref=e323]:
+        - strong [ref=e325]: Round Confirmed
+        - generic [ref=e327]:
+          - term [ref=e328]: Date
+          - definition [ref=e329]: Wednesday, April 22, 2026
+          - term [ref=e330]: Time
+          - definition [ref=e331]: 5:00 PM
+          - term [ref=e332]: Tee Colour
+          - definition [ref=e333]: White
+          - term [ref=e334]: Raw Total Score
+          - definition [ref=e335]: "90"
+          - term [ref=e336]: Calculated Adjusted Score
+          - definition [ref=e337]: "90"
+          - term [ref=e338]: Current Handicap Index
+          - definition [ref=e339]:
+            - text: "12.7"
+            - generic [ref=e340]: Provisional
+          - term [ref=e341]: Rounds Used
+          - definition [ref=e342]: "1"
+          - term [ref=e343]: Calculation Basis
+          - definition [ref=e344]: Derived using WHS hole adjustment rules
+          - term [ref=e345]: Member
+          - definition [ref=e346]: Alice Shareholder
+          - term [ref=e347]: Submitted On
+          - definition [ref=e348]: Apr 22, 2026 11:45 PM
+      - link "Return to Score Console" [ref=e350] [cursor=pointer]:
+        - /url: /scores/staff

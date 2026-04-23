@@ -1,0 +1,117 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - link "Club BAIST" [ref=e6] [cursor=pointer]:
+      - /url: ""
+    - navigation [ref=e8]:
+      - link "Home" [ref=e10] [cursor=pointer]:
+        - /url: ""
+        - text: Home
+      - link "Tee Times" [ref=e13] [cursor=pointer]:
+        - /url: teetimes
+        - text: Tee Times
+      - link "Staff Console" [ref=e16] [cursor=pointer]:
+        - /url: teetimes/staff
+        - text: Staff Console
+      - link "Score Console" [ref=e19] [cursor=pointer]:
+        - /url: scores/staff
+        - text: Score Console
+      - link "PCC Console" [ref=e22] [cursor=pointer]:
+        - /url: scores/pcc
+        - text: PCC Console
+      - link "User Management" [ref=e25] [cursor=pointer]:
+        - /url: admin/users
+        - text: User Management
+      - link "Seasons" [ref=e28] [cursor=pointer]:
+        - /url: admin/seasons
+        - text: Seasons
+      - link "Standing Tee Times" [ref=e31] [cursor=pointer]:
+        - /url: admin/standing-teetimes
+        - text: Standing Tee Times
+      - link "Membership Levels" [ref=e34] [cursor=pointer]:
+        - /url: admin/membership-levels
+        - text: Membership Levels
+      - link "Applications" [ref=e37] [cursor=pointer]:
+        - /url: membership/applications
+        - text: Applications
+      - link "Apply for Membership" [ref=e40] [cursor=pointer]:
+        - /url: membership/apply
+        - text: Apply for Membership
+      - link "admin@clubbaist.com" [ref=e43] [cursor=pointer]:
+        - /url: Account/Manage
+        - text: admin@clubbaist.com
+      - button "Logout" [ref=e47] [cursor=pointer]: Logout
+  - main [ref=e49]:
+    - link "About" [ref=e51] [cursor=pointer]:
+      - /url: https://learn.microsoft.com/aspnet/core/
+    - article [ref=e52]:
+      - heading "Staff Console" [level=3] [ref=e53]
+      - list [ref=e54]:
+        - listitem [ref=e55]:
+          - button "Members" [ref=e56] [cursor=pointer]
+        - listitem [ref=e57]:
+          - button "Reservations" [ref=e58] [cursor=pointer]
+      - generic [ref=e59]:
+        - strong [ref=e61]: Members
+        - generic [ref=e62]:
+          - generic [ref=e65]:
+            - textbox "Filter by name or member number" [ref=e66]:
+              - /placeholder: " "
+            - generic: Filter by name or member number
+          - table [ref=e67]:
+            - rowgroup [ref=e68]:
+              - 'row "Member # Name Email Level Action" [ref=e69]':
+                - 'columnheader "Member #" [ref=e70]':
+                  - 'button "Member #" [ref=e72] [cursor=pointer]':
+                    - generic [ref=e73]: "Member #"
+                - columnheader "Name" [ref=e75]:
+                  - button "Name" [ref=e77] [cursor=pointer]:
+                    - generic [ref=e78]: Name
+                - columnheader "Email" [ref=e80]:
+                  - generic [ref=e83]: Email
+                - columnheader "Level" [ref=e84]:
+                  - generic [ref=e87]: Level
+                - columnheader "Action" [ref=e88]:
+                  - generic [ref=e91]: Action
+            - rowgroup [ref=e92]:
+              - row "BR-0005 Evan Bronze bronze@clubbaist.com Intermediate Select" [ref=e93]:
+                - cell "BR-0005" [ref=e94]
+                - cell "Evan Bronze" [ref=e95]
+                - cell "bronze@clubbaist.com" [ref=e96]
+                - cell "Intermediate" [ref=e97]
+                - cell "Select" [ref=e98]:
+                  - button "Select" [ref=e99] [cursor=pointer]
+              - row "CP-0006 Fiona Copper copper@clubbaist.com Social Select" [ref=e100]:
+                - cell "CP-0006" [ref=e101]
+                - cell "Fiona Copper" [ref=e102]
+                - cell "copper@clubbaist.com" [ref=e103]
+                - cell "Social" [ref=e104]
+                - cell "Select" [ref=e105]:
+                  - button "Select" [ref=e106] [cursor=pointer]
+              - row "SH-0001 Alice Shareholder shareholder1@clubbaist.com Shareholder Select" [ref=e107]:
+                - cell "SH-0001" [ref=e108]
+                - cell "Alice Shareholder" [ref=e109]
+                - cell "shareholder1@clubbaist.com" [ref=e110]
+                - cell "Shareholder" [ref=e111]
+                - cell "Select" [ref=e112]:
+                  - button "Select" [ref=e113] [cursor=pointer]
+              - row "SH-0002 Bob Shareholder shareholder2@clubbaist.com Shareholder Select" [ref=e114]:
+                - cell "SH-0002" [ref=e115]
+                - cell "Bob Shareholder" [ref=e116]
+                - cell "shareholder2@clubbaist.com" [ref=e117]
+                - cell "Shareholder" [ref=e118]
+                - cell "Select" [ref=e119]:
+                  - button "Select" [ref=e120] [cursor=pointer]
+              - row "SH-0003 Carol Shareholder shareholder3@clubbaist.com Shareholder Select" [ref=e121]:
+                - cell "SH-0003" [ref=e122]
+                - cell "Carol Shareholder" [ref=e123]
+                - cell "shareholder3@clubbaist.com" [ref=e124]
+                - cell "Shareholder" [ref=e125]
+                - cell "Select" [ref=e126]:
+                  - button "Select" [ref=e127] [cursor=pointer]
+              - row "SV-0004 Diana Silver silver@clubbaist.com Associate Spouse Select" [ref=e128]:
+                - cell "SV-0004" [ref=e129]
+                - cell "Diana Silver" [ref=e130]
+                - cell "silver@clubbaist.com" [ref=e131]
+                - cell "Associate Spouse" [ref=e132]
+                - cell "Select" [ref=e133]:
+                  - button "Select" [ref=e134] [cursor=pointer]

@@ -1,0 +1,136 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - link "Club BAIST" [ref=e6] [cursor=pointer]:
+      - /url: ""
+    - navigation [ref=e8]:
+      - link "Home" [ref=e10] [cursor=pointer]:
+        - /url: ""
+        - text: Home
+      - link "Tee Times" [ref=e13] [cursor=pointer]:
+        - /url: teetimes
+        - text: Tee Times
+      - link "Staff Console" [ref=e16] [cursor=pointer]:
+        - /url: teetimes/staff
+        - text: Staff Console
+      - link "Score Console" [ref=e19] [cursor=pointer]:
+        - /url: scores/staff
+        - text: Score Console
+      - link "PCC Console" [ref=e22] [cursor=pointer]:
+        - /url: scores/pcc
+        - text: PCC Console
+      - link "User Management" [ref=e25] [cursor=pointer]:
+        - /url: admin/users
+        - text: User Management
+      - link "Seasons" [ref=e28] [cursor=pointer]:
+        - /url: admin/seasons
+        - text: Seasons
+      - link "Standing Tee Times" [ref=e31] [cursor=pointer]:
+        - /url: admin/standing-teetimes
+        - text: Standing Tee Times
+      - link "Membership Levels" [ref=e34] [cursor=pointer]:
+        - /url: admin/membership-levels
+        - text: Membership Levels
+      - link "Applications" [ref=e37] [cursor=pointer]:
+        - /url: membership/applications
+        - text: Applications
+      - link "Apply for Membership" [ref=e40] [cursor=pointer]:
+        - /url: membership/apply
+        - text: Apply for Membership
+      - link "admin@clubbaist.com" [ref=e43] [cursor=pointer]:
+        - /url: Account/Manage
+        - text: admin@clubbaist.com
+      - button "Logout" [ref=e47] [cursor=pointer]: Logout
+  - main [ref=e49]:
+    - link "About" [ref=e51] [cursor=pointer]:
+      - /url: https://learn.microsoft.com/aspnet/core/
+    - article [ref=e52]:
+      - heading "Staff Console" [level=3] [ref=e53]
+      - list [ref=e54]:
+        - listitem [ref=e55]:
+          - button "Members" [ref=e56] [cursor=pointer]
+        - listitem [ref=e57]:
+          - button "Reservations" [active] [ref=e58] [cursor=pointer]
+      - generic [ref=e137]:
+        - strong [ref=e139]: Reservations
+        - generic [ref=e140]:
+          - generic [ref=e141]:
+            - generic [ref=e143]:
+              - textbox "Filter by member name or number" [ref=e144]:
+                - /placeholder: " "
+              - generic: Filter by member name or number
+            - generic [ref=e146]:
+              - checkbox "Custom date range" [ref=e147]
+              - generic [ref=e148]: Custom date range
+            - generic [ref=e150]:
+              - generic [ref=e151]: From
+              - textbox [disabled] [ref=e152]: 2026-04-22
+            - generic [ref=e154]:
+              - generic [ref=e155]: To
+              - textbox [disabled] [ref=e156]
+          - table [ref=e157]:
+            - rowgroup [ref=e158]:
+              - 'row "Date Time Booked By Member # Players Status Actions" [ref=e159]':
+                - columnheader "Date" [ref=e160]:
+                  - button "Date" [ref=e162] [cursor=pointer]:
+                    - generic [ref=e163]: Date
+                - columnheader "Time" [ref=e165]:
+                  - button "Time" [ref=e167] [cursor=pointer]:
+                    - generic [ref=e168]: Time
+                - columnheader "Booked By" [ref=e170]:
+                  - button "Booked By" [ref=e172] [cursor=pointer]:
+                    - generic [ref=e173]: Booked By
+                - 'columnheader "Member #" [ref=e175]':
+                  - generic [ref=e178]: "Member #"
+                - columnheader "Players" [ref=e179]:
+                  - generic [ref=e182]: Players
+                - columnheader "Status" [ref=e183]:
+                  - generic [ref=e186]: Status
+                - columnheader "Actions" [ref=e187]:
+                  - generic [ref=e190]: Actions
+            - rowgroup [ref=e191]:
+              - row "Apr 22, 2026 5:00 PM Alice Shareholder SH-0001 2 Past View/Edit" [ref=e192]:
+                - cell "Apr 22, 2026" [ref=e193]
+                - cell "5:00 PM" [ref=e194]
+                - cell "Alice Shareholder" [ref=e195]
+                - cell "SH-0001" [ref=e196]
+                - cell "2" [ref=e197]
+                - cell "Past" [ref=e198]:
+                  - generic [ref=e199]: Past
+                - cell "View/Edit" [ref=e200]:
+                  - link "View/Edit" [ref=e201] [cursor=pointer]:
+                    - /url: /teetimes/reservation/2
+              - row "Apr 22, 2026 6:00 PM Alice Shareholder SH-0001 1 Past View/Edit" [ref=e202]:
+                - cell "Apr 22, 2026" [ref=e203]
+                - cell "6:00 PM" [ref=e204]
+                - cell "Alice Shareholder" [ref=e205]
+                - cell "SH-0001" [ref=e206]
+                - cell "1" [ref=e207]
+                - cell "Past" [ref=e208]:
+                  - generic [ref=e209]: Past
+                - cell "View/Edit" [ref=e210]:
+                  - link "View/Edit" [ref=e211] [cursor=pointer]:
+                    - /url: /teetimes/reservation/1
+              - row "Apr 23, 2026 8:00 AM Diana Silver SV-0004 1 Upcoming View/Edit Cancel" [ref=e212]:
+                - cell "Apr 23, 2026" [ref=e213]
+                - cell "8:00 AM" [ref=e214]
+                - cell "Diana Silver" [ref=e215]
+                - cell "SV-0004" [ref=e216]
+                - cell "1" [ref=e217]
+                - cell "Upcoming" [ref=e218]:
+                  - generic [ref=e219]: Upcoming
+                - cell "View/Edit Cancel" [ref=e220]:
+                  - link "View/Edit" [ref=e221] [cursor=pointer]:
+                    - /url: /teetimes/reservation/3
+                  - button "Cancel" [ref=e222] [cursor=pointer]
+              - row "Apr 25, 2026 10:00 AM Carol Shareholder SH-0003 4 Upcoming View/Edit Cancel" [ref=e223]:
+                - cell "Apr 25, 2026" [ref=e224]
+                - cell "10:00 AM" [ref=e225]
+                - cell "Carol Shareholder" [ref=e226]
+                - cell "SH-0003" [ref=e227]
+                - cell "4" [ref=e228]
+                - cell "Upcoming" [ref=e229]:
+                  - generic [ref=e230]: Upcoming
+                - cell "View/Edit Cancel" [ref=e231]:
+                  - link "View/Edit" [ref=e232] [cursor=pointer]:
+                    - /url: /teetimes/reservation/6
+                  - button "Cancel" [ref=e233] [cursor=pointer]

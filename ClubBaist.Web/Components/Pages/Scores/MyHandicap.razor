@@ -1,0 +1,121 @@
+@page "/scores/handicap"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = AppRoles.Member)]
+
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.EntityFrameworkCore
+@using ClubBaist.Domain2
+@using ClubBaist.Services2.Scoring
+
+@inject IAppDbContext2 DbContext
+@inject AuthenticationStateProvider AuthStateProvider
+@inject HandicapCalculationService HandicapCalculationService
+@inject ILogger<MyHandicap> Logger
+
+<PageTitle>My Handicap - Club Baist</PageTitle>
+
+<h3 class="mb-4">My Handicap</h3>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
+@if (isLoading)
+{
+    <div class="text-center my-4">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+}
+else if (member is not null && handicapResult is not null)
+{
+    <div class="card" style="max-width: 560px;">
+        <div class="card-header bg-primary text-white">
+            <strong>Handicap Snapshot</strong>
+        </div>
+        <div class="card-body">
+            <dl class="row mb-0">
+                <dt class="col-sm-5">Member</dt>
+                <dd class="col-sm-7">@($"{member.User.FirstName} {member.User.LastName}".Trim())</dd>
+
+                <dt class="col-sm-5">Membership #</dt>
+                <dd class="col-sm-7">@member.MembershipNumber</dd>
+
+                <dt class="col-sm-5">Current Handicap Index</dt>
+                <dd class="col-sm-7">
+                    @if (handicapResult.IsAvailable && handicapResult.CurrentHandicap.HasValue)
+                    {
+                        <span>@handicapResult.CurrentHandicap.Value.ToString("0.0")</span>
+                        @if (handicapResult.IsProvisional)
+                        {
+                            <span class="badge bg-warning text-dark ms-1">Provisional</span>
+                        }
+                    }
+                    else
+                    {
+                        <span class="text-muted">Not available</span>
+                    }
+                </dd>
+
+                <dt class="col-sm-5">Rounds Used</dt>
+                <dd class="col-sm-7">@handicapResult.RoundCount</dd>
+
+                <dt class="col-sm-5">Established Handicap</dt>
+                <dd class="col-sm-7">
+                    @(handicapResult.IsAvailable && handicapResult.RoundCount >= 3 ? "Yes" : "No")
+                </dd>
+            </dl>
+        </div>
+    </div>
+}
+
+@code {
+    private bool isLoading = true;
+    private string? errorMessage;
+    private MemberShipInfo? member;
+    private HandicapResult? handicapResult;
+
+    protected override async Task OnInitializedAsync()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            var userIdValue = user.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (!Guid.TryParse(userIdValue, out var userId))
+            {
+                errorMessage = "Unable to determine the current member profile.";
+                return;
+            }
+
+            member = await DbContext.MemberShips
+                .Include(m => m.User)
+                .FirstOrDefaultAsync(m => m.UserId == userId);
+
+            if (member is null)
+            {
+                errorMessage = "Member account not found.";
+                return;
+            }
+
+            handicapResult = await HandicapCalculationService.GetCurrentHandicapAsync(member.Id, CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load handicap data for current member");
+            errorMessage = "An unexpected error occurred while loading handicap data.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

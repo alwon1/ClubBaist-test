@@ -47,6 +47,11 @@
                             </NavLink>
                         </div>
                         <div class="nav-item px-3">
+                            <NavLink class="nav-link" href="scores/handicap">
+                                <span class="bi bi-speedometer2" aria-hidden="true"></span> My Handicap
+                            </NavLink>
+                        </div>
+                        <div class="nav-item px-3">
                             <NavLink class="nav-link" href="teetimes/standing/my">
                                 <span class="bi bi-calendar-week-fill" aria-hidden="true"></span> My Standing Requests
                             </NavLink>
@@ -125,7 +130,7 @@
                     </NavLink>
                 </div>
                 <div class="nav-item px-3">
-                    <form action="Account/Logout" method="post" data-enhance="false">
+                    <form action="Account/Logout" method="post">
                         <AntiforgeryToken />
                         <input type="hidden" name="ReturnUrl" value="@currentUrl" />
                         <button type="submit" class="nav-link">

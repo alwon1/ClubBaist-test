@@ -1,0 +1,205 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - link "Club BAIST" [ref=e6] [cursor=pointer]:
+      - /url: ""
+    - navigation [ref=e8]:
+      - link "Home" [ref=e10] [cursor=pointer]:
+        - /url: ""
+        - text: Home
+      - link "Tee Times" [ref=e13] [cursor=pointer]:
+        - /url: teetimes
+        - text: Tee Times
+      - link "Staff Console" [ref=e16] [cursor=pointer]:
+        - /url: teetimes/staff
+        - text: Staff Console
+      - link "Score Console" [ref=e19] [cursor=pointer]:
+        - /url: scores/staff
+        - text: Score Console
+      - link "PCC Console" [ref=e22] [cursor=pointer]:
+        - /url: scores/pcc
+        - text: PCC Console
+      - link "User Management" [ref=e25] [cursor=pointer]:
+        - /url: admin/users
+        - text: User Management
+      - link "Seasons" [ref=e28] [cursor=pointer]:
+        - /url: admin/seasons
+        - text: Seasons
+      - link "Standing Tee Times" [ref=e31] [cursor=pointer]:
+        - /url: admin/standing-teetimes
+        - text: Standing Tee Times
+      - link "Membership Levels" [ref=e34] [cursor=pointer]:
+        - /url: admin/membership-levels
+        - text: Membership Levels
+      - link "Applications" [ref=e37] [cursor=pointer]:
+        - /url: membership/applications
+        - text: Applications
+      - link "Apply for Membership" [ref=e40] [cursor=pointer]:
+        - /url: membership/apply
+        - text: Apply for Membership
+      - link "admin@clubbaist.com" [ref=e43] [cursor=pointer]:
+        - /url: Account/Manage
+        - text: admin@clubbaist.com
+      - button "Logout" [ref=e47] [cursor=pointer]: Logout
+  - main [ref=e49]:
+    - link "About" [ref=e51] [cursor=pointer]:
+      - /url: https://learn.microsoft.com/aspnet/core/
+    - article [ref=e52]:
+      - heading "Standing Tee Time Requests" [level=3] [ref=e53]
+      - generic [ref=e57]:
+        - strong [ref=e59]: Create Standing Tee Time Request (Admin)
+        - generic [ref=e61]:
+          - generic [ref=e62]:
+            - generic [ref=e63]: Booking Shareholder
+            - combobox "Booking Shareholder" [ref=e64]:
+              - option "-- Select Shareholder --" [selected]
+              - option "SH-0001 - Alice Shareholder"
+              - option "SH-0002 - Bob Shareholder"
+              - option "SH-0003 - Carol Shareholder"
+          - generic [ref=e65]:
+            - generic [ref=e66]: Day
+            - combobox "Day" [ref=e67]:
+              - option "Sunday"
+              - option "Monday"
+              - option "Tuesday"
+              - option "Wednesday"
+              - option "Thursday"
+              - option "Friday"
+              - option "Saturday" [selected]
+          - generic [ref=e68]:
+            - generic [ref=e69]: Time
+            - textbox "Time" [ref=e70]: 08:00
+          - generic [ref=e71]:
+            - generic [ref=e72]: Tolerance
+            - combobox "Tolerance" [ref=e73]:
+              - option "0 min"
+              - option "±15 min"
+              - option "±30 min" [selected]
+              - option "±60 min"
+          - generic [ref=e74]:
+            - generic [ref=e75]: Priority
+            - spinbutton "Priority" [ref=e76]
+          - generic [ref=e77]:
+            - generic [ref=e78]: Start Date
+            - textbox "Start Date" [ref=e79]: 2026-04-22
+          - generic [ref=e80]:
+            - generic [ref=e81]: End Date
+            - textbox "End Date" [ref=e82]: 2026-10-22
+          - generic [ref=e83]:
+            - generic [ref=e84]: Player 2
+            - combobox "Player 2" [ref=e85]:
+              - option "-- Select --" [selected]
+              - option "BR-0005 - Evan Bronze"
+              - option "CP-0006 - Fiona Copper"
+              - option "SH-0001 - Alice Shareholder"
+              - option "SH-0002 - Bob Shareholder"
+              - option "SH-0003 - Carol Shareholder"
+              - option "SV-0004 - Diana Silver"
+          - generic [ref=e86]:
+            - generic [ref=e87]: Player 3
+            - combobox "Player 3" [ref=e88]:
+              - option "-- Select --" [selected]
+              - option "BR-0005 - Evan Bronze"
+              - option "CP-0006 - Fiona Copper"
+              - option "SH-0001 - Alice Shareholder"
+              - option "SH-0002 - Bob Shareholder"
+              - option "SH-0003 - Carol Shareholder"
+              - option "SV-0004 - Diana Silver"
+          - generic [ref=e89]:
+            - generic [ref=e90]: Player 4
+            - combobox "Player 4" [ref=e91]:
+              - option "-- Select --" [selected]
+              - option "BR-0005 - Evan Bronze"
+              - option "CP-0006 - Fiona Copper"
+              - option "SH-0001 - Alice Shareholder"
+              - option "SH-0002 - Bob Shareholder"
+              - option "SH-0003 - Carol Shareholder"
+              - option "SV-0004 - Diana Silver"
+          - button "Create Request" [ref=e93] [cursor=pointer]
+      - generic [ref=e95]:
+        - button "All 3" [ref=e96] [cursor=pointer]:
+          - text: All
+          - generic [ref=e97]: "3"
+        - button "Draft 1" [ref=e98] [cursor=pointer]:
+          - text: Draft
+          - generic [ref=e99]: "1"
+        - button "Approved 1" [ref=e100] [cursor=pointer]:
+          - text: Approved
+          - generic [ref=e101]: "1"
+        - button "Allocated 1" [ref=e102] [cursor=pointer]:
+          - text: Allocated
+          - generic [ref=e103]: "1"
+        - button "Unallocated" [ref=e104] [cursor=pointer]
+        - button "Denied" [ref=e105] [cursor=pointer]
+        - button "Cancelled" [ref=e106] [cursor=pointer]
+      - table [ref=e107]:
+        - rowgroup [ref=e108]:
+          - row "Member Day / Time Season Players Status Approved Time / Priority Actions" [ref=e109]:
+            - columnheader "Member" [ref=e110]:
+              - button "Member" [ref=e112] [cursor=pointer]:
+                - generic [ref=e113]: Member
+            - columnheader "Day / Time" [ref=e115]:
+              - button "Day / Time" [ref=e117] [cursor=pointer]:
+                - generic [ref=e118]: Day / Time
+            - columnheader "Season" [ref=e120]:
+              - generic [ref=e123]: Season
+            - columnheader "Players" [ref=e124]:
+              - generic [ref=e127]: Players
+            - columnheader "Status" [ref=e128]:
+              - button "Status" [ref=e130] [cursor=pointer]:
+                - generic [ref=e131]: Status
+            - columnheader "Approved Time / Priority" [ref=e133]:
+              - generic [ref=e136]: Approved Time / Priority
+            - columnheader "Actions" [ref=e137]:
+              - generic [ref=e140]: Actions
+        - rowgroup [ref=e141]:
+          - 'row "Carol Shareholder (#SH-0003) Saturday, 10:00 AM (±0 min) Apr 22 – Jul 22, 2026 Carol Shareholder, Alice Shareholder, Bob Shareholder, Diana Silver Allocated 10:00 AM #1" [ref=e142]':
+            - cell "Carol Shareholder (#SH-0003)" [ref=e143]:
+              - strong [ref=e144]: Carol Shareholder
+              - generic [ref=e145]: (#SH-0003)
+            - cell "Saturday, 10:00 AM (±0 min)" [ref=e146]:
+              - text: Saturday, 10:00 AM
+              - generic [ref=e147]: (±0 min)
+            - cell "Apr 22 – Jul 22, 2026" [ref=e148]
+            - cell "Carol Shareholder, Alice Shareholder, Bob Shareholder, Diana Silver" [ref=e149]:
+              - generic [ref=e150]: Carol Shareholder
+              - text: ", Alice Shareholder, Bob Shareholder, Diana Silver"
+            - cell "Allocated" [ref=e151]:
+              - generic [ref=e152]: Allocated
+            - 'cell "10:00 AM #1" [ref=e153]':
+              - text: 10:00 AM
+              - generic [ref=e154]: "#1"
+            - cell [ref=e155]
+          - 'row "Bob Shareholder (#SH-0002) Sunday, 9:00 AM (±15 min) Apr 22 – Jul 22, 2026 Bob Shareholder, Alice Shareholder, Carol Shareholder, Diana Silver Approved 9:00 AM #2" [ref=e156]':
+            - cell "Bob Shareholder (#SH-0002)" [ref=e157]:
+              - strong [ref=e158]: Bob Shareholder
+              - generic [ref=e159]: (#SH-0002)
+            - cell "Sunday, 9:00 AM (±15 min)" [ref=e160]:
+              - text: Sunday, 9:00 AM
+              - generic [ref=e161]: (±15 min)
+            - cell "Apr 22 – Jul 22, 2026" [ref=e162]
+            - cell "Bob Shareholder, Alice Shareholder, Carol Shareholder, Diana Silver" [ref=e163]:
+              - generic [ref=e164]: Bob Shareholder
+              - text: ", Alice Shareholder, Carol Shareholder, Diana Silver"
+            - cell "Approved" [ref=e165]:
+              - generic [ref=e166]: Approved
+            - 'cell "9:00 AM #2" [ref=e167]':
+              - text: 9:00 AM
+              - generic [ref=e168]: "#2"
+            - cell [ref=e169]
+          - row "Alice Shareholder (#SH-0001) Saturday, 8:00 AM (±30 min) Apr 22 – Jul 22, 2026 Alice Shareholder, Bob Shareholder, Carol Shareholder, Diana Silver Draft — Approve Deny" [ref=e170]:
+            - cell "Alice Shareholder (#SH-0001)" [ref=e171]:
+              - strong [ref=e172]: Alice Shareholder
+              - generic [ref=e173]: (#SH-0001)
+            - cell "Saturday, 8:00 AM (±30 min)" [ref=e174]:
+              - text: Saturday, 8:00 AM
+              - generic [ref=e175]: (±30 min)
+            - cell "Apr 22 – Jul 22, 2026" [ref=e176]
+            - cell "Alice Shareholder, Bob Shareholder, Carol Shareholder, Diana Silver" [ref=e177]:
+              - generic [ref=e178]: Alice Shareholder
+              - text: ", Bob Shareholder, Carol Shareholder, Diana Silver"
+            - cell "Draft" [ref=e179]:
+              - generic [ref=e180]: Draft
+            - cell "—" [ref=e181]
+            - cell "Approve Deny" [ref=e182]:
+              - button "Approve" [ref=e183] [cursor=pointer]
+              - button "Deny" [ref=e184] [cursor=pointer]

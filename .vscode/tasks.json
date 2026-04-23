@@ -265,6 +265,16 @@
 				"ps -ax | grep dotnet | grep ClubBaist.AppHost.csproj | grep -v grep || true; echo CHECK_PORT; lsof -nP -iTCP:17289 -sTCP:LISTEN || true"
 			],
 			"isBackground": false
+		},
+		{
+			"label": "Copy screenshots to clear names",
+			"type": "shell",
+			"command": "bash",
+			"args": [
+				"-lc",
+				"cd /Users/allyn/Repos/ClubBaist-test && mkdir -p screenshots && [ -f screenshots/standing-tee-times-member.png ] && cp -f screenshots/standing-tee-times-member.png screenshots/01-standing-requests-member-view.png || true && [ -f screenshots/standing-tee-times-admin.png ] && cp -f screenshots/standing-tee-times-admin.png screenshots/02-standing-requests-admin-management.png || true && [ -f screenshots/standing-booking-example-allocated-request.png ] && cp -f screenshots/standing-booking-example-allocated-request.png screenshots/03-standing-booking-example-allocated-request.png || true && [ -f screenshots/score-console.png ] && cp -f screenshots/score-console.png screenshots/04-score-console-eligible-rounds.png || true && [ -f screenshots/record-score.png ] && cp -f screenshots/record-score.png screenshots/05-score-entry-and-adjusted-calculation.png || true && [ -f screenshots/score-confirmation-handicap.png ] && cp -f screenshots/score-confirmation-handicap.png screenshots/06-score-submission-handicap-result.png || true && ls -1 screenshots | sort"
+			],
+			"isBackground": false
 		}
 	]
 }

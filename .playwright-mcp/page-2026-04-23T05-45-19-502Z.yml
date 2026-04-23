@@ -1,0 +1,167 @@
+- generic [ref=e97]:
+  - generic [ref=e98]:
+    - link "Club BAIST" [ref=e101] [cursor=pointer]:
+      - /url: ""
+    - navigation [ref=e103]:
+      - link "Home" [ref=e105] [cursor=pointer]:
+        - /url: ""
+        - text: Home
+      - link "Tee Times" [ref=e108] [cursor=pointer]:
+        - /url: teetimes
+        - text: Tee Times
+      - link "Staff Console" [ref=e111] [cursor=pointer]:
+        - /url: teetimes/staff
+        - text: Staff Console
+      - link "Score Console" [ref=e114] [cursor=pointer]:
+        - /url: scores/staff
+        - text: Score Console
+      - link "PCC Console" [ref=e117] [cursor=pointer]:
+        - /url: scores/pcc
+        - text: PCC Console
+      - link "User Management" [ref=e120] [cursor=pointer]:
+        - /url: admin/users
+        - text: User Management
+      - link "Seasons" [ref=e123] [cursor=pointer]:
+        - /url: admin/seasons
+        - text: Seasons
+      - link "Standing Tee Times" [ref=e126] [cursor=pointer]:
+        - /url: admin/standing-teetimes
+        - text: Standing Tee Times
+      - link "Membership Levels" [ref=e129] [cursor=pointer]:
+        - /url: admin/membership-levels
+        - text: Membership Levels
+      - link "Applications" [ref=e132] [cursor=pointer]:
+        - /url: membership/applications
+        - text: Applications
+      - link "Apply for Membership" [ref=e135] [cursor=pointer]:
+        - /url: membership/apply
+        - text: Apply for Membership
+      - link "admin@clubbaist.com" [ref=e138] [cursor=pointer]:
+        - /url: Account/Manage
+        - text: admin@clubbaist.com
+      - button "Logout" [ref=e142] [cursor=pointer]: Logout
+  - main [ref=e144]:
+    - link "About" [ref=e146] [cursor=pointer]:
+      - /url: https://learn.microsoft.com/aspnet/core/
+    - article [ref=e147]:
+      - heading "Record Score" [level=3] [ref=e192]
+      - generic [ref=e193]:
+        - strong [ref=e195]: Round Details
+        - generic [ref=e197]:
+          - term [ref=e198]: Date & Time
+          - definition [ref=e199]: Wednesday, April 22, 2026 5:00 PM
+          - term [ref=e200]: Players
+          - definition [ref=e201]: "2"
+          - term [ref=e202]: Member
+          - definition [ref=e203]: Alice Shareholder
+          - term [ref=e204]: Tee Colour
+          - definition [ref=e205]:
+            - generic [ref=e206]:
+              - generic [ref=e207]:
+                - radio "Red" [ref=e208]
+                - generic [ref=e209]: Red
+              - generic [ref=e210]:
+                - radio "White" [checked] [ref=e211]
+                - generic [ref=e212]: White
+              - generic [ref=e213]:
+                - radio "Blue" [ref=e214]
+                - generic [ref=e215]: Blue
+      - generic [ref=e216]:
+        - strong [ref=e218]: Scorecard
+        - table [ref=e221]:
+          - rowgroup [ref=e222]:
+            - row "Hole 1 2 3 4 5 6 7 8 9 Out 10 11 12 13 14 15 16 17 18 In Total" [ref=e223]:
+              - columnheader "Hole" [ref=e224]
+              - columnheader "1" [ref=e225]
+              - columnheader "2" [ref=e226]
+              - columnheader "3" [ref=e227]
+              - columnheader "4" [ref=e228]
+              - columnheader "5" [ref=e229]
+              - columnheader "6" [ref=e230]
+              - columnheader "7" [ref=e231]
+              - columnheader "8" [ref=e232]
+              - columnheader "9" [ref=e233]
+              - columnheader "Out" [ref=e234]
+              - columnheader "10" [ref=e235]
+              - columnheader "11" [ref=e236]
+              - columnheader "12" [ref=e237]
+              - columnheader "13" [ref=e238]
+              - columnheader "14" [ref=e239]
+              - columnheader "15" [ref=e240]
+              - columnheader "16" [ref=e241]
+              - columnheader "17" [ref=e242]
+              - columnheader "18" [ref=e243]
+              - columnheader "In" [ref=e244]
+              - columnheader "Total" [ref=e245]
+          - rowgroup [ref=e246]:
+            - row "Par 4 5 3 4 4 4 4 5 4 37 4 4 3 5 4 4 3 5 4 36 73" [ref=e247]:
+              - rowheader "Par" [ref=e248]
+              - cell "4" [ref=e249]
+              - cell "5" [ref=e250]
+              - cell "3" [ref=e251]
+              - cell "4" [ref=e252]
+              - cell "4" [ref=e253]
+              - cell "4" [ref=e254]
+              - cell "4" [ref=e255]
+              - cell "5" [ref=e256]
+              - cell "4" [ref=e257]
+              - cell "37" [ref=e258]
+              - cell "4" [ref=e259]
+              - cell "4" [ref=e260]
+              - cell "3" [ref=e261]
+              - cell "5" [ref=e262]
+              - cell "4" [ref=e263]
+              - cell "4" [ref=e264]
+              - cell "3" [ref=e265]
+              - cell "5" [ref=e266]
+              - cell "4" [ref=e267]
+              - cell "36" [ref=e268]
+              - cell "73" [ref=e269]
+            - row "Score — — —" [ref=e270]:
+              - rowheader "Score" [ref=e271]
+              - cell [ref=e272]:
+                - spinbutton [ref=e273]
+              - cell [ref=e274]:
+                - spinbutton [ref=e275]
+              - cell [ref=e276]:
+                - spinbutton [ref=e277]
+              - cell [ref=e278]:
+                - spinbutton [ref=e279]
+              - cell [ref=e280]:
+                - spinbutton [ref=e281]
+              - cell [ref=e282]:
+                - spinbutton [ref=e283]
+              - cell [ref=e284]:
+                - spinbutton [ref=e285]
+              - cell [ref=e286]:
+                - spinbutton [ref=e287]
+              - cell [ref=e288]:
+                - spinbutton [ref=e289]
+              - cell "—" [ref=e290]
+              - cell [ref=e291]:
+                - spinbutton [ref=e292]
+              - cell [ref=e293]:
+                - spinbutton [ref=e294]
+              - cell [ref=e295]:
+                - spinbutton [ref=e296]
+              - cell [ref=e297]:
+                - spinbutton [ref=e298]
+              - cell [ref=e299]:
+                - spinbutton [ref=e300]
+              - cell [ref=e301]:
+                - spinbutton [ref=e302]
+              - cell [ref=e303]:
+                - spinbutton [ref=e304]
+              - cell [ref=e305]:
+                - spinbutton [ref=e306]
+              - cell [ref=e307]:
+                - spinbutton [ref=e308]
+              - cell "—" [ref=e309]
+              - cell "—" [ref=e310]
+      - generic [ref=e311]:
+        - button "Submit Round" [disabled]
+        - generic [ref=e312]: All 18 hole scores are required before submitting.
+      - generic [ref=e313]:
+        - generic [ref=e314]: "Raw Total: 0"
+        - generic [ref=e315]: "Calculated Adjusted: 73"
+        - generic [ref=e316]: Derived using WHS hole adjustment rules
