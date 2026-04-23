@@ -15,6 +15,7 @@
 @inject ScoreService ScoreService
 @inject RoundScoreDerivationService RoundScoreDerivationService
 @inject HandicapCalculationService HandicapCalculationService
+@inject CourseHoleReferenceService CourseHoleReferenceService
 @inject AuthenticationStateProvider AuthStateProvider
 @inject ILogger<MyScoreSubmissions> Logger
 
@@ -101,9 +102,6 @@ else
     private IReadOnlyList<GolfRound> pastRounds = [];
     private Dictionary<int, RoundScoreView> derivedRoundScores = [];
 
-    private static readonly int[] parByHole = [4, 5, 3, 4, 4, 4, 4, 5, 4, 4, 4, 3, 5, 4, 4, 3, 5, 4];
-    private static readonly int[] strokeIndexByHole = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18];
-
     protected override async Task OnInitializedAsync()
     {
         await LoadData();
@@ -177,9 +175,21 @@ else
             .Where(r => r.Gender == gender)
             .ToDictionaryAsync(r => r.TeeColor);
 
+        var holeRefsByTee = new Dictionary<GolfRound.TeeColor, IReadOnlyList<CourseHoleReference>>();
+        foreach (var teeColor in rounds.Select(r => r.SelectedTeeColor).Distinct())
+        {
+            holeRefsByTee[teeColor] = await CourseHoleReferenceService.GetHoleReferencesAsync(teeColor);
+        }
+
         foreach (var round in rounds)
         {
             if (!ratingsByTee.TryGetValue(round.SelectedTeeColor, out var rating))
+            {
+                derivedRoundScores[round.Id] = fallback[round.Id];
+                continue;
+            }
+
+            if (!holeRefsByTee.TryGetValue(round.SelectedTeeColor, out var holeRefs) || holeRefs.Count != 18)
             {
                 derivedRoundScores[round.Id] = fallback[round.Id];
                 continue;
@@ -189,9 +199,9 @@ else
                 handicapResult.CurrentHandicap,
                 rating.Rating,
                 rating.SlopeRating,
-                parByHole.Sum());
+                holeRefs.Sum(h => h.Par));
 
-            var holeInputs = BuildHoleInputs(round.Scores);
+            var holeInputs = BuildHoleInputs(round.Scores, holeRefs);
             derivedRoundScores[round.Id] = RoundScoreDerivationService.ComputeWithWhsHoleAdjustments(
                 holeInputs,
                 courseHandicap,
@@ -199,7 +209,9 @@ else
         }
     }
 
-    private static List<HoleScoreInput> BuildHoleInputs(IReadOnlyList<uint?> scores)
+    private static List<HoleScoreInput> BuildHoleInputs(
+        IReadOnlyList<uint?> scores,
+        IReadOnlyList<CourseHoleReference> holeRefs)
     {
         var holeInputs = new List<HoleScoreInput>(18);
 
@@ -211,8 +223,8 @@ else
 
             holeInputs.Add(new HoleScoreInput(
                 HoleNumber: i + 1,
-                Par: parByHole[i],
-                StrokeIndex: strokeIndexByHole[i],
+                Par: holeRefs[i].Par,
+                StrokeIndex: holeRefs[i].StrokeIndex,
                 RawScore: scores.Count > i && scores[i].HasValue ? Convert.ToInt32(scores[i]!.Value) : null,
                 State: state));
         }

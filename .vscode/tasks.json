@@ -38,6 +38,86 @@
 				"FullyQualifiedName~RoundScoreDerivationServiceTests"
 			],
 			"isBackground": false
+		},
+		{
+			"label": "Run CourseHoleReferenceServiceTests",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"test",
+				"--project",
+				"ClubBaist.Domain2.Tests/ClubBaist.Domain2.Tests.csproj",
+				"--filter",
+				"FullyQualifiedName~CourseHoleReferenceServiceTests"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "Re-run CourseHoleReferenceServiceTests",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"test",
+				"--project",
+				"ClubBaist.Domain2.Tests/ClubBaist.Domain2.Tests.csproj",
+				"--filter",
+				"FullyQualifiedName~CourseHoleReferenceServiceTests"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "Run RoundScoreDerivationServiceTests after ref data",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"test",
+				"--project",
+				"ClubBaist.Domain2.Tests/ClubBaist.Domain2.Tests.csproj",
+				"--filter",
+				"FullyQualifiedName~RoundScoreDerivationServiceTests"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "Run Domain2 tests after assertion fixes",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"test",
+				"--project",
+				"ClubBaist.Domain2.Tests/ClubBaist.Domain2.Tests.csproj"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "Diagnose git pull",
+			"type": "shell",
+			"command": "bash",
+			"args": [
+				"-lc",
+				"cd /Users/allyn/Repos/ClubBaist-test && echo '---status---' && git status -sb && echo '---remote---' && git remote -v && echo '---branch---' && git branch -vv && echo '---pull.rebase---' && git config --get pull.rebase || true && echo '---pull.ff---' && git config --get pull.ff || true && echo '---fetch---' && git fetch --all --prune && echo '---pull---' && git pull"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "Fix git pull with autostash",
+			"type": "shell",
+			"command": "bash",
+			"args": [
+				"-lc",
+				"cd /Users/allyn/Repos/ClubBaist-test && git pull --rebase --autostash && echo '---post-status---' && git status -sb"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "Verify git pull succeeds",
+			"type": "shell",
+			"command": "bash",
+			"args": [
+				"-lc",
+				"cd /Users/allyn/Repos/ClubBaist-test && git pull"
+			],
+			"isBackground": false
 		}
 	]
 }

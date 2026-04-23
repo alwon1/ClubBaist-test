@@ -15,6 +15,7 @@
 @inject ScoreService ScoreService
 @inject RoundScoreDerivationService RoundScoreDerivationService
 @inject HandicapCalculationService HandicapCalculationService
+@inject CourseHoleReferenceService CourseHoleReferenceService
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager NavigationManager
 @inject ILogger<RecordScore> Logger
@@ -67,7 +68,7 @@ else if (booking is not null)
                                        id="tee-@tee"
                                        value="@tee"
                                        checked="@(selectedTeeColor == tee)"
-                                       @onchange="() => selectedTeeColor = tee" />
+                                       @onchange="async () => await OnTeeColorChangedAsync(tee)" />
                                 <label class="form-check-label" for="tee-@tee">@tee</label>
                             </div>
                         }
@@ -105,15 +106,15 @@ else if (booking is not null)
                             <th class="table-light">Par</th>
                             @for (int i = 0; i < 9; i++)
                             {
-                                <td>@par[i]</td>
+                                <td>@holeReferences[i].Par</td>
                             }
-                            <td class="table-secondary fw-semibold">@par.Take(9).Sum()</td>
+                            <td class="table-secondary fw-semibold">@holeReferences.Take(9).Sum(h => h.Par)</td>
                             @for (int i = 9; i < 18; i++)
                             {
-                                <td>@par[i]</td>
+                                <td>@holeReferences[i].Par</td>
                             }
-                            <td class="table-secondary fw-semibold">@par.Skip(9).Sum()</td>
-                            <td class="table-dark text-white fw-bold">@par.Sum()</td>
+                            <td class="table-secondary fw-semibold">@holeReferences.Skip(9).Sum(h => h.Par)</td>
+                            <td class="table-dark text-white fw-bold">@holeReferences.Sum(h => h.Par)</td>
                         </tr>
                         <tr>
                             <th class="table-light">Score</th>
@@ -213,9 +214,14 @@ else if (booking is not null)
 
     private uint?[] scores = new uint?[18];
     private GolfRound.TeeColor selectedTeeColor = GolfRound.TeeColor.White;
+    private IReadOnlyList<CourseHoleReference> holeReferences = DefaultHoleReferences;
 
-    private static readonly int[] par = [4, 5, 3, 4, 4, 4, 4, 5, 4, 4, 4, 3, 5, 4, 4, 3, 5, 4];
-    private static readonly int[] strokeIndexByHole = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18];
+    private static readonly IReadOnlyList<CourseHoleReference> DefaultHoleReferences =
+    [
+        new(1, 4, 1), new(2, 5, 2), new(3, 3, 3), new(4, 4, 4), new(5, 4, 5), new(6, 4, 6),
+        new(7, 4, 7), new(8, 5, 8), new(9, 4, 9), new(10, 4, 10), new(11, 4, 11), new(12, 3, 12),
+        new(13, 5, 13), new(14, 4, 14), new(15, 4, 15), new(16, 3, 16), new(17, 5, 17), new(18, 4, 18)
+    ];
 
     private bool AllScoresEntered => scores.All(s => s.HasValue);
     private RoundScoreView DerivedScore => DeriveScorePreview();
@@ -270,6 +276,7 @@ else if (booking is not null)
             }
 
             await LoadDerivationInputsAsync();
+            await LoadHoleReferencesAsync(selectedTeeColor);
         }
         catch (Exception ex)
         {
@@ -308,19 +315,26 @@ else if (booking is not null)
     private RoundScoreView DeriveScorePreview()
     {
         var fallback = RoundScoreDerivationService.Compute(scores);
+        if (holeReferences.Count != 18)
+        {
+            return fallback;
+        }
+
         if (!ratingsByTeeColor.TryGetValue(selectedTeeColor, out var rating))
         {
             return fallback;
         }
 
-        var courseHandicap = CalculateCourseHandicap(currentHandicapIndex, rating.Rating, rating.SlopeRating, par.Sum());
+        var courseHandicap = CalculateCourseHandicap(currentHandicapIndex, rating.Rating, rating.SlopeRating, holeReferences.Sum(h => h.Par));
         return RoundScoreDerivationService.ComputeWithWhsHoleAdjustments(
-            BuildHoleInputs(scores),
+            BuildHoleInputs(scores, holeReferences),
             courseHandicap,
             hasEstablishedHandicap && currentHandicapIndex.HasValue);
     }
 
-    private static List<HoleScoreInput> BuildHoleInputs(IReadOnlyList<uint?> scoreValues)
+    private static List<HoleScoreInput> BuildHoleInputs(
+        IReadOnlyList<uint?> scoreValues,
+        IReadOnlyList<CourseHoleReference> references)
     {
         var holeInputs = new List<HoleScoreInput>(18);
 
@@ -332,8 +346,8 @@ else if (booking is not null)
 
             holeInputs.Add(new HoleScoreInput(
                 HoleNumber: i + 1,
-                Par: par[i],
-                StrokeIndex: strokeIndexByHole[i],
+                Par: references[i].Par,
+                StrokeIndex: references[i].StrokeIndex,
                 RawScore: scoreValues.Count > i && scoreValues[i].HasValue ? Convert.ToInt32(scoreValues[i]!.Value) : null,
                 State: state));
         }
@@ -350,6 +364,17 @@ else if (booking is not null)
 
         var rawCourseHandicap = handicapIndex.Value * (slopeRating / 113m) + (courseRating - parTotal);
         return Convert.ToInt32(decimal.Round(rawCourseHandicap, 0, MidpointRounding.AwayFromZero));
+    }
+
+    private async Task OnTeeColorChangedAsync(GolfRound.TeeColor tee)
+    {
+        selectedTeeColor = tee;
+        await LoadHoleReferencesAsync(tee);
+    }
+
+    private async Task LoadHoleReferencesAsync(GolfRound.TeeColor teeColor)
+    {
+        holeReferences = await CourseHoleReferenceService.GetHoleReferencesAsync(teeColor);
     }
 
     private void OnScoreChanged(int holeIndex, ChangeEventArgs e)

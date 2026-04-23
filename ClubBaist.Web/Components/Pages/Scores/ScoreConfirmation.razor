@@ -14,6 +14,7 @@
 @inject IAppDbContext2 DbContext
 @inject RoundScoreDerivationService RoundScoreDerivationService
 @inject HandicapCalculationService HandicapCalculationService
+@inject CourseHoleReferenceService CourseHoleReferenceService
 @inject AuthenticationStateProvider AuthStateProvider
 @inject ILogger<ScoreConfirmation> Logger
 
@@ -169,15 +170,23 @@ else
 
         var handicapResult = await HandicapCalculationService.GetCurrentHandicapAsync(golfRound.MembershipId, CancellationToken.None);
         var hasEstablishedHandicap = handicapResult.IsAvailable && handicapResult.RoundCount >= 3;
-        var courseHandicap = CalculateCourseHandicap(handicapResult.CurrentHandicap, rating.Rating, rating.SlopeRating, parByHole.Sum());
+        var holeRefs = await CourseHoleReferenceService.GetHoleReferencesAsync(golfRound.SelectedTeeColor);
+        if (holeRefs.Count != 18)
+        {
+            return fallback with { Basis = "Derived from raw totals (missing complete hole reference data for WHS rules)" };
+        }
+
+        var courseHandicap = CalculateCourseHandicap(handicapResult.CurrentHandicap, rating.Rating, rating.SlopeRating, holeRefs.Sum(h => h.Par));
 
         return RoundScoreDerivationService.ComputeWithWhsHoleAdjustments(
-            BuildHoleInputs(golfRound.Scores),
+            BuildHoleInputs(golfRound.Scores, holeRefs),
             courseHandicap,
             hasEstablishedHandicap && handicapResult.CurrentHandicap.HasValue);
     }
 
-    private static List<HoleScoreInput> BuildHoleInputs(IReadOnlyList<uint?> scores)
+    private static List<HoleScoreInput> BuildHoleInputs(
+        IReadOnlyList<uint?> scores,
+        IReadOnlyList<CourseHoleReference> holeRefs)
     {
         var holeInputs = new List<HoleScoreInput>(18);
 
@@ -189,8 +198,8 @@ else
 
             holeInputs.Add(new HoleScoreInput(
                 HoleNumber: i + 1,
-                Par: parByHole[i],
-                StrokeIndex: strokeIndexByHole[i],
+                Par: holeRefs[i].Par,
+                StrokeIndex: holeRefs[i].StrokeIndex,
                 RawScore: scores.Count > i && scores[i].HasValue ? Convert.ToInt32(scores[i]!.Value) : null,
                 State: state));
         }
@@ -208,7 +217,4 @@ else
         var rawCourseHandicap = handicapIndex.Value * (slopeRating / 113m) + (courseRating - parTotal);
         return Convert.ToInt32(decimal.Round(rawCourseHandicap, 0, MidpointRounding.AwayFromZero));
     }
-
-    private static readonly int[] parByHole = [4, 5, 3, 4, 4, 4, 4, 5, 4, 4, 4, 3, 5, 4, 4, 3, 5, 4];
-    private static readonly int[] strokeIndexByHole = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18];
 }
