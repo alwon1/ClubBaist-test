@@ -12,6 +12,32 @@
 			],
 			"isBackground": true,
 			"group": "build"
+		},
+		{
+			"label": "Run RoundScoreDerivationServiceTests",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"test",
+				"--project",
+				"ClubBaist.Domain2.Tests/ClubBaist.Domain2.Tests.csproj",
+				"--filter",
+				"FullyQualifiedName~RoundScoreDerivationServiceTests"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "Re-run RoundScoreDerivationServiceTests",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"test",
+				"--project",
+				"ClubBaist.Domain2.Tests/ClubBaist.Domain2.Tests.csproj",
+				"--filter",
+				"FullyQualifiedName~RoundScoreDerivationServiceTests"
+			],
+			"isBackground": false
 		}
 	]
 }
